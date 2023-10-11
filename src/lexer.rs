@@ -8,7 +8,6 @@ pub enum Token {
     Plus,
     SyntaxError,
     NewLine,
-    EOF,
 }
 
 struct Lexer {
@@ -24,7 +23,7 @@ pub fn lex(source: &str) -> Vec<Token> {
 }
 
 impl Lexer {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self {
             source: Vec::default(),
             start: 0,
@@ -34,20 +33,18 @@ impl Lexer {
         }
     }
 
-    pub fn scan_tokens(&mut self, source: &str) -> Vec<Token> {
+    fn scan_tokens(&mut self, source: &str) -> Vec<Token> {
         self.source = source.chars().collect();
 
-        let mut tokens: Vec<Token> = vec![];
+        let mut tokens = vec![];
 
         while !self.is_at_end() {
             self.start = self.current;
-            if let Some(token) = self.scan_token() {
-                tokens.push(token); // TODO: Enrich tokens with line and column
-            }
+            let token = self.scan_token();
+            tokens.push(token); // TODO: Enrich tokens with line and column
             self.column += self.current - self.start;
         }
-        tokens.push(Token::EOF);
-        tokens
+        tokens.into_iter().flatten().collect()
     }
 
     fn scan_token(&mut self) -> Option<Token> {
