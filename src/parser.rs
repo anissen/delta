@@ -1,7 +1,7 @@
-//use lexer::Token;
-
+use crate::lexer::TokenKind;
 use crate::lexer::{Span, Token};
-// use crate::lexer::TokenKind;
+use std::vec::IntoIter;
+// use Expr::*;
 
 type BoxedExpr<'a> = Box<Expr<'a>>;
 
@@ -16,8 +16,6 @@ pub enum Expr<'a> {
     },
 }
 
-// use Expr::*;
-
 struct Parser {
     // <'a> {
     // tokens: Vec<Token<'a>>,
@@ -26,7 +24,7 @@ struct Parser {
 }
 
 pub fn parse<'a>(tokens: Vec<Token<'a>>) -> Expr<'a> {
-    Parser::new().parse_tokens::<std::vec::IntoIter<Token<'_>>>(tokens.into_iter())
+    Parser::new().parse_tokens::<IntoIter<Token<'_>>>(tokens.into_iter())
 }
 
 impl Parser {
@@ -43,7 +41,7 @@ impl Parser {
         Expr::Binary {
             left: Box::new(Expr::Float(32.1)),
             op: Token {
-                kind: crate::lexer::TokenKind::Plus,
+                kind: TokenKind::Plus,
                 lexeme: "+",
                 position: Span { line: 1, column: 2 },
             },
