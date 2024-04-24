@@ -6,6 +6,7 @@ pub enum TokenKind {
     Integer(i32),
     Float(f32),
     Plus,
+    Star,
     SyntaxError,
     NewLine,
 }
