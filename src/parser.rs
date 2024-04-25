@@ -1,105 +1,184 @@
+use crate::lexer::Token;
 use crate::lexer::TokenKind;
-use crate::lexer::{Span, Token};
-use std::vec::IntoIter;
-// use Expr::*;
-
-type BoxedExpr<'a> = Box<Expr<'a>>;
+use crate::lexer::TokenKind::{Bang, Float, Integer, Minus, Plus, Slash, Star, EOF};
 
 #[derive(Debug)]
-pub enum Expr<'a> {
+pub enum Expr {
     Error(),
     Integer(i32),
     Float(f32),
+    Unary {
+        operator: Token,
+        expr: Box<Expr>,
+    },
     Binary {
-        left: BoxedExpr<'a>,
-        operator: Token<'a>,
-        right: BoxedExpr<'a>,
+        left: Box<Expr>,
+        operator: Token,
+        right: Box<Expr>,
     },
 }
 
-struct Parser {
-    // <'a> {
-    // tokens: Vec<Token<'a>>,
-    // token_iter: Box<Iterator<Item = Token<'a>>>,
-    // token_iter: IntoIterator<Item = Token<'a>>,
+pub struct Parser {
+    tokens: Vec<Token>,
+    current: usize,
 }
 
-pub fn parse<'a>(tokens: Vec<Token<'a>>) -> Vec<Expr<'a>> {
-    Parser::new().parse_tokens::<IntoIter<Token>>(tokens.into_iter())
+pub fn parse(tokens: Vec<Token>) -> Vec<Expr> {
+    Parser::new(tokens).parse()
 }
 
 impl Parser {
-    fn new() -> Self {
-        Self {}
+    fn new(tokens: Vec<Token>) -> Self {
+        Self { tokens, current: 0 }
     }
 
-    fn parse_tokens<'a, Container: IntoIterator<Item = Token<'a>>>(
-        &self,
-        iter: Container,
-    ) -> Vec<Expr<'a>> {
-        // let mut iterator = iter.into_iter();
-        // Expr::Float(32.1)
-
-        let peekable_iter = iter.into_iter().peekable(); // TODO: The peakable trait is unused
-        peekable_iter.map(|_| Expr::Float(12.3)).collect()
-
-        peekable_iter.
-
-        // Expr::Binary {
-        //     left: Box::new(Expr::Float(32.1)),
-        //     op: Token {
-        //         kind: TokenKind::Plus,
-        //         lexeme: "+",
-        //         position: Span { line: 1, column: 2 },
-        //     },
-        //     right: Box::new(Expr::Float(45.6)),
-        // }
+    fn parse(&mut self) -> Vec<Expr> {
+        let mut expressions = Vec::new();
+        loop {
+            if let Ok(expression) = self.term() {
+                expressions.push(expression);
+            } else {
+                // synchronize
+                // TODO(anissen): Handle error synchronization
+                break;
+            }
+            if self.is_at_end() {
+                break;
+            }
+        }
+        expressions
     }
 
-    fn addition(&self) -> Expr {
-        let expr = self.multiplication();
-
-        while self.is_kind(TokenKind::Plus) {
+    fn term(&mut self) -> Result<Expr, String> {
+        let mut expr = self.factor()?;
+        while self.matches(&[Plus, Minus]) {
             let operator = self.previous();
-            let right = self.multiplication();
+            let right = self.factor()?;
             expr = Expr::Binary {
-                left: expr,
+                left: Box::new(expr),
                 operator,
-                right,
+                right: Box::new(right),
             };
         }
-        expr
+        Ok(expr)
     }
 
-    fn multiplication(&self) -> Expr {
-        if self.is_kind(TokenKind::Star) {
-            let left = multiplication();
-            let operator = previous();
-            let right = multiplication();
-            Expr::Binary {
-                left,
+    fn factor(&mut self) -> Result<Expr, String> {
+        let mut expr = self.unary()?;
+        while self.matches(&[Slash, Star]) {
+            let operator = self.previous();
+            let right = self.unary()?;
+            expr = Expr::Binary {
+                left: Box::new(expr),
                 operator,
-                right,
+                right: Box::new(right),
+            };
+        }
+        Ok(expr)
+    }
+
+    fn unary(&mut self) -> Result<Expr, String> {
+        if self.matches(&[Bang, Minus]) {
+            let operator = self.previous();
+            let right = self.unary()?;
+            Ok(Expr::Unary {
+                operator,
+                expr: Box::new(right),
+            })
+        } else {
+            self.primary()
+        }
+    }
+
+    fn primary(&mut self) -> Result<Expr, String> {
+        if self.matches(&[Integer]) {
+            let lexeme = self.previous().lexeme;
+            let value = lexeme.parse::<i32>();
+            match value {
+                Ok(value) => Ok(Expr::Integer(value)),
+                Err(err) => Err(err.to_string()),
+            }
+        } else if self.matches(&[Float]) {
+            let lexeme = self.previous().lexeme;
+            let value = lexeme.parse::<f32>();
+            match value {
+                Ok(value) => Ok(Expr::Float(value)),
+                Err(err) => Err(err.to_string()),
             }
         } else {
-            Expr::Error()
+            Err("parse error".to_string())
         }
+
+        // if self.matches(&[False]) {
+        //     return Ok(Expr::Literal(Literal::Bool(false)));
+        // }
+        // if self.matches(&[True]) {
+        //     return Ok(Expr::Literal(Literal::Bool(true)));
+        // }
+        // if self.matches(&[Nil]) {
+        //     return Ok(Expr::Literal(Literal::Nil));
+        // }
+        // if self.matches(&[Number, String_]) {
+        //     return Ok(Expr::Literal(match self.previous().literal {
+        //         Some(l) => l,
+        //         None => Literal::Nil,
+        //     }));
+        // }
+        // if self.matches(&[Identifier]) {
+        //     return Ok(Expr::Variable(self.previous()));
+        // }
+        // if self.matches(&[LeftParen]) {
+        //     let expr = self.expression()?;
+        //     self.consume(&RightParen, "Expect `)` after expression")?;
+        //     return Ok(Expr::Grouping(Box::new(expr)));
+        // }
+        // crate::error_at_token(&self.peek(), "Expect expression");
+        // Err("Parse error")
     }
 
-    fn is_kind(&self, kind: TokenKind) -> bool {
-        let is_match = self.check(kind);
-        if is_match {
-            self.advance();
+    fn matches(&mut self, kinds: &[TokenKind]) -> bool {
+        for kind in kinds {
+            if self.check(kind) {
+                self.advance();
+                return true;
+            }
         }
-        is_match
+        false
     }
 
-    // fn check(&self) -> bool {
-    //     if self.is_at_end() {
-    //         false
+    // fn consume(&mut self, type_: &TokenType, message: &str) -> Result<Token> {
+    //     if self.check(type_) {
+    //         Ok(self.advance())
     //     } else {
+    //         crate::error_at_token(&self.peek(), message);
+    //         Err(anyhow!("Parse error"))
     //     }
     // }
 
-    // fn advance(&self) -> () {}
+    fn check(&self, kind: &TokenKind) -> bool {
+        if self.is_at_end() {
+            false
+        } else {
+            &self.peek().kind == kind
+        }
+    }
+
+    fn advance(&mut self) -> Token {
+        if !self.is_at_end() {
+            self.current += 1;
+        }
+        self.previous()
+    }
+
+    fn is_at_end(&self) -> bool {
+        self.peek().kind == EOF
+    }
+
+    fn peek(&self) -> Token {
+        self.tokens[self.current].clone()
+    }
+
+    fn previous(&self) -> Token {
+        self.tokens[self.current - 1].clone()
+    }
 }

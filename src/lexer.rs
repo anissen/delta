@@ -1,17 +1,23 @@
 use std::char;
 use vec;
 
-#[derive(Debug)]
+// TODO(anissen): Move Token-stuff into own file
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum TokenKind {
-    Integer(i32),
-    Float(f32),
+    Integer,
+    Float,
+    Bang,
     Plus,
+    Minus,
     Star,
+    Slash,
     SyntaxError,
     NewLine,
+    EOF,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Span {
     pub line: usize,
     pub column: usize,
@@ -20,11 +26,11 @@ pub struct Span {
     // length: usize,
 }
 
-#[derive(Debug)]
-pub struct Token<'a> {
+#[derive(Debug, Clone)]
+pub struct Token {
     pub kind: TokenKind,
     pub position: Span,
-    pub lexeme: &'a str,
+    pub lexeme: String, // TODO(anissen): Should probably be &'a str,
 }
 
 struct Lexer {
@@ -50,7 +56,7 @@ impl<'a> Lexer {
         }
     }
 
-    fn scan_tokens(&mut self, source: &'a str) -> Vec<Token<'a>> {
+    fn scan_tokens(&mut self, source: &'a str) -> Vec<Token> {
         self.source = source.chars().collect();
 
         let mut tokens = vec![];
@@ -67,12 +73,21 @@ impl<'a> Lexer {
                 let token = Token {
                     kind,
                     position,
-                    lexeme: &source[self.start..self.current],
+                    lexeme: source[self.start..self.current].to_string(),
                 };
                 tokens.push(token);
             }
             self.column += self.current - self.start;
         }
+        // TODO(anissen): EOF could probably be handled more gracefully
+        tokens.push(Token {
+            kind: TokenKind::EOF,
+            position: Span {
+                line: self.line,
+                column: self.column,
+            },
+            lexeme: source[self.start..self.current].to_string(),
+        });
         tokens
     }
 
@@ -81,6 +96,10 @@ impl<'a> Lexer {
         let token = match char {
             ' ' => None,
             '+' => Some(TokenKind::Plus),
+            '-' => Some(TokenKind::Minus),
+            '*' => Some(TokenKind::Star),
+            '/' => Some(TokenKind::Slash),
+            '!' => Some(TokenKind::Bang),
             '\n' => {
                 self.line += 1;
                 self.column = 0;
@@ -103,17 +122,20 @@ impl<'a> Lexer {
             while self.is_digit(self.peek()) {
                 self.advance();
             }
+            TokenKind::Float
+        } else {
+            TokenKind::Integer
         }
 
-        let chars = self.source[self.start..self.current].to_vec();
-        let str: String = chars.into_iter().collect(); // HACK: This could probably be done better
-        if is_float {
-            let value = str.parse::<f32>().unwrap();
-            TokenKind::Float(value)
-        } else {
-            let value = str.parse::<i32>().unwrap();
-            TokenKind::Integer(value)
-        }
+        // let chars = self.source[self.start..self.current].to_vec();
+        // let str: String = chars.into_iter().collect(); // HACK: This could probably be done better
+        // if is_float {
+        //     let value = str.parse::<f32>().unwrap();
+        //     TokenKind::Float(value)
+        // } else {
+        //     let value = str.parse::<i32>().unwrap();
+        //     TokenKind::Integer(value)
+        // }
     }
 
     fn peek(&self) -> char {
