@@ -4,7 +4,7 @@ use crate::lexer::TokenKind::{Bang, Float, Integer, Minus, Plus, Slash, Star, EO
 
 #[derive(Debug)]
 pub enum Expr {
-    Error(),
+    // Error(),
     Integer(i32),
     Float(f32),
     Unary {

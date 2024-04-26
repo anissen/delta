@@ -12,6 +12,7 @@ pub enum TokenKind {
     Minus,
     Star,
     Slash,
+    Space,
     SyntaxError,
     NewLine,
     EOF,
@@ -63,20 +64,19 @@ impl<'a> Lexer {
 
         while !self.is_at_end() {
             self.start = self.current;
-            if let Some(kind) = self.scan_next() {
-                let position = Span {
-                    line: self.line,
-                    column: self.column,
-                    // start: self.start,
-                    // length: self.current - self.start,
-                };
-                let token = Token {
-                    kind,
-                    position,
-                    lexeme: source[self.start..self.current].to_string(),
-                };
-                tokens.push(token);
-            }
+            let kind = self.scan_next();
+            let position = Span {
+                line: self.line,
+                column: self.column, // TODO(anissen): Column is incorrect from line 2+
+                                     // start: self.start,
+                                     // length: self.current - self.start,
+            };
+            let token = Token {
+                kind,
+                position,
+                lexeme: source[self.start..self.current].to_string(),
+            };
+            tokens.push(token);
             self.column += self.current - self.start;
         }
         // TODO(anissen): EOF could probably be handled more gracefully
@@ -91,24 +91,23 @@ impl<'a> Lexer {
         tokens
     }
 
-    fn scan_next(&mut self) -> Option<TokenKind> {
+    fn scan_next(&mut self) -> TokenKind {
         let char = self.advance();
-        let token = match char {
-            ' ' => None,
-            '+' => Some(TokenKind::Plus),
-            '-' => Some(TokenKind::Minus),
-            '*' => Some(TokenKind::Star),
-            '/' => Some(TokenKind::Slash),
-            '!' => Some(TokenKind::Bang),
+        match char {
+            ' ' => TokenKind::Space,
+            '+' => TokenKind::Plus,
+            '-' => TokenKind::Minus,
+            '*' => TokenKind::Star,
+            '/' => TokenKind::Slash,
+            '!' => TokenKind::Bang,
             '\n' => {
                 self.line += 1;
                 self.column = 0;
-                Some(TokenKind::NewLine)
+                TokenKind::NewLine
             }
-            c if self.is_digit(c) => Some(self.number()),
-            _ => Some(TokenKind::SyntaxError),
-        };
-        token
+            c if self.is_digit(c) => self.number(),
+            _ => TokenKind::SyntaxError,
+        }
     }
 
     fn number(&mut self) -> TokenKind {
