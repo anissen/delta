@@ -67,17 +67,23 @@ impl<'a> Lexer {
             let kind = self.scan_next();
             let position = Span {
                 line: self.line,
-                column: self.column, // TODO(anissen): Column is incorrect from line 2+
-                                     // start: self.start,
-                                     // length: self.current - self.start,
+                column: self.column,
+                // start: self.start,
+                // length: self.current - self.start,
             };
+            let is_new_line = kind == TokenKind::NewLine;
             let token = Token {
                 kind,
                 position,
                 lexeme: source[self.start..self.current].to_string(),
             };
             tokens.push(token);
-            self.column += self.current - self.start;
+            if is_new_line {
+                self.line += 1;
+                self.column = 0;
+            } else {
+                self.column += self.current - self.start;
+            }
         }
         // TODO(anissen): EOF could probably be handled more gracefully
         tokens.push(Token {
@@ -100,11 +106,7 @@ impl<'a> Lexer {
             '*' => TokenKind::Star,
             '/' => TokenKind::Slash,
             '!' => TokenKind::Bang,
-            '\n' => {
-                self.line += 1;
-                self.column = 0;
-                TokenKind::NewLine
-            }
+            '\n' => TokenKind::NewLine,
             c if self.is_digit(c) => self.number(),
             _ => TokenKind::SyntaxError,
         }

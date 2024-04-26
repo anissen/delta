@@ -2,7 +2,7 @@ mod lexer;
 mod parser;
 
 fn main() {
-    let source = r"zy2+1.3 xyz 4
+    let source = r"2+1.3 xyz 4
 oh yeah
 42";
     println!("{}", source);

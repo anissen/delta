@@ -1,10 +1,11 @@
 use crate::lexer::Token;
 use crate::lexer::TokenKind;
-use crate::lexer::TokenKind::{Bang, Float, Integer, Minus, Plus, Slash, Star, EOF};
+use crate::lexer::TokenKind::{Bang, Float, Integer, Minus, Plus, Slash, Space, Star, EOF};
 
 #[derive(Debug)]
 pub enum Expr {
     // Error(),
+    Indentation(u32),
     Integer(i32),
     Float(f32),
     Unary {
@@ -91,7 +92,9 @@ impl Parser {
     }
 
     fn primary(&mut self) -> Result<Expr, String> {
-        if self.matches(&[Integer]) {
+        if self.matches(&[Space]) {
+            Ok(Expr::Indentation(1))
+        } else if self.matches(&[Integer]) {
             let lexeme = self.previous().lexeme;
             let value = lexeme.parse::<i32>();
             match value {
