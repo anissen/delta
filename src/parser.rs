@@ -1,23 +1,7 @@
+use crate::expressions::Expr;
 use crate::tokens::Token;
 use crate::tokens::TokenKind;
 use crate::tokens::TokenKind::{Bang, Float, Integer, Minus, Plus, Slash, Space, Star, EOF};
-
-#[derive(Debug)]
-pub enum Expr {
-    // Error(),
-    Indentation(u32),
-    Integer(i32),
-    Float(f32),
-    Unary {
-        operator: Token,
-        expr: Box<Expr>,
-    },
-    Binary {
-        left: Box<Expr>,
-        operator: Token,
-        right: Box<Expr>,
-    },
-}
 
 pub struct Parser {
     tokens: Vec<Token>,
