@@ -1,5 +1,6 @@
 mod lexer;
 mod parser;
+mod tokens;
 
 fn main() {
     let source = r"2+1.3 xyz 4
@@ -12,7 +13,7 @@ oh yeah
     println!("lexing =>");
     // tokens.iter().for_each(|f| println!("tokens: {:?}", f));
     tokens.iter().for_each(|f| match f.kind {
-        lexer::TokenKind::SyntaxError => {
+        tokens::TokenKind::SyntaxError => {
             println!(
                 "syntax error at '{}' (line {}, column {})",
                 f.lexeme, f.position.line, f.position.column,

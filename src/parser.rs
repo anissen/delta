@@ -1,6 +1,6 @@
-use crate::lexer::Token;
-use crate::lexer::TokenKind;
-use crate::lexer::TokenKind::{Bang, Float, Integer, Minus, Plus, Slash, Space, Star, EOF};
+use crate::tokens::Token;
+use crate::tokens::TokenKind;
+use crate::tokens::TokenKind::{Bang, Float, Integer, Minus, Plus, Slash, Space, Star, EOF};
 
 #[derive(Debug)]
 pub enum Expr {
