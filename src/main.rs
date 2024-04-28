@@ -1,10 +1,13 @@
+mod bytecodes;
+mod codegen;
 mod expressions;
 mod lexer;
 mod parser;
 mod tokens;
+mod vm;
 
 fn main() {
-    let source = r"2+1.3 xyz 4
+    let source = r"2-1.3 xyz 4
 oh yeah
 42";
     println!("{}", source);
@@ -27,4 +30,11 @@ oh yeah
     println!("parsing =>");
     let ast = parser::parse(tokens);
     println!("tokens: {:?}", ast);
+
+    println!("code gen =>");
+    let bytecodes = codegen::codegen(ast);
+    println!("byte codes: {:?}", bytecodes);
+
+    println!("vm =>");
+    vm::run(bytecodes);
 }
