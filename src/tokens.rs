@@ -1,17 +1,17 @@
-
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenKind {
-    Integer,
-    Float,
     Bang,
-    Plus,
+    EOF,
+    Float,
+    Integer,
     Minus,
-    Star,
+    NewLine,
+    Plus,
     Slash,
     Space,
+    Star,
     SyntaxError,
-    NewLine,
-    EOF,
+    Tab,
 }
 
 #[derive(Debug, Clone)]

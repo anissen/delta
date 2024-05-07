@@ -74,6 +74,7 @@ impl<'a> Lexer {
             '*' => TokenKind::Star,
             '/' => TokenKind::Slash,
             '!' => TokenKind::Bang,
+            '\t' => TokenKind::Tab,
             '\n' => TokenKind::NewLine,
             c if self.is_digit(c) => self.number(),
             _ => TokenKind::SyntaxError,
