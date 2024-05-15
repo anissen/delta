@@ -1,6 +1,7 @@
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenKind {
     Bang,
+    Comment,
     EOF,
     Float,
     Integer,

@@ -17,30 +17,30 @@ fn main() {
     file.read_to_string(&mut source)
         .expect("Error reading file.");
 
-    println!("# source =>");
+    println!("\n# source =>");
     println!("{}", source);
 
-    println!("# lexing =>");
+    println!("\n# lexing =>");
     let tokens = lexer::lex(&source);
-    tokens.iter().for_each(|f| match f.kind {
+    tokens.iter().for_each(|token| match token.kind {
         tokens::TokenKind::SyntaxError => {
             println!(
                 "! syntax error at '{}' (line {}, column {})",
-                f.lexeme, f.position.line, f.position.column,
+                token.lexeme, token.position.line, token.position.column,
             )
         }
-        _ => println!("token: {:?}", f.kind),
+        _ => println!("token: {:?} ({:?})", token.kind, token.lexeme),
     });
     println!();
 
-    println!("# parsing =>");
+    println!("\n# parsing =>");
     let ast = parser::parse(tokens);
     println!("tokens: {:?}", ast);
 
-    println!("# code gen =>");
+    println!("\n# code gen =>");
     let bytecodes = codegen::codegen(ast);
     println!("byte codes: {:?}", bytecodes);
 
-    println!("# vm =>");
+    println!("\n# vm =>");
     vm::run(bytecodes);
 }

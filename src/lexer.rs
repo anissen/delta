@@ -60,7 +60,7 @@ impl<'a> Lexer {
                 line: self.line,
                 column: self.column,
             },
-            lexeme: source[self.start..self.current].to_string(),
+            lexeme: "".to_string(),
         });
         tokens
     }
@@ -74,6 +74,7 @@ impl<'a> Lexer {
             '*' => TokenKind::Star,
             '/' => TokenKind::Slash,
             '!' => TokenKind::Bang,
+            '#' => self.comment(),
             '\t' => TokenKind::Tab,
             '\n' => TokenKind::NewLine,
             c if self.is_digit(c) => self.number(),
@@ -96,16 +97,13 @@ impl<'a> Lexer {
         } else {
             TokenKind::Integer
         }
+    }
 
-        // let chars = self.source[self.start..self.current].to_vec();
-        // let str: String = chars.into_iter().collect(); // HACK: This could probably be done better
-        // if is_float {
-        //     let value = str.parse::<f32>().unwrap();
-        //     TokenKind::Float(value)
-        // } else {
-        //     let value = str.parse::<i32>().unwrap();
-        //     TokenKind::Integer(value)
-        // }
+    fn comment(&mut self) -> TokenKind {
+        while !self.is_at_end() && self.peek() != '\n' {
+            self.advance();
+        }
+        TokenKind::Comment
     }
 
     fn peek(&self) -> char {
