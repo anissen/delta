@@ -1,3 +1,5 @@
+use std::{fs::File, io::Read};
+
 mod bytecodes;
 mod codegen;
 mod expressions;
@@ -6,10 +8,15 @@ mod parser;
 mod tokens;
 mod vm;
 
+// https://github.com/brightly-salty/rox/
+
 fn main() {
-    let source = r"2-1.3 xyz 4
-oh yeah
-42";
+    let source_path = "examples/workbench.∆";
+    let mut file = File::open(source_path).expect("Unable to open file");
+    let mut source = String::new();
+    file.read_to_string(&mut source)
+        .expect("Error reading file.");
+
     println!("# source =>");
     println!("{}", source);
 
