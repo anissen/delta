@@ -18,9 +18,10 @@ impl Codegen {
     fn do_emit(&mut self, expressions: Vec<Expr>) {
         for expr in expressions {
             match expr {
-                Expr::Indentation(_) => (),
                 Expr::Integer(i) => self.emit_bytes(ByteCode::PushInteger, i.to_be_bytes()),
+
                 Expr::Float(f) => self.emit_bytes(ByteCode::PushFloat, f.to_be_bytes()),
+
                 Expr::Binary {
                     left,
                     operator,
@@ -36,6 +37,7 @@ impl Codegen {
                         }
                     }
                 }
+
                 _ => {
                     println!("Unhandled expr: {:?}", expr);
                     ()

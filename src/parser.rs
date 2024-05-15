@@ -1,7 +1,7 @@
 use crate::expressions::Expr;
 use crate::tokens::Token;
 use crate::tokens::TokenKind;
-use crate::tokens::TokenKind::{Bang, Float, Integer, Minus, Plus, Slash, Star, Tab, EOF};
+use crate::tokens::TokenKind::{Bang, Float, Integer, Minus, Plus, Slash, Star, EOF};
 
 pub struct Parser {
     tokens: Vec<Token>,
@@ -76,9 +76,10 @@ impl Parser {
     }
 
     fn primary(&mut self) -> Result<Expr, String> {
-        if self.matches(&[Tab]) {
-            Ok(Expr::Indentation(1))
-        } else if self.matches(&[Integer]) {
+        // if self.matches(&[Tab]) {
+        //     Ok(Expr::Indentation(1))
+        // } else
+        if self.matches(&[Integer]) {
             let lexeme = self.previous().lexeme;
             let value = lexeme.parse::<i32>();
             match value {
