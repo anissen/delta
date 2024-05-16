@@ -5,7 +5,7 @@ pub struct VirtualMachine {
     program_counter: usize,
 }
 
-pub fn run(bytes: Vec<u8>) {
+pub fn run(bytes: Vec<u8>) -> Option<f32> {
     VirtualMachine::new(bytes).execute()
 }
 
@@ -17,7 +17,7 @@ impl VirtualMachine {
         }
     }
 
-    pub fn execute(&mut self) {
+    pub fn execute(&mut self) -> Option<f32> {
         let mut stack: Vec<f32> = vec![];
         while self.program_counter < self.program.len() {
             let instruction = ByteCode::try_from(self.program[self.program_counter]).unwrap();
@@ -33,6 +33,7 @@ impl VirtualMachine {
                     self.program_counter += 4;
                     stack.push(raw as f32);
                 }
+
                 ByteCode::PushFloat => {
                     let value_bytes: [u8; 4] = self.program
                         [self.program_counter..self.program_counter + 4]
@@ -43,12 +44,14 @@ impl VirtualMachine {
                     self.program_counter += 4;
                     stack.push(value);
                 }
+
                 ByteCode::Addition => {
                     let right = stack.pop().unwrap();
                     let left = stack.pop().unwrap();
                     println!("{} + {}", left, right);
                     stack.push(left + right);
                 }
+
                 ByteCode::Subtraction => {
                     let right = stack.pop().unwrap();
                     let left = stack.pop().unwrap();
@@ -58,5 +61,6 @@ impl VirtualMachine {
             }
             println!("stack: {:?}", stack);
         }
+        stack.pop()
     }
 }

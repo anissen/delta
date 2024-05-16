@@ -1,6 +1,8 @@
+22+3
+
 # let square = \value -> value * 2
 
-22 # let list = [1, 2, 3]
-+ # list
-43#    List.map
+# let list = [1, 2, 3]
+# list
+#    List.map
 #    square

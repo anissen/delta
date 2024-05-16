@@ -10,7 +10,6 @@ pub enum TokenKind {
     Slash,
     Space,
     Star,
-    SyntaxError,
     Tab,
 }
 

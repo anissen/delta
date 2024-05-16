@@ -11,7 +11,18 @@ mod vm;
 // https://github.com/brightly-salty/rox/
 
 fn main() {
-    let source_path = "examples/workbench.∆";
+    let source_path = "examples/workbench.∆".to_string();
+    let result = run(source_path);
+    match result {
+        Ok(Some(value)) => println!("Result: {}", value),
+
+        Ok(None) => println!("Result: N/A"),
+
+        Err(err) => println!("Error(s) occured:\n{}", err),
+    }
+}
+
+fn run(source_path: String) -> Result<Option<f32>, String> {
     let mut file = File::open(source_path).expect("Unable to open file");
     let mut source = String::new();
     file.read_to_string(&mut source)
@@ -21,20 +32,13 @@ fn main() {
     println!("{}", source);
 
     println!("\n# lexing =>");
-    let tokens = lexer::lex(&source);
-    tokens.iter().for_each(|token| match token.kind {
-        tokens::TokenKind::SyntaxError => {
-            println!(
-                "! syntax error at '{}' (line {}, column {})",
-                token.lexeme, token.position.line, token.position.column,
-            )
-        }
-        _ => println!("token: {:?} ({:?})", token.kind, token.lexeme),
-    });
-    println!();
+    let tokens = lexer::lex(&source)?;
+    tokens
+        .iter()
+        .for_each(|token| println!("token: {:?} ({:?})", token.kind, token.lexeme));
 
     println!("\n# parsing =>");
-    let ast = parser::parse(tokens).expect("Parse error");
+    let ast = parser::parse(tokens)?;
     println!("ast: {:?}", ast);
 
     println!("\n# code gen =>");
@@ -42,5 +46,7 @@ fn main() {
     println!("byte codes: {:?}", bytecodes);
 
     println!("\n# vm =>");
-    vm::run(bytecodes);
+    let result = vm::run(bytecodes);
+
+    Ok(result)
 }

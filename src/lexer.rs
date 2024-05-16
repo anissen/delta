@@ -1,5 +1,4 @@
 use crate::tokens::{Span, Token, TokenKind};
-use std::char;
 use vec;
 
 struct Lexer {
@@ -10,8 +9,31 @@ struct Lexer {
     column: usize,
 }
 
-pub fn lex<'a>(source: &'a str) -> Vec<Token> {
-    Lexer::new().scan_tokens(source)
+#[derive(Debug, Clone)]
+pub struct Error {
+    pub position: Span,
+    pub lexeme: String, // TODO(anissen): Should probably be &'a str,
+}
+
+type Errors = Vec<Error>;
+
+// TODO(anissen): Ideally, I would like to return `Result<Vec<Token>, Errors>`
+// and have the caller handle it gracefully, but I can't figure out how.
+pub fn lex<'a>(source: &'a str) -> Result<Vec<Token>, String> {
+    match Lexer::new().scan_tokens(source) {
+        Ok(tokens) => Ok(tokens),
+
+        Err(errors) => Err(errors
+            .into_iter()
+            .map(|err| {
+                format!(
+                    "! syntax error at '{}' (line {}, column {})",
+                    err.lexeme, err.position.line, err.position.column,
+                )
+            })
+            .collect::<Vec<String>>()
+            .join("\n")),
+    }
 }
 
 impl<'a> Lexer {
@@ -25,51 +47,65 @@ impl<'a> Lexer {
         }
     }
 
-    fn scan_tokens(&mut self, source: &'a str) -> Vec<Token> {
+    fn scan_tokens(&mut self, source: &'a str) -> Result<Vec<Token>, Errors> {
         self.source = source.chars().collect();
 
+        let mut errors = vec![];
         let mut tokens = vec![];
 
         while !self.is_at_end() {
             self.start = self.current;
-            let kind = self.scan_next();
+            let result = self.scan_next();
             let position = Span {
                 line: self.line,
                 column: self.column,
                 // start: self.start,
                 // length: self.current - self.start,
             };
-            let is_new_line = kind == TokenKind::NewLine;
-            let token = Token {
-                kind,
-                position,
-                lexeme: source[self.start..self.current].to_string(),
-            };
-            tokens.push(token);
-            if is_new_line {
-                self.line += 1;
-                self.column = 0;
-            } else {
-                self.column += self.current - self.start;
+            let lexeme = source[self.start..self.current].to_string();
+
+            match result {
+                Ok(kind) => {
+                    let is_new_line = kind == TokenKind::NewLine;
+                    let token = Token {
+                        kind,
+                        position,
+                        lexeme,
+                    };
+                    tokens.push(token);
+                    if is_new_line {
+                        self.line += 1;
+                        self.column = 0;
+                    } else {
+                        self.column += self.current - self.start;
+                    }
+                }
+
+                Err(_) => errors.push(Error { position, lexeme }),
             }
         }
-        tokens
+
+        if !errors.is_empty() {
+            Err(errors)
+        } else {
+            Ok(tokens)
+        }
     }
 
-    fn scan_next(&mut self) -> TokenKind {
+    fn scan_next(&mut self) -> Result<TokenKind, ()> {
         let char = self.advance();
         match char {
-            ' ' => TokenKind::Space,
-            '+' => TokenKind::Plus,
-            '-' => TokenKind::Minus,
-            '*' => TokenKind::Star,
-            '/' => TokenKind::Slash,
-            '!' => TokenKind::Bang,
-            '#' => self.comment(),
-            '\t' => TokenKind::Tab,
-            '\n' => TokenKind::NewLine,
-            c if self.is_digit(c) => self.number(),
-            _ => TokenKind::SyntaxError,
+            ' ' => Ok(TokenKind::Space),
+            '+' => Ok(TokenKind::Plus),
+            '-' => Ok(TokenKind::Minus),
+            '*' => Ok(TokenKind::Star),
+            '/' => Ok(TokenKind::Slash),
+            '!' => Ok(TokenKind::Bang),
+            '#' => Ok(self.comment()),
+            '\t' => Ok(TokenKind::Tab),
+            '\n' => Ok(TokenKind::NewLine),
+            c if self.is_digit(c) => Ok(self.number()),
+            _ => Err(()),
         }
     }
 
