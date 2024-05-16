@@ -2,7 +2,6 @@
 pub enum TokenKind {
     Bang,
     Comment,
-    EOF,
     Float,
     Integer,
     Minus,

@@ -2,7 +2,7 @@ use crate::expressions::Expr;
 use crate::tokens::Token;
 use crate::tokens::TokenKind;
 use crate::tokens::TokenKind::{
-    Bang, Comment, Float, Integer, Minus, NewLine, Plus, Slash, Space, Star, EOF,
+    Bang, Comment, Float, Integer, Minus, NewLine, Plus, Slash, Space, Star,
 };
 
 pub struct Parser {
@@ -193,7 +193,7 @@ impl Parser {
     }
 
     fn is_at_end(&self) -> bool {
-        self.peek().kind == EOF
+        self.current >= self.tokens.len()
     }
 
     fn peek(&self) -> Token {

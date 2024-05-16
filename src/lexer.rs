@@ -53,15 +53,6 @@ impl<'a> Lexer {
                 self.column += self.current - self.start;
             }
         }
-        // TODO(anissen): EOF could probably be handled more gracefully
-        tokens.push(Token {
-            kind: TokenKind::EOF,
-            position: Span {
-                line: self.line,
-                column: self.column,
-            },
-            lexeme: "".to_string(),
-        });
         tokens
     }
 
