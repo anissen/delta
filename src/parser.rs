@@ -1,37 +1,58 @@
 use crate::expressions::Expr;
 use crate::tokens::Token;
 use crate::tokens::TokenKind;
-use crate::tokens::TokenKind::{Bang, Float, Integer, Minus, Plus, Slash, Star, EOF};
+use crate::tokens::TokenKind::{
+    Bang, Comment, Float, Integer, Minus, NewLine, Plus, Slash, Space, Star, EOF,
+};
 
 pub struct Parser {
     tokens: Vec<Token>,
     current: usize,
 }
 
-pub fn parse(tokens: Vec<Token>) -> Vec<Expr> {
+pub fn parse(tokens: Vec<Token>) -> Result<Vec<Expr>, String> {
     Parser::new(tokens).parse()
 }
 
 impl Parser {
     fn new(tokens: Vec<Token>) -> Self {
-        Self { tokens, current: 0 }
+        let non_whitespace_tokens: Vec<Token> = tokens
+            .into_iter()
+            .filter(|token| match token.kind {
+                Comment | NewLine | Space => false, // TODO(anissen): We probably need to keep newline for semantic later
+                _ => true,
+            })
+            .collect();
+        let kinds: Vec<TokenKind> = non_whitespace_tokens
+            .clone()
+            .into_iter()
+            .map(|t| t.kind)
+            .collect();
+        println!("condensed tokens: {:?}", kinds);
+        Self {
+            tokens: non_whitespace_tokens,
+            current: 0,
+        }
     }
 
-    fn parse(&mut self) -> Vec<Expr> {
+    fn parse(&mut self) -> Result<Vec<Expr>, String> {
         let mut expressions = Vec::new();
         loop {
-            if let Ok(expression) = self.term() {
-                expressions.push(expression);
-            } else {
-                // synchronize
-                // TODO(anissen): Handle error synchronization
-                break;
-            }
+            let res = self.term()?;
+            expressions.push(res);
+            // if let Ok(expression) = res {
+            //     expressions.push(expression);
+            // } else {
+            //     // synchronize
+            //     // TODO(anissen): Handle error synchronization
+            //     // println!("Error detected: {:?}", res);
+            //     // break;
+            // }
             if self.is_at_end() {
                 break;
             }
         }
-        expressions
+        Ok(expressions)
     }
 
     fn term(&mut self) -> Result<Expr, String> {
@@ -75,10 +96,17 @@ impl Parser {
         }
     }
 
+    fn whitespace(&mut self) -> Result<Option<Expr>, String> {
+        if self.matches(&[Comment]) {
+            Ok(Some(Expr::Comment(self.previous().lexeme)))
+        } else if self.matches(&[NewLine, Space]) {
+            Ok(None)
+        } else {
+            Err("Unhandled whitespace".to_string())
+        }
+    }
+
     fn primary(&mut self) -> Result<Expr, String> {
-        // if self.matches(&[Tab]) {
-        //     Ok(Expr::Indentation(1))
-        // } else
         if self.matches(&[Integer]) {
             let lexeme = self.previous().lexeme;
             let value = lexeme.parse::<i32>();
@@ -94,7 +122,13 @@ impl Parser {
                 Err(err) => Err(err.to_string()),
             }
         } else {
-            Err("parse error".to_string())
+            let error = format!(
+                "Parse error of kind {:?} at {:?} ({:?})",
+                self.peek().kind,
+                self.previous().lexeme,
+                self.previous().position
+            );
+            Err(error)
         }
 
         // if self.matches(&[False]) {

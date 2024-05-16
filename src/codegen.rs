@@ -16,12 +16,16 @@ impl Codegen {
     }
 
     fn do_emit(&mut self, expressions: Vec<Expr>) {
+        // TODO(anissen): Make this a proper return type.
         for expr in expressions {
             match expr {
+                Expr::Comment(_) => (), // do nothing
+
                 Expr::Integer(i) => self.emit_bytes(ByteCode::PushInteger, i.to_be_bytes()),
 
                 Expr::Float(f) => self.emit_bytes(ByteCode::PushFloat, f.to_be_bytes()),
 
+                // TODO(anissen): Handle Unary
                 Expr::Binary {
                     left,
                     operator,
@@ -31,16 +35,17 @@ impl Codegen {
                     match operator.kind {
                         TokenKind::Plus => self.emit_bytecode(ByteCode::Addition),
                         TokenKind::Minus => self.emit_bytecode(ByteCode::Subtraction),
+                        // TokenKind::Star => self.emit_bytecode(ByteCode::Multiplication),
                         _ => {
                             println!("Unhandled binary expr: {:?}", operator);
-                            ()
+                            panic!("Unhandled binary expr");
                         }
                     }
                 }
 
                 _ => {
                     println!("Unhandled expr: {:?}", expr);
-                    ()
+                    panic!("Unhandled expr");
                 }
             };
         }

@@ -34,8 +34,8 @@ fn main() {
     println!();
 
     println!("\n# parsing =>");
-    let ast = parser::parse(tokens);
-    println!("tokens: {:?}", ast);
+    let ast = parser::parse(tokens).expect("Parse error");
+    println!("ast: {:?}", ast);
 
     println!("\n# code gen =>");
     let bytecodes = codegen::codegen(ast);
