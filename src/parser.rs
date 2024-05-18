@@ -2,7 +2,7 @@ use crate::expressions::Expr;
 use crate::tokens::Token;
 use crate::tokens::TokenKind;
 use crate::tokens::TokenKind::{
-    Bang, Comment, Float, Integer, Minus, NewLine, Plus, Slash, Space, Star,
+    Bang, Comment, Equal, Float, Identifier, Integer, Minus, NewLine, Plus, Slash, Space, Star,
 };
 
 pub struct Parser {
@@ -38,7 +38,7 @@ impl Parser {
     fn parse(&mut self) -> Result<Vec<Expr>, String> {
         let mut expressions = Vec::new();
         loop {
-            let res = self.term()?;
+            let res = self.expression()?;
             expressions.push(res);
             // if let Ok(expression) = res {
             //     expressions.push(expression);
@@ -53,6 +53,31 @@ impl Parser {
             }
         }
         Ok(expressions)
+    }
+
+    fn expression(&mut self) -> Result<Expr, String> {
+        self.assignment()
+    }
+
+    fn assignment(&mut self) -> Result<Expr, String> {
+        // TODO(anissen): Fix precedence
+        // let expr = self.or()?;
+        let expr = self.term()?;
+        if self.matches(&[Equal]) {
+            match expr {
+                Expr::Variable(name) => {
+                    let value = self.assignment()?;
+                    Ok(Expr::Assignment {
+                        variable: name,
+                        expr: Box::new(value),
+                    })
+                }
+
+                _ => Err("Invalid assignment target".to_string()),
+            }
+        } else {
+            Ok(expr)
+        }
     }
 
     fn term(&mut self) -> Result<Expr, String> {
@@ -107,7 +132,9 @@ impl Parser {
     }
 
     fn primary(&mut self) -> Result<Expr, String> {
-        if self.matches(&[Integer]) {
+        if self.matches(&[Identifier]) {
+            Ok(Expr::Variable(self.previous().lexeme))
+        } else if self.matches(&[Integer]) {
             let lexeme = self.previous().lexeme;
             let value = lexeme.parse::<i32>();
             match value {

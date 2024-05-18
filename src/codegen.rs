@@ -1,9 +1,12 @@
+use std::collections::HashMap;
+
 use crate::bytecodes::ByteCode;
 use crate::expressions::Expr;
 use crate::tokens::TokenKind;
 
 pub struct Codegen {
     bytes: Vec<u8>,
+    value_index: HashMap<String, u8>,
 }
 
 pub fn codegen(expressions: Vec<Expr>) -> Vec<u8> {
@@ -12,8 +15,13 @@ pub fn codegen(expressions: Vec<Expr>) -> Vec<u8> {
 
 impl Codegen {
     fn new() -> Self {
-        Self { bytes: vec![] }
+        Self {
+            bytes: vec![],
+            value_index: HashMap::new(),
+        }
     }
+
+    // TODO(anissen): We need a mapping from variable to an index
 
     fn do_emit(&mut self, expressions: Vec<Expr>) {
         // TODO(anissen): Make this a proper return type.
@@ -25,7 +33,32 @@ impl Codegen {
 
                 Expr::Float(f) => self.emit_bytes(ByteCode::PushFloat, f.to_be_bytes()),
 
-                // TODO(anissen): Handle Unary
+                Expr::Variable(name) => {
+                    self.emit_bytecode(ByteCode::GetValue);
+                    let index = self.value_index.get(&name).unwrap();
+                    self.emit_byte(*index);
+                }
+
+                Expr::Assignment { variable, expr } => {
+                    self.do_emit(vec![*expr]);
+                    self.emit_bytecode(ByteCode::SetValue);
+                    let index = self.value_index.len() as u8; // TODO(anissen): This cast is bad, m'kay!?
+                    self.value_index.insert(variable, index);
+                    self.emit_byte(index);
+                }
+
+                Expr::Unary { operator, expr } => match operator.kind {
+                    TokenKind::Bang => {
+                        self.do_emit(vec![*expr]);
+                        self.emit_bytecode(ByteCode::Negation);
+                    }
+
+                    _ => {
+                        println!("Unhandled unary expr: {:?}", operator);
+                        panic!("Unhandled unary expr");
+                    }
+                },
+
                 Expr::Binary {
                     left,
                     operator,
@@ -41,11 +74,6 @@ impl Codegen {
                             panic!("Unhandled binary expr");
                         }
                     }
-                }
-
-                _ => {
-                    println!("Unhandled expr: {:?}", expr);
-                    panic!("Unhandled expr");
                 }
             };
         }

@@ -2,7 +2,9 @@
 pub enum TokenKind {
     Bang,
     Comment,
+    Equal,
     Float,
+    Identifier,
     Integer,
     Minus,
     NewLine,

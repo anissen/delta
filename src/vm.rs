@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::bytecodes::ByteCode;
 
 pub struct VirtualMachine {
@@ -19,6 +21,7 @@ impl VirtualMachine {
 
     pub fn execute(&mut self) -> Option<f32> {
         let mut stack: Vec<f32> = vec![];
+        let mut values = HashMap::new();
         while self.program_counter < self.program.len() {
             let instruction = ByteCode::try_from(self.program[self.program_counter]).unwrap();
             self.program_counter += 1;
@@ -58,6 +61,26 @@ impl VirtualMachine {
                     println!("{} - {}", left, right);
                     stack.push(left - right);
                 } // _ => println!("unhandled instruction: {:?}", instruction),
+
+                ByteCode::Negation => {
+                    let value = stack.pop().unwrap();
+                    stack.push(-value);
+                }
+
+                ByteCode::GetValue => {
+                    let index = self.program[self.program_counter]; // TODO(anissen): Make helper function to read bytes and increment program counter
+                    self.program_counter += 1;
+                    let value = values.get(&index).unwrap();
+                    stack.push(*value);
+                }
+
+                ByteCode::SetValue => {
+                    let index = self.program[self.program_counter];
+                    self.program_counter += 1;
+                    let value = stack.pop().unwrap();
+                    values.insert(index, value);
+                    stack.push(value); // TODO(anissen): This could be done with a peek instead of a pop + push
+                }
             }
             println!("stack: {:?}", stack);
         }

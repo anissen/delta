@@ -101,12 +101,22 @@ impl<'a> Lexer {
             '*' => Ok(TokenKind::Star),
             '/' => Ok(TokenKind::Slash),
             '!' => Ok(TokenKind::Bang),
+            '=' => Ok(TokenKind::Equal),
             '#' => Ok(self.comment()),
             '\t' => Ok(TokenKind::Tab),
             '\n' => Ok(TokenKind::NewLine),
+            c if self.is_letter(c) => Ok(self.identifier()),
             c if self.is_digit(c) => Ok(self.number()),
             _ => Err(()),
         }
+    }
+
+    fn identifier(&mut self) -> TokenKind {
+        while self.is_letter(self.peek()) {
+            self.advance();
+        }
+
+        TokenKind::Identifier
     }
 
     fn number(&mut self) -> TokenKind {
@@ -147,6 +157,10 @@ impl<'a> Lexer {
         } else {
             self.source[self.current + 1]
         }
+    }
+
+    fn is_letter(&self, value: char) -> bool {
+        value.is_ascii_alphabetic()
     }
 
     fn is_digit(&self, value: char) -> bool {
