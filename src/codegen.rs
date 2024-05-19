@@ -39,6 +39,12 @@ impl Codegen {
                 Expr::Assignment { variable, expr } => {
                     self.do_emit(vec![*expr]);
                     self.emit_bytecode(ByteCode::SetValue);
+                    if self.value_index.contains_key(&variable) {
+                        // TODO(anissen): This is a hack (and wrong -- it does not consider disjoint scopes)
+                        // Should probably be handled in a its own static analysis phase
+                        panic!("possible reassignment of immutable value");
+                    }
+
                     let index = self.value_index.len() as u8; // TODO(anissen): This cast is bad, m'kay!?
                     self.value_index.insert(variable, index);
                     self.emit_byte(index);
