@@ -1,7 +1,9 @@
 #[derive(Debug)]
 pub enum ByteCode {
     Addition,
+    Division,
     GetValue,
+    Multiplication,
     Negation,
     PushFloat,
     PushInteger,
@@ -21,7 +23,9 @@ impl TryFrom<u8> for ByteCode {
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
             value if value == ByteCode::Addition as u8 => Ok(Self::Addition),
+            value if value == ByteCode::Division as u8 => Ok(Self::Division),
             value if value == ByteCode::GetValue as u8 => Ok(Self::GetValue),
+            value if value == ByteCode::Multiplication as u8 => Ok(Self::Multiplication),
             value if value == ByteCode::Negation as u8 => Ok(Self::Negation),
             value if value == ByteCode::PushFloat as u8 => Ok(Self::PushFloat),
             value if value == ByteCode::PushInteger as u8 => Ok(Self::PushInteger),

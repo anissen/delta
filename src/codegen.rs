@@ -68,7 +68,8 @@ impl Codegen {
                     match operator.kind {
                         TokenKind::Plus => self.emit_bytecode(ByteCode::Addition),
                         TokenKind::Minus => self.emit_bytecode(ByteCode::Subtraction),
-                        // TokenKind::Star => self.emit_bytecode(ByteCode::Multiplication),
+                        TokenKind::Star => self.emit_bytecode(ByteCode::Multiplication),
+                        TokenKind::Slash => self.emit_bytecode(ByteCode::Division),
                         _ => {
                             println!("Unhandled binary expr: {:?}", operator);
                             panic!("Unhandled binary expr");

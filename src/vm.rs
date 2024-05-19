@@ -60,7 +60,21 @@ impl VirtualMachine {
                     let left = stack.pop().unwrap();
                     println!("{} - {}", left, right);
                     stack.push(left - right);
-                } // _ => println!("unhandled instruction: {:?}", instruction),
+                }
+
+                ByteCode::Multiplication => {
+                    let right = stack.pop().unwrap();
+                    let left = stack.pop().unwrap();
+                    println!("{} * {}", left, right);
+                    stack.push(left * right);
+                }
+
+                ByteCode::Division => {
+                    let right = stack.pop().unwrap();
+                    let left = stack.pop().unwrap();
+                    println!("{} / {}", left, right);
+                    stack.push(left / right);
+                }
 
                 ByteCode::Negation => {
                     let value = stack.pop().unwrap();
