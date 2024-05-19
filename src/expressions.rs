@@ -2,7 +2,6 @@ use crate::tokens::Token;
 
 #[derive(Debug)]
 pub enum Expr {
-    Comment(String),  // TODO(anissen): Remove this
     Variable(String), // TODO(anissen): Rename this (the value is not variable)
     Integer(i32),
     Float(f32),

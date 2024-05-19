@@ -141,15 +141,15 @@ impl Parser {
         }
     }
 
-    fn whitespace(&mut self) -> Result<Option<Expr>, String> {
-        if self.matches(&[Comment]) {
-            Ok(Some(Expr::Comment(self.previous().lexeme)))
-        } else if self.matches(&[NewLine, Space]) {
-            Ok(None)
-        } else {
-            Err("Unhandled whitespace".to_string())
-        }
-    }
+    // fn whitespace(&mut self) -> Result<Option<Expr>, String> {
+    //     if self.matches(&[Comment]) {
+    //         Ok(Some(Expr::Comment(self.previous().lexeme)))
+    //     } else if self.matches(&[NewLine, Space]) {
+    //         Ok(None)
+    //     } else {
+    //         Err("Unhandled whitespace".to_string())
+    //     }
+    // }
 
     fn primary(&mut self) -> Result<Expr, String> {
         if self.matches(&[Identifier]) {

@@ -26,8 +26,6 @@ impl Codegen {
         // TODO(anissen): Make this a proper return type.
         for expr in expressions {
             match expr {
-                Expr::Comment(_) => (), // do nothing
-
                 Expr::Integer(i) => self.emit_bytes(ByteCode::PushInteger, i.to_be_bytes()),
 
                 Expr::Float(f) => self.emit_bytes(ByteCode::PushFloat, f.to_be_bytes()),
