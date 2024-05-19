@@ -8,15 +8,32 @@ pub enum Expr {
     Float(f32),
     Assignment {
         variable: String, // TODO(anissen): Rename
+        // token: Token,
         expr: Box<Expr>,
     },
     Unary {
-        operator: Token, // TODO(anissen): Maybe make this a unary-specific operator type
+        operator: UnaryOperator,
+        token: Token,
         expr: Box<Expr>,
     },
     Binary {
         left: Box<Expr>,
-        operator: Token, // TODO(anissen): Maybe make this a binary-specific operator type
+        operator: BinaryOperator,
+        token: Token,
         right: Box<Expr>,
     },
+}
+
+#[derive(Debug)]
+pub enum UnaryOperator {
+    Negation,
+    Not,
+}
+
+#[derive(Debug)]
+pub enum BinaryOperator {
+    Addition,
+    Subtraction,
+    Multiplication,
+    Division,
 }

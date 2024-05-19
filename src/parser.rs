@@ -1,4 +1,6 @@
+use crate::expressions::BinaryOperator;
 use crate::expressions::Expr;
+use crate::expressions::UnaryOperator;
 use crate::tokens::Token;
 use crate::tokens::TokenKind;
 use crate::tokens::TokenKind::{
@@ -83,11 +85,17 @@ impl Parser {
     fn term(&mut self) -> Result<Expr, String> {
         let mut expr = self.factor()?;
         while self.matches(&[Plus, Minus]) {
-            let operator = self.previous();
+            let token = self.previous();
+            let operator = match token.kind {
+                Plus => BinaryOperator::Addition,
+                Minus => BinaryOperator::Subtraction,
+                _ => panic!("unreachable"),
+            };
             let right = self.factor()?;
             expr = Expr::Binary {
                 left: Box::new(expr),
                 operator,
+                token,
                 right: Box::new(right),
             };
         }
@@ -97,11 +105,17 @@ impl Parser {
     fn factor(&mut self) -> Result<Expr, String> {
         let mut expr = self.unary()?;
         while self.matches(&[Slash, Star]) {
-            let operator = self.previous();
+            let token = self.previous();
+            let operator = match token.kind {
+                Slash => BinaryOperator::Division,
+                Star => BinaryOperator::Multiplication,
+                _ => panic!("unreachable"),
+            };
             let right = self.unary()?;
             expr = Expr::Binary {
                 left: Box::new(expr),
                 operator,
+                token,
                 right: Box::new(right),
             };
         }
@@ -110,10 +124,16 @@ impl Parser {
 
     fn unary(&mut self) -> Result<Expr, String> {
         if self.matches(&[Bang, Minus]) {
-            let operator = self.previous();
+            let token = self.previous();
+            let operator = match token.kind {
+                Bang => UnaryOperator::Not,
+                Minus => UnaryOperator::Negation,
+                _ => panic!("cannot happen"),
+            };
             let right = self.unary()?;
             Ok(Expr::Unary {
                 operator,
+                token,
                 expr: Box::new(right),
             })
         } else {

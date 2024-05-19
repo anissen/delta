@@ -1,8 +1,7 @@
 use std::collections::HashMap;
 
 use crate::bytecodes::ByteCode;
-use crate::expressions::Expr;
-use crate::tokens::TokenKind;
+use crate::expressions::{BinaryOperator, Expr, UnaryOperator};
 
 pub struct Codegen {
     bytes: Vec<u8>,
@@ -47,33 +46,38 @@ impl Codegen {
                     self.emit_byte(index);
                 }
 
-                Expr::Unary { operator, expr } => match operator.kind {
-                    TokenKind::Bang => {
+                Expr::Unary {
+                    operator,
+                    token: _,
+                    expr,
+                } => match operator {
+                    UnaryOperator::Negation => {
                         self.do_emit(vec![*expr]);
                         self.emit_bytecode(ByteCode::Negation);
                     }
 
-                    _ => {
-                        println!("Unhandled unary expr: {:?}", operator);
-                        panic!("Unhandled unary expr");
+                    UnaryOperator::Not => {
+                        panic!("not implemented"); // TODO(anissen): Implement
                     }
                 },
 
                 Expr::Binary {
                     left,
                     operator,
+                    token: _,
                     right,
                 } => {
                     self.do_emit(vec![*left, *right]);
-                    match operator.kind {
-                        TokenKind::Plus => self.emit_bytecode(ByteCode::Addition),
-                        TokenKind::Minus => self.emit_bytecode(ByteCode::Subtraction),
-                        TokenKind::Star => self.emit_bytecode(ByteCode::Multiplication),
-                        TokenKind::Slash => self.emit_bytecode(ByteCode::Division),
-                        _ => {
-                            println!("Unhandled binary expr: {:?}", operator);
-                            panic!("Unhandled binary expr");
+                    match operator {
+                        BinaryOperator::Addition => self.emit_bytecode(ByteCode::Addition),
+
+                        BinaryOperator::Subtraction => self.emit_bytecode(ByteCode::Subtraction),
+
+                        BinaryOperator::Multiplication => {
+                            self.emit_bytecode(ByteCode::Multiplication)
                         }
+
+                        BinaryOperator::Division => self.emit_bytecode(ByteCode::Division),
                     }
                 }
             };
