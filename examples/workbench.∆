@@ -1,6 +1,6 @@
-xyz = 4
+xyz = true
 # xyz = 6
-xyz / 2 + 2
+# xyz / 2 + 2
 
 # let square = \value -> value * 2
 

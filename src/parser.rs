@@ -4,7 +4,8 @@ use crate::expressions::UnaryOperator;
 use crate::tokens::Token;
 use crate::tokens::TokenKind;
 use crate::tokens::TokenKind::{
-    Bang, Comment, Equal, Float, Identifier, Integer, Minus, NewLine, Plus, Slash, Space, Star,
+    Bang, Comment, Equal, False, Float, Identifier, Integer, Minus, NewLine, Plus, Slash, Space,
+    Star, True,
 };
 
 pub struct Parser {
@@ -168,6 +169,10 @@ impl Parser {
                 Ok(value) => Ok(Expr::Float(value)),
                 Err(err) => Err(err.to_string()),
             }
+        } else if self.matches(&[False]) {
+            return Ok(Expr::Boolean(false));
+        } else if self.matches(&[True]) {
+            return Ok(Expr::Boolean(true));
         } else {
             let error = format!(
                 "Parse error of kind {:?} at {:?} ({:?})",
@@ -177,13 +182,6 @@ impl Parser {
             );
             Err(error)
         }
-
-        // if self.matches(&[False]) {
-        //     return Ok(Expr::Literal(Literal::Bool(false)));
-        // }
-        // if self.matches(&[True]) {
-        //     return Ok(Expr::Literal(Literal::Bool(true)));
-        // }
         // if self.matches(&[Nil]) {
         //     return Ok(Expr::Literal(Literal::Nil));
         // }

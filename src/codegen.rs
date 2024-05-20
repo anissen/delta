@@ -26,6 +26,16 @@ impl Codegen {
         // TODO(anissen): Make this a proper return type.
         for expr in expressions {
             match expr {
+                Expr::Boolean(b) => {
+                    self.emit_bytecode(ByteCode::PushBoolean);
+                    self.emit_byte(b as u8);
+                    // let value: u8 = match b {
+                    //     true => 1,
+                    //     false => 0,
+                    // };
+                    // self.emit_byte(value);
+                }
+
                 Expr::Integer(i) => self.emit_bytes(ByteCode::PushInteger, i.to_be_bytes()),
 
                 Expr::Float(f) => self.emit_bytes(ByteCode::PushFloat, f.to_be_bytes()),

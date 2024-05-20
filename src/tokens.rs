@@ -3,6 +3,7 @@ pub enum TokenKind {
     Bang,
     Comment,
     Equal,
+    False,
     Float,
     Identifier,
     Integer,
@@ -13,6 +14,7 @@ pub enum TokenKind {
     Space,
     Star,
     Tab,
+    True,
 }
 
 #[derive(Debug, Clone)]

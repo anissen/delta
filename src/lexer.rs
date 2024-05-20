@@ -2,7 +2,7 @@ use crate::tokens::{Span, Token, TokenKind};
 use vec;
 
 struct Lexer {
-    source: Vec<char>,
+    source: Vec<char>, // TODO(anissen): Should this be a `str`?
     start: usize,
     current: usize,
     line: usize,
@@ -116,7 +116,14 @@ impl<'a> Lexer {
             self.advance();
         }
 
-        TokenKind::Identifier
+        let lexeme = self.source[self.start..self.current]
+            .into_iter()
+            .collect::<String>();
+        match lexeme.as_str() {
+            "true" => TokenKind::True,
+            "false" => TokenKind::False,
+            _ => TokenKind::Identifier,
+        }
     }
 
     fn number(&mut self) -> TokenKind {

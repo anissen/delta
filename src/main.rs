@@ -14,7 +14,7 @@ fn main() {
     let source_path = "examples/workbench.∆".to_string();
     let result = run(source_path);
     match result {
-        Ok(Some(value)) => println!("Result: {}", value),
+        Ok(Some(value)) => println!("Result: {:?}", value),
 
         Ok(None) => println!("Result: N/A"),
 
@@ -22,7 +22,7 @@ fn main() {
     }
 }
 
-fn run(source_path: String) -> Result<Option<f32>, String> {
+fn run(source_path: String) -> Result<Option<vm::Value>, String> {
     let mut file = File::open(source_path).expect("Unable to open file");
     let mut source = String::new();
     file.read_to_string(&mut source)

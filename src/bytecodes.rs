@@ -7,6 +7,7 @@ pub enum ByteCode {
     Negation,
     PushFloat,
     PushInteger,
+    PushBoolean,
     SetValue,
     Subtraction,
 }
@@ -29,6 +30,7 @@ impl TryFrom<u8> for ByteCode {
             value if value == ByteCode::Negation as u8 => Ok(Self::Negation),
             value if value == ByteCode::PushFloat as u8 => Ok(Self::PushFloat),
             value if value == ByteCode::PushInteger as u8 => Ok(Self::PushInteger),
+            value if value == ByteCode::PushBoolean as u8 => Ok(Self::PushBoolean),
             value if value == ByteCode::SetValue as u8 => Ok(Self::SetValue),
             value if value == ByteCode::Subtraction as u8 => Ok(Self::Subtraction),
             _ => Err(()),

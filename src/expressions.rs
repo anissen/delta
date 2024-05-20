@@ -3,6 +3,7 @@ use crate::tokens::Token;
 #[derive(Debug)]
 pub enum Expr {
     Variable(String), // TODO(anissen): Rename this (the value is not variable)
+    Boolean(bool),
     Integer(i32),
     Float(f32),
     Assignment {
