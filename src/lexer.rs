@@ -103,6 +103,8 @@ impl<'a> Lexer {
             '!' => Ok(TokenKind::Bang),
             '=' => Ok(TokenKind::Equal),
             '#' => Ok(self.comment()),
+            '(' => Ok(TokenKind::LeftParen),
+            ')' => Ok(TokenKind::RightParen),
             '\t' => Ok(TokenKind::Tab),
             '\n' => Ok(TokenKind::NewLine),
             c if self.is_letter(c) => Ok(self.identifier()),

@@ -4,6 +4,7 @@ use crate::tokens::Token;
 pub enum Expr {
     Variable(String), // TODO(anissen): Rename this (the value is not variable)
     Boolean(bool),
+    Grouping(Box<Expr>),
     Integer(i32),
     Float(f32),
     Assignment {

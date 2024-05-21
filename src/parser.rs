@@ -4,8 +4,8 @@ use crate::expressions::UnaryOperator;
 use crate::tokens::Token;
 use crate::tokens::TokenKind;
 use crate::tokens::TokenKind::{
-    Bang, Comment, Equal, False, Float, Identifier, Integer, Minus, NewLine, Plus, Slash, Space,
-    Star, True,
+    Bang, Comment, Equal, False, Float, Identifier, Integer, LeftParen, Minus, NewLine, Plus,
+    RightParen, Slash, Space, Star, True,
 };
 
 pub struct Parser {
@@ -173,6 +173,10 @@ impl Parser {
             return Ok(Expr::Boolean(false));
         } else if self.matches(&[True]) {
             return Ok(Expr::Boolean(true));
+        } else if self.matches(&[LeftParen]) {
+            let expr = self.expression()?;
+            self.consume(&RightParen);
+            return Ok(Expr::Grouping(Box::new(expr)));
         } else {
             let error = format!(
                 "Parse error of kind {:?} at {:?} ({:?})",
@@ -213,14 +217,13 @@ impl Parser {
         false
     }
 
-    // fn consume(&mut self, type_: &TokenType, message: &str) -> Result<Token> {
-    //     if self.check(type_) {
-    //         Ok(self.advance())
-    //     } else {
-    //         crate::error_at_token(&self.peek(), message);
-    //         Err(anyhow!("Parse error"))
-    //     }
-    // }
+    fn consume(&mut self, kind: &TokenKind) -> Result<Token, String> {
+        if self.check(kind) {
+            Ok(self.advance())
+        } else {
+            Err("Unexpected token".to_string())
+        }
+    }
 
     fn check(&self, kind: &TokenKind) -> bool {
         if self.is_at_end() {

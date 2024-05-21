@@ -29,11 +29,6 @@ impl Codegen {
                 Expr::Boolean(b) => {
                     self.emit_bytecode(ByteCode::PushBoolean);
                     self.emit_byte(b as u8);
-                    // let value: u8 = match b {
-                    //     true => 1,
-                    //     false => 0,
-                    // };
-                    // self.emit_byte(value);
                 }
 
                 Expr::Integer(i) => self.emit_bytes(ByteCode::PushInteger, i.to_be_bytes()),
@@ -45,6 +40,8 @@ impl Codegen {
                     let index = self.value_index.get(&name).unwrap();
                     self.emit_byte(*index);
                 }
+
+                Expr::Grouping(expr) => self.do_emit(vec![*expr]),
 
                 Expr::Assignment { variable, expr } => {
                     self.do_emit(vec![*expr]);
