@@ -2,7 +2,8 @@ use std::collections::HashMap;
 
 use crate::bytecodes::ByteCode;
 
-#[derive(Debug)]
+// TODO(anissen): See https://github.com/brightly-salty/rox/blob/master/src/value.rs
+#[derive(Debug, Copy, Clone)]
 pub enum Value {
     Boolean(bool),
     Integer(i32),
@@ -29,7 +30,6 @@ impl VirtualMachine {
     }
 
     pub fn execute(&mut self) -> Option<Value> {
-        // let mut stack: Vec<Value> = vec![];
         let mut values = HashMap::new();
 
         while self.program_counter < self.program.len() {
@@ -40,9 +40,8 @@ impl VirtualMachine {
                 ByteCode::PushBoolean => {
                     let value_bytes = self.program[self.program_counter];
                     self.program_counter += 1;
-                    // let value = if value_bytes == 0 { false } else { true };
-                    let value = if value_bytes == 0 { 0.0 } else { 1.0 };
-                    self.stack.push(Value::Float(value)); // TODO(anissen): Should be Value::Boolean -- fix me!
+                    let value = if value_bytes == 0 { false } else { true };
+                    self.stack.push(Value::Boolean(value));
                 }
 
                 ByteCode::PushInteger => {
@@ -52,7 +51,7 @@ impl VirtualMachine {
                         .unwrap();
                     self.program_counter += 4;
                     let raw = i32::from_be_bytes(value_bytes);
-                    self.stack.push(Value::Float(raw as f32)); // TODO(anissen): Should be Value::Integer -- fix me!
+                    self.stack.push(Value::Integer(raw));
                 }
 
                 ByteCode::PushFloat => {
@@ -67,10 +66,19 @@ impl VirtualMachine {
                 }
 
                 ByteCode::Addition => {
-                    let right = self.pop_float();
-                    let left = self.pop_float();
-                    println!("{} + {}", left, right);
-                    self.push_float(left + right);
+                    let right = self.stack.pop().unwrap();
+                    let left = self.stack.pop().unwrap();
+                    // println!("{} + {}", left, right);
+                    // self.push_float(left + right);
+                    match (right, left) {
+                        (Value::Float(right), Value::Float(left)) => self.push_float(left + right),
+
+                        (Value::Integer(right), Value::Integer(left)) => {
+                            self.stack.push(Value::Integer(left + right))
+                        }
+
+                        _ => panic!("incompatible types for addition"),
+                    }
                 }
 
                 ByteCode::Subtraction => {
@@ -88,10 +96,18 @@ impl VirtualMachine {
                 }
 
                 ByteCode::Division => {
-                    let right = self.pop_float();
-                    let left = self.pop_float();
-                    println!("{} / {}", left, right);
-                    self.push_float(left / right);
+                    let right = self.stack.pop().unwrap();
+                    let left = self.stack.pop().unwrap();
+                    // println!("{} / {}", left, right);
+                    match (right, left) {
+                        (Value::Float(right), Value::Float(left)) => self.push_float(left / right),
+
+                        (Value::Integer(right), Value::Integer(left)) => {
+                            self.stack.push(Value::Integer(left / right))
+                        }
+
+                        _ => panic!("incompatible types for division"),
+                    }
                 }
 
                 ByteCode::Negation => {
@@ -99,24 +115,40 @@ impl VirtualMachine {
                     self.push_float(-value);
                 }
 
+                ByteCode::Not => {
+                    let value = self.pop_boolean();
+                    self.push_boolean(!value);
+                }
+
                 ByteCode::GetValue => {
                     let index = self.program[self.program_counter]; // TODO(anissen): Make helper function to read bytes and increment program counter
                     self.program_counter += 1;
                     let value = values.get(&index).unwrap();
-                    self.push_float(*value);
+                    self.stack.push(*value);
                 }
 
                 ByteCode::SetValue => {
                     let index = self.program[self.program_counter];
                     self.program_counter += 1;
-                    let value = self.pop_float();
+                    let value = self.stack.pop().unwrap();
                     values.insert(index, value);
-                    self.push_float(value); // TODO(anissen): This could be done with a peek instead of a pop + push
+                    self.stack.push(value); // TODO(anissen): This could be done with a peek instead of a pop + push
                 }
             }
             println!("stack: {:?}", self.stack);
         }
         self.stack.pop()
+    }
+
+    fn pop_boolean(&mut self) -> bool {
+        match self.stack.pop().unwrap() {
+            Value::Boolean(b) => b,
+            _ => panic!("expected boolean, encountered some other type"),
+        }
+    }
+
+    fn push_boolean(&mut self, value: bool) {
+        self.stack.push(Value::Boolean(value));
     }
 
     fn pop_float(&mut self) -> f32 {

@@ -71,7 +71,8 @@ impl Codegen {
                     }
 
                     UnaryOperator::Not => {
-                        panic!("not implemented"); // TODO(anissen): Implement
+                        self.do_emit(vec![*expr]);
+                        self.emit_bytecode(ByteCode::Not);
                     }
                 },
 
