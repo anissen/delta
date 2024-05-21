@@ -186,25 +186,6 @@ impl Parser {
             );
             Err(error)
         }
-        // if self.matches(&[Nil]) {
-        //     return Ok(Expr::Literal(Literal::Nil));
-        // }
-        // if self.matches(&[Number, String_]) {
-        //     return Ok(Expr::Literal(match self.previous().literal {
-        //         Some(l) => l,
-        //         None => Literal::Nil,
-        //     }));
-        // }
-        // if self.matches(&[Identifier]) {
-        //     return Ok(Expr::Variable(self.previous()));
-        // }
-        // if self.matches(&[LeftParen]) {
-        //     let expr = self.expression()?;
-        //     self.consume(&RightParen, "Expect `)` after expression")?;
-        //     return Ok(Expr::Grouping(Box::new(expr)));
-        // }
-        // crate::error_at_token(&self.peek(), "Expect expression");
-        // Err("Parse error")
     }
 
     fn matches(&mut self, kinds: &[TokenKind]) -> bool {
