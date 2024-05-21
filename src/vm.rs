@@ -82,17 +82,35 @@ impl VirtualMachine {
                 }
 
                 ByteCode::Subtraction => {
-                    let right = self.pop_float();
-                    let left = self.pop_float();
-                    println!("{} - {}", left, right);
-                    self.push_float(left - right);
+                    let right = self.stack.pop().unwrap();
+                    let left = self.stack.pop().unwrap();
+                    // println!("{} - {}", left, right);
+                    // self.push_float(left - right);
+                    match (right, left) {
+                        (Value::Float(right), Value::Float(left)) => self.push_float(left - right),
+
+                        (Value::Integer(right), Value::Integer(left)) => {
+                            self.stack.push(Value::Integer(left - right))
+                        }
+
+                        _ => panic!("incompatible types for subtraction"),
+                    }
                 }
 
                 ByteCode::Multiplication => {
-                    let right = self.pop_float();
-                    let left = self.pop_float();
-                    println!("{} * {}", left, right);
-                    self.push_float(left * right);
+                    let right = self.stack.pop().unwrap();
+                    let left = self.stack.pop().unwrap();
+                    // println!("{} - {}", left, right);
+                    // self.push_float(left * right);
+                    match (right, left) {
+                        (Value::Float(right), Value::Float(left)) => self.push_float(left * right),
+
+                        (Value::Integer(right), Value::Integer(left)) => {
+                            self.stack.push(Value::Integer(left * right))
+                        }
+
+                        _ => panic!("incompatible types for multiplication"),
+                    }
                 }
 
                 ByteCode::Division => {
