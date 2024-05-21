@@ -175,7 +175,7 @@ impl Parser {
             return Ok(Expr::Boolean(true));
         } else if self.matches(&[LeftParen]) {
             let expr = self.expression()?;
-            self.consume(&RightParen);
+            self.consume(&RightParen)?;
             return Ok(Expr::Grouping(Box::new(expr)));
         } else {
             let error = format!(
