@@ -4,6 +4,6 @@
 # \_ * 2
 # fn value -> value * 2
 
-square = \value|2
+square = \value | value * 2
 
-square
+square 5

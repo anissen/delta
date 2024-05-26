@@ -63,6 +63,12 @@ impl Parser {
     }
 
     fn assignment(&mut self) -> Result<Expr, String> {
+        // TODO(anissen): Is this the right precedence for handling functions?
+        // if self.matches(&[BackSlash]) {
+        //     let name = self.consume(kind)
+        //     return Ok(Expr::Call { name: (), args: () })
+        // }
+
         // TODO(anissen): Fix precedence
         // let expr = self.or()?;
         let expr = self.term()?;
@@ -154,7 +160,18 @@ impl Parser {
 
     fn primary(&mut self) -> Result<Expr, String> {
         if self.matches(&[Identifier]) {
-            Ok(Expr::Variable(self.previous().lexeme))
+            let lexeme = self.previous().lexeme;
+            if self.check(&Integer) {
+                // TODO: Incomplete, needs rework
+                let mut args = vec![];
+                while !self.is_at_end() {
+                    let arg = self.expression()?;
+                    args.push(arg);
+                }
+                Ok(Expr::Call { name: lexeme, args })
+            } else {
+                Ok(Expr::Variable(lexeme))
+            }
         } else if self.matches(&[Integer]) {
             let lexeme = self.previous().lexeme;
             let value = lexeme.parse::<i32>();

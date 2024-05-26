@@ -11,6 +11,10 @@ pub enum Expr {
         params: Vec<Token>, // TODO(anissen): Do we also need type information here?
         expr: Box<Expr>,
     },
+    Call {
+        name: String,
+        args: Vec<Expr>, // TODO(anissen): Should arguments be named? E.g. `square value:5`.
+    },
     Assignment {
         variable: String, // TODO(anissen): Rename
         // token: Token,

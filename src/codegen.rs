@@ -46,9 +46,31 @@ impl Codegen {
                 Expr::Function { params, expr } => {
                     // println!("Expr::Function! Params: {:?}", params);
                     // self.emit_function()
-                    self.emit_bytecode(ByteCode::Function);
+                    self.emit_bytecode(ByteCode::FunctionStart);
+                    for param in params {
+                        if self.value_index.contains_key(&param.lexeme) {
+                            // TODO(anissen): This is a hack (and wrong -- it does not consider disjoint scopes)
+                            // Should probably be handled in a its own static analysis phase
+                            panic!("possible shadowing of value");
+                        }
+
+                        let index = self.value_index.len() as u8; // TODO(anissen): This cast is bad, m'kay!?
+                        self.value_index.insert(param.lexeme, index);
+                        self.emit_byte(index);
+                    }
+
                     self.do_emit(vec![*expr]);
-                    // self.emit_bytecode(ByteCode::EndFunction);
+                    self.emit_bytecode(ByteCode::FunctionEnd);
+                }
+
+                Expr::Call { name, args } => {
+                    self.do_emit(args);
+                    if !self.value_index.contains_key(&name) {
+                        // Should probably be handled in a its own static analysis phase
+                        panic!("unknown function");
+                    }
+                    self.emit_bytecode(ByteCode::Call);
+                    self.emit_byte(*self.value_index.get(&name).unwrap());
                 }
 
                 Expr::Assignment { variable, expr } => {

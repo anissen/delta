@@ -31,12 +31,21 @@ impl VirtualMachine {
 
     pub fn execute(&mut self) -> Option<Value> {
         let mut values = HashMap::new();
-        // let mut functions = vec![];
+
+        let mut functions: Vec<usize> = Vec::new(); // function index => starting byte
+        for (index, instruction) in self.program.iter().enumerate() {
+            if let ByteCode::FunctionStart = ByteCode::try_from(*instruction).unwrap() {
+                functions.push(index + 1);
+            }
+        }
+
+        let mut prev_program_counter = 0; // TODO(anissen): Should probably be a stack of call frames
 
         while self.program_counter < self.program.len() {
             let instruction = ByteCode::try_from(self.program[self.program_counter]).unwrap();
             self.program_counter += 1;
             println!("=== frame === (pc: {})", self.program_counter);
+            println!("Instruction: {:?}", instruction);
             match instruction {
                 ByteCode::PushBoolean => {
                     let value_bytes = self.program[self.program_counter];
@@ -154,16 +163,31 @@ impl VirtualMachine {
                     self.stack.push(value); // TODO(anissen): This could be done with a peek instead of a pop + push
                 }
 
-                ByteCode::Function => {
+                ByteCode::FunctionStart => {
                     // let index = functions.len();
                     // self.stack.push(Value::Integer(42));
+                    self.program_counter += 1;
                 }
-                ByteCode::EndFunction => {}
+
+                ByteCode::FunctionEnd => {
+                    // reset program counter
+                    self.program_counter = prev_program_counter;
+                }
+
+                ByteCode::Call => {
+                    prev_program_counter = self.program_counter + 1;
+                    let index = self.program[self.program_counter];
+                    self.program_counter = functions[index as usize];
+                }
             }
             println!("stack: {:?}", self.stack);
         }
         self.stack.pop()
     }
+
+    // fn call(&mut self) {
+    //    // ...
+    // }
 
     fn pop_boolean(&mut self) -> bool {
         match self.stack.pop().unwrap() {

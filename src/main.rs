@@ -2,6 +2,7 @@ use std::{fs::File, io::Read};
 
 mod bytecodes;
 mod codegen;
+mod disassembler;
 mod expressions;
 mod lexer;
 mod parser;
@@ -44,6 +45,14 @@ fn run(source_path: String) -> Result<Option<vm::Value>, String> {
     println!("\n# code gen =>");
     let bytecodes = codegen::codegen(ast);
     println!("byte codes: {:?}", bytecodes);
+
+    println!("\n# disassembly =>");
+    let disassembled = disassembler::disassemble(bytecodes.clone());
+    println!("disassembled:");
+    for ele in disassembled {
+        println!("{:?}", ele);
+    }
+    // println!("disassembled: {:?}", disassembled);
 
     println!("\n# vm =>");
     let result = vm::run(bytecodes);
