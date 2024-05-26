@@ -4,8 +4,8 @@ use crate::expressions::UnaryOperator;
 use crate::tokens::Token;
 use crate::tokens::TokenKind;
 use crate::tokens::TokenKind::{
-    Bang, Comment, Equal, False, Float, Identifier, Integer, LeftParen, Minus, NewLine, Plus,
-    RightParen, Slash, Space, Star, True,
+    BackSlash, Bang, Comment, Equal, False, Float, Identifier, Integer, LeftParen, Minus, NewLine,
+    Plus, RightParen, Slash, Space, Star, True,
 };
 
 pub struct Parser {
@@ -177,6 +177,21 @@ impl Parser {
             let expr = self.expression()?;
             self.consume(&RightParen)?;
             return Ok(Expr::Grouping(Box::new(expr)));
+        } else if self.matches(&[BackSlash]) {
+            let mut params = vec![];
+            while self.check(&TokenKind::Identifier) {
+                self.advance();
+                let param = self.previous();
+                params.push(param);
+            }
+            self.consume(&TokenKind::Pipe)?;
+            // TODO(anissen): Support a variable list of parameters
+            // self.consume(&NewLine)?;
+            let expr = self.expression()?;
+            return Ok(Expr::Function {
+                params,
+                expr: Box::new(expr),
+            });
         } else {
             let error = format!(
                 "Parse error of kind {:?} at {:?} ({:?})",

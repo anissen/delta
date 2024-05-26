@@ -31,6 +31,7 @@ impl VirtualMachine {
 
     pub fn execute(&mut self) -> Option<Value> {
         let mut values = HashMap::new();
+        // let mut functions = vec![];
 
         while self.program_counter < self.program.len() {
             let instruction = ByteCode::try_from(self.program[self.program_counter]).unwrap();
@@ -152,6 +153,12 @@ impl VirtualMachine {
                     values.insert(index, value);
                     self.stack.push(value); // TODO(anissen): This could be done with a peek instead of a pop + push
                 }
+
+                ByteCode::Function => {
+                    // let index = functions.len();
+                    // self.stack.push(Value::Integer(42));
+                }
+                ByteCode::EndFunction => {}
             }
             println!("stack: {:?}", self.stack);
         }

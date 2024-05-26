@@ -11,6 +11,8 @@ pub enum ByteCode {
     PushInteger,
     SetValue,
     Subtraction,
+    Function,
+    EndFunction,
 }
 
 impl From<ByteCode> for u8 {
@@ -35,6 +37,8 @@ impl TryFrom<u8> for ByteCode {
             value if value == ByteCode::PushInteger as u8 => Ok(Self::PushInteger),
             value if value == ByteCode::SetValue as u8 => Ok(Self::SetValue),
             value if value == ByteCode::Subtraction as u8 => Ok(Self::Subtraction),
+            value if value == ByteCode::Function as u8 => Ok(Self::Function),
+            value if value == ByteCode::EndFunction as u8 => Ok(Self::EndFunction),
             _ => Err(()),
         }
     }

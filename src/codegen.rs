@@ -43,6 +43,14 @@ impl Codegen {
 
                 Expr::Grouping(expr) => self.do_emit(vec![*expr]),
 
+                Expr::Function { params, expr } => {
+                    // println!("Expr::Function! Params: {:?}", params);
+                    // self.emit_function()
+                    self.emit_bytecode(ByteCode::Function);
+                    self.do_emit(vec![*expr]);
+                    // self.emit_bytecode(ByteCode::EndFunction);
+                }
+
                 Expr::Assignment { variable, expr } => {
                     self.do_emit(vec![*expr]);
                     self.emit_bytecode(ByteCode::SetValue);

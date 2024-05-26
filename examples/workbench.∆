@@ -1,10 +1,9 @@
-xyz = true
-# xyz = 6
-# xyz / 2 + 2
 
-# let square = \value -> value * 2
+# alternatives:
+# \value: value * 2
+# \_ * 2
+# fn value -> value * 2
 
-# let list = [1, 2, 3]
-# list
-#    List.map
-#    square
+square = \value|2
+
+square
