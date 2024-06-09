@@ -12,7 +12,7 @@ pub enum ByteCode {
     SetValue,
     Subtraction,
     FunctionStart,
-    FunctionEnd,
+    FunctionEnd, // TODO(anissen): Maybe FunctionDefinition + FunctionBodyStart + FunctionBodyEnd?
     Call,
 }
 

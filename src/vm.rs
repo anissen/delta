@@ -8,7 +8,7 @@ pub enum Value {
     Boolean(bool),
     Integer(i32),
     Float(f32),
-    Function(i32),
+    Function(u8),
 }
 
 pub struct VirtualMachine {
@@ -35,7 +35,7 @@ impl VirtualMachine {
 
         let mut functions: Vec<usize> = Vec::new(); // function index => starting byte
         for (index, instruction) in self.program.iter().enumerate() {
-            if let ByteCode::FunctionStart = ByteCode::try_from(*instruction).unwrap() {
+            if let Ok(ByteCode::FunctionStart) = ByteCode::try_from(*instruction) {
                 functions.push(index + 1);
             }
         }
@@ -169,24 +169,37 @@ impl VirtualMachine {
 
                 // https://godbolt.org/#g:!((g:!((g:!((h:codeEditor,i:(filename:'1',fontScale:14,fontUsePx:'0',j:1,lang:scala,selection:(endColumn:1,endLineNumber:16,positionColumn:1,positionLineNumber:16,selectionStartColumn:1,selectionStartLineNumber:16,startColumn:1,startLineNumber:16),source:'@main%0Adef+main()+%3D+%7B%0A++println(%22hello%22)%0A%0A++val+y+%3D+3%0A++def+twice(v:+Float)+%3D+%7B%0A++++v+*+2+%2B+y%0A++%7D%0A%0A++println(%22world%22)%0A%0A++val+x+%3D+twice(5)%0A%0A++println(x)%0A%7D%0A'),l:'5',n:'1',o:'Scala+source+%231',t:'0')),k:50,l:'4',n:'0',o:'',s:0,t:'0'),(g:!((h:compiler,i:(compiler:scalac300,filters:(b:'0',binary:'1',binaryObject:'1',commentOnly:'0',debugCalls:'1',demangle:'0',directives:'0',execute:'1',intel:'0',libraryCode:'0',trim:'1',verboseDemangling:'0'),flagsViewOpen:'1',fontScale:14,fontUsePx:'0',j:1,lang:scala,libs:!(),options:'',overrides:!(),selection:(endColumn:14,endLineNumber:65,positionColumn:14,positionLineNumber:65,selectionStartColumn:14,selectionStartLineNumber:65,startColumn:14,startLineNumber:65),source:1),l:'5',n:'0',o:'+scalac+3.0.0+(Editor+%231)',t:'0')),k:50,l:'4',n:'0',o:'',s:0,t:'0')),l:'2',n:'0',o:'',t:'0')),version:4
                 ByteCode::FunctionStart => {
-                    // let index = functions.len();
-                    // self.stack.push(Value::Integer(42));
+                    let function_index = self.program[self.program_counter];
+                    self.program_counter += 1;
                     let param_count = self.program[self.program_counter];
                     self.program_counter += 1;
                     for param in 0..param_count {
                         // ???
                     }
+
+                    // jump to function end HACK!
+                    while self.program_counter < self.program.len() {
+                        let instruction = self.program[self.program_counter];
+                        self.program_counter += 1;
+                        if let Ok(ByteCode::FunctionEnd) = ByteCode::try_from(instruction) {
+                            break;
+                        }
+                    }
+
+                    self.stack.push(Value::Function(function_index));
                 }
 
                 ByteCode::FunctionEnd => {
                     // reset program counter
-                    self.program_counter = prev_program_counter;
+                    self.program_counter = prev_program_counter + 1;
                 }
 
                 ByteCode::Call => {
-                    prev_program_counter = self.program_counter + 1;
-                    let index = self.program[self.program_counter];
-                    self.program_counter = functions[index as usize];
+                    prev_program_counter = self.program_counter;
+                    let index =
+                        self.program[self.program_counter] /* TODO(anissen): HACK! ==> */ - 1;
+                    // let function_index = self.pop_function();
+                    self.program_counter = functions[index as usize] + 1 /* function index */ + 1 /* param count */;
                 }
             }
             println!("stack: {:?}", self.stack);
@@ -218,5 +231,12 @@ impl VirtualMachine {
 
     fn push_float(&mut self, value: f32) {
         self.stack.push(Value::Float(value));
+    }
+
+    fn pop_function(&mut self) -> u8 {
+        match self.stack.pop().unwrap() {
+            Value::Function(f) => f,
+            _ => panic!("expected function, encountered some other type"),
+        }
     }
 }

@@ -105,10 +105,13 @@ impl Disassembler {
                 ByteCode::FunctionStart => {
                     // let index = functions.len();
                     // self.stack.push(Value::Integer(42));
+                    let function_index = self.program[self.program_counter];
+                    self.program_counter += 1;
                     let param_count = self.program[self.program_counter];
                     self.program_counter += 1;
                     res.push(vec![
                         "function".to_string(),
+                        format!("(function index: {})", function_index),
                         format!("(params: {})", param_count),
                     ]);
                 }

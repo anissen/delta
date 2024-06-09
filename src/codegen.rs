@@ -6,6 +6,7 @@ use crate::expressions::{BinaryOperator, Expr, UnaryOperator};
 pub struct Codegen {
     bytes: Vec<u8>,
     value_index: HashMap<String, u8>,
+    function_count: u8,
 }
 
 pub fn codegen(expressions: Vec<Expr>) -> Vec<u8> {
@@ -17,6 +18,7 @@ impl Codegen {
         Self {
             bytes: vec![],
             value_index: HashMap::new(),
+            function_count: 0,
         }
     }
 
@@ -61,11 +63,10 @@ impl Codegen {
                         // self.emit_byte(index);
                     }
 
-                    // bytecodes: function start, ?function index?, param count, function body, function end
+                    // bytecodes: function start, function index, param count, function body, function end
 
-                    // let index = self.value_index.len() as u8; // TODO(anissen): This cast is bad, m'kay!?
-                    // self.value_index.insert(param.lexeme, index);
-                    // self.emit_byte(index);
+                    self.emit_byte(self.function_count);
+                    self.function_count += 1;
 
                     self.emit_byte(params.len() as u8); // TODO(anissen): Guard against overflow
                     self.do_emit(vec![*expr]);
