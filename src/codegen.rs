@@ -36,6 +36,7 @@ impl Codegen {
                 Expr::Float(f) => self.emit_bytes(ByteCode::PushFloat, f.to_be_bytes()),
 
                 Expr::Variable(name) => {
+                    println!("{}", name);
                     self.emit_bytecode(ByteCode::GetValue);
                     let index = self.value_index.get(&name).unwrap();
                     self.emit_byte(*index);
@@ -46,8 +47,9 @@ impl Codegen {
                 Expr::Function { params, expr } => {
                     // println!("Expr::Function! Params: {:?}", params);
                     // self.emit_function()
+
                     self.emit_bytecode(ByteCode::FunctionStart);
-                    for param in params {
+                    for param in params.clone() {
                         if self.value_index.contains_key(&param.lexeme) {
                             // TODO(anissen): This is a hack (and wrong -- it does not consider disjoint scopes)
                             // Should probably be handled in a its own static analysis phase
@@ -56,10 +58,18 @@ impl Codegen {
 
                         let index = self.value_index.len() as u8; // TODO(anissen): This cast is bad, m'kay!?
                         self.value_index.insert(param.lexeme, index);
-                        self.emit_byte(index);
+                        // self.emit_byte(index);
                     }
 
+                    // bytecodes: function start, ?function index?, param count, function body, function end
+
+                    // let index = self.value_index.len() as u8; // TODO(anissen): This cast is bad, m'kay!?
+                    // self.value_index.insert(param.lexeme, index);
+                    // self.emit_byte(index);
+
+                    self.emit_byte(params.len() as u8); // TODO(anissen): Guard against overflow
                     self.do_emit(vec![*expr]);
+
                     self.emit_bytecode(ByteCode::FunctionEnd);
                 }
 

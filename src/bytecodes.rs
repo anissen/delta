@@ -4,9 +4,9 @@ pub enum ByteCode {
     Division,
     GetValue,
     Multiplication,
-    Negation,
+    Negation, // TODO(anissen): Rename all (here e.g. op_negate)?
     Not,
-    PushBoolean,
+    PushBoolean, // TODO(anissen): Should be split into PushTrue + PushFalse
     PushFloat,
     PushInteger,
     SetValue,
