@@ -11,6 +11,10 @@ pub enum Value {
     Function(u8),
 }
 
+struct CallFrame {
+    return_program_counter: usize,
+}
+
 pub struct VirtualMachine {
     program: Vec<u8>,
     program_counter: usize,
@@ -40,7 +44,7 @@ impl VirtualMachine {
             }
         }
 
-        let mut prev_program_counter = 0; // TODO(anissen): Should probably be a stack of call frames
+        let mut prev_program_counter = 0; // TODO(anissen): Should probably be a stack of call frames!
 
         while self.program_counter < self.program.len() {
             let instruction = ByteCode::try_from(self.program[self.program_counter]).unwrap();
@@ -171,6 +175,7 @@ impl VirtualMachine {
                 ByteCode::FunctionStart => {
                     let function_index = self.program[self.program_counter];
                     self.program_counter += 1;
+
                     let param_count = self.program[self.program_counter];
                     self.program_counter += 1;
                     for param in 0..param_count {
