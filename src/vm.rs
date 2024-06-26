@@ -11,6 +11,12 @@ pub enum Value {
     Function(u8),
 }
 
+struct FunctionSignature {
+    ip: usize,
+    params: u8,
+    index: u8, // TODO(anissen): Is this required?
+}
+
 struct CallFrame {
     return_program_counter: usize, // maybe simply `ip`?
 }
@@ -37,14 +43,22 @@ impl VirtualMachine {
     pub fn execute(&mut self) -> Option<Value> {
         let mut values = HashMap::new();
 
-        let mut functions: Vec<usize> = Vec::new(); // function index => starting byte
-        for (index, instruction) in self.program.iter().enumerate() {
+        let mut functions: Vec<FunctionSignature> = Vec::new(); // function index => starting byte
+        let cp = self.program.clone(); // TODO(anissen): Hack!
+        for (index, instruction) in cp.iter().enumerate() {
             if let Ok(ByteCode::FunctionStart) = ByteCode::try_from(*instruction) {
-                functions.push(index + 1);
+                let function_index = self.read_byte();
+                let param_count = self.read_byte();
+                functions.push(FunctionSignature {
+                    ip: index + 1,
+                    params: param_count,
+                    index: function_index,
+                });
             }
         }
 
         let mut prev_program_counter = 0; // TODO(anissen): Should probably be a stack of call frames!
+        self.program_counter = 0;
 
         while self.program_counter < self.program.len() {
             println!("=== frame === (pc: {})", self.program_counter);
@@ -170,6 +184,7 @@ impl VirtualMachine {
                         }
                     }
 
+                    self.discard(param_count);
                     self.stack.push(Value::Function(function_index));
                 }
 
@@ -180,10 +195,10 @@ impl VirtualMachine {
 
                 ByteCode::Call => {
                     prev_program_counter = self.program_counter;
-                    let index =
-                        self.program[self.program_counter] /* TODO(anissen): HACK! ==> */ - 1;
+                    let index = self.read_byte() /* TODO(anissen): HACK! ==> */ - 1;
                     // let function_index = self.pop_function();
-                    self.program_counter = functions[index as usize] + 1 /* function index */ + 1 /* param count */;
+                    let function = &functions[index as usize];
+                    self.program_counter = function.ip + 1 /* function index */ + 1 /* param count */;
                 }
             }
             println!("stack: {:?}", self.stack);
@@ -234,6 +249,12 @@ impl VirtualMachine {
 
     fn peek(&mut self) -> Option<&Value> {
         self.stack.get(self.stack.len() - 1)
+    }
+
+    fn discard(&mut self, count: u8) {
+        for _ in 0..count {
+            self.stack.pop();
+        }
     }
 
     fn pop_any(&mut self) -> Value {

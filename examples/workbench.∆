@@ -1,4 +1,4 @@
 
 
-sayHello = \dummy | dummy
+sayHello = \dummy | dummy +  2
 sayHello 3
