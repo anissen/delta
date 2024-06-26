@@ -47,8 +47,8 @@ impl VirtualMachine {
         let mut prev_program_counter = 0; // TODO(anissen): Should probably be a stack of call frames!
 
         while self.program_counter < self.program.len() {
-            let instruction = ByteCode::try_from(self.program[self.program_counter]).unwrap();
-            self.program_counter += 1;
+            let next = self.read_byte();
+            let instruction = ByteCode::try_from(next).unwrap();
             println!("=== frame === (pc: {})", self.program_counter);
             println!("Instruction: {:?}", instruction);
             match instruction {
@@ -69,8 +69,8 @@ impl VirtualMachine {
                 }
 
                 ByteCode::Addition => {
-                    let right = self.stack.pop().unwrap();
-                    let left = self.stack.pop().unwrap();
+                    let right = self.pop_any();
+                    let left = self.pop_any();
                     match (right, left) {
                         (Value::Float(right), Value::Float(left)) => self.push_float(left + right),
 
@@ -83,8 +83,8 @@ impl VirtualMachine {
                 }
 
                 ByteCode::Subtraction => {
-                    let right = self.stack.pop().unwrap();
-                    let left = self.stack.pop().unwrap();
+                    let right = self.pop_any();
+                    let left = self.pop_any();
                     match (right, left) {
                         (Value::Float(right), Value::Float(left)) => self.push_float(left - right),
 
@@ -97,8 +97,8 @@ impl VirtualMachine {
                 }
 
                 ByteCode::Multiplication => {
-                    let right = self.stack.pop().unwrap();
-                    let left = self.stack.pop().unwrap();
+                    let right = self.pop_any();
+                    let left = self.pop_any();
                     match (right, left) {
                         (Value::Float(right), Value::Float(left)) => self.push_float(left * right),
 
@@ -111,8 +111,8 @@ impl VirtualMachine {
                 }
 
                 ByteCode::Division => {
-                    let right = self.stack.pop().unwrap();
-                    let left = self.stack.pop().unwrap();
+                    let right = self.pop_any();
+                    let left = self.pop_any();
 
                     // TODO(anissen): Division by zero => 0
                     match (right, left) {
@@ -145,9 +145,8 @@ impl VirtualMachine {
 
                 ByteCode::SetValue => {
                     let index = self.read_byte();
-                    let value = self.stack.pop().unwrap();
+                    let value = *self.peek().unwrap();
                     values.insert(index, value);
-                    self.stack.push(value); // TODO(anissen): This could be done with a peek instead of a pop + push
                 }
 
                 // https://godbolt.org/#g:!((g:!((g:!((h:codeEditor,i:(filename:'1',fontScale:14,fontUsePx:'0',j:1,lang:scala,selection:(endColumn:1,endLineNumber:16,positionColumn:1,positionLineNumber:16,selectionStartColumn:1,selectionStartLineNumber:16,startColumn:1,startLineNumber:16),source:'@main%0Adef+main()+%3D+%7B%0A++println(%22hello%22)%0A%0A++val+y+%3D+3%0A++def+twice(v:+Float)+%3D+%7B%0A++++v+*+2+%2B+y%0A++%7D%0A%0A++println(%22world%22)%0A%0A++val+x+%3D+twice(5)%0A%0A++println(x)%0A%7D%0A'),l:'5',n:'1',o:'Scala+source+%231',t:'0')),k:50,l:'4',n:'0',o:'',s:0,t:'0'),(g:!((h:compiler,i:(compiler:scalac300,filters:(b:'0',binary:'1',binaryObject:'1',commentOnly:'0',debugCalls:'1',demangle:'0',directives:'0',execute:'1',intel:'0',libraryCode:'0',trim:'1',verboseDemangling:'0'),flagsViewOpen:'1',fontScale:14,fontUsePx:'0',j:1,lang:scala,libs:!(),options:'',overrides:!(),selection:(endColumn:14,endLineNumber:65,positionColumn:14,positionLineNumber:65,selectionStartColumn:14,selectionStartLineNumber:65,startColumn:14,startLineNumber:65),source:1),l:'5',n:'0',o:'+scalac+3.0.0+(Editor+%231)',t:'0')),k:50,l:'4',n:'0',o:'',s:0,t:'0')),l:'2',n:'0',o:'',t:'0')),version:4
@@ -222,6 +221,14 @@ impl VirtualMachine {
             Value::Boolean(b) => b,
             _ => panic!("expected boolean, encountered some other type"),
         }
+    }
+
+    fn peek(&mut self) -> Option<&Value> {
+        self.stack.get(self.stack.len() - 1)
+    }
+
+    fn pop_any(&mut self) -> Value {
+        self.stack.pop().unwrap()
     }
 
     fn push_boolean(&mut self, value: bool) {
