@@ -55,7 +55,7 @@ impl VirtualMachine {
                 ByteCode::PushBoolean => {
                     let value_bytes = self.program[self.program_counter];
                     self.program_counter += 1;
-                    let value = if value_bytes == 0 { false } else { true };
+                    let value = value_bytes != 0;
                     self.stack.push(Value::Boolean(value));
                 }
 

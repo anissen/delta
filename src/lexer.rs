@@ -1,5 +1,4 @@
 use crate::tokens::{Span, Token, TokenKind};
-use vec;
 
 struct Lexer {
     source: Vec<char>, // TODO(anissen): Should this be a `str`?
@@ -19,7 +18,7 @@ type Errors = Vec<Error>;
 
 // TODO(anissen): Ideally, I would like to return `Result<Vec<Token>, Errors>`
 // and have the caller handle it gracefully, but I can't figure out how.
-pub fn lex<'a>(source: &'a str) -> Result<Vec<Token>, String> {
+pub fn lex(source: &str) -> Result<Vec<Token>, String> {
     match Lexer::new().scan_tokens(source) {
         Ok(tokens) => Ok(tokens),
 
@@ -121,7 +120,7 @@ impl<'a> Lexer {
         }
 
         let lexeme = self.source[self.start..self.current]
-            .into_iter()
+            .iter()
             .collect::<String>();
         match lexeme.as_str() {
             "true" => TokenKind::True,
@@ -175,7 +174,7 @@ impl<'a> Lexer {
     }
 
     fn is_digit(&self, value: char) -> bool {
-        value.is_digit(10)
+        value.is_ascii_digit()
     }
 
     fn is_at_end(&self) -> bool {
