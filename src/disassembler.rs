@@ -123,10 +123,7 @@ impl Disassembler {
                 ByteCode::Call => {
                     let index = self.program[self.program_counter];
                     self.program_counter += 1;
-                    res.push(vec![
-                        "call".to_string(),
-                        format!("(function index: {})", index),
-                    ]);
+                    res.push(vec!["call".to_string(), format!("(index: {})", index)]);
                 }
             }
         }
