@@ -51,23 +51,35 @@ impl VirtualMachine {
     pub fn execute(&mut self) -> Option<Value> {
         let mut values = HashMap::new();
 
-        let cp = self.program.clone(); // TODO(anissen): Hack!
-        for (index, instruction) in cp.iter().enumerate() {
-            if let Ok(ByteCode::FunctionStart) = ByteCode::try_from(*instruction) {
-                // let function_index = self.read_byte();
+        // let cp = self.program.clone(); // TODO(anissen): Hack!
+        while self.program_counter < self.program.len() {
+            let next = self.read_byte();
+            let instruction = ByteCode::try_from(next);
+            // for (index, instruction) in self.program.iter().enumerate() {
+            if let Ok(ByteCode::FunctionStart) = instruction {
+                let _function_index = self.read_byte();
                 let arity = self.read_byte();
                 self.functions.push(FunctionObj {
                     name: "placeholder".to_string(),
                     arity,
-                    ip: index + 1,
+                    ip: self.program_counter,
                     code: vec![], // TODO(anissen): Get the code!
                 });
             }
         }
+        println!("self.functions: {:?}", self.functions);
 
         // TODO: Construct an initial call frame for the top-level code
+        // self.call(
+        //     FunctionObj {
+        //         name: "main".to_string(),
+        //         arity: 0,
+        //         code: vec![], // TODO(anissen)
+        //         ip: 0,
+        //     },
+        //     0,
+        // );
 
-        let mut prev_program_counter = 0; // TODO(anissen): Should probably be a stack of call frames!
         self.program_counter = 0;
 
         while self.program_counter < self.program.len() {
@@ -165,13 +177,18 @@ impl VirtualMachine {
                     let index = self.read_byte();
                     println!("values: {:?}", values);
                     println!("index is: {}", index);
-                    let value = values.get(&index).unwrap();
+                    // let value = self.peek(index).unwrap(); // values.get(&index).unwrap();
+                    // self.stack.push(value);
+                    let value = self
+                        .stack
+                        .get(self.stack.len() - 1 - index as usize)
+                        .unwrap();
                     self.stack.push(*value);
                 }
 
                 ByteCode::SetValue => {
                     let index = self.read_byte();
-                    let value = *self.peek(1).unwrap();
+                    let value = *self.peek(0).unwrap();
                     println!("value: insert {:?} at index {}", value, index);
                     values.insert(index, value);
                 }
@@ -182,7 +199,7 @@ impl VirtualMachine {
                     println!("function_index: {}", function_index);
 
                     let param_count = self.read_byte();
-                    for param in 0..param_count {
+                    for _param in 0..param_count {
                         // ???
                     }
 
@@ -200,11 +217,16 @@ impl VirtualMachine {
 
                 ByteCode::FunctionEnd => {
                     // reset program counter
-                    self.program_counter = prev_program_counter + 1;
+                    self.discard(self.call_frames[self.call_frames.len() - 1].slots);
+                    self.call_frames.pop();
+                    let frame = &self.call_frames[self.call_frames.len() - 1];
+                    self.program_counter = frame.ip;
                 }
 
                 ByteCode::Call => {
                     let arg_count = self.read_byte();
+                    println!("arg_count: {}", arg_count);
+                    println!("function_index: {:?}", self.peek(arg_count).unwrap());
                     let function_index = match self.peek(arg_count).unwrap() {
                         Value::Function(f) => *f,
                         _ => panic!("expected function, encountered some other type"),
@@ -226,6 +248,7 @@ impl VirtualMachine {
             ip,
             slots: (self.stack.len() - (arg_count as usize) - 1) as u8,
         });
+        self.program_counter = ip;
     }
 
     fn read_byte(&mut self) -> u8 {
@@ -265,7 +288,7 @@ impl VirtualMachine {
     }
 
     fn peek(&mut self, distance: u8) -> Option<&Value> {
-        self.stack.get(self.stack.len() - distance as usize)
+        self.stack.get(self.stack.len() - 1 - distance as usize)
     }
 
     fn discard(&mut self, count: u8) {
