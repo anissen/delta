@@ -19,6 +19,7 @@ struct FunctionObj {
     ip: usize, // TODO(anissen): Is ip required?
 }
 
+#[derive(Debug)]
 struct CallFrame {
     ip: usize,
     slots: u8,
@@ -70,15 +71,15 @@ impl VirtualMachine {
         println!("self.functions: {:?}", self.functions);
 
         // TODO: Construct an initial call frame for the top-level code
-        // self.call(
-        //     FunctionObj {
-        //         name: "main".to_string(),
-        //         arity: 0,
-        //         code: vec![], // TODO(anissen)
-        //         ip: 0,
-        //     },
-        //     0,
-        // );
+        self.call(
+            FunctionObj {
+                name: "main".to_string(),
+                arity: 0,
+                code: vec![],           // TODO(anissen): Get the code
+                ip: self.program.len(), // TODO(anissen): Hack to avoid infinite loops
+            },
+            0,
+        );
 
         self.program_counter = 0;
 
@@ -198,10 +199,10 @@ impl VirtualMachine {
                     let function_index = self.read_byte();
                     println!("function_index: {}", function_index);
 
-                    let param_count = self.read_byte();
-                    for _param in 0..param_count {
-                        // ???
-                    }
+                    // let param_count = self.read_byte();
+                    // for _param in 0..param_count {
+                    //     // ???
+                    // }
 
                     // jump to function end HACK!
                     while self.program_counter < self.program.len() {
@@ -211,13 +212,19 @@ impl VirtualMachine {
                         }
                     }
 
-                    self.discard(param_count);
+                    // self.discard(param_count);
                     self.stack.push(Value::Function(function_index));
                 }
 
                 ByteCode::FunctionEnd => {
                     // reset program counter
-                    self.discard(self.call_frames[self.call_frames.len() - 1].slots);
+                    println!(
+                        "slots: {}",
+                        self.call_frames[self.call_frames.len() - 1].slots
+                    );
+                    // let slots = self.call_frames[self.call_frames.len() - 1].slots;
+                    // let discard_count = slots;
+                    // self.discard(discard_count); // TODO: Instead we need a per-call-frame stack
                     self.call_frames.pop();
                     let frame = &self.call_frames[self.call_frames.len() - 1];
                     self.program_counter = frame.ip;
@@ -246,8 +253,9 @@ impl VirtualMachine {
         self.call_frames.push(CallFrame {
             function,
             ip,
-            slots: (self.stack.len() - (arg_count as usize) - 1) as u8,
+            slots: arg_count, //(self.stack.len() - 1 - (arg_count as usize)) as u8,
         });
+        println!("call: {:?}", self.call_frames[self.call_frames.len() - 1]);
         self.program_counter = ip;
     }
 

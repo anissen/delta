@@ -1,4 +1,4 @@
 
 
-sayHello = \dummy | dummy +  2
-sayHello 3
+sayHello = \dummy | dummy * dummy
+sayHello 5
