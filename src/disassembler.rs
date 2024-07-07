@@ -88,14 +88,14 @@ impl Disassembler {
                     res.push(vec!["not".to_string()]);
                 }
 
-                ByteCode::GetValue => {
+                ByteCode::GetLocalValue => {
                     let index = self.program[self.program_counter]; // TODO(anissen): Make helper function to read bytes and increment program counter
                     self.program_counter += 1;
                     // let value = values.get(&index).unwrap();
                     res.push(vec!["get_value".to_string(), format!("(index: {})", index)]);
                 }
 
-                ByteCode::SetValue => {
+                ByteCode::SetLocalValue => {
                     let index = self.program[self.program_counter];
                     self.program_counter += 1;
                     // values.insert(index, value);

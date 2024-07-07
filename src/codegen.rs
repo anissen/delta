@@ -38,7 +38,7 @@ impl Codegen {
 
                 Expr::Variable(name) => {
                     println!("{}", name);
-                    self.emit_bytecode(ByteCode::GetValue);
+                    self.emit_bytecode(ByteCode::GetLocalValue);
                     self.emit_byte(localVariableIndex);
                     localVariableIndex += 1;
                 }
@@ -69,7 +69,7 @@ impl Codegen {
 
                 Expr::Assignment { variable, expr } => {
                     self.do_emit(vec![*expr]);
-                    self.emit_bytecode(ByteCode::SetValue);
+                    self.emit_bytecode(ByteCode::SetLocalValue);
 
                     self.emit_byte(localVariableIndex);
                     localVariableIndex += 1;
