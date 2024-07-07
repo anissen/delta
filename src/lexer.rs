@@ -115,7 +115,7 @@ impl<'a> Lexer {
     }
 
     fn identifier(&mut self) -> TokenKind {
-        while self.is_letter(self.peek()) {
+        while self.is_letter(self.peek()) | self.is_digit(self.peek()) {
             self.advance();
         }
 

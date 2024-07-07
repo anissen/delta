@@ -75,13 +75,15 @@ impl Codegen {
                 }
 
                 Expr::Call { name, args } => {
+                    let arg_count = args.len();
                     self.do_emit(args);
                     if !self.value_index.contains_key(&name) {
                         // Should probably be handled in a its own static analysis phase
                         panic!("unknown function");
                     }
                     self.emit_bytecode(ByteCode::Call);
-                    self.emit_byte(*self.value_index.get(&name).unwrap());
+                    self.emit_byte(arg_count as u8);
+                    // self.emit_byte(*self.value_index.get(&name).unwrap());
                 }
 
                 Expr::Assignment { variable, expr } => {
