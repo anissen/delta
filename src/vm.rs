@@ -52,11 +52,9 @@ impl VirtualMachine {
     pub fn execute(&mut self) -> Option<Value> {
         let mut values = HashMap::new();
 
-        // let cp = self.program.clone(); // TODO(anissen): Hack!
         while self.program_counter < self.program.len() {
             let next = self.read_byte();
             let instruction = ByteCode::try_from(next);
-            // for (index, instruction) in self.program.iter().enumerate() {
             if let Ok(ByteCode::FunctionStart) = instruction {
                 let _function_index = self.read_byte();
                 let arity = self.read_byte();
@@ -70,7 +68,7 @@ impl VirtualMachine {
         }
         println!("self.functions: {:?}", self.functions);
 
-        // TODO: Construct an initial call frame for the top-level code
+        // Construct an initial call frame for the top-level code.
         self.call(
             FunctionObj {
                 name: "main".to_string(),
@@ -180,10 +178,8 @@ impl VirtualMachine {
                     println!("index is: {}", index);
                     // let value = self.peek(index).unwrap(); // values.get(&index).unwrap();
                     // self.stack.push(value);
-                    let value = self
-                        .stack
-                        .get(self.stack.len() - 1 - index as usize)
-                        .unwrap();
+                    let slots = self.current_call_frame().slots;
+                    let value = self.stack.get((slots + index) as usize).unwrap();
                     self.stack.push(*value);
                 }
 
@@ -218,16 +214,9 @@ impl VirtualMachine {
 
                 ByteCode::FunctionEnd => {
                     // reset program counter
-                    println!(
-                        "slots: {}",
-                        self.call_frames[self.call_frames.len() - 1].slots
-                    );
-                    // let slots = self.call_frames[self.call_frames.len() - 1].slots;
-                    // let discard_count = slots;
-                    // self.discard(discard_count); // TODO: Instead we need a per-call-frame stack
+                    println!("slots: {}", self.current_call_frame().slots);
                     self.call_frames.pop();
-                    let frame = &self.call_frames[self.call_frames.len() - 1];
-                    self.program_counter = frame.ip;
+                    self.program_counter = self.current_call_frame().ip;
                 }
 
                 ByteCode::Call => {
@@ -253,10 +242,14 @@ impl VirtualMachine {
         self.call_frames.push(CallFrame {
             function,
             ip,
-            slots: arg_count, //(self.stack.len() - 1 - (arg_count as usize)) as u8,
+            slots: (self.stack.len() - (arg_count as usize)) as u8,
         });
-        println!("call: {:?}", self.call_frames[self.call_frames.len() - 1]);
+        println!("call: {:?}", self.current_call_frame());
         self.program_counter = ip;
+    }
+
+    fn current_call_frame(&self) -> &CallFrame {
+        &self.call_frames[self.call_frames.len() - 1]
     }
 
     fn read_byte(&mut self) -> u8 {
@@ -295,7 +288,7 @@ impl VirtualMachine {
         }
     }
 
-    fn peek(&mut self, distance: u8) -> Option<&Value> {
+    fn peek(&self, distance: u8) -> Option<&Value> {
         self.stack.get(self.stack.len() - 1 - distance as usize)
     }
 
