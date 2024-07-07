@@ -179,6 +179,7 @@ impl VirtualMachine {
                     // let value = self.peek(index).unwrap(); // values.get(&index).unwrap();
                     // self.stack.push(value);
                     let slots = self.current_call_frame().slots;
+                    println!("slots is: {}", slots);
                     let value = self.stack.get((slots + index) as usize).unwrap();
                     self.stack.push(*value);
                 }

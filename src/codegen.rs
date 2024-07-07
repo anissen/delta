@@ -5,7 +5,6 @@ use crate::expressions::{BinaryOperator, Expr, UnaryOperator};
 
 pub struct Codegen {
     bytes: Vec<u8>,
-    value_index: HashMap<String, u8>,
     function_count: u8,
 }
 
@@ -17,7 +16,6 @@ impl Codegen {
     fn new() -> Self {
         Self {
             bytes: vec![],
-            value_index: HashMap::new(),
             function_count: 0,
         }
     }
@@ -25,6 +23,7 @@ impl Codegen {
     // TODO(anissen): We need a mapping from variable to an index
 
     fn do_emit(&mut self, expressions: Vec<Expr>) {
+        let mut localVariableIndex: u8 = 0;
         // TODO(anissen): Make this a proper return type.
         for expr in expressions {
             match expr {
@@ -40,28 +39,14 @@ impl Codegen {
                 Expr::Variable(name) => {
                     println!("{}", name);
                     self.emit_bytecode(ByteCode::GetValue);
-                    let index = self.value_index.get(&name).unwrap();
-                    self.emit_byte(*index);
+                    self.emit_byte(localVariableIndex);
+                    localVariableIndex += 1;
                 }
 
                 Expr::Grouping(expr) => self.do_emit(vec![*expr]),
 
                 Expr::Function { params, expr } => {
-                    // println!("Expr::Function! Params: {:?}", params);
-                    // self.emit_function()
-
                     self.emit_bytecode(ByteCode::FunctionStart);
-                    for param in params.clone() {
-                        if self.value_index.contains_key(&param.lexeme) {
-                            // TODO(anissen): This is a hack (and wrong -- it does not consider disjoint scopes)
-                            // Should probably be handled in a its own static analysis phase
-                            panic!("possible shadowing of value");
-                        }
-
-                        let index = self.value_index.len() as u8; // TODO(anissen): This cast is bad, m'kay!?
-                        self.value_index.insert(param.lexeme, index);
-                        // self.emit_byte(index);
-                    }
 
                     // bytecodes: function start, function index, param count, function body, function end
 
@@ -77,10 +62,6 @@ impl Codegen {
                 Expr::Call { name, args } => {
                     let arg_count = args.len();
                     self.do_emit(args);
-                    if !self.value_index.contains_key(&name) {
-                        // Should probably be handled in a its own static analysis phase
-                        panic!("unknown function");
-                    }
                     self.emit_bytecode(ByteCode::Call);
                     self.emit_byte(arg_count as u8);
                     // self.emit_byte(*self.value_index.get(&name).unwrap());
@@ -89,15 +70,9 @@ impl Codegen {
                 Expr::Assignment { variable, expr } => {
                     self.do_emit(vec![*expr]);
                     self.emit_bytecode(ByteCode::SetValue);
-                    if self.value_index.contains_key(&variable) {
-                        // TODO(anissen): This is a hack (and wrong -- it does not consider disjoint scopes)
-                        // Should probably be handled in a its own static analysis phase
-                        panic!("possible reassignment of immutable value");
-                    }
 
-                    let index = self.value_index.len() as u8; // TODO(anissen): This cast is bad, m'kay!?
-                    self.value_index.insert(variable, index);
-                    self.emit_byte(index);
+                    self.emit_byte(localVariableIndex);
+                    localVariableIndex += 1;
                 }
 
                 Expr::Unary {

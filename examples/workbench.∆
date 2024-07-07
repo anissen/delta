@@ -1,8 +1,8 @@
 
 #addOne = \v | v + 1
-#square = \value | value * value
+square = \value | value * value
 add = \v1 v2 | v1 + v2
 
-#square 5
+square 5
 #addOne 42
-add 4 7
+#add 4 7
