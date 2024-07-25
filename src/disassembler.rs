@@ -121,9 +121,14 @@ impl Disassembler {
                 }
 
                 ByteCode::Call => {
+                    let arg_count = self.program[self.program_counter];
+                    self.program_counter += 1;
                     let index = self.program[self.program_counter];
                     self.program_counter += 1;
-                    res.push(vec!["call".to_string(), format!("(index: {})", index)]);
+                    res.push(vec![
+                        "call".to_string(),
+                        format!("(arg count: {}, index: {})", arg_count, index),
+                    ]);
                 }
             }
         }

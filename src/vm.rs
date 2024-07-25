@@ -212,9 +212,15 @@ impl VirtualMachine {
 
                 ByteCode::Call => {
                     let arg_count = self.read_byte();
+                    let index = self.read_byte(); // TODO(anissen): This seems off
                     println!("arg_count: {}", arg_count);
-                    println!("function_index: {:?}", self.peek(arg_count).unwrap());
-                    let function_index = match self.peek(arg_count).unwrap() {
+                    let slots = self.current_call_frame().slots;
+                    // println!("function_index: {:?}", self.peek(arg_count).unwrap());
+                    let value = self
+                        .stack
+                        .get((slots - arg_count + index) as usize)
+                        .unwrap();
+                    let function_index = match value {
                         Value::Function(f) => *f,
                         _ => panic!("expected function, encountered some other type"),
                     };
