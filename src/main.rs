@@ -1,4 +1,4 @@
-use std::{fs::File, io::Read};
+use std::{fs::File, io::Read, path::Path};
 
 mod bytecodes;
 mod codegen;
@@ -12,7 +12,9 @@ mod vm;
 // https://github.com/brightly-salty/rox/
 
 fn main() {
-    let source_path = "examples/workbench.∆".to_string();
+    let path = Path::new("..").join("examples").join("workbench.∆");
+    let source_path = path.to_str().unwrap().to_string();
+
     let result = run(source_path);
     match result {
         Ok(Some(value)) => println!("Result: {:?}", value),

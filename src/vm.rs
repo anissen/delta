@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use crate::bytecodes::ByteCode;
 
 // TODO(anissen): See https://github.com/brightly-salty/rox/blob/master/src/value.rs
@@ -182,9 +180,14 @@ impl VirtualMachine {
                 ByteCode::SetLocalValue => {
                     let index = self.read_byte();
                     let slots = self.current_call_frame().slots;
-                    let value = *self.peek(0).unwrap();
+                    let value = self.pop_any();
                     println!("set local: insert {:?} at index {}", value, index);
-                    self.stack[(slots + index) as usize] = value;
+                    let actual_index = (slots + index) as usize;
+                    if self.stack.len() > actual_index {
+                        self.stack[actual_index] = value;
+                    } else {
+                        panic!(); // TODO(anissen): ???
+                    }
                 }
 
                 // https://godbolt.org/#g:!((g:!((g:!((h:codeEditor,i:(filename:'1',fontScale:14,fontUsePx:'0',j:1,lang:scala,selection:(endColumn:1,endLineNumber:16,positionColumn:1,positionLineNumber:16,selectionStartColumn:1,selectionStartLineNumber:16,startColumn:1,startLineNumber:16),source:'@main%0Adef+main()+%3D+%7B%0A++println(%22hello%22)%0A%0A++val+y+%3D+3%0A++def+twice(v:+Float)+%3D+%7B%0A++++v+*+2+%2B+y%0A++%7D%0A%0A++println(%22world%22)%0A%0A++val+x+%3D+twice(5)%0A%0A++println(x)%0A%7D%0A'),l:'5',n:'1',o:'Scala+source+%231',t:'0')),k:50,l:'4',n:'0',o:'',s:0,t:'0'),(g:!((h:compiler,i:(compiler:scalac300,filters:(b:'0',binary:'1',binaryObject:'1',commentOnly:'0',debugCalls:'1',demangle:'0',directives:'0',execute:'1',intel:'0',libraryCode:'0',trim:'1',verboseDemangling:'0'),flagsViewOpen:'1',fontScale:14,fontUsePx:'0',j:1,lang:scala,libs:!(),options:'',overrides:!(),selection:(endColumn:14,endLineNumber:65,positionColumn:14,positionLineNumber:65,selectionStartColumn:14,selectionStartLineNumber:65,startColumn:14,startLineNumber:65),source:1),l:'5',n:'0',o:'+scalac+3.0.0+(Editor+%231)',t:'0')),k:50,l:'4',n:'0',o:'',s:0,t:'0')),l:'2',n:'0',o:'',t:'0')),version:4
@@ -199,23 +202,26 @@ impl VirtualMachine {
                             break;
                         }
                     }
+                    self.program_counter -= 1;
 
                     self.stack.push(Value::Function(function_index));
                 }
 
                 ByteCode::FunctionEnd => {
+                    // self.pop_any(); // TODO(anissen): Is this right?
+
                     // reset program counter
-                    println!("slots: {}", self.current_call_frame().slots);
-                    self.call_frames.pop();
-                    self.program_counter = self.current_call_frame().ip;
+                    // println!("slots: {}", self.current_call_frame().slots);
+                    // self.call_frames.pop();
+                    // self.program_counter = self.current_call_frame().ip;
                 }
 
                 ByteCode::Call => {
                     let arg_count = self.read_byte();
                     let index = self.read_byte(); // TODO(anissen): This seems off
                     println!("arg_count: {}", arg_count);
-                    let slots = self.current_call_frame().slots;
-                    // println!("function_index: {:?}", self.peek(arg_count).unwrap());
+                    let slots = self.current_call_frame().slots; // TODO(anissen): This becomes zero and we try to get a negative index below :(
+                    println!("function_index: {:?}", self.peek(arg_count).unwrap());
                     let value = self
                         .stack
                         .get((slots - arg_count + index) as usize)

@@ -87,10 +87,9 @@ impl Codegen {
                     self.do_emit(vec![*expr], environment);
                     self.emit_bytecode(ByteCode::SetLocalValue);
 
-                    // self.emit_byte(localVariableIndex);
-                    // localVariableIndex += 1;
                     let index = environment.len() as u8;
                     environment.insert(variable, index);
+                    self.emit_byte(index);
                 }
 
                 Expr::Unary {
