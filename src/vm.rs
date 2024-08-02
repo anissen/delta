@@ -20,7 +20,7 @@ struct FunctionObj {
 #[derive(Debug)]
 struct CallFrame {
     ip: usize,
-    slots: u8,
+    stack_index: u8,
     function: FunctionObj,
 }
 
@@ -171,20 +171,20 @@ impl VirtualMachine {
                 ByteCode::GetLocalValue => {
                     let index = self.read_byte();
                     println!("index is: {}", index);
-                    let slots = self.current_call_frame().slots;
-                    println!("slots is: {}", slots);
-                    let value = self.stack.get((slots + index) as usize).unwrap();
+                    let stack_index = self.current_call_frame().stack_index;
+                    println!("slots is: {}", stack_index);
+                    let value = self.stack.get((stack_index + index) as usize).unwrap();
                     self.stack.push(*value);
                 }
 
                 ByteCode::SetLocalValue => {
                     let index = self.read_byte();
-                    let slots = self.current_call_frame().slots;
-                    let value = self.pop_any();
+                    let stack_index = self.current_call_frame().stack_index;
+                    let value = self.peek(0);
                     println!("set local: insert {:?} at index {}", value, index);
-                    let actual_index = (slots + index) as usize;
+                    let actual_index = (stack_index + index) as usize;
                     if self.stack.len() > actual_index {
-                        self.stack[actual_index] = value;
+                        self.stack[actual_index] = *value;
                     } else {
                         panic!(); // TODO(anissen): ???
                     }
@@ -218,13 +218,15 @@ impl VirtualMachine {
 
                 ByteCode::Call => {
                     let arg_count = self.read_byte();
-                    let index = self.read_byte(); // TODO(anissen): This seems off
                     println!("arg_count: {}", arg_count);
-                    let slots = self.current_call_frame().slots; // TODO(anissen): This becomes zero and we try to get a negative index below :(
-                    println!("function_index: {:?}", self.peek(arg_count).unwrap());
+                    let index = self.read_byte(); // TODO(anissen): This seems off
+                    println!("index: {}", index);
+                    let stack_index = self.current_call_frame().stack_index; // TODO(anissen): This becomes zero and we try to get a negative index below :(
+                    println!("stack_index: {}", stack_index);
+                    println!("function_index: {:?}", self.peek(arg_count));
                     let value = self
                         .stack
-                        .get((slots - arg_count + index) as usize)
+                        .get((stack_index + arg_count + index) as usize)
                         .unwrap();
                     let function_index = match value {
                         Value::Function(f) => *f,
@@ -240,11 +242,12 @@ impl VirtualMachine {
     }
 
     fn call(&mut self, function: FunctionObj, arg_count: u8) {
+        println!("call with arg_count: {}", arg_count);
         let ip = function.ip;
         self.call_frames.push(CallFrame {
             function,
             ip,
-            slots: (self.stack.len() - (arg_count as usize)) as u8,
+            stack_index: (self.stack.len() - (arg_count as usize)) as u8,
         });
         println!("call: {:?}", self.current_call_frame());
         self.program_counter = ip;
@@ -254,6 +257,7 @@ impl VirtualMachine {
         &self.call_frames[self.call_frames.len() - 1]
     }
 
+    // TODO(anissen): All the function below should be part of the CallFrame impl instead (see https://craftinginterpreters.com/calls-and-functions.html @ "We’ll start at the top and plow through it.")
     fn read_byte(&mut self) -> u8 {
         let byte = self.program[self.program_counter];
         self.program_counter += 1;
@@ -290,8 +294,10 @@ impl VirtualMachine {
         }
     }
 
-    fn peek(&self, distance: u8) -> Option<&Value> {
-        self.stack.get(self.stack.len() - 1 - distance as usize)
+    fn peek(&self, distance: u8) -> &Value {
+        self.stack
+            .get(self.stack.len() - 1 - distance as usize)
+            .unwrap()
     }
 
     fn discard(&mut self, count: u8) {

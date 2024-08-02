@@ -1,4 +1,4 @@
-use std::{fs::File, io::Read, path::Path};
+use std::{fs::File, io::Read, path::Path, process::exit};
 
 mod bytecodes;
 mod codegen;
@@ -12,8 +12,17 @@ mod vm;
 // https://github.com/brightly-salty/rox/
 
 fn main() {
-    let path = Path::new("..").join("examples").join("workbench.∆");
-    let source_path = path.to_str().unwrap().to_string();
+    let args: Vec<String> = std::env::args().collect();
+
+    if args.len() < 2 {
+        println!("No source file argument provided.");
+        exit(1);
+    }
+
+    let source_path = &args[1];
+
+    // let path = Path::new("..").join("examples").join("workbench.∆");
+    // let source_path = path.to_str().unwrap().to_string();
 
     let result = run(source_path);
     match result {
@@ -25,7 +34,7 @@ fn main() {
     }
 }
 
-fn run(source_path: String) -> Result<Option<vm::Value>, String> {
+fn run(source_path: &String) -> Result<Option<vm::Value>, String> {
     let mut file = File::open(source_path).expect("Unable to open file");
     let mut source = String::new();
     file.read_to_string(&mut source)
