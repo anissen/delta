@@ -71,6 +71,7 @@ impl Parser {
 
         // TODO(anissen): Fix precedence
         // let expr = self.or()?;
+        let token = self.previous();
         let expr = self.term()?;
         if self.matches(&[Equal]) {
             match expr {
@@ -78,6 +79,7 @@ impl Parser {
                     let value = self.assignment()?;
                     Ok(Expr::Assignment {
                         variable: name,
+                        token: token,
                         expr: Box::new(value),
                     })
                 }

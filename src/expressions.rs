@@ -17,7 +17,7 @@ pub enum Expr {
     },
     Assignment {
         variable: String, // TODO(anissen): Rename
-        // token: Token,
+        token: Token,
         expr: Box<Expr>,
     },
     Unary {

@@ -11,17 +11,17 @@ pub enum Value {
 
 #[derive(Debug, Clone)]
 struct FunctionObj {
-    name: String,
-    arity: u8,
-    code: Vec<u8>,
+    // name: String,
+    // arity: u8,
+    // code: Vec<u8>,
     ip: usize, // TODO(anissen): Is ip required?
 }
 
 #[derive(Debug)]
 struct CallFrame {
-    ip: usize,
+    // ip: usize,
     stack_index: u8,
-    function: FunctionObj,
+    // function: FunctionObj,
 }
 
 pub struct VirtualMachine {
@@ -53,12 +53,12 @@ impl VirtualMachine {
             let instruction = ByteCode::try_from(next);
             if let Ok(ByteCode::FunctionStart) = instruction {
                 let _function_index = self.read_byte();
-                let arity = self.read_byte();
+                let _arity = self.read_byte();
                 self.functions.push(FunctionObj {
-                    name: "placeholder".to_string(),
-                    arity,
+                    // name: "placeholder".to_string(),
+                    // arity,
                     ip: self.program_counter,
-                    code: vec![], // TODO(anissen): Get the code!
+                    // code: vec![], // TODO(anissen): Get the code!
                 });
             }
         }
@@ -67,9 +67,9 @@ impl VirtualMachine {
         // Construct an initial call frame for the top-level code.
         self.call(
             FunctionObj {
-                name: "main".to_string(),
-                arity: 0,
-                code: vec![],           // TODO(anissen): Get the code
+                // name: "main".to_string(),
+                // arity: 0,
+                // code: vec![],           // TODO(anissen): Get the code
                 ip: self.program.len(), // TODO(anissen): Hack to avoid infinite loops
             },
             0,
@@ -226,7 +226,7 @@ impl VirtualMachine {
                     println!("function_index: {:?}", self.peek(arg_count));
                     let value = self
                         .stack
-                        .get((stack_index + arg_count + index) as usize)
+                        .get((stack_index + arg_count + index) as usize) // TODO(anissen): Is this right?
                         .unwrap();
                     let function_index = match value {
                         Value::Function(f) => *f,
@@ -245,8 +245,8 @@ impl VirtualMachine {
         println!("call with arg_count: {}", arg_count);
         let ip = function.ip;
         self.call_frames.push(CallFrame {
-            function,
-            ip,
+            // function,
+            // ip,
             stack_index: (self.stack.len() - (arg_count as usize)) as u8,
         });
         println!("call: {:?}", self.current_call_frame());
@@ -300,11 +300,11 @@ impl VirtualMachine {
             .unwrap()
     }
 
-    fn discard(&mut self, count: u8) {
-        for _ in 0..count {
-            self.stack.pop();
-        }
-    }
+    // fn discard(&mut self, count: u8) {
+    //     for _ in 0..count {
+    //         self.stack.pop();
+    //     }
+    // }
 
     fn pop_any(&mut self) -> Value {
         self.stack.pop().unwrap()
@@ -325,10 +325,10 @@ impl VirtualMachine {
         self.stack.push(Value::Float(value));
     }
 
-    fn pop_function(&mut self) -> u8 {
-        match self.stack.pop().unwrap() {
-            Value::Function(f) => f,
-            _ => panic!("expected function, encountered some other type"),
-        }
-    }
+    // fn pop_function(&mut self) -> u8 {
+    //     match self.stack.pop().unwrap() {
+    //         Value::Function(f) => f,
+    //         _ => panic!("expected function, encountered some other type"),
+    //     }
+    // }
 }

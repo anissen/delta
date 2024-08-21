@@ -83,7 +83,11 @@ impl Codegen {
                     self.emit_byte(*index);
                 }
 
-                Expr::Assignment { variable, expr } => {
+                Expr::Assignment {
+                    variable,
+                    token: _,
+                    expr,
+                } => {
                     self.do_emit(vec![*expr], environment);
                     self.emit_bytecode(ByteCode::SetLocalValue);
 

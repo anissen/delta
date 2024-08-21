@@ -1,4 +1,4 @@
-use std::{fs::File, io::Read, path::Path, process::exit};
+use std::{fs::File, io::Read, process::exit};
 
 mod bytecodes;
 mod codegen;
