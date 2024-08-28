@@ -12,7 +12,7 @@ pub enum Value {
 #[derive(Debug, Clone)]
 struct FunctionObj {
     // name: String,
-    // arity: u8,
+    arity: u8,
     // code: Vec<u8>,
     ip: usize, // TODO(anissen): Is ip required?
 }
@@ -21,7 +21,7 @@ struct FunctionObj {
 struct CallFrame {
     // ip: usize,
     stack_index: u8,
-    // function: FunctionObj,
+    function: FunctionObj,
 }
 
 pub struct VirtualMachine {
@@ -29,7 +29,7 @@ pub struct VirtualMachine {
     program_counter: usize,
     functions: Vec<FunctionObj>,
     stack: Vec<Value>,
-    call_frames: Vec<CallFrame>,
+    call_stack: Vec<CallFrame>,
 }
 
 pub fn run(bytes: Vec<u8>) -> Option<Value> {
@@ -43,7 +43,7 @@ impl VirtualMachine {
             program_counter: 0,
             functions: Vec::new(),
             stack: Vec::new(),
-            call_frames: Vec::new(),
+            call_stack: Vec::new(),
         }
     }
 
@@ -53,10 +53,10 @@ impl VirtualMachine {
             let instruction = ByteCode::try_from(next);
             if let Ok(ByteCode::FunctionStart) = instruction {
                 let _function_index = self.read_byte();
-                let _arity = self.read_byte();
+                let arity = self.read_byte();
                 self.functions.push(FunctionObj {
                     // name: "placeholder".to_string(),
-                    // arity,
+                    arity,
                     ip: self.program_counter,
                     // code: vec![], // TODO(anissen): Get the code!
                 });
@@ -68,7 +68,7 @@ impl VirtualMachine {
         self.call(
             FunctionObj {
                 // name: "main".to_string(),
-                // arity: 0,
+                arity: 0,
                 // code: vec![],           // TODO(anissen): Get the code
                 ip: self.program.len(), // TODO(anissen): Hack to avoid infinite loops
             },
@@ -183,6 +183,7 @@ impl VirtualMachine {
                     let value = self.peek(0);
                     println!("set local: insert {:?} at index {}", value, index);
                     let actual_index = (stack_index + index) as usize;
+                    println!("actual_index: {}", actual_index);
                     if self.stack.len() > actual_index {
                         self.stack[actual_index] = *value;
                     } else {
@@ -202,7 +203,7 @@ impl VirtualMachine {
                             break;
                         }
                     }
-                    self.program_counter -= 1;
+                    // self.program_counter -= 1;
 
                     self.stack.push(Value::Function(function_index));
                 }
@@ -214,26 +215,39 @@ impl VirtualMachine {
                     // println!("slots: {}", self.current_call_frame().slots);
                     // self.call_frames.pop();
                     // self.program_counter = self.current_call_frame().ip;
+
+                    let result = self.stack.pop().unwrap();
+
+                    // Pop the arguments from the stack
+                    let arity = self.current_call_frame().function.arity;
+                    self.discard(arity);
+
+                    // Pop the function from the stack
+                    // self.stack.pop().unwrap();
+
+                    // Push the return value
+                    self.stack.push(result);
                 }
 
                 ByteCode::Call => {
-                    let arg_count = self.read_byte();
-                    println!("arg_count: {}", arg_count);
+                    let arity = self.read_byte();
+                    println!("arity: {}", arity);
                     let index = self.read_byte(); // TODO(anissen): This seems off
                     println!("index: {}", index);
                     let stack_index = self.current_call_frame().stack_index; // TODO(anissen): This becomes zero and we try to get a negative index below :(
                     println!("stack_index: {}", stack_index);
-                    println!("function_index: {:?}", self.peek(arg_count));
+                    println!("function_index: {:?}", self.peek(arity));
                     let value = self
                         .stack
-                        .get((stack_index + arg_count + index) as usize) // TODO(anissen): Is this right?
+                        .get((stack_index) as usize) // TODO(anissen): Is this right?
                         .unwrap();
+                    println!("value: {:?}", value);
                     let function_index = match value {
                         Value::Function(f) => *f,
                         _ => panic!("expected function, encountered some other type"),
                     };
                     let function = self.functions[function_index as usize].clone(); // TODO(anissen): Clone hack
-                    self.call(function, arg_count)
+                    self.call(function, arity)
                 }
             }
             println!("stack: {:?}", self.stack);
@@ -241,20 +255,20 @@ impl VirtualMachine {
         self.stack.pop()
     }
 
-    fn call(&mut self, function: FunctionObj, arg_count: u8) {
-        println!("call with arg_count: {}", arg_count);
+    fn call(&mut self, function: FunctionObj, arity: u8) {
+        println!("call with arity: {}", arity);
         let ip = function.ip;
-        self.call_frames.push(CallFrame {
-            // function,
+        self.call_stack.push(CallFrame {
+            function,
             // ip,
-            stack_index: (self.stack.len() - (arg_count as usize)) as u8,
+            stack_index: (self.stack.len() - (arity as usize)) as u8,
         });
         println!("call: {:?}", self.current_call_frame());
         self.program_counter = ip;
     }
 
     fn current_call_frame(&self) -> &CallFrame {
-        &self.call_frames[self.call_frames.len() - 1]
+        &self.call_stack[self.call_stack.len() - 1]
     }
 
     // TODO(anissen): All the function below should be part of the CallFrame impl instead (see https://craftinginterpreters.com/calls-and-functions.html @ "We’ll start at the top and plow through it.")
@@ -300,11 +314,11 @@ impl VirtualMachine {
             .unwrap()
     }
 
-    // fn discard(&mut self, count: u8) {
-    //     for _ in 0..count {
-    //         self.stack.pop();
-    //     }
-    // }
+    fn discard(&mut self, count: u8) {
+        for _ in 0..count {
+            self.stack.pop();
+        }
+    }
 
     fn pop_any(&mut self) -> Value {
         self.stack.pop().unwrap()
