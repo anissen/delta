@@ -127,7 +127,7 @@ impl Disassembler {
                     self.program_counter += 1;
                     res.push(vec![
                         "call".to_string(),
-                        format!("(arg count: {}, index: {})", arg_count, index),
+                        format!("(arg count: {}, function index: {})", arg_count, index),
                     ]);
                 }
             }
