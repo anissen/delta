@@ -242,13 +242,14 @@ impl VirtualMachine {
                     println!("stack_index: {}", stack_index);
                     let value = self
                         .stack
-                        .get((stack_index) as usize) // TODO(anissen): Is this right?
+                        .get((stack_index + index) as usize) // TODO(anissen): Is this right?
                         .unwrap();
                     println!("value: {:?}", value);
                     let function_index = match value {
                         Value::Function(f) => *f,
                         _ => panic!("expected function, encountered some other type"),
                     };
+                    println!("functions: {:?}", self.functions);
                     println!("function_index: {:?}", function_index);
                     let function = self.functions[function_index as usize].clone(); // TODO(anissen): Clone hack
                     self.call(function, arity)
