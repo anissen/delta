@@ -20,6 +20,7 @@ struct FunctionObj {
 #[derive(Debug)]
 struct CallFrame {
     // ip: usize,
+    return_program_counter: usize,
     stack_index: u8,
     function: FunctionObj,
 }
@@ -223,10 +224,13 @@ impl VirtualMachine {
                     self.discard(arity);
 
                     // Pop the function from the stack
-                    // self.stack.pop().unwrap();
+                    self.stack.pop().unwrap();
 
                     // Push the return value
                     self.stack.push(result);
+
+                    self.program_counter = self.current_call_frame().return_program_counter;
+                    self.call_stack.pop();
                 }
 
                 ByteCode::Call => {
@@ -236,7 +240,6 @@ impl VirtualMachine {
                     println!("index: {}", index);
                     let stack_index = self.current_call_frame().stack_index; // TODO(anissen): This becomes zero and we try to get a negative index below :(
                     println!("stack_index: {}", stack_index);
-                    println!("function_index: {:?}", self.peek(arity));
                     let value = self
                         .stack
                         .get((stack_index) as usize) // TODO(anissen): Is this right?
@@ -246,6 +249,7 @@ impl VirtualMachine {
                         Value::Function(f) => *f,
                         _ => panic!("expected function, encountered some other type"),
                     };
+                    println!("function_index: {:?}", function_index);
                     let function = self.functions[function_index as usize].clone(); // TODO(anissen): Clone hack
                     self.call(function, arity)
                 }
@@ -256,11 +260,12 @@ impl VirtualMachine {
     }
 
     fn call(&mut self, function: FunctionObj, arity: u8) {
+        println!("call function: {:?}", function);
         println!("call with arity: {}", arity);
         let ip = function.ip;
         self.call_stack.push(CallFrame {
             function,
-            // ip,
+            return_program_counter: self.program_counter,
             stack_index: (self.stack.len() - (arity as usize)) as u8,
         });
         println!("call: {:?}", self.current_call_frame());
