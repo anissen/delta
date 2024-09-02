@@ -224,7 +224,7 @@ impl VirtualMachine {
                     self.discard(arity);
 
                     // Pop the function from the stack
-                    self.stack.pop().unwrap();
+                    // self.stack.pop().unwrap();
 
                     // Push the return value
                     self.stack.push(result);

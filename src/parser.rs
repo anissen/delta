@@ -17,12 +17,14 @@ pub fn parse(tokens: Vec<Token>) -> Result<Vec<Expr>, String> {
     Parser::new(tokens).parse()
 }
 
+// TODO(anissen): Clean up `.unwrap` in this file
+
 impl Parser {
     fn new(tokens: Vec<Token>) -> Self {
         let non_whitespace_tokens: Vec<Token> = tokens
             .into_iter()
             .filter(|token| match token.kind {
-                Comment | NewLine | Space => false, // TODO(anissen): We probably need to keep newline for semantic later
+                Comment | Space => false, // TODO(anissen): We probably need to keep newline for semantic later
                 _ => true,
             })
             .collect();
@@ -42,7 +44,9 @@ impl Parser {
         let mut expressions = Vec::new();
         loop {
             let res = self.expression()?;
-            expressions.push(res);
+            if let Some(expression) = res {
+                expressions.push(expression);
+            }
             // if let Ok(expression) = res {
             //     expressions.push(expression);
             // } else {
@@ -58,11 +62,11 @@ impl Parser {
         Ok(expressions)
     }
 
-    fn expression(&mut self) -> Result<Expr, String> {
+    fn expression(&mut self) -> Result<Option<Expr>, String> {
         self.assignment()
     }
 
-    fn assignment(&mut self) -> Result<Expr, String> {
+    fn assignment(&mut self) -> Result<Option<Expr>, String> {
         // TODO(anissen): Is this the right precedence for handling functions?
         // if self.matches(&[BackSlash]) {
         //     let name = self.consume(kind)
@@ -72,16 +76,16 @@ impl Parser {
         // TODO(anissen): Fix precedence
         // let expr = self.or()?;
         let expr = self.term()?;
-        if self.matches(&[Equal]) {
-            match expr {
+        if expr.is_some() && self.matches(&[Equal]) {
+            match expr.unwrap() {
                 Expr::Variable(name) => {
                     let token = self.previous();
                     let value = self.assignment()?;
-                    Ok(Expr::Assignment {
+                    Ok(Some(Expr::Assignment {
                         variable: name,
                         token: token,
-                        expr: Box::new(value),
-                    })
+                        expr: Box::new(value.unwrap()),
+                    }))
                 }
 
                 _ => Err("Invalid assignment target".to_string()),
@@ -91,9 +95,9 @@ impl Parser {
         }
     }
 
-    fn term(&mut self) -> Result<Expr, String> {
+    fn term(&mut self) -> Result<Option<Expr>, String> {
         let mut expr = self.factor()?;
-        while self.matches(&[Plus, Minus]) {
+        while expr.is_some() && self.matches(&[Plus, Minus]) {
             let token = self.previous();
             let operator = match token.kind {
                 Plus => BinaryOperator::Addition,
@@ -101,19 +105,19 @@ impl Parser {
                 _ => panic!("unreachable"),
             };
             let right = self.factor()?;
-            expr = Expr::Binary {
-                left: Box::new(expr),
+            expr = Some(Expr::Binary {
+                left: Box::new(expr.unwrap()),
                 operator,
                 token,
-                right: Box::new(right),
-            };
+                right: Box::new(right.unwrap()),
+            });
         }
         Ok(expr)
     }
 
-    fn factor(&mut self) -> Result<Expr, String> {
+    fn factor(&mut self) -> Result<Option<Expr>, String> {
         let mut expr = self.unary()?;
-        while self.matches(&[Slash, Star]) {
+        while expr.is_some() && self.matches(&[Slash, Star]) {
             let token = self.previous();
             let operator = match token.kind {
                 Slash => BinaryOperator::Division,
@@ -121,17 +125,17 @@ impl Parser {
                 _ => panic!("unreachable"),
             };
             let right = self.unary()?;
-            expr = Expr::Binary {
-                left: Box::new(expr),
+            expr = Some(Expr::Binary {
+                left: Box::new(expr.unwrap()),
                 operator,
                 token,
-                right: Box::new(right),
-            };
+                right: Box::new(right.unwrap()),
+            });
         }
         Ok(expr)
     }
 
-    fn unary(&mut self) -> Result<Expr, String> {
+    fn unary(&mut self) -> Result<Option<Expr>, String> {
         if self.matches(&[Bang, Minus]) {
             let token = self.previous();
             let operator = match token.kind {
@@ -140,77 +144,22 @@ impl Parser {
                 _ => panic!("cannot happen"),
             };
             let right = self.unary()?;
-            Ok(Expr::Unary {
+            Ok(Some(Expr::Unary {
                 operator,
                 token,
-                expr: Box::new(right),
-            })
+                expr: Box::new(right.unwrap()),
+            }))
         } else {
             self.primary()
         }
     }
 
-    // fn whitespace(&mut self) -> Result<Option<Expr>, String> {
-    //     if self.matches(&[Comment]) {
-    //         Ok(Some(Expr::Comment(self.previous().lexeme)))
-    //     } else if self.matches(&[NewLine, Space]) {
-    //         Ok(None)
-    //     } else {
-    //         Err("Unhandled whitespace".to_string())
-    //     }
-    // }
-
-    fn primary(&mut self) -> Result<Expr, String> {
-        if self.matches(&[Identifier]) {
-            let lexeme = self.previous().lexeme;
-            if self.check(&Integer) {
-                // TODO: Incomplete, needs rework
-                let mut args = vec![];
-                while !self.is_at_end() {
-                    let arg = self.expression()?;
-                    args.push(arg);
-                }
-                Ok(Expr::Call { name: lexeme, args })
-            } else {
-                Ok(Expr::Variable(lexeme))
-            }
-        } else if self.matches(&[Integer]) {
-            let lexeme = self.previous().lexeme;
-            let value = lexeme.parse::<i32>();
-            match value {
-                Ok(value) => Ok(Expr::Integer(value)),
-                Err(err) => Err(err.to_string()),
-            }
-        } else if self.matches(&[Float]) {
-            let lexeme = self.previous().lexeme;
-            let value = lexeme.parse::<f32>();
-            match value {
-                Ok(value) => Ok(Expr::Float(value)),
-                Err(err) => Err(err.to_string()),
-            }
-        } else if self.matches(&[False]) {
-            return Ok(Expr::Boolean(false));
-        } else if self.matches(&[True]) {
-            return Ok(Expr::Boolean(true));
-        } else if self.matches(&[LeftParen]) {
-            let expr = self.expression()?;
-            self.consume(&RightParen)?;
-            return Ok(Expr::Grouping(Box::new(expr)));
-        } else if self.matches(&[BackSlash]) {
-            let mut params = vec![];
-            while self.check(&TokenKind::Identifier) {
-                self.advance();
-                let param = self.previous();
-                params.push(param);
-            }
-            self.consume(&TokenKind::Pipe)?;
-            // TODO(anissen): Support a variable list of parameters
-            // self.consume(&NewLine)?;
-            let expr = self.expression()?;
-            return Ok(Expr::Function {
-                params,
-                expr: Box::new(expr),
-            });
+    fn whitespace(&mut self) -> Result<Option<Expr>, String> {
+        // if self.matches(&[Comment]) {
+        //     Ok(Some(Expr::Comment(self.previous().lexeme)))
+        // } else if self.matches(&[NewLine, Space]) {
+        if self.matches(&[NewLine, Space]) {
+            Ok(None)
         } else {
             let error = format!(
                 "Parse error of kind {:?} at {:?} ({:?})",
@@ -219,6 +168,71 @@ impl Parser {
                 self.previous().position
             );
             Err(error)
+        }
+    }
+
+    fn primary(&mut self) -> Result<Option<Expr>, String> {
+        if self.matches(&[Identifier]) {
+            let lexeme = self.previous().lexeme;
+            if self.check(&Integer) {
+                // TODO: Incomplete, needs rework
+                let mut args = vec![];
+                while !self.is_at_end() && !self.check(&NewLine) {
+                    if let Some(arg) = self.expression()? {
+                        args.push(arg);
+                    }
+                }
+                // TODO(anissen): There's a bug here! I probably need meaningful whitespace to solve this.
+                /*
+                  square 5
+                  add 4 7
+                becomes
+                  square 5 (add 4 7)
+                */
+                Ok(Some(Expr::Call { name: lexeme, args }))
+            } else {
+                Ok(Some(Expr::Variable(lexeme)))
+            }
+        } else if self.matches(&[Integer]) {
+            let lexeme = self.previous().lexeme;
+            let value = lexeme.parse::<i32>();
+            match value {
+                Ok(value) => Ok(Some(Expr::Integer(value))),
+                Err(err) => Err(err.to_string()),
+            }
+        } else if self.matches(&[Float]) {
+            let lexeme = self.previous().lexeme;
+            let value = lexeme.parse::<f32>();
+            match value {
+                Ok(value) => Ok(Some(Expr::Float(value))),
+                Err(err) => Err(err.to_string()),
+            }
+        } else if self.matches(&[False]) {
+            Ok(Some(Expr::Boolean(false)))
+        } else if self.matches(&[True]) {
+            Ok(Some(Expr::Boolean(true)))
+        } else if self.matches(&[LeftParen]) {
+            let expr = self.expression()?;
+            self.consume(&RightParen)?;
+            Ok(Some(Expr::Grouping(Box::new(expr.unwrap()))))
+        } else if self.matches(&[BackSlash]) {
+            let mut params = vec![];
+            while self.check(&TokenKind::Identifier) {
+                // TODO(anissen): Could this check be a `match` instead?
+                self.advance();
+                let param = self.previous();
+                params.push(param);
+            }
+            self.consume(&TokenKind::Pipe)?;
+            // TODO(anissen): Support a variable list of parameters
+            // self.consume(&NewLine)?;
+            let expr = self.expression()?;
+            Ok(Some(Expr::Function {
+                params,
+                expr: Box::new(expr.unwrap()),
+            }))
+        } else {
+            self.whitespace()
         }
     }
 
