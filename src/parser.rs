@@ -24,7 +24,7 @@ impl Parser {
         let non_whitespace_tokens: Vec<Token> = tokens
             .into_iter()
             .filter(|token| match token.kind {
-                Comment | Space => false, // TODO(anissen): We probably need to keep newline for semantic later
+                Space => false, // TODO(anissen): We probably need to keep newline for semantic later
                 _ => true,
             })
             .collect();
@@ -158,7 +158,7 @@ impl Parser {
         // if self.matches(&[Comment]) {
         //     Ok(Some(Expr::Comment(self.previous().lexeme)))
         // } else if self.matches(&[NewLine, Space]) {
-        if self.matches(&[NewLine, Space]) {
+        if self.matches(&[NewLine, Comment]) {
             Ok(None)
         } else {
             let error = format!(
@@ -171,24 +171,32 @@ impl Parser {
         }
     }
 
+    // TODO(anissen): Parse blocks (e.g. (newline followed by) tabs followed by some expression) at the same indentation level
+
     fn primary(&mut self) -> Result<Option<Expr>, String> {
         if self.matches(&[Identifier]) {
             let lexeme = self.previous().lexeme;
-            if self.check(&Integer) {
-                // TODO: Incomplete, needs rework
+
+            // TODO(anissen): P0: Change parsing of calls to be
+            /*
+            arg1 func
+                arg2
+                ...
+                argN
+            */
+
+            // function calls end with newline + tab(s)
+
+            // TODO(anissen): FIXME
+            // TODO(anissen): This check is terrible and incomplete (e.g. doesn't handle grouping)
+            // let is_call = self.check(&NewLine) && self.check_next(&TokenKind::Tab);
+            let is_call = self.check(&Integer);
+            if is_call {
                 let mut args = vec![];
                 while !self.is_at_end() && !self.check(&NewLine) {
-                    if let Some(arg) = self.expression()? {
-                        args.push(arg);
-                    }
+                    let arg = self.expression()?;
+                    args.push(arg.unwrap());
                 }
-                // TODO(anissen): There's a bug here! I probably need meaningful whitespace to solve this.
-                /*
-                  square 5
-                  add 4 7
-                becomes
-                  square 5 (add 4 7)
-                */
                 Ok(Some(Expr::Call { name: lexeme, args }))
             } else {
                 Ok(Some(Expr::Variable(lexeme)))
@@ -224,8 +232,9 @@ impl Parser {
                 params.push(param);
             }
             self.consume(&TokenKind::Pipe)?;
+            // self.consume(&TokenKind::NewLine)?;
+            // self.consume(&TokenKind::Tab)?;
             // TODO(anissen): Support a variable list of parameters
-            // self.consume(&NewLine)?;
             let expr = self.expression()?;
             Ok(Some(Expr::Function {
                 params,
@@ -250,7 +259,8 @@ impl Parser {
         if self.check(kind) {
             Ok(self.advance())
         } else {
-            Err("Unexpected token".to_string())
+            let message = format!("Expected {:?} but found {:?}", kind, &self.peek());
+            Err(message.to_string())
         }
     }
 
@@ -259,6 +269,16 @@ impl Parser {
             false
         } else {
             &self.peek().kind == kind
+        }
+    }
+
+    // TODO(anissen): Need to do something smarter to handle tab scoping
+    fn check_next(&self, kind: &TokenKind) -> bool {
+        let next_index = self.current + 1;
+        if next_index >= self.tokens.len() {
+            false
+        } else {
+            &self.tokens[next_index].kind == kind
         }
     }
 

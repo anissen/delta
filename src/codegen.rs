@@ -25,6 +25,7 @@ impl Codegen {
     fn do_emit(&mut self, expressions: Vec<Expr>, environment: &mut HashMap<String, u8>) {
         // TODO(anissen): Make this a proper return type.
         for expr in expressions {
+            println!("do_emit with expr: {:?}", expr);
             match expr {
                 Expr::Boolean(b) => {
                     self.emit_bytecode(ByteCode::PushBoolean);
@@ -36,9 +37,8 @@ impl Codegen {
                 Expr::Float(f) => self.emit_bytes(ByteCode::PushFloat, f.to_be_bytes()),
 
                 Expr::Variable(name) => {
-                    println!("{}", name);
-                    self.emit_bytecode(ByteCode::GetLocalValue);
                     println!("read variable: {}", name);
+                    self.emit_bytecode(ByteCode::GetLocalValue);
                     // let index = if let Some(i) = localVariableIndex.get(&name) {
                     //     *i
                     // } else {
@@ -46,6 +46,7 @@ impl Codegen {
                     //     localVariableIndex.insert(name, i);
                     //     i
                     // };
+                    println!("environment: {:?}", environment);
                     let index = environment.get(&name).unwrap();
                     self.emit_byte(*index);
                 }
@@ -53,7 +54,7 @@ impl Codegen {
                 Expr::Grouping(expr) => self.do_emit(vec![*expr], environment),
 
                 Expr::Function { params, expr } => {
-                    let mut function_environment = HashMap::new();
+                    let mut function_environment = environment.clone();
 
                     self.emit_bytecode(ByteCode::FunctionStart);
 
@@ -68,6 +69,7 @@ impl Codegen {
                     self.function_count += 1;
 
                     self.emit_byte(params.len() as u8); // TODO(anissen): Guard against overflow
+                    println!("function_environment: {:?}", function_environment);
                     self.do_emit(vec![*expr], &mut function_environment);
 
                     self.emit_bytecode(ByteCode::FunctionEnd);
@@ -79,6 +81,10 @@ impl Codegen {
                     self.emit_bytecode(ByteCode::Call);
                     self.emit_byte(arg_count as u8);
                     // self.emit_byte(*self.value_index.get(&name).unwrap());
+                    println!(
+                        "call function '{}' with environment: {:?}",
+                        name, environment
+                    );
                     let index = environment.get(&name).unwrap();
                     self.emit_byte(*index);
                 }
@@ -88,10 +94,12 @@ impl Codegen {
                     token: _,
                     expr,
                 } => {
+                    println!("assignment with environment: {:?}", environment);
                     self.do_emit(vec![*expr], environment);
                     self.emit_bytecode(ByteCode::SetLocalValue);
 
                     let index = environment.len() as u8;
+                    println!("insert variable {} at index {}", variable, index);
                     environment.insert(variable, index);
                     self.emit_byte(index);
                 }
@@ -136,6 +144,7 @@ impl Codegen {
     }
 
     pub fn emit(&mut self, expressions: Vec<Expr>) -> Vec<u8> {
+        println!("emit with fresh environment");
         self.do_emit(expressions, &mut HashMap::new());
         self.bytes.clone()
     }

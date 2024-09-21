@@ -1,8 +1,19 @@
 
-addOne = \v | v + 1
-square = \value | value * value
+#square = \value | value * value
 add = \v1 v2 | v1 + v2
+addOne = \v | add v 1
 
-square 5
-addOne 42
-add 4 7
+#square 5
+#addOne 42
+addOne 7
+
+# Check that this works
+# func1 arg1 (func2 arg2) arg3
+
+#do = \f v
+#    f v + 1
+#x = \z
+#    z + 2
+#do x 3
+
+# do = \func v -> v + 1 | func
