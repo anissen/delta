@@ -5,7 +5,7 @@ use crate::tokens::Token;
 use crate::tokens::TokenKind;
 use crate::tokens::TokenKind::{
     BackSlash, Bang, Comment, Equal, False, Float, Identifier, Integer, LeftParen, Minus, NewLine,
-    Plus, RightParen, Slash, Space, Star, True,
+    Pipe, Plus, RightParen, Slash, Space, Star, True,
 };
 
 pub struct Parser {
@@ -172,35 +172,12 @@ impl Parser {
     }
 
     // TODO(anissen): Parse blocks (e.g. (newline followed by) tabs followed by some expression) at the same indentation level
+    // TODO: parse block
 
     fn primary(&mut self) -> Result<Option<Expr>, String> {
         if self.matches(&[Identifier]) {
             let lexeme = self.previous().lexeme;
-
-            // TODO(anissen): P0: Change parsing of calls to be
-            /*
-            arg1 func
-                arg2
-                ...
-                argN
-            */
-
-            // function calls end with newline + tab(s)
-
-            // TODO(anissen): FIXME
-            // TODO(anissen): This check is terrible and incomplete (e.g. doesn't handle grouping)
-            // let is_call = self.check(&NewLine) && self.check_next(&TokenKind::Tab);
-            let is_call = self.check(&Integer);
-            if is_call {
-                let mut args = vec![];
-                while !self.is_at_end() && !self.check(&NewLine) {
-                    let arg = self.expression()?;
-                    args.push(arg.unwrap());
-                }
-                Ok(Some(Expr::Call { name: lexeme, args }))
-            } else {
-                Ok(Some(Expr::Variable(lexeme)))
-            }
+            Ok(Some(Expr::Variable(lexeme)))
         } else if self.matches(&[Integer]) {
             let lexeme = self.previous().lexeme;
             let value = lexeme.parse::<i32>();
@@ -223,6 +200,16 @@ impl Parser {
             let expr = self.expression()?;
             self.consume(&RightParen)?;
             Ok(Some(Expr::Grouping(Box::new(expr.unwrap()))))
+        } else if self.matches(&[Pipe]) {
+            self.consume(&Identifier)?;
+            let lexeme = self.previous().lexeme;
+            // TODO(anissen): Check that function name exists and is a function
+            let mut args = vec![];
+            while !self.is_at_end() && !self.check(&NewLine) {
+                let arg = self.expression()?;
+                args.push(arg.unwrap());
+            }
+            Ok(Some(Expr::Call { name: lexeme, args }))
         } else if self.matches(&[BackSlash]) {
             let mut params = vec![];
             while self.check(&TokenKind::Identifier) {
@@ -231,7 +218,7 @@ impl Parser {
                 let param = self.previous();
                 params.push(param);
             }
-            self.consume(&TokenKind::Pipe)?;
+            self.consume(&TokenKind::BackSlash)?;
             // self.consume(&TokenKind::NewLine)?;
             // self.consume(&TokenKind::Tab)?;
             // TODO(anissen): Support a variable list of parameters

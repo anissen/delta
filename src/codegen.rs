@@ -76,7 +76,7 @@ impl Codegen {
                 }
 
                 Expr::Call { name, args } => {
-                    let arg_count = args.len();
+                    let arg_count = args.len() + 1 /* pre-argument */;
                     self.do_emit(args, environment);
                     self.emit_bytecode(ByteCode::Call);
                     self.emit_byte(arg_count as u8);
