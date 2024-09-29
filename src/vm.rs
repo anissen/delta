@@ -31,6 +31,7 @@ pub struct VirtualMachine {
     functions: Vec<FunctionObj>,
     stack: Vec<Value>,
     call_stack: Vec<CallFrame>,
+    verbose_logging: bool,
 }
 
 pub fn run(bytes: Vec<u8>) -> Option<Value> {
@@ -45,6 +46,7 @@ impl VirtualMachine {
             functions: Vec::new(),
             stack: Vec::new(),
             call_stack: Vec::new(),
+            verbose_logging: false,
         }
     }
 
@@ -79,11 +81,13 @@ impl VirtualMachine {
         self.program_counter = 0;
 
         while self.program_counter < self.program.len() {
-            println!("=== frame === (pc: {})", self.program_counter);
             let next = self.read_byte();
             let instruction = ByteCode::try_from(next).unwrap();
-            println!("Instruction: {:?}", instruction);
-            println!("stack: {:?}", self.stack);
+            println!(
+                "\n=== Instruction: {:?} === (pc: {})",
+                instruction, self.program_counter
+            );
+            println!("Stack: {:?}", self.stack);
             match instruction {
                 ByteCode::PushBoolean => {
                     let value_bytes = self.read_byte();
@@ -238,6 +242,15 @@ impl VirtualMachine {
                     println!("arity: {}", arity);
                     let index = self.read_byte(); // TODO(anissen): This seems off
                     println!("index: {}", index);
+                    let name_length = self.program[self.program_counter];
+                    self.program_counter += 1;
+                    let value_bytes: Vec<u8> = self.program
+                        [self.program_counter..self.program_counter + (name_length as usize)]
+                        .try_into()
+                        .unwrap();
+                    self.program_counter += name_length as usize;
+                    let name = String::from_utf8(value_bytes).unwrap();
+                    println!("function name: {}", name);
                     let stack_index = self.current_call_frame().stack_index; // TODO(anissen): This becomes zero and we try to get a negative index below :(
                     println!("stack_index: {}", stack_index);
                     let value = self
@@ -255,8 +268,9 @@ impl VirtualMachine {
                     self.call(function, arity)
                 }
             }
-            println!("stack: {:?}", self.stack);
+            // println!("stack: {:?}", self.stack);
         }
+        println!("End stack: {:?}", self.stack);
         self.stack.pop()
     }
 
@@ -281,7 +295,9 @@ impl VirtualMachine {
     fn read_byte(&mut self) -> u8 {
         let byte = self.program[self.program_counter];
         self.program_counter += 1;
-        println!("read_byte: {}", byte);
+        if self.verbose_logging {
+            println!("read_byte: {}", byte);
+        }
         byte
     }
 
@@ -296,14 +312,18 @@ impl VirtualMachine {
     fn read_i32(&mut self) -> i32 {
         let raw = self.read_4bytes();
         let value = i32::from_be_bytes(raw);
-        println!("read_i32: {}", value);
+        if self.verbose_logging {
+            println!("read_i32: {}", value);
+        }
         value
     }
 
     fn read_f32(&mut self) -> f32 {
         let raw = u32::from_be_bytes(self.read_4bytes());
         let value = f32::from_bits(raw);
-        println!("read_f32: {}", value);
+        if self.verbose_logging {
+            println!("read_f32: {}", value);
+        }
         value
     }
 

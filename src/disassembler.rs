@@ -110,7 +110,7 @@ impl Disassembler {
                     let param_count = self.program[self.program_counter];
                     self.program_counter += 1;
                     res.push(vec![
-                        "function".to_string(),
+                        format!("function"),
                         format!("(function index: {})", function_index),
                         format!("(params: {})", param_count),
                     ]);
@@ -125,8 +125,18 @@ impl Disassembler {
                     self.program_counter += 1;
                     let index = self.program[self.program_counter];
                     self.program_counter += 1;
+
+                    let name_length = self.program[self.program_counter];
+                    self.program_counter += 1;
+                    let value_bytes: Vec<u8> = self.program
+                        [self.program_counter..self.program_counter + (name_length as usize)]
+                        .try_into()
+                        .unwrap();
+                    self.program_counter += name_length as usize;
+                    let name = String::from_utf8(value_bytes).unwrap();
+
                     res.push(vec![
-                        "call".to_string(),
+                        format!("call {}", name),
                         format!("(arg count: {}, function index: {})", arg_count, index),
                     ]);
                 }

@@ -1,7 +1,8 @@
 
-#square = \value \ value * value
-add = \v1 v2 \ v1 + v2
-add_one = \v \ v add 1
+x = 42
+square = \value \ value * value
+add = \v1 v2 \ v1 + v2 + x
+#add_one = \v \ v | add 2
 #add_one = \v \ v + 1
 #add_one = \v
 #    add
@@ -10,7 +11,9 @@ add_one = \v \ v add 1
 
 #5 | square
 
-5 | add 3
+#5 | add_one
+
+5 | add 2
 
 #4 + 1 | add 3 + 2
 

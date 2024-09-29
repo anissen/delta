@@ -13,6 +13,7 @@ pub enum ByteCode {
     Subtraction,
     FunctionStart,
     FunctionEnd, // TODO(anissen): Maybe FunctionDefinition + FunctionBodyStart + FunctionBodyEnd?
+    // FunctionSignature,
     Call,
 }
 
@@ -40,6 +41,7 @@ impl TryFrom<u8> for ByteCode {
             value if value == ByteCode::Subtraction as u8 => Ok(Self::Subtraction),
             value if value == ByteCode::FunctionStart as u8 => Ok(Self::FunctionStart),
             value if value == ByteCode::FunctionEnd as u8 => Ok(Self::FunctionEnd),
+            // value if value == ByteCode::FunctionSignature as u8 => Ok(Self::FunctionSignature),
             value if value == ByteCode::Call as u8 => Ok(Self::Call),
             _ => Err(()),
         }

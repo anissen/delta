@@ -12,6 +12,9 @@ pub fn codegen(expressions: Vec<Expr>) -> Vec<u8> {
     Codegen::new().emit(expressions)
 }
 
+// TODO(anissen): Add a function overview mapping for each scope containing { name, arity, starting IP, source line number  }.
+// This will be used directly in the VM as well as for debug logging.
+
 impl Codegen {
     fn new() -> Self {
         Self {
@@ -69,6 +72,14 @@ impl Codegen {
                     self.function_count += 1;
 
                     self.emit_byte(params.len() as u8); // TODO(anissen): Guard against overflow
+
+                    // emit function signatures here?
+                    // e.g.
+                    // function_signatures = []
+                    // bytes = emit(expr, ...) // also populates function_signatures
+                    // write_bytes(function_signatures)
+                    // write_bytes(bytes)
+
                     println!("function_environment: {:?}", function_environment);
                     self.do_emit(vec![*expr], &mut function_environment);
 
@@ -87,6 +98,12 @@ impl Codegen {
                     );
                     let index = environment.get(&name).unwrap();
                     self.emit_byte(*index);
+
+                    if name.len() > 64 {
+                        panic!("function name too long!");
+                    }
+                    self.emit_byte(name.len() as u8);
+                    self.emit_raw_bytes(&mut name.as_bytes().to_vec());
                 }
 
                 Expr::Assignment {
@@ -162,5 +179,9 @@ impl Codegen {
         for byte in value {
             self.emit_byte(byte);
         }
+    }
+
+    fn emit_raw_bytes(&mut self, bytes: &mut Vec<u8>) {
+        self.bytes.append(bytes);
     }
 }
