@@ -155,23 +155,24 @@ impl Parser {
     }
 
     fn call(&mut self) -> Result<Option<Expr>, String> {
+        let expr = self.function()?;
         if self.matches(&[Pipe]) {
             self.consume(&Identifier)?;
             let lexeme = self.previous().lexeme;
             // TODO(anissen): Check that function name exists and is a function
-            let mut args = vec![];
+            let first_arg = expr.unwrap();
+            let mut args = vec![first_arg];
             while !self.is_at_end() && !self.check(&NewLine) {
                 let arg = self.expression()?;
                 args.push(arg.unwrap());
             }
             Ok(Some(Expr::Call { name: lexeme, args }))
         } else {
-            self.function()
+            Ok(expr)
         }
     }
 
     fn function(&mut self) -> Result<Option<Expr>, String> {
-        // let expr = self.primary();
         if self.matches(&[BackSlash]) {
             let mut params = vec![];
             while self.check(&TokenKind::Identifier) {
