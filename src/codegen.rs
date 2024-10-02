@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use crate::bytecodes::ByteCode;
 use crate::expressions::{BinaryOperator, Expr, UnaryOperator};
@@ -25,7 +25,12 @@ impl Codegen {
 
     // TODO(anissen): We need a mapping from variable to an index
 
-    fn do_emit(&mut self, expressions: Vec<Expr>, environment: &mut HashMap<String, u8>) {
+    fn do_emit(
+        &mut self,
+        expressions: Vec<Expr>,
+        environment: &mut HashMap<String, u8>,
+        locals: &mut HashSet<String>,
+    ) {
         // TODO(anissen): Make this a proper return type.
         for expr in expressions {
             println!("do_emit with expr: {:?}", expr);
@@ -41,32 +46,37 @@ impl Codegen {
 
                 Expr::Variable(name) => {
                     println!("read variable: {}", name);
-                    self.emit_bytecode(ByteCode::GetLocalValue);
-                    // let index = if let Some(i) = localVariableIndex.get(&name) {
-                    //     *i
-                    // } else {
-                    //     let i = localVariableIndex.len() as u8;
-                    //     localVariableIndex.insert(name, i);
-                    //     i
-                    // };
-                    println!("environment: {:?}", environment);
                     let index = environment.get(&name).unwrap();
+                    // println!("locals: {:?}", locals);
+                    // println!("does locals contain {}?", name);
+                    // if locals.contains(&name) {
+                    // println!("yes!");
+                    self.emit_bytecode(ByteCode::GetLocalValue);
+                    // } else {
+                    //     println!("no!");
+                    //     println!("environment: {:?}", environment);
+                    //     self.emit_bytecode(ByteCode::GetGlobalValue);
+                    // }
                     self.emit_byte(*index);
                 }
 
-                Expr::Grouping(expr) => self.do_emit(vec![*expr], environment),
+                Expr::Grouping(expr) => self.do_emit(vec![*expr], environment, locals),
 
-                Expr::Block { exprs } => self.do_emit(exprs, environment),
+                Expr::Block { exprs } => self.do_emit(exprs, environment, locals),
 
                 Expr::Function { params, expr } => {
-                    let mut function_environment = environment.clone(); // HashMap::new();
+                    let mut function_environment = environment.clone();
+                    let mut function_locals = HashSet::new();
 
                     self.emit_bytecode(ByteCode::FunctionStart);
 
+                    let mut index = 0;
                     for param in params.iter() {
                         println!("set param: {}", param.lexeme);
-                        let index = function_environment.len() as u8;
                         function_environment.insert(param.lexeme.clone(), index);
+                        index += 1;
+
+                        function_locals.insert(param.lexeme.clone());
                     }
                     // bytecodes: function start, function index, param count, function body, function end
 
@@ -83,14 +93,14 @@ impl Codegen {
                     // write_bytes(bytes)
 
                     println!("function_environment: {:?}", function_environment);
-                    self.do_emit(vec![*expr], &mut function_environment);
+                    self.do_emit(vec![*expr], &mut function_environment, &mut function_locals);
 
                     self.emit_bytecode(ByteCode::FunctionEnd);
                 }
 
                 Expr::Call { name, args } => {
                     let arg_count = args.len(); // + 1 /* pre-argument */;
-                    self.do_emit(args, environment);
+                    self.do_emit(args, environment, locals);
                     self.emit_bytecode(ByteCode::Call);
                     self.emit_byte(arg_count as u8);
                     // self.emit_byte(*self.value_index.get(&name).unwrap());
@@ -99,6 +109,12 @@ impl Codegen {
                         name, environment
                     );
                     let index = environment.get(&name).unwrap();
+                    // println!("*** call locals: {:?}", locals);
+                    // if locals.contains(&name) {
+                    //     self.emit_byte(0);
+                    // } else {
+                    //     self.emit_byte(1);
+                    // }
                     self.emit_byte(*index);
 
                     if name.len() > 64 {
@@ -114,12 +130,13 @@ impl Codegen {
                     expr,
                 } => {
                     println!("assignment with environment: {:?}", environment);
-                    self.do_emit(vec![*expr], environment);
+                    self.do_emit(vec![*expr], environment, locals);
                     self.emit_bytecode(ByteCode::SetLocalValue);
 
                     let index = environment.len() as u8;
                     println!("insert variable {} at index {}", variable, index);
-                    environment.insert(variable, index);
+                    environment.insert(variable.clone(), index);
+                    locals.insert(variable.clone());
                     self.emit_byte(index);
                 }
 
@@ -129,12 +146,12 @@ impl Codegen {
                     expr,
                 } => match operator {
                     UnaryOperator::Negation => {
-                        self.do_emit(vec![*expr], environment);
+                        self.do_emit(vec![*expr], environment, locals);
                         self.emit_bytecode(ByteCode::Negation);
                     }
 
                     UnaryOperator::Not => {
-                        self.do_emit(vec![*expr], environment);
+                        self.do_emit(vec![*expr], environment, locals);
                         self.emit_bytecode(ByteCode::Not);
                     }
                 },
@@ -145,7 +162,7 @@ impl Codegen {
                     token: _,
                     right,
                 } => {
-                    self.do_emit(vec![*left, *right], environment);
+                    self.do_emit(vec![*left, *right], environment, locals);
                     match operator {
                         BinaryOperator::Addition => self.emit_bytecode(ByteCode::Addition),
 
@@ -164,7 +181,7 @@ impl Codegen {
 
     pub fn emit(&mut self, expressions: Vec<Expr>) -> Vec<u8> {
         println!("emit with fresh environment");
-        self.do_emit(expressions, &mut HashMap::new());
+        self.do_emit(expressions, &mut HashMap::new(), &mut HashSet::new());
         self.bytes.clone()
     }
 
