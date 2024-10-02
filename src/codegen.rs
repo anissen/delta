@@ -56,8 +56,10 @@ impl Codegen {
 
                 Expr::Grouping(expr) => self.do_emit(vec![*expr], environment),
 
+                Expr::Block { exprs } => self.do_emit(exprs, environment),
+
                 Expr::Function { params, expr } => {
-                    let mut function_environment = environment.clone();
+                    let mut function_environment = environment.clone(); // HashMap::new();
 
                     self.emit_bytecode(ByteCode::FunctionStart);
 

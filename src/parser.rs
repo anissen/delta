@@ -164,7 +164,9 @@ impl Parser {
             let mut args = vec![first_arg];
             while !self.is_at_end() && !self.check(&NewLine) {
                 let arg = self.expression()?;
-                args.push(arg.unwrap());
+                if arg.is_some() {
+                    args.push(arg.unwrap());
+                }
             }
             Ok(Some(Expr::Call { name: lexeme, args }))
         } else {
@@ -181,11 +183,7 @@ impl Parser {
                 let param = self.previous();
                 params.push(param);
             }
-            // self.consume(&TokenKind::BackSlash)?;
-            self.consume(&TokenKind::NewLine)?;
-            self.consume(&TokenKind::Tab)?; // TODO(anissen): This should be a block to correctly handle indentation level.
-                                            // TODO(anissen): Support a variable list of parameters
-            let expr = self.expression()?; // TODO(anissen): Should be a block or a list of expressions
+            let expr = self.block(1)?;
             println!("function expression: {:?}", expr);
             Ok(Some(Expr::Function {
                 params,
@@ -194,6 +192,25 @@ impl Parser {
         } else {
             self.primary()
         }
+    }
+
+    fn block(&mut self, indent: u8) -> Result<Option<Expr>, String> {
+        self.consume(&TokenKind::NewLine)?;
+        for _ in 0..indent {
+            self.consume(&TokenKind::Tab)?;
+        }
+        let mut exprs = vec![];
+        loop {
+            if let Some(expr) = self.expression()? {
+                exprs.push(expr);
+            }
+            self.consume(&TokenKind::NewLine)?;
+            let matches_indentation = (0..indent).all(|_| self.matches(&[TokenKind::Tab])); // TODO(anissen): Should probably Err if indentation is wrong
+            if !matches_indentation {
+                break;
+            }
+        }
+        Ok(Some(Expr::Block { exprs }))
     }
 
     fn whitespace(&mut self) -> Result<Option<Expr>, String> {

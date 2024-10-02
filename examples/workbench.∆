@@ -1,10 +1,6 @@
 
 add = \v1 v2
-    v1 + v2
+    tmp = v2
+    v1 + tmp
 
-add_one = \v
-    v | add 2
-
-#5 | add 3
-
-5 | add_one
+5 | add 3

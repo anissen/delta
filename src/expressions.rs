@@ -31,6 +31,9 @@ pub enum Expr {
         token: Token,
         right: Box<Expr>,
     },
+    Block {
+        exprs: Vec<Expr>,
+    },
 }
 
 #[derive(Debug)]
