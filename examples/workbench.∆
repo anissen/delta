@@ -1,33 +1,8 @@
 
-x = 42
-square = \value \ value * value
-add = \v1 v2 \ v1 + v2 + x
-#add_one = \v \ v | add 2
-#add_one = \v \ v + 1
-#add_one = \v
-#    add
-#        v1: v
-#        v2: 1
+add = \v1 v2
+    v1 + v2
 
-#5 | square
+add_one = \v
+    v | add 2
 
-#5 | add_one
-
-5 | add 2
-
-#4 + 1 | add 3 + 2
-
-#42 + 5 | add_one
-
-# 7 | add_one
-
-# Check that this works
-# func1 arg1 (func2 arg2) arg3
-
-#do = \f v
-#    f v + 1
-#x = \z
-#    z + 2
-#do x 3
-
-# do = \func v -> v + 1 | func
+5 | add_one

@@ -150,7 +150,49 @@ impl Parser {
                 expr: Box::new(right.unwrap()),
             }))
         } else {
-            self.primary()
+            self.call()
+        }
+    }
+
+    fn call(&mut self) -> Result<Option<Expr>, String> {
+        let expr = self.function();
+        if self.matches(&[Pipe]) {
+            self.consume(&Identifier)?;
+            let lexeme = self.previous().lexeme;
+            // TODO(anissen): Check that function name exists and is a function
+            let mut args = vec![];
+            while !self.is_at_end() && !self.check(&NewLine) {
+                let arg = self.expression()?;
+                args.push(arg.unwrap());
+            }
+            Ok(Some(Expr::Call { name: lexeme, args }))
+        } else {
+            expr
+        }
+    }
+
+    fn function(&mut self) -> Result<Option<Expr>, String> {
+        let expr = self.primary();
+        if self.matches(&[BackSlash]) {
+            let mut params = vec![];
+            while self.check(&TokenKind::Identifier) {
+                // TODO(anissen): Could this check be a `match` instead?
+                self.advance();
+                let param = self.previous();
+                params.push(param);
+            }
+            // self.consume(&TokenKind::BackSlash)?;
+            self.consume(&TokenKind::NewLine)?;
+            self.consume(&TokenKind::Tab)?;
+            // TODO(anissen): Support a variable list of parameters
+            let expr = self.expression()?; // TODO(anissen): Should be a block or a list of expressions
+            println!("function expression: {:?}", expr);
+            Ok(Some(Expr::Function {
+                params,
+                expr: Box::new(expr.unwrap()),
+            }))
+        } else {
+            expr
         }
     }
 
@@ -200,33 +242,34 @@ impl Parser {
             let expr = self.expression()?;
             self.consume(&RightParen)?;
             Ok(Some(Expr::Grouping(Box::new(expr.unwrap()))))
-        } else if self.matches(&[Pipe]) {
-            self.consume(&Identifier)?;
-            let lexeme = self.previous().lexeme;
-            // TODO(anissen): Check that function name exists and is a function
-            let mut args = vec![];
-            while !self.is_at_end() && !self.check(&NewLine) {
-                let arg = self.expression()?;
-                args.push(arg.unwrap());
-            }
-            Ok(Some(Expr::Call { name: lexeme, args }))
-        } else if self.matches(&[BackSlash]) {
-            let mut params = vec![];
-            while self.check(&TokenKind::Identifier) {
-                // TODO(anissen): Could this check be a `match` instead?
-                self.advance();
-                let param = self.previous();
-                params.push(param);
-            }
-            self.consume(&TokenKind::BackSlash)?;
-            // self.consume(&TokenKind::NewLine)?;
-            // self.consume(&TokenKind::Tab)?;
-            // TODO(anissen): Support a variable list of parameters
-            let expr = self.expression()?;
-            Ok(Some(Expr::Function {
-                params,
-                expr: Box::new(expr.unwrap()),
-            }))
+        // } else if self.matches(&[Pipe]) {
+        //     self.consume(&Identifier)?;
+        //     let lexeme = self.previous().lexeme;
+        //     // TODO(anissen): Check that function name exists and is a function
+        //     let mut args = vec![];
+        //     while !self.is_at_end() && !self.check(&NewLine) {
+        //         let arg = self.expression()?;
+        //         args.push(arg.unwrap());
+        //     }
+        //     Ok(Some(Expr::Call { name: lexeme, args }))
+        // } else if self.matches(&[BackSlash]) {
+        //     let mut params = vec![];
+        //     while self.check(&TokenKind::Identifier) {
+        //         // TODO(anissen): Could this check be a `match` instead?
+        //         self.advance();
+        //         let param = self.previous();
+        //         params.push(param);
+        //     }
+        //     self.consume(&TokenKind::BackSlash)?;
+        //     // self.consume(&TokenKind::NewLine)?;
+        //     // self.consume(&TokenKind::Tab)?;
+        //     // TODO(anissen): Support a variable list of parameters
+        //     let expr = self.expression()?;
+        //     println!("function expression: {:?}", expr);
+        //     Ok(Some(Expr::Function {
+        //         params,
+        //         expr: Box::new(expr.unwrap()),
+        //     }))
         } else {
             self.whitespace()
         }

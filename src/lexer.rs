@@ -94,7 +94,7 @@ impl<'a> Lexer {
     fn scan_next(&mut self) -> Result<TokenKind, ()> {
         let char = self.advance();
         match char {
-            ' ' => Ok(TokenKind::Space),
+            ' ' => self.spaces(),
             '+' => Ok(TokenKind::Plus),
             '-' => Ok(TokenKind::Minus),
             '*' => Ok(TokenKind::Star),
@@ -114,8 +114,23 @@ impl<'a> Lexer {
         }
     }
 
+    fn spaces(&mut self) -> Result<TokenKind, ()> {
+        let mut spaces = 1;
+        while !self.is_at_end() && self.peek() == ' ' {
+            self.advance();
+            spaces += 1;
+        }
+        match spaces {
+            1 => Ok(TokenKind::Space),
+            4 => Ok(TokenKind::Tab), // HACK because Zed cannot handle hard tabs correctly. Scanning for '\t' should be sufficient.
+            _ => Err(()),
+        }
+    }
+
     fn identifier(&mut self) -> TokenKind {
-        while self.is_letter(self.peek()) || self.is_digit(self.peek()) || self.peek() == '_' {
+        while !self.is_at_end()
+            && (self.is_letter(self.peek()) || self.is_digit(self.peek()) || self.peek() == '_')
+        {
             self.advance();
         }
 
