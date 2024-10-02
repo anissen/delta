@@ -155,7 +155,6 @@ impl Parser {
     }
 
     fn call(&mut self) -> Result<Option<Expr>, String> {
-        let expr = self.function();
         if self.matches(&[Pipe]) {
             self.consume(&Identifier)?;
             let lexeme = self.previous().lexeme;
@@ -167,12 +166,12 @@ impl Parser {
             }
             Ok(Some(Expr::Call { name: lexeme, args }))
         } else {
-            expr
+            self.function()
         }
     }
 
     fn function(&mut self) -> Result<Option<Expr>, String> {
-        let expr = self.primary();
+        // let expr = self.primary();
         if self.matches(&[BackSlash]) {
             let mut params = vec![];
             while self.check(&TokenKind::Identifier) {
@@ -183,8 +182,8 @@ impl Parser {
             }
             // self.consume(&TokenKind::BackSlash)?;
             self.consume(&TokenKind::NewLine)?;
-            self.consume(&TokenKind::Tab)?;
-            // TODO(anissen): Support a variable list of parameters
+            self.consume(&TokenKind::Tab)?; // TODO(anissen): This should be a block to correctly handle indentation level.
+                                            // TODO(anissen): Support a variable list of parameters
             let expr = self.expression()?; // TODO(anissen): Should be a block or a list of expressions
             println!("function expression: {:?}", expr);
             Ok(Some(Expr::Function {
@@ -192,7 +191,7 @@ impl Parser {
                 expr: Box::new(expr.unwrap()),
             }))
         } else {
-            expr
+            self.primary()
         }
     }
 
