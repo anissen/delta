@@ -83,12 +83,37 @@ fn run(source: &String, file_name: Option<&String>) -> Result<Option<vm::Value>,
 mod tests {
     use super::*;
 
-    fn assert_ok(source: &str, result: vm::Value) {
-        let res = run(&source.to_string(), None);
-        assert!(match res {
-            Ok(Some(r)) if r == result => true,
+    fn assert_ok(source: &str, expected: vm::Value) {
+        let result = match run(&source.to_string(), None) {
+            Ok(Some(r)) => r,
+            _ => panic!(),
+        };
+        assert!(
+            result == expected,
+            "Expected to succeed with {:?} but was {:?}",
+            expected,
+            result
+        );
+    }
+
+    #[test]
+    fn empty() {
+        let source = r"# nothing here";
+        let result = match run(&source.to_string(), None) {
+            Ok(None) => true,
             _ => false,
-        });
+        };
+        assert!(result);
+    }
+
+    #[test]
+    fn integer_plus() {
+        assert_ok(r"1 + 2 + 3 + 4 + 5", vm::Value::Integer(15));
+    }
+
+    #[test]
+    fn float_plus() {
+        assert_ok(r"1.1 + 2.2 + 3.3 + 4.4 + 5.5", vm::Value::Float(16.5));
     }
 
     #[test]
