@@ -24,7 +24,7 @@ fn main() {
     // let path = Path::new("..").join("examples").join("workbench.∆");
     // let source_path = path.to_str().unwrap().to_string();
 
-    let result = run(source_path);
+    let result = run_file(source_path);
     match result {
         Ok(Some(value)) => println!("Result: {:?}", value),
 
@@ -34,13 +34,21 @@ fn main() {
     }
 }
 
-fn run(source_path: &String) -> Result<Option<vm::Value>, String> {
+fn run_file(source_path: &String) -> Result<Option<vm::Value>, String> {
     let mut file = File::open(source_path).expect("Unable to open file");
     let mut source = String::new();
     file.read_to_string(&mut source)
         .expect("Error reading file.");
 
-    println!("\n# source =>");
+    run(&source, Some(source_path))
+}
+
+fn run(source: &String, file_name: Option<&String>) -> Result<Option<vm::Value>, String> {
+    let default_file_name = "n/a".to_string();
+    println!(
+        "\n# source (file: {}) =>",
+        file_name.unwrap_or(&default_file_name)
+    );
     println!("{}", source);
 
     println!("\n# lexing =>");
@@ -69,4 +77,44 @@ fn run(source_path: &String) -> Result<Option<vm::Value>, String> {
     let result = vm::run(bytecodes);
 
     Ok(result)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn assert_ok(source: &str, result: vm::Value) {
+        let res = run(&source.to_string(), None);
+        assert!(match res {
+            Ok(Some(r)) if r == result => true,
+            _ => false,
+        });
+    }
+
+    #[test]
+    fn function_calling() {
+        assert_ok(
+            r"
+add = \v1 v2
+    v1 + v2
+
+5 | add 3",
+            vm::Value::Integer(8),
+        );
+    }
+
+    #[test]
+    fn nested_function_calling() {
+        assert_ok(
+            r"
+add = \v1 v2
+    v1 + v2
+
+add_one = \v
+    v | add 1
+
+5 | add_one",
+            vm::Value::Integer(6),
+        )
+    }
 }

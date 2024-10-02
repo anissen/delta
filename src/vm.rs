@@ -1,7 +1,7 @@
 use crate::bytecodes::ByteCode;
 
 // TODO(anissen): See https://github.com/brightly-salty/rox/blob/master/src/value.rs
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Value {
     Boolean(bool),
     Integer(i32),
