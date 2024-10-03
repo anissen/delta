@@ -95,6 +95,15 @@ impl Disassembler {
                     res.push(vec!["get_value".to_string(), format!("(index: {})", index)]);
                 }
 
+                // ByteCode::GetGlobalValue => {
+                //     let index = self.program[self.program_counter]; // TODO(anissen): Make helper function to read bytes and increment program counter
+                //     self.program_counter += 1;
+                //     // let value = values.get(&index).unwrap();
+                //     res.push(vec![
+                //         "get_global_value".to_string(),
+                //         format!("(index: {})", index),
+                //     ]);
+                // }
                 ByteCode::SetLocalValue => {
                     let index = self.program[self.program_counter];
                     self.program_counter += 1;
@@ -123,6 +132,8 @@ impl Disassembler {
                 ByteCode::Call => {
                     let arg_count = self.program[self.program_counter];
                     self.program_counter += 1;
+                    let is_global = self.program[self.program_counter];
+                    self.program_counter += 1;
                     let index = self.program[self.program_counter];
                     self.program_counter += 1;
 
@@ -136,7 +147,8 @@ impl Disassembler {
                     let name = String::from_utf8(value_bytes).unwrap();
 
                     res.push(vec![
-                        format!("call {}", name),
+                        // format!("call {}", name),
+                        format!("call {} (is_global: {})", name, is_global),
                         format!("(arg count: {}, function index: {})", arg_count, index),
                     ]);
                 }

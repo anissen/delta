@@ -155,43 +155,47 @@ impl Parser {
     }
 
     fn call(&mut self) -> Result<Option<Expr>, String> {
-        let expr = self.function()?;
+        let expr = self.primary()?;
         if self.matches(&[Pipe]) {
-            self.consume(&Identifier)?;
-            let lexeme = self.previous().lexeme;
-            // TODO(anissen): Check that function name exists and is a function
-            let first_arg = expr.unwrap();
-            let mut args = vec![first_arg];
-            while !self.is_at_end() && !self.check(&NewLine) {
-                let arg = self.expression()?;
-                if arg.is_some() {
-                    args.push(arg.unwrap());
-                }
-            }
-            Ok(Some(Expr::Call { name: lexeme, args }))
+            self.call_with_first_arg(expr.unwrap())
         } else {
             Ok(expr)
         }
     }
 
-    fn function(&mut self) -> Result<Option<Expr>, String> {
-        if self.matches(&[BackSlash]) {
-            let mut params = vec![];
-            while self.check(&TokenKind::Identifier) {
-                // TODO(anissen): Could this check be a `match` instead?
-                self.advance();
-                let param = self.previous();
-                params.push(param);
+    fn call_with_first_arg(&mut self, expr: Expr) -> Result<Option<Expr>, String> {
+        self.consume(&Identifier)?;
+        let lexeme = self.previous().lexeme;
+        // TODO(anissen): Check that function name exists and is a function
+        let first_arg = expr;
+        let mut args = vec![first_arg];
+        while !self.is_at_end() && !self.check(&NewLine) && !self.check(&Pipe) {
+            let arg = self.expression()?;
+            if let Some(arg) = arg {
+                args.push(arg);
             }
-            let expr = self.block(1)?;
-            println!("function expression: {:?}", expr);
-            Ok(Some(Expr::Function {
-                params,
-                expr: Box::new(expr.unwrap()),
-            }))
-        } else {
-            self.primary()
         }
+        let call_expr = Expr::Call { name: lexeme, args };
+        if self.matches(&[Pipe]) {
+            self.call_with_first_arg(call_expr)
+        } else {
+            Ok(Some(call_expr))
+        }
+    }
+
+    fn function(&mut self) -> Result<Option<Expr>, String> {
+        let mut params = vec![];
+        while self.check(&TokenKind::Identifier) {
+            // TODO(anissen): Could this check be a `match` instead?
+            self.advance();
+            let param = self.previous();
+            params.push(param);
+        }
+        let expr = self.block(1)?;
+        Ok(Some(Expr::Function {
+            params,
+            expr: Box::new(expr.unwrap()),
+        }))
     }
 
     fn block(&mut self, indent: u8) -> Result<Option<Expr>, String> {
@@ -287,6 +291,8 @@ impl Parser {
         //         params,
         //         expr: Box::new(expr.unwrap()),
         //     }))
+        } else if self.matches(&[BackSlash]) {
+            self.function()
         } else {
             self.whitespace()
         }

@@ -12,4 +12,4 @@ add = \v1 v2
 add_one = \v
     v | add 1
 
-5 | square
+5 | square | square | add_one

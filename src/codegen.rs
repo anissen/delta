@@ -110,11 +110,11 @@ impl Codegen {
                     );
                     let index = environment.get(&name).unwrap();
                     // println!("*** call locals: {:?}", locals);
-                    // if locals.contains(&name) {
-                    //     self.emit_byte(0);
-                    // } else {
-                    //     self.emit_byte(1);
-                    // }
+                    if locals.contains(&name) {
+                        self.emit_byte(0);
+                    } else {
+                        self.emit_byte(1);
+                    }
                     self.emit_byte(*index);
 
                     if name.len() > 64 {

@@ -182,6 +182,12 @@ impl VirtualMachine {
                     self.stack.push(*value);
                 }
 
+                // ByteCode::GetGlobalValue => {
+                //     let index = self.read_byte();
+                //     println!("index is: {}", index);
+                //     let value = self.stack.get(index as usize).unwrap();
+                //     self.stack.push(*value);
+                // }
                 ByteCode::SetLocalValue => {
                     let index = self.read_byte();
                     let stack_index = self.current_call_frame().stack_index;
@@ -240,6 +246,8 @@ impl VirtualMachine {
                 ByteCode::Call => {
                     let arity = self.read_byte();
                     println!("arity: {}", arity);
+                    let is_global = self.read_byte() == 1;
+                    println!("is_global: {}", is_global);
                     let index = self.read_byte(); // TODO(anissen): This seems off
                     println!("index: {}", index);
                     let name_length = self.program[self.program_counter];
@@ -251,12 +259,16 @@ impl VirtualMachine {
                     self.program_counter += name_length as usize;
                     let name = String::from_utf8(value_bytes).unwrap();
                     println!("function name: {}", name);
-                    let stack_index = self.current_call_frame().stack_index; // TODO(anissen): This becomes zero and we try to get a negative index below :(
-                    println!("stack_index: {}", stack_index);
-                    let value = self
-                        .stack
-                        .get((stack_index + index) as usize) // TODO(anissen): Is this right?
-                        .unwrap();
+                    let the_index = if is_global {
+                        index
+                    } else {
+                        let stack_index = self.current_call_frame().stack_index; // TODO(anissen): This becomes zero and we try to get a negative index below :(
+                        println!("stack_index: {}", stack_index);
+                        stack_index + index // TODO(anissen): Is this right?
+                    };
+                    println!("the_index: {}", the_index);
+                    // };
+                    let value = self.stack.get(the_index as usize).unwrap();
                     println!("value: {:?}", value);
                     let function_index = match value {
                         Value::Function(f) => *f,
