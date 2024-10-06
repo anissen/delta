@@ -1,19 +1,34 @@
-use std::collections::HashMap;
-
 use crate::bytecodes::ByteCode;
 
 // TODO(anissen): See https://github.com/brightly-salty/rox/blob/master/src/value.rs
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Value {
     Boolean(bool),
     Integer(i32),
     Float(f32),
+    Function(u8),
+}
+
+#[derive(Debug, Clone)]
+struct FunctionObj {
+    arity: u8,
+    ip: usize, // TODO(anissen): Is ip required?
+}
+
+#[derive(Debug)]
+struct CallFrame {
+    return_program_counter: usize,
+    stack_index: u8,
+    function: FunctionObj,
 }
 
 pub struct VirtualMachine {
     program: Vec<u8>,
     program_counter: usize,
+    functions: Vec<FunctionObj>,
     stack: Vec<Value>,
+    call_stack: Vec<CallFrame>,
+    verbose_logging: bool,
 }
 
 pub fn run(bytes: Vec<u8>) -> Option<Value> {
@@ -25,51 +40,67 @@ impl VirtualMachine {
         Self {
             program: bytes,
             program_counter: 0,
+            functions: Vec::new(),
             stack: Vec::new(),
+            call_stack: Vec::new(),
+            verbose_logging: false,
         }
     }
 
     pub fn execute(&mut self) -> Option<Value> {
-        let mut values = HashMap::new();
+        while self.program_counter < self.program.len() {
+            let next = self.read_byte();
+            let instruction = ByteCode::try_from(next);
+            if let Ok(ByteCode::FunctionStart) = instruction {
+                let _function_index = self.read_byte();
+                let arity = self.read_byte();
+                self.functions.push(FunctionObj {
+                    arity,
+                    ip: self.program_counter,
+                });
+            }
+        }
+        println!("self.functions: {:?}", self.functions);
+
+        // Construct an initial call frame for the top-level code.
+        self.call(
+            FunctionObj {
+                arity: 0,
+                ip: self.program.len(), // TODO(anissen): Hack to avoid infinite loops
+            },
+            0,
+        );
+
+        self.program_counter = 0;
 
         while self.program_counter < self.program.len() {
-            let instruction = ByteCode::try_from(self.program[self.program_counter]).unwrap();
-            self.program_counter += 1;
-            println!("=== frame === (pc: {})", self.program_counter);
+            let next = self.read_byte();
+            let instruction = ByteCode::try_from(next).unwrap();
+            println!(
+                "\n=== Instruction: {:?} === (pc: {})",
+                instruction, self.program_counter
+            );
+            println!("Stack: {:?}", self.stack);
             match instruction {
                 ByteCode::PushBoolean => {
-                    let value_bytes = self.program[self.program_counter];
-                    self.program_counter += 1;
-                    let value = if value_bytes == 0 { false } else { true };
+                    let value_bytes = self.read_byte();
+                    let value = value_bytes != 0;
                     self.stack.push(Value::Boolean(value));
                 }
 
                 ByteCode::PushInteger => {
-                    let value_bytes: [u8; 4] = self.program
-                        [self.program_counter..self.program_counter + 4]
-                        .try_into()
-                        .unwrap();
-                    self.program_counter += 4;
-                    let raw = i32::from_be_bytes(value_bytes);
-                    self.stack.push(Value::Integer(raw));
+                    let value = self.read_i32();
+                    self.stack.push(Value::Integer(value));
                 }
 
                 ByteCode::PushFloat => {
-                    let value_bytes: [u8; 4] = self.program
-                        [self.program_counter..self.program_counter + 4]
-                        .try_into()
-                        .unwrap();
-                    let raw = u32::from_be_bytes(value_bytes);
-                    let value: f32 = f32::from_bits(raw);
-                    self.program_counter += 4;
+                    let value = self.read_f32();
                     self.push_float(value);
                 }
 
                 ByteCode::Addition => {
-                    let right = self.stack.pop().unwrap();
-                    let left = self.stack.pop().unwrap();
-                    // println!("{} + {}", left, right);
-                    // self.push_float(left + right);
+                    let right = self.pop_any();
+                    let left = self.pop_any();
                     match (right, left) {
                         (Value::Float(right), Value::Float(left)) => self.push_float(left + right),
 
@@ -82,10 +113,8 @@ impl VirtualMachine {
                 }
 
                 ByteCode::Subtraction => {
-                    let right = self.stack.pop().unwrap();
-                    let left = self.stack.pop().unwrap();
-                    // println!("{} - {}", left, right);
-                    // self.push_float(left - right);
+                    let right = self.pop_any();
+                    let left = self.pop_any();
                     match (right, left) {
                         (Value::Float(right), Value::Float(left)) => self.push_float(left - right),
 
@@ -98,10 +127,8 @@ impl VirtualMachine {
                 }
 
                 ByteCode::Multiplication => {
-                    let right = self.stack.pop().unwrap();
-                    let left = self.stack.pop().unwrap();
-                    // println!("{} - {}", left, right);
-                    // self.push_float(left * right);
+                    let right = self.pop_any();
+                    let left = self.pop_any();
                     match (right, left) {
                         (Value::Float(right), Value::Float(left)) => self.push_float(left * right),
 
@@ -114,14 +141,15 @@ impl VirtualMachine {
                 }
 
                 ByteCode::Division => {
-                    let right = self.stack.pop().unwrap();
-                    let left = self.stack.pop().unwrap();
-                    // println!("{} / {}", left, right);
+                    let right = self.pop_any();
+                    let left = self.pop_any();
+
+                    // TODO(anissen): Division by zero => 0
                     match (right, left) {
                         (Value::Float(right), Value::Float(left)) => self.push_float(left / right),
 
                         (Value::Integer(right), Value::Integer(left)) => {
-                            self.stack.push(Value::Integer(left / right))
+                            self.stack.push(Value::Float((left / right) as f32))
                         }
 
                         _ => panic!("incompatible types for division"),
@@ -138,24 +166,150 @@ impl VirtualMachine {
                     self.push_boolean(!value);
                 }
 
-                ByteCode::GetValue => {
-                    let index = self.program[self.program_counter]; // TODO(anissen): Make helper function to read bytes and increment program counter
-                    self.program_counter += 1;
-                    let value = values.get(&index).unwrap();
+                ByteCode::GetLocalValue => {
+                    let index = self.read_byte();
+                    println!("index is: {}", index);
+                    let stack_index = self.current_call_frame().stack_index;
+                    println!("slots is: {}", stack_index);
+                    let value = self.stack.get((stack_index + index) as usize).unwrap();
                     self.stack.push(*value);
                 }
 
-                ByteCode::SetValue => {
-                    let index = self.program[self.program_counter];
-                    self.program_counter += 1;
-                    let value = self.stack.pop().unwrap();
-                    values.insert(index, value);
-                    self.stack.push(value); // TODO(anissen): This could be done with a peek instead of a pop + push
+                ByteCode::SetLocalValue => {
+                    let index = self.read_byte();
+                    let stack_index = self.current_call_frame().stack_index;
+                    let value = self.peek(0);
+                    println!("set local: insert {:?} at index {}", value, index);
+                    let actual_index = (stack_index + index) as usize;
+                    println!("actual_index: {}", actual_index);
+
+                    if actual_index < self.stack.len() {
+                        self.stack[actual_index] = *value;
+                    } else if actual_index == self.stack.len() {
+                        self.stack.push(*value);
+                    } else {
+                        panic!("Trying to set local value outside stack size");
+                    }
+                }
+
+                ByteCode::FunctionStart => {
+                    let function_index = self.read_byte();
+                    println!("function_index: {}", function_index);
+
+                    // jump to function end HACK!
+                    while self.program_counter < self.program.len() {
+                        let instruction = self.read_byte();
+                        if let Ok(ByteCode::FunctionEnd) = ByteCode::try_from(instruction) {
+                            break;
+                        }
+                    }
+
+                    self.stack.push(Value::Function(function_index));
+                }
+
+                ByteCode::FunctionEnd => {
+                    let result = self.stack.pop().unwrap();
+
+                    // Pop the arguments from the stack
+                    let arity = self.current_call_frame().function.arity;
+                    self.discard(arity);
+
+                    // Push the return value
+                    self.stack.push(result);
+
+                    self.program_counter = self.current_call_frame().return_program_counter;
+                    self.call_stack.pop();
+                }
+
+                ByteCode::Call => {
+                    let arity = self.read_byte();
+                    let is_global = self.read_byte() == 1;
+                    let index = self.read_byte(); // TODO(anissen): This seems off
+                    let name_length = self.read_byte();
+                    let value_bytes: Vec<u8> = self.program
+                        [self.program_counter..self.program_counter + (name_length as usize)]
+                        .into();
+                    self.program_counter += name_length as usize;
+                    let name = String::from_utf8(value_bytes).unwrap();
+                    println!("function name: {}", name);
+                    println!("is_global: {}", is_global);
+                    println!("arity: {}", arity);
+                    println!("index: {}", index);
+
+                    let corrected_index = if is_global {
+                        index
+                    } else {
+                        self.current_call_frame().stack_index + index
+                    };
+                    println!("corrected_index: {}", corrected_index);
+                    let value = self.stack.get(corrected_index as usize).unwrap();
+                    println!("value: {:?}", value);
+                    let function_index = match value {
+                        Value::Function(f) => *f,
+                        _ => panic!("expected function, encountered some other type"),
+                    };
+                    println!("functions: {:?}", self.functions);
+                    println!("function_index: {:?}", function_index);
+                    let function = self.functions[function_index as usize].clone(); // TODO(anissen): Clone hack
+                    self.call(function, arity)
                 }
             }
-            println!("stack: {:?}", self.stack);
         }
+        println!("End stack: {:?}", self.stack);
         self.stack.pop()
+    }
+
+    fn call(&mut self, function: FunctionObj, arity: u8) {
+        println!("call function: {:?}", function);
+        println!("call with arity: {}", arity);
+        let ip = function.ip;
+        self.call_stack.push(CallFrame {
+            function,
+            return_program_counter: self.program_counter,
+            stack_index: (self.stack.len() - (arity as usize)) as u8,
+        });
+        println!("call: {:?}", self.current_call_frame());
+        self.program_counter = ip;
+    }
+
+    fn current_call_frame(&self) -> &CallFrame {
+        &self.call_stack[self.call_stack.len() - 1]
+    }
+
+    // TODO(anissen): All the function below should be part of the CallFrame impl instead (see https://craftinginterpreters.com/calls-and-functions.html @ "We’ll start at the top and plow through it.")
+    fn read_byte(&mut self) -> u8 {
+        let byte = self.program[self.program_counter];
+        self.program_counter += 1;
+        if self.verbose_logging {
+            println!("read_byte: {}", byte);
+        }
+        byte
+    }
+
+    fn read_4bytes(&mut self) -> [u8; 4] {
+        let value_bytes: [u8; 4] = self.program[self.program_counter..self.program_counter + 4]
+            .try_into()
+            .unwrap();
+        self.program_counter += 4;
+        value_bytes
+    }
+
+    fn read_i32(&mut self) -> i32 {
+        let raw = self.read_4bytes();
+        let value = i32::from_be_bytes(raw);
+        if self.verbose_logging {
+            println!("read_i32: {}", value);
+        }
+        value
+    }
+
+    fn read_f32(&mut self) -> f32 {
+        let raw = u32::from_be_bytes(self.read_4bytes());
+        let value = f32::from_bits(raw);
+        if self.verbose_logging {
+            println!("read_f32: {}", value);
+        }
+        value
     }
 
     fn pop_boolean(&mut self) -> bool {
@@ -163,6 +317,22 @@ impl VirtualMachine {
             Value::Boolean(b) => b,
             _ => panic!("expected boolean, encountered some other type"),
         }
+    }
+
+    fn peek(&self, distance: u8) -> &Value {
+        self.stack
+            .get(self.stack.len() - 1 - distance as usize)
+            .unwrap()
+    }
+
+    fn discard(&mut self, count: u8) {
+        for _ in 0..count {
+            self.stack.pop();
+        }
+    }
+
+    fn pop_any(&mut self) -> Value {
+        self.stack.pop().unwrap()
     }
 
     fn push_boolean(&mut self, value: bool) {

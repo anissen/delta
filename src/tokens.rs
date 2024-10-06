@@ -1,8 +1,10 @@
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenKind {
     Bang,
+    BackSlash,
     Comment,
     Equal,
+    Pipe,
     False,
     Float,
     Identifier,

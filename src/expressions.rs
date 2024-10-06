@@ -7,9 +7,17 @@ pub enum Expr {
     Grouping(Box<Expr>),
     Integer(i32),
     Float(f32),
+    Function {
+        params: Vec<Token>, // TODO(anissen): Do we also need type information here?
+        expr: Box<Expr>,
+    },
+    Call {
+        name: String,
+        args: Vec<Expr>, // TODO(anissen): Should arguments be named? E.g. `square value:5`.
+    },
     Assignment {
         variable: String, // TODO(anissen): Rename
-        // token: Token,
+        token: Token,
         expr: Box<Expr>,
     },
     Unary {
@@ -22,6 +30,9 @@ pub enum Expr {
         operator: BinaryOperator,
         token: Token,
         right: Box<Expr>,
+    },
+    Block {
+        exprs: Vec<Expr>,
     },
 }
 

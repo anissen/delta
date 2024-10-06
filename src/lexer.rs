@@ -1,5 +1,4 @@
 use crate::tokens::{Span, Token, TokenKind};
-use vec;
 
 struct Lexer {
     source: Vec<char>, // TODO(anissen): Should this be a `str`?
@@ -19,7 +18,7 @@ type Errors = Vec<Error>;
 
 // TODO(anissen): Ideally, I would like to return `Result<Vec<Token>, Errors>`
 // and have the caller handle it gracefully, but I can't figure out how.
-pub fn lex<'a>(source: &'a str) -> Result<Vec<Token>, String> {
+pub fn lex(source: &str) -> Result<Vec<Token>, String> {
     match Lexer::new().scan_tokens(source) {
         Ok(tokens) => Ok(tokens),
 
@@ -95,14 +94,16 @@ impl<'a> Lexer {
     fn scan_next(&mut self) -> Result<TokenKind, ()> {
         let char = self.advance();
         match char {
-            ' ' => Ok(TokenKind::Space),
+            ' ' => self.spaces(),
             '+' => Ok(TokenKind::Plus),
             '-' => Ok(TokenKind::Minus),
             '*' => Ok(TokenKind::Star),
             '/' => Ok(TokenKind::Slash),
+            '\\' => Ok(TokenKind::BackSlash),
             '!' => Ok(TokenKind::Bang),
             '=' => Ok(TokenKind::Equal),
             '#' => Ok(self.comment()),
+            '|' => Ok(TokenKind::Pipe),
             '(' => Ok(TokenKind::LeftParen),
             ')' => Ok(TokenKind::RightParen),
             '\t' => Ok(TokenKind::Tab),
@@ -113,13 +114,28 @@ impl<'a> Lexer {
         }
     }
 
+    fn spaces(&mut self) -> Result<TokenKind, ()> {
+        let mut spaces = 1;
+        while !self.is_at_end() && self.peek() == ' ' {
+            self.advance();
+            spaces += 1;
+        }
+        match spaces {
+            1 => Ok(TokenKind::Space),
+            4 => Ok(TokenKind::Tab), // HACK because Zed cannot handle hard tabs correctly. Scanning for '\t' should be sufficient.
+            _ => Err(()),
+        }
+    }
+
     fn identifier(&mut self) -> TokenKind {
-        while self.is_letter(self.peek()) {
+        while !self.is_at_end()
+            && (self.is_letter(self.peek()) || self.is_digit(self.peek()) || self.peek() == '_')
+        {
             self.advance();
         }
 
         let lexeme = self.source[self.start..self.current]
-            .into_iter()
+            .iter()
             .collect::<String>();
         match lexeme.as_str() {
             "true" => TokenKind::True,
@@ -173,7 +189,7 @@ impl<'a> Lexer {
     }
 
     fn is_digit(&self, value: char) -> bool {
-        value.is_digit(10)
+        value.is_ascii_digit()
     }
 
     fn is_at_end(&self) -> bool {

@@ -4,27 +4,27 @@ use crate::expressions::UnaryOperator;
 use crate::tokens::Token;
 use crate::tokens::TokenKind;
 use crate::tokens::TokenKind::{
-    Bang, Comment, Equal, False, Float, Identifier, Integer, LeftParen, Minus, NewLine, Plus,
-    RightParen, Slash, Space, Star, True,
+    BackSlash, Bang, Comment, Equal, False, Float, Identifier, Integer, LeftParen, Minus, NewLine,
+    Pipe, Plus, RightParen, Slash, Space, Star, True,
 };
 
 pub struct Parser {
     tokens: Vec<Token>,
     current: usize,
+    indentation: u8,
 }
 
 pub fn parse(tokens: Vec<Token>) -> Result<Vec<Expr>, String> {
     Parser::new(tokens).parse()
 }
 
+// TODO(anissen): Clean up `.unwrap` in this file
+
 impl Parser {
     fn new(tokens: Vec<Token>) -> Self {
         let non_whitespace_tokens: Vec<Token> = tokens
             .into_iter()
-            .filter(|token| match token.kind {
-                Comment | NewLine | Space => false, // TODO(anissen): We probably need to keep newline for semantic later
-                _ => true,
-            })
+            .filter(|token| !matches!(token.kind, Space))
             .collect();
         let kinds: Vec<TokenKind> = non_whitespace_tokens
             .clone()
@@ -35,6 +35,7 @@ impl Parser {
         Self {
             tokens: non_whitespace_tokens,
             current: 0,
+            indentation: 0,
         }
     }
 
@@ -42,7 +43,9 @@ impl Parser {
         let mut expressions = Vec::new();
         loop {
             let res = self.expression()?;
-            expressions.push(res);
+            if let Some(expression) = res {
+                expressions.push(expression);
+            }
             // if let Ok(expression) = res {
             //     expressions.push(expression);
             // } else {
@@ -58,22 +61,22 @@ impl Parser {
         Ok(expressions)
     }
 
-    fn expression(&mut self) -> Result<Expr, String> {
+    fn expression(&mut self) -> Result<Option<Expr>, String> {
         self.assignment()
     }
 
-    fn assignment(&mut self) -> Result<Expr, String> {
-        // TODO(anissen): Fix precedence
-        // let expr = self.or()?;
+    fn assignment(&mut self) -> Result<Option<Expr>, String> {
         let expr = self.term()?;
-        if self.matches(&[Equal]) {
-            match expr {
+        if expr.is_some() && self.matches(&[Equal]) {
+            match expr.unwrap() {
                 Expr::Variable(name) => {
+                    let token = self.previous();
                     let value = self.assignment()?;
-                    Ok(Expr::Assignment {
+                    Ok(Some(Expr::Assignment {
                         variable: name,
-                        expr: Box::new(value),
-                    })
+                        token,
+                        expr: Box::new(value.unwrap()),
+                    }))
                 }
 
                 _ => Err("Invalid assignment target".to_string()),
@@ -83,9 +86,9 @@ impl Parser {
         }
     }
 
-    fn term(&mut self) -> Result<Expr, String> {
+    fn term(&mut self) -> Result<Option<Expr>, String> {
         let mut expr = self.factor()?;
-        while self.matches(&[Plus, Minus]) {
+        while expr.is_some() && self.matches(&[Plus, Minus]) {
             let token = self.previous();
             let operator = match token.kind {
                 Plus => BinaryOperator::Addition,
@@ -93,19 +96,19 @@ impl Parser {
                 _ => panic!("unreachable"),
             };
             let right = self.factor()?;
-            expr = Expr::Binary {
-                left: Box::new(expr),
+            expr = Some(Expr::Binary {
+                left: Box::new(expr.unwrap()),
                 operator,
                 token,
-                right: Box::new(right),
-            };
+                right: Box::new(right.unwrap()),
+            });
         }
         Ok(expr)
     }
 
-    fn factor(&mut self) -> Result<Expr, String> {
+    fn factor(&mut self) -> Result<Option<Expr>, String> {
         let mut expr = self.unary()?;
-        while self.matches(&[Slash, Star]) {
+        while expr.is_some() && self.matches(&[Slash, Star]) {
             let token = self.previous();
             let operator = match token.kind {
                 Slash => BinaryOperator::Division,
@@ -113,17 +116,17 @@ impl Parser {
                 _ => panic!("unreachable"),
             };
             let right = self.unary()?;
-            expr = Expr::Binary {
-                left: Box::new(expr),
+            expr = Some(Expr::Binary {
+                left: Box::new(expr.unwrap()),
                 operator,
                 token,
-                right: Box::new(right),
-            };
+                right: Box::new(right.unwrap()),
+            });
         }
         Ok(expr)
     }
 
-    fn unary(&mut self) -> Result<Expr, String> {
+    fn unary(&mut self) -> Result<Option<Expr>, String> {
         if self.matches(&[Bang, Minus]) {
             let token = self.previous();
             let operator = match token.kind {
@@ -132,51 +135,83 @@ impl Parser {
                 _ => panic!("cannot happen"),
             };
             let right = self.unary()?;
-            Ok(Expr::Unary {
+            Ok(Some(Expr::Unary {
                 operator,
                 token,
-                expr: Box::new(right),
-            })
+                expr: Box::new(right.unwrap()),
+            }))
         } else {
-            self.primary()
+            self.call()
         }
     }
 
-    // fn whitespace(&mut self) -> Result<Option<Expr>, String> {
-    //     if self.matches(&[Comment]) {
-    //         Ok(Some(Expr::Comment(self.previous().lexeme)))
-    //     } else if self.matches(&[NewLine, Space]) {
-    //         Ok(None)
-    //     } else {
-    //         Err("Unhandled whitespace".to_string())
-    //     }
-    // }
+    fn call(&mut self) -> Result<Option<Expr>, String> {
+        let expr = self.primary()?;
+        if self.matches(&[Pipe]) {
+            self.call_with_first_arg(expr.unwrap())
+        } else {
+            Ok(expr)
+        }
+    }
 
-    fn primary(&mut self) -> Result<Expr, String> {
-        if self.matches(&[Identifier]) {
-            Ok(Expr::Variable(self.previous().lexeme))
-        } else if self.matches(&[Integer]) {
-            let lexeme = self.previous().lexeme;
-            let value = lexeme.parse::<i32>();
-            match value {
-                Ok(value) => Ok(Expr::Integer(value)),
-                Err(err) => Err(err.to_string()),
+    fn call_with_first_arg(&mut self, expr: Expr) -> Result<Option<Expr>, String> {
+        self.consume(&Identifier)?;
+        let lexeme = self.previous().lexeme;
+        // TODO(anissen): Check that function name exists and is a function
+        let first_arg = expr;
+        let mut args = vec![first_arg];
+        while !self.is_at_end() && !self.check(&NewLine) && !self.check(&Pipe) {
+            let arg = self.expression()?;
+            if let Some(arg) = arg {
+                args.push(arg);
             }
-        } else if self.matches(&[Float]) {
-            let lexeme = self.previous().lexeme;
-            let value = lexeme.parse::<f32>();
-            match value {
-                Ok(value) => Ok(Expr::Float(value)),
-                Err(err) => Err(err.to_string()),
+        }
+        let call_expr = Expr::Call { name: lexeme, args };
+        if self.matches(&[Pipe]) {
+            self.call_with_first_arg(call_expr)
+        } else {
+            Ok(Some(call_expr))
+        }
+    }
+
+    fn function(&mut self) -> Result<Option<Expr>, String> {
+        let mut params = vec![];
+        while self.matches(&[TokenKind::Identifier]) {
+            let param = self.previous();
+            params.push(param);
+        }
+        let expr = self.block()?;
+        Ok(Some(Expr::Function {
+            params,
+            expr: Box::new(expr.unwrap()),
+        }))
+    }
+
+    fn block(&mut self) -> Result<Option<Expr>, String> {
+        self.consume(&TokenKind::NewLine)?;
+        self.indentation += 1;
+        for _ in 0..self.indentation {
+            self.consume(&TokenKind::Tab)?;
+        }
+        let mut exprs = vec![];
+        loop {
+            if let Some(expr) = self.expression()? {
+                exprs.push(expr);
             }
-        } else if self.matches(&[False]) {
-            return Ok(Expr::Boolean(false));
-        } else if self.matches(&[True]) {
-            return Ok(Expr::Boolean(true));
-        } else if self.matches(&[LeftParen]) {
-            let expr = self.expression()?;
-            self.consume(&RightParen)?;
-            return Ok(Expr::Grouping(Box::new(expr)));
+            self.consume(&TokenKind::NewLine)?;
+            let matches_indentation =
+                (0..self.indentation).all(|_| self.matches(&[TokenKind::Tab])); // TODO(anissen): Should probably Err if indentation is wrong
+            if !matches_indentation {
+                break;
+            }
+        }
+        self.indentation -= 1;
+        Ok(Some(Expr::Block { exprs }))
+    }
+
+    fn whitespace(&mut self) -> Result<Option<Expr>, String> {
+        if self.matches(&[NewLine, Comment]) {
+            Ok(None)
         } else {
             let error = format!(
                 "Parse error of kind {:?} at {:?} ({:?})",
@@ -185,6 +220,39 @@ impl Parser {
                 self.previous().position
             );
             Err(error)
+        }
+    }
+
+    fn primary(&mut self) -> Result<Option<Expr>, String> {
+        if self.matches(&[Identifier]) {
+            let lexeme = self.previous().lexeme;
+            Ok(Some(Expr::Variable(lexeme)))
+        } else if self.matches(&[Integer]) {
+            let lexeme = self.previous().lexeme;
+            let value = lexeme.parse::<i32>();
+            match value {
+                Ok(value) => Ok(Some(Expr::Integer(value))),
+                Err(err) => Err(err.to_string()),
+            }
+        } else if self.matches(&[Float]) {
+            let lexeme = self.previous().lexeme;
+            let value = lexeme.parse::<f32>();
+            match value {
+                Ok(value) => Ok(Some(Expr::Float(value))),
+                Err(err) => Err(err.to_string()),
+            }
+        } else if self.matches(&[False]) {
+            Ok(Some(Expr::Boolean(false)))
+        } else if self.matches(&[True]) {
+            Ok(Some(Expr::Boolean(true)))
+        } else if self.matches(&[LeftParen]) {
+            let expr = self.expression()?;
+            self.consume(&RightParen)?;
+            Ok(Some(Expr::Grouping(Box::new(expr.unwrap()))))
+        } else if self.matches(&[BackSlash]) {
+            self.function()
+        } else {
+            self.whitespace()
         }
     }
 
@@ -202,7 +270,8 @@ impl Parser {
         if self.check(kind) {
             Ok(self.advance())
         } else {
-            Err("Unexpected token".to_string())
+            let message = format!("Expected {:?} but found {:?}", kind, &self.peek());
+            Err(message.to_string())
         }
     }
 
