@@ -59,11 +59,9 @@ impl Codegen {
 
                     self.emit_bytecode(ByteCode::FunctionStart);
 
-                    let mut index = 0;
-                    for param in params.iter() {
+                    for (index, param) in params.iter().enumerate() {
                         println!("set param: {}", param.lexeme);
-                        function_environment.insert(param.lexeme.clone(), index);
-                        index += 1;
+                        function_environment.insert(param.lexeme.clone(), index as u8);
 
                         function_locals.insert(param.lexeme.clone());
                     }

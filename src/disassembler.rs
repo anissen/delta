@@ -125,8 +125,7 @@ impl Disassembler {
                     self.program_counter += 1;
                     let value_bytes: Vec<u8> = self.program
                         [self.program_counter..self.program_counter + (name_length as usize)]
-                        .try_into()
-                        .unwrap();
+                        .into();
                     self.program_counter += name_length as usize;
                     let name = String::from_utf8(value_bytes).unwrap();
 

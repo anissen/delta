@@ -24,10 +24,7 @@ impl Parser {
     fn new(tokens: Vec<Token>) -> Self {
         let non_whitespace_tokens: Vec<Token> = tokens
             .into_iter()
-            .filter(|token| match token.kind {
-                Space => false,
-                _ => true,
-            })
+            .filter(|token| !matches!(token.kind, Space))
             .collect();
         let kinds: Vec<TokenKind> = non_whitespace_tokens
             .clone()

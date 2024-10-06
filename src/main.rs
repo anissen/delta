@@ -49,7 +49,7 @@ fn run(source: &String, file_name: Option<&String>) -> Result<Option<vm::Value>,
     println!("{}", source);
 
     println!("\n# lexing =>");
-    let tokens = lexer::lex(&source)?;
+    let tokens = lexer::lex(source)?;
     tokens
         .iter()
         .for_each(|token| println!("token: {:?} ({:?})", token.kind, token.lexeme));
