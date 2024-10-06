@@ -23,8 +23,6 @@ impl Codegen {
         }
     }
 
-    // TODO(anissen): We need a mapping from variable to an index
-
     fn do_emit(
         &mut self,
         expressions: Vec<Expr>,
@@ -47,16 +45,7 @@ impl Codegen {
                 Expr::Variable(name) => {
                     println!("read variable: {}", name);
                     let index = environment.get(&name).unwrap();
-                    // println!("locals: {:?}", locals);
-                    // println!("does locals contain {}?", name);
-                    // if locals.contains(&name) {
-                    // println!("yes!");
                     self.emit_bytecode(ByteCode::GetLocalValue);
-                    // } else {
-                    //     println!("no!");
-                    //     println!("environment: {:?}", environment);
-                    //     self.emit_bytecode(ByteCode::GetGlobalValue);
-                    // }
                     self.emit_byte(*index);
                 }
 
@@ -99,17 +88,15 @@ impl Codegen {
                 }
 
                 Expr::Call { name, args } => {
-                    let arg_count = args.len(); // + 1 /* pre-argument */;
+                    let arg_count = args.len();
                     self.do_emit(args, environment, locals);
                     self.emit_bytecode(ByteCode::Call);
                     self.emit_byte(arg_count as u8);
-                    // self.emit_byte(*self.value_index.get(&name).unwrap());
                     println!(
                         "call function '{}' with environment: {:?}",
                         name, environment
                     );
                     let index = environment.get(&name).unwrap();
-                    // println!("*** call locals: {:?}", locals);
                     if locals.contains(&name) {
                         self.emit_byte(0);
                     } else {

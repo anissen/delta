@@ -11,15 +11,12 @@ pub enum Value {
 
 #[derive(Debug, Clone)]
 struct FunctionObj {
-    // name: String,
     arity: u8,
-    // code: Vec<u8>,
     ip: usize, // TODO(anissen): Is ip required?
 }
 
 #[derive(Debug)]
 struct CallFrame {
-    // ip: usize,
     return_program_counter: usize,
     stack_index: u8,
     function: FunctionObj,
@@ -58,10 +55,8 @@ impl VirtualMachine {
                 let _function_index = self.read_byte();
                 let arity = self.read_byte();
                 self.functions.push(FunctionObj {
-                    // name: "placeholder".to_string(),
                     arity,
                     ip: self.program_counter,
-                    // code: vec![], // TODO(anissen): Get the code!
                 });
             }
         }
@@ -70,9 +65,7 @@ impl VirtualMachine {
         // Construct an initial call frame for the top-level code.
         self.call(
             FunctionObj {
-                // name: "main".to_string(),
                 arity: 0,
-                // code: vec![],           // TODO(anissen): Get the code
                 ip: self.program.len(), // TODO(anissen): Hack to avoid infinite loops
             },
             0,
@@ -182,12 +175,6 @@ impl VirtualMachine {
                     self.stack.push(*value);
                 }
 
-                // ByteCode::GetGlobalValue => {
-                //     let index = self.read_byte();
-                //     println!("index is: {}", index);
-                //     let value = self.stack.get(index as usize).unwrap();
-                //     self.stack.push(*value);
-                // }
                 ByteCode::SetLocalValue => {
                     let index = self.read_byte();
                     let stack_index = self.current_call_frame().stack_index;
@@ -202,7 +189,6 @@ impl VirtualMachine {
                     }
                 }
 
-                // https://godbolt.org/#g:!((g:!((g:!((h:codeEditor,i:(filename:'1',fontScale:14,fontUsePx:'0',j:1,lang:scala,selection:(endColumn:1,endLineNumber:16,positionColumn:1,positionLineNumber:16,selectionStartColumn:1,selectionStartLineNumber:16,startColumn:1,startLineNumber:16),source:'@main%0Adef+main()+%3D+%7B%0A++println(%22hello%22)%0A%0A++val+y+%3D+3%0A++def+twice(v:+Float)+%3D+%7B%0A++++v+*+2+%2B+y%0A++%7D%0A%0A++println(%22world%22)%0A%0A++val+x+%3D+twice(5)%0A%0A++println(x)%0A%7D%0A'),l:'5',n:'1',o:'Scala+source+%231',t:'0')),k:50,l:'4',n:'0',o:'',s:0,t:'0'),(g:!((h:compiler,i:(compiler:scalac300,filters:(b:'0',binary:'1',binaryObject:'1',commentOnly:'0',debugCalls:'1',demangle:'0',directives:'0',execute:'1',intel:'0',libraryCode:'0',trim:'1',verboseDemangling:'0'),flagsViewOpen:'1',fontScale:14,fontUsePx:'0',j:1,lang:scala,libs:!(),options:'',overrides:!(),selection:(endColumn:14,endLineNumber:65,positionColumn:14,positionLineNumber:65,selectionStartColumn:14,selectionStartLineNumber:65,startColumn:14,startLineNumber:65),source:1),l:'5',n:'0',o:'+scalac+3.0.0+(Editor+%231)',t:'0')),k:50,l:'4',n:'0',o:'',s:0,t:'0')),l:'2',n:'0',o:'',t:'0')),version:4
                 ByteCode::FunctionStart => {
                     let function_index = self.read_byte();
                     println!("function_index: {}", function_index);
@@ -214,27 +200,16 @@ impl VirtualMachine {
                             break;
                         }
                     }
-                    // self.program_counter -= 1;
 
                     self.stack.push(Value::Function(function_index));
                 }
 
                 ByteCode::FunctionEnd => {
-                    // self.pop_any(); // TODO(anissen): Is this right?
-
-                    // reset program counter
-                    // println!("slots: {}", self.current_call_frame().slots);
-                    // self.call_frames.pop();
-                    // self.program_counter = self.current_call_frame().ip;
-
                     let result = self.stack.pop().unwrap();
 
                     // Pop the arguments from the stack
                     let arity = self.current_call_frame().function.arity;
                     self.discard(arity);
-
-                    // Pop the function from the stack
-                    // self.stack.pop().unwrap();
 
                     // Push the return value
                     self.stack.push(result);
@@ -245,13 +220,9 @@ impl VirtualMachine {
 
                 ByteCode::Call => {
                     let arity = self.read_byte();
-                    println!("arity: {}", arity);
                     let is_global = self.read_byte() == 1;
-                    println!("is_global: {}", is_global);
                     let index = self.read_byte(); // TODO(anissen): This seems off
-                    println!("index: {}", index);
-                    let name_length = self.program[self.program_counter];
-                    self.program_counter += 1;
+                    let name_length = self.read_byte();
                     let value_bytes: Vec<u8> = self.program
                         [self.program_counter..self.program_counter + (name_length as usize)]
                         .try_into()
@@ -259,16 +230,17 @@ impl VirtualMachine {
                     self.program_counter += name_length as usize;
                     let name = String::from_utf8(value_bytes).unwrap();
                     println!("function name: {}", name);
-                    let the_index = if is_global {
+                    println!("is_global: {}", is_global);
+                    println!("arity: {}", arity);
+                    println!("index: {}", index);
+
+                    let corrected_index = if is_global {
                         index
                     } else {
-                        let stack_index = self.current_call_frame().stack_index; // TODO(anissen): This becomes zero and we try to get a negative index below :(
-                        println!("stack_index: {}", stack_index);
-                        stack_index + index // TODO(anissen): Is this right?
+                        self.current_call_frame().stack_index + index
                     };
-                    println!("the_index: {}", the_index);
-                    // };
-                    let value = self.stack.get(the_index as usize).unwrap();
+                    println!("corrected_index: {}", corrected_index);
+                    let value = self.stack.get(corrected_index as usize).unwrap();
                     println!("value: {:?}", value);
                     let function_index = match value {
                         Value::Function(f) => *f,
@@ -280,7 +252,6 @@ impl VirtualMachine {
                     self.call(function, arity)
                 }
             }
-            // println!("stack: {:?}", self.stack);
         }
         println!("End stack: {:?}", self.stack);
         self.stack.pop()
@@ -376,11 +347,4 @@ impl VirtualMachine {
     fn push_float(&mut self, value: f32) {
         self.stack.push(Value::Float(value));
     }
-
-    // fn pop_function(&mut self) -> u8 {
-    //     match self.stack.pop().unwrap() {
-    //         Value::Function(f) => f,
-    //         _ => panic!("expected function, encountered some other type"),
-    //     }
-    // }
 }

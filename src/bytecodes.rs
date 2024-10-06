@@ -3,7 +3,6 @@ pub enum ByteCode {
     Addition,
     Division,
     GetLocalValue,
-    // GetGlobalValue,
     Multiplication,
     Negation, // TODO(anissen): Rename all (here e.g. op_negate)?
     Not,
@@ -32,7 +31,6 @@ impl TryFrom<u8> for ByteCode {
             value if value == ByteCode::Addition as u8 => Ok(Self::Addition),
             value if value == ByteCode::Division as u8 => Ok(Self::Division),
             value if value == ByteCode::GetLocalValue as u8 => Ok(Self::GetLocalValue),
-            // value if value == ByteCode::GetGlobalValue as u8 => Ok(Self::GetGlobalValue),
             value if value == ByteCode::Multiplication as u8 => Ok(Self::Multiplication),
             value if value == ByteCode::Negation as u8 => Ok(Self::Negation),
             value if value == ByteCode::Not as u8 => Ok(Self::Not),

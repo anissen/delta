@@ -11,6 +11,7 @@ use crate::tokens::TokenKind::{
 pub struct Parser {
     tokens: Vec<Token>,
     current: usize,
+    indentation: u8,
 }
 
 pub fn parse(tokens: Vec<Token>) -> Result<Vec<Expr>, String> {
@@ -24,7 +25,7 @@ impl Parser {
         let non_whitespace_tokens: Vec<Token> = tokens
             .into_iter()
             .filter(|token| match token.kind {
-                Space => false, // TODO(anissen): We probably need to keep newline for semantic later
+                Space => false,
                 _ => true,
             })
             .collect();
@@ -37,6 +38,7 @@ impl Parser {
         Self {
             tokens: non_whitespace_tokens,
             current: 0,
+            indentation: 0,
         }
     }
 
@@ -67,14 +69,6 @@ impl Parser {
     }
 
     fn assignment(&mut self) -> Result<Option<Expr>, String> {
-        // TODO(anissen): Is this the right precedence for handling functions?
-        // if self.matches(&[BackSlash]) {
-        //     let name = self.consume(kind)
-        //     return Ok(Expr::Call { name: (), args: () })
-        // }
-
-        // TODO(anissen): Fix precedence
-        // let expr = self.or()?;
         let expr = self.term()?;
         if expr.is_some() && self.matches(&[Equal]) {
             match expr.unwrap() {
@@ -83,7 +77,7 @@ impl Parser {
                     let value = self.assignment()?;
                     Ok(Some(Expr::Assignment {
                         variable: name,
-                        token: token,
+                        token,
                         expr: Box::new(value.unwrap()),
                     }))
                 }
@@ -185,22 +179,21 @@ impl Parser {
 
     fn function(&mut self) -> Result<Option<Expr>, String> {
         let mut params = vec![];
-        while self.check(&TokenKind::Identifier) {
-            // TODO(anissen): Could this check be a `match` instead?
-            self.advance();
+        while self.matches(&[TokenKind::Identifier]) {
             let param = self.previous();
             params.push(param);
         }
-        let expr = self.block(1)?;
+        let expr = self.block()?;
         Ok(Some(Expr::Function {
             params,
             expr: Box::new(expr.unwrap()),
         }))
     }
 
-    fn block(&mut self, indent: u8) -> Result<Option<Expr>, String> {
+    fn block(&mut self) -> Result<Option<Expr>, String> {
         self.consume(&TokenKind::NewLine)?;
-        for _ in 0..indent {
+        self.indentation += 1;
+        for _ in 0..self.indentation {
             self.consume(&TokenKind::Tab)?;
         }
         let mut exprs = vec![];
@@ -209,18 +202,17 @@ impl Parser {
                 exprs.push(expr);
             }
             self.consume(&TokenKind::NewLine)?;
-            let matches_indentation = (0..indent).all(|_| self.matches(&[TokenKind::Tab])); // TODO(anissen): Should probably Err if indentation is wrong
+            let matches_indentation =
+                (0..self.indentation).all(|_| self.matches(&[TokenKind::Tab])); // TODO(anissen): Should probably Err if indentation is wrong
             if !matches_indentation {
                 break;
             }
         }
+        self.indentation -= 1;
         Ok(Some(Expr::Block { exprs }))
     }
 
     fn whitespace(&mut self) -> Result<Option<Expr>, String> {
-        // if self.matches(&[Comment]) {
-        //     Ok(Some(Expr::Comment(self.previous().lexeme)))
-        // } else if self.matches(&[NewLine, Space]) {
         if self.matches(&[NewLine, Comment]) {
             Ok(None)
         } else {
@@ -233,9 +225,6 @@ impl Parser {
             Err(error)
         }
     }
-
-    // TODO(anissen): Parse blocks (e.g. (newline followed by) tabs followed by some expression) at the same indentation level
-    // TODO: parse block
 
     fn primary(&mut self) -> Result<Option<Expr>, String> {
         if self.matches(&[Identifier]) {
@@ -263,34 +252,6 @@ impl Parser {
             let expr = self.expression()?;
             self.consume(&RightParen)?;
             Ok(Some(Expr::Grouping(Box::new(expr.unwrap()))))
-        // } else if self.matches(&[Pipe]) {
-        //     self.consume(&Identifier)?;
-        //     let lexeme = self.previous().lexeme;
-        //     // TODO(anissen): Check that function name exists and is a function
-        //     let mut args = vec![];
-        //     while !self.is_at_end() && !self.check(&NewLine) {
-        //         let arg = self.expression()?;
-        //         args.push(arg.unwrap());
-        //     }
-        //     Ok(Some(Expr::Call { name: lexeme, args }))
-        // } else if self.matches(&[BackSlash]) {
-        //     let mut params = vec![];
-        //     while self.check(&TokenKind::Identifier) {
-        //         // TODO(anissen): Could this check be a `match` instead?
-        //         self.advance();
-        //         let param = self.previous();
-        //         params.push(param);
-        //     }
-        //     self.consume(&TokenKind::BackSlash)?;
-        //     // self.consume(&TokenKind::NewLine)?;
-        //     // self.consume(&TokenKind::Tab)?;
-        //     // TODO(anissen): Support a variable list of parameters
-        //     let expr = self.expression()?;
-        //     println!("function expression: {:?}", expr);
-        //     Ok(Some(Expr::Function {
-        //         params,
-        //         expr: Box::new(expr.unwrap()),
-        //     }))
         } else if self.matches(&[BackSlash]) {
             self.function()
         } else {
@@ -322,16 +283,6 @@ impl Parser {
             false
         } else {
             &self.peek().kind == kind
-        }
-    }
-
-    // TODO(anissen): Need to do something smarter to handle tab scoping
-    fn check_next(&self, kind: &TokenKind) -> bool {
-        let next_index = self.current + 1;
-        if next_index >= self.tokens.len() {
-            false
-        } else {
-            &self.tokens[next_index].kind == kind
         }
     }
 

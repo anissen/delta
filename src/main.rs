@@ -21,9 +21,6 @@ fn main() {
 
     let source_path = &args[1];
 
-    // let path = Path::new("..").join("examples").join("workbench.∆");
-    // let source_path = path.to_str().unwrap().to_string();
-
     let result = run_file(source_path);
     match result {
         Ok(Some(value)) => println!("Result: {:?}", value),
@@ -71,7 +68,6 @@ fn run(source: &String, file_name: Option<&String>) -> Result<Option<vm::Value>,
     for ele in disassembled {
         println!("{:?}", ele);
     }
-    // println!("disassembled: {:?}", disassembled);
 
     println!("\n# vm =>");
     let result = vm::run(bytecodes);
@@ -170,6 +166,38 @@ add_one = \v
 
 5 | square | add 3 | add_one",
             vm::Value::Integer(29),
+        )
+    }
+
+    #[test]
+    fn temp_values_in_function() {
+        assert_ok(
+            r"
+       add_one = \v
+           x = 1
+           y = x
+           v + y
+
+       5 | add_one
+    ",
+            vm::Value::Integer(6),
+        )
+    }
+
+    #[test]
+    fn temp_value_in_function_call() {
+        assert_ok(
+            r"
+            add = \v1 v2
+                v1 + v2
+
+            add_one = \v
+                x = 1
+                v | add x
+
+            5 | add_one
+    ",
+            vm::Value::Integer(6),
         )
     }
 }
