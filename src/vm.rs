@@ -182,10 +182,13 @@ impl VirtualMachine {
                     println!("set local: insert {:?} at index {}", value, index);
                     let actual_index = (stack_index + index) as usize;
                     println!("actual_index: {}", actual_index);
-                    if self.stack.len() > actual_index {
+
+                    if actual_index < self.stack.len() {
                         self.stack[actual_index] = *value;
+                    } else if actual_index == self.stack.len() {
+                        self.stack.push(*value);
                     } else {
-                        panic!(); // TODO(anissen): ???
+                        panic!("Trying to set local value outside stack size");
                     }
                 }
 

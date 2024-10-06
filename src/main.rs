@@ -173,13 +173,12 @@ add_one = \v
     fn temp_values_in_function() {
         assert_ok(
             r"
-       add_one = \v
-           x = 1
-           y = x
-           v + y
+add_one = \v
+    x = 1
+    y = x
+    v + y
 
-       5 | add_one
-    ",
+5 | add_one",
             vm::Value::Integer(6),
         )
     }
@@ -188,15 +187,14 @@ add_one = \v
     fn temp_value_in_function_call() {
         assert_ok(
             r"
-            add = \v1 v2
-                v1 + v2
+add = \v1 v2
+    v1 + v2
 
-            add_one = \v
-                x = 1
-                v | add x
+add_one = \v
+    x = 1
+    v | add x
 
-            5 | add_one
-    ",
+5 | add_one",
             vm::Value::Integer(6),
         )
     }
