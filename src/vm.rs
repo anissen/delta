@@ -144,12 +144,21 @@ impl VirtualMachine {
                     let right = self.pop_any();
                     let left = self.pop_any();
 
-                    // TODO(anissen): Division by zero => 0
                     match (right, left) {
-                        (Value::Float(right), Value::Float(left)) => self.push_float(left / right),
+                        (Value::Float(right), Value::Float(left)) => {
+                            if right == 0.0 {
+                                self.push_float(0.0);
+                            } else {
+                                self.push_float(left / right)
+                            }
+                        }
 
                         (Value::Integer(right), Value::Integer(left)) => {
-                            self.stack.push(Value::Float((left / right) as f32))
+                            if right == 0 {
+                                self.push_integer(0);
+                            } else {
+                                self.push_integer(left / right)
+                            }
                         }
 
                         _ => panic!("incompatible types for division"),
@@ -348,5 +357,9 @@ impl VirtualMachine {
 
     fn push_float(&mut self, value: f32) {
         self.stack.push(Value::Float(value));
+    }
+
+    fn push_integer(&mut self, value: i32) {
+        self.stack.push(Value::Integer(value));
     }
 }
