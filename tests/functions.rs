@@ -1,5 +1,3 @@
-// should use mod common; instead
-
 mod common;
 
 use common::assert_ok;
