@@ -69,11 +69,11 @@ impl Parser {
         let expr = self.term()?;
         if expr.is_some() && self.matches(&[Equal]) {
             match expr.unwrap() {
-                Expr::Variable(name) => {
+                Expr::Value(name) => {
                     let token = self.previous();
                     let value = self.assignment()?;
                     Ok(Some(Expr::Assignment {
-                        variable: name,
+                        value: name,
                         token,
                         expr: Box::new(value.unwrap()),
                     }))
@@ -226,7 +226,7 @@ impl Parser {
     fn primary(&mut self) -> Result<Option<Expr>, String> {
         if self.matches(&[Identifier]) {
             let lexeme = self.previous().lexeme;
-            Ok(Some(Expr::Variable(lexeme)))
+            Ok(Some(Expr::Value(lexeme)))
         } else if self.matches(&[Integer]) {
             let lexeme = self.previous().lexeme;
             let value = lexeme.parse::<i32>();

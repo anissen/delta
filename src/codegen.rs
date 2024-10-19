@@ -41,8 +41,8 @@ impl Codegen {
 
                 Expr::Float(f) => self.emit_bytes(ByteCode::PushFloat, f.to_be_bytes()),
 
-                Expr::Variable(name) => {
-                    println!("read variable: {}", name);
+                Expr::Value(name) => {
+                    println!("read value: {}", name);
                     let index = environment.get(&name).unwrap();
                     self.emit_bytecode(ByteCode::GetLocalValue);
                     self.emit_byte(*index);
@@ -109,7 +109,7 @@ impl Codegen {
                 }
 
                 Expr::Assignment {
-                    variable,
+                    value,
                     token: _,
                     expr,
                 } => {
@@ -118,9 +118,9 @@ impl Codegen {
                     self.emit_bytecode(ByteCode::SetLocalValue);
 
                     let index = environment.len() as u8;
-                    println!("insert variable {} at index {}", variable, index);
-                    environment.insert(variable.clone(), index);
-                    locals.insert(variable.clone());
+                    println!("insert value {} at index {}", value, index);
+                    environment.insert(value.clone(), index);
+                    locals.insert(value.clone());
                     self.emit_byte(index);
                 }
 

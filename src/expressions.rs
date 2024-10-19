@@ -2,7 +2,7 @@ use crate::tokens::Token;
 
 #[derive(Debug)]
 pub enum Expr {
-    Variable(String), // TODO(anissen): Rename this (the value is not variable)
+    Value(String),
     Boolean(bool),
     Grouping(Box<Expr>),
     Integer(i32),
@@ -16,7 +16,7 @@ pub enum Expr {
         args: Vec<Expr>, // TODO(anissen): Should arguments be named? E.g. `square value:5`.
     },
     Assignment {
-        variable: String, // TODO(anissen): Rename
+        value: String,
         token: Token,
         expr: Box<Expr>,
     },
