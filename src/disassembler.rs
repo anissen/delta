@@ -24,15 +24,9 @@ impl Disassembler {
             let instruction = ByteCode::try_from(self.program[self.program_counter]).unwrap();
             self.program_counter += 1;
             match instruction {
-                ByteCode::PushBoolean => {
-                    let value_bytes = self.program[self.program_counter];
-                    self.program_counter += 1;
-                    let value = if value_bytes == 0 { "false" } else { "true" };
-                    res.push(vec![
-                        "push_boolean".to_string(),
-                        format!("(value: {})", value),
-                    ]);
-                }
+                ByteCode::PushTrue => res.push(vec!["push_true".to_string()]),
+
+                ByteCode::PushFalse => res.push(vec!["push_false".to_string()]),
 
                 ByteCode::PushInteger => {
                     let value_bytes: [u8; 4] = self.program

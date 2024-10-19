@@ -3,7 +3,8 @@ use crate::bytecodes::ByteCode;
 // TODO(anissen): See https://github.com/brightly-salty/rox/blob/master/src/value.rs
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Value {
-    Boolean(bool),
+    True,
+    False,
     Integer(i32),
     Float(f32),
     Function(u8),
@@ -82,11 +83,9 @@ impl VirtualMachine {
             );
             println!("Stack: {:?}", self.stack);
             match instruction {
-                ByteCode::PushBoolean => {
-                    let value_bytes = self.read_byte();
-                    let value = value_bytes != 0;
-                    self.stack.push(Value::Boolean(value));
-                }
+                ByteCode::PushTrue => self.stack.push(Value::True),
+
+                ByteCode::PushFalse => self.stack.push(Value::False),
 
                 ByteCode::PushInteger => {
                     let value = self.read_i32();
@@ -323,7 +322,8 @@ impl VirtualMachine {
 
     fn pop_boolean(&mut self) -> bool {
         match self.stack.pop().unwrap() {
-            Value::Boolean(b) => b,
+            Value::True => true,
+            Value::False => false,
             _ => panic!("expected boolean, encountered some other type"),
         }
     }
@@ -345,7 +345,8 @@ impl VirtualMachine {
     }
 
     fn push_boolean(&mut self, value: bool) {
-        self.stack.push(Value::Boolean(value));
+        let v = if value { Value::True } else { Value::False };
+        self.stack.push(v);
     }
 
     fn pop_float(&mut self) -> f32 {

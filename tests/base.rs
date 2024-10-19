@@ -24,6 +24,16 @@ fn float_plus() {
 }
 
 #[test]
+fn boolean_true() {
+    assert_ok(r"true", vm::Value::True);
+}
+
+#[test]
+fn boolean_false() {
+    assert_ok(r"false", vm::Value::False);
+}
+
+#[test]
 fn integer_division_by_zero() {
     assert_ok(
         r"
