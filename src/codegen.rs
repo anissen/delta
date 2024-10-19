@@ -33,10 +33,9 @@ impl Codegen {
         for expr in expressions {
             println!("do_emit with expr: {:?}", expr);
             match expr {
-                Expr::Boolean(b) => {
-                    self.emit_bytecode(ByteCode::PushBoolean);
-                    self.emit_byte(b as u8);
-                }
+                Expr::Boolean(true) => self.emit_bytecode(ByteCode::PushTrue),
+
+                Expr::Boolean(false) => self.emit_bytecode(ByteCode::PushFalse),
 
                 Expr::Integer(i) => self.emit_bytes(ByteCode::PushInteger, i.to_be_bytes()),
 

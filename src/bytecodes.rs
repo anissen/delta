@@ -6,7 +6,8 @@ pub enum ByteCode {
     Multiplication,
     Negation, // TODO(anissen): Rename all (here e.g. op_negate)?
     Not,
-    PushBoolean, // TODO(anissen): Should be split into PushTrue + PushFalse
+    PushTrue,
+    PushFalse,
     PushFloat,
     PushInteger,
     SetLocalValue,
@@ -34,7 +35,8 @@ impl TryFrom<u8> for ByteCode {
             value if value == ByteCode::Multiplication as u8 => Ok(Self::Multiplication),
             value if value == ByteCode::Negation as u8 => Ok(Self::Negation),
             value if value == ByteCode::Not as u8 => Ok(Self::Not),
-            value if value == ByteCode::PushBoolean as u8 => Ok(Self::PushBoolean),
+            value if value == ByteCode::PushTrue as u8 => Ok(Self::PushTrue),
+            value if value == ByteCode::PushFalse as u8 => Ok(Self::PushFalse),
             value if value == ByteCode::PushFloat as u8 => Ok(Self::PushFloat),
             value if value == ByteCode::PushInteger as u8 => Ok(Self::PushInteger),
             value if value == ByteCode::SetLocalValue as u8 => Ok(Self::SetLocalValue),
