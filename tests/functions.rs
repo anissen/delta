@@ -89,3 +89,34 @@ add_one = \v
         vm::Value::Integer(6),
     )
 }
+
+#[test]
+fn comparison_function() {
+    assert_ok(
+        r"
+is_5 = \v
+    v == 5
+
+5 | is_5",
+        vm::Value::True,
+    )
+}
+
+// #[test]
+// fn indexes_are_off() {
+//     assert_ok(
+//         r"
+// add = \v1 v2
+//     v1 + v2
+
+// is_even = \v3
+//     v3 % 2 == 0
+
+// is_odd = \v4
+//     res = v4 | is_even
+//     !res
+
+// 5 | is_odd",
+//         vm::Value::True,
+//     )
+// }

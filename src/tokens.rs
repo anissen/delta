@@ -1,10 +1,10 @@
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenKind {
-    Bang,
     BackSlash,
+    Bang,
     Comment,
     Equal,
-    Pipe,
+    EqualEqual,
     False,
     Float,
     Identifier,
@@ -12,6 +12,8 @@ pub enum TokenKind {
     LeftParen,
     Minus,
     NewLine,
+    Percent,
+    Pipe,
     Plus,
     RightParen,
     Slash,

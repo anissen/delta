@@ -71,6 +71,14 @@ impl Disassembler {
                     res.push(vec!["div".to_string()]);
                 }
 
+                ByteCode::Modulo => {
+                    res.push(vec!["mod".to_string()]);
+                }
+
+                ByteCode::Equals => {
+                    res.push(vec!["eq".to_string()]);
+                }
+
                 ByteCode::Negation => {
                     res.push(vec!["neg".to_string()]);
                 }

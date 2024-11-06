@@ -96,11 +96,14 @@ impl<'a> Lexer {
         match char {
             ' ' => self.spaces(),
             '+' => Ok(TokenKind::Plus),
+            '-' if self.is_digit(self.peek()) => Ok(self.number()),
             '-' => Ok(TokenKind::Minus),
             '*' => Ok(TokenKind::Star),
             '/' => Ok(TokenKind::Slash),
+            '%' => Ok(TokenKind::Percent),
             '\\' => Ok(TokenKind::BackSlash),
             '!' => Ok(TokenKind::Bang),
+            '=' if self.matches('=') => Ok(TokenKind::EqualEqual),
             '=' => Ok(TokenKind::Equal),
             '#' => Ok(self.comment()),
             '|' => Ok(TokenKind::Pipe),
@@ -166,6 +169,15 @@ impl<'a> Lexer {
             self.advance();
         }
         TokenKind::Comment
+    }
+
+    fn matches(&mut self, c: char) -> bool {
+        if self.peek() == c {
+            self.advance();
+            true
+        } else {
+            false
+        }
     }
 
     fn peek(&self) -> char {

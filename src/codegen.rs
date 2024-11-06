@@ -2,6 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use crate::bytecodes::ByteCode;
 use crate::expressions::{BinaryOperator, Expr, UnaryOperator};
+use crate::tokens::TokenKind;
 
 pub struct Codegen {
     bytes: Vec<u8>,
@@ -124,6 +125,16 @@ impl Codegen {
                     self.emit_byte(index);
                 }
 
+                Expr::Comparison { left, token, right } => {
+                    // println!("comparison, with environment: {:?}", environment);
+                    self.do_emit(vec![*left, *right], environment, locals);
+
+                    match token.kind {
+                        TokenKind::EqualEqual => self.emit_bytecode(ByteCode::Equals),
+                        _ => panic!("unexpected comparison operator"),
+                    }
+                }
+
                 Expr::Unary {
                     operator,
                     token: _,
@@ -157,6 +168,8 @@ impl Codegen {
                         }
 
                         BinaryOperator::Division => self.emit_bytecode(ByteCode::Division),
+
+                        BinaryOperator::Modulus => self.emit_bytecode(ByteCode::Modulo),
                     }
                 }
             };

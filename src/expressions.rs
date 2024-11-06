@@ -20,6 +20,11 @@ pub enum Expr {
         token: Token,
         expr: Box<Expr>,
     },
+    Comparison {
+        left: Box<Expr>,
+        token: Token,
+        right: Box<Expr>,
+    },
     Unary {
         operator: UnaryOperator,
         token: Token,
@@ -34,6 +39,7 @@ pub enum Expr {
     Block {
         exprs: Vec<Expr>,
     },
+    // TODO(anissen): Add an Error and/or Todo expression?
 }
 
 #[derive(Debug)]
@@ -48,4 +54,5 @@ pub enum BinaryOperator {
     Subtraction,
     Multiplication,
     Division,
+    Modulus,
 }

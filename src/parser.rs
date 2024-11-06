@@ -4,8 +4,8 @@ use crate::expressions::UnaryOperator;
 use crate::tokens::Token;
 use crate::tokens::TokenKind;
 use crate::tokens::TokenKind::{
-    BackSlash, Bang, Comment, Equal, False, Float, Identifier, Integer, LeftParen, Minus, NewLine,
-    Pipe, Plus, RightParen, Slash, Space, Star, True,
+    BackSlash, Bang, Comment, Equal, EqualEqual, False, Float, Identifier, Integer, LeftParen,
+    Minus, NewLine, Percent, Pipe, Plus, RightParen, Slash, Space, Star, True,
 };
 
 pub struct Parser {
@@ -66,7 +66,7 @@ impl Parser {
     }
 
     fn assignment(&mut self) -> Result<Option<Expr>, String> {
-        let expr = self.term()?;
+        let expr = self.comparison()?;
         if expr.is_some() && self.matches(&[Equal]) {
             match expr.unwrap() {
                 Expr::Value(name) => {
@@ -81,6 +81,21 @@ impl Parser {
 
                 _ => Err("Invalid assignment target".to_string()),
             }
+        } else {
+            Ok(expr)
+        }
+    }
+
+    fn comparison(&mut self) -> Result<Option<Expr>, String> {
+        let expr = self.term()?;
+        if expr.is_some() && self.matches(&[EqualEqual]) {
+            let token = self.previous();
+            let right = self.comparison()?;
+            Ok(Some(Expr::Comparison {
+                left: Box::new(expr.unwrap()),
+                token,
+                right: Box::new(right.unwrap()),
+            }))
         } else {
             Ok(expr)
         }
@@ -108,11 +123,12 @@ impl Parser {
 
     fn factor(&mut self) -> Result<Option<Expr>, String> {
         let mut expr = self.unary()?;
-        while expr.is_some() && self.matches(&[Slash, Star]) {
+        while expr.is_some() && self.matches(&[Slash, Star, Percent]) {
             let token = self.previous();
             let operator = match token.kind {
                 Slash => BinaryOperator::Division,
                 Star => BinaryOperator::Multiplication,
+                Percent => BinaryOperator::Modulus,
                 _ => panic!("unreachable"),
             };
             let right = self.unary()?;

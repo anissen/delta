@@ -132,7 +132,7 @@ impl VirtualMachine {
                         (Value::Float(right), Value::Float(left)) => self.push_float(left * right),
 
                         (Value::Integer(right), Value::Integer(left)) => {
-                            self.stack.push(Value::Integer(left * right))
+                            self.push_integer(left * right)
                         }
 
                         _ => panic!("incompatible types for multiplication"),
@@ -162,6 +162,28 @@ impl VirtualMachine {
 
                         _ => panic!("incompatible types for division"),
                     }
+                }
+
+                ByteCode::Modulo => {
+                    let modulus = self.pop_any();
+                    let value = self.pop_any();
+                    match (value, modulus) {
+                        (Value::Float(value), Value::Float(modulus)) => {
+                            self.push_float(value % modulus)
+                        }
+
+                        (Value::Integer(value), Value::Integer(modulus)) => {
+                            self.push_integer(value % modulus)
+                        }
+
+                        _ => panic!("incompatible types for multiplication"),
+                    }
+                }
+
+                ByteCode::Equals => {
+                    let right = self.pop_any();
+                    let left = self.pop_any();
+                    self.push_boolean(left == right)
                 }
 
                 ByteCode::Negation => {
