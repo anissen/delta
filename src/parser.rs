@@ -261,6 +261,9 @@ impl Parser {
             Ok(Some(Expr::Boolean(false)))
         } else if self.matches(&[True]) {
             Ok(Some(Expr::Boolean(true)))
+        } else if self.matches(&[TokenKind::String]) {
+            let lexeme = self.previous().lexeme;
+            Ok(Some(Expr::String(lexeme)))
         } else if self.matches(&[LeftParen]) {
             let expr = self.expression()?;
             self.consume(&RightParen)?;

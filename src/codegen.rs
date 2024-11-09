@@ -49,6 +49,15 @@ impl Codegen {
                     self.emit_byte(*index);
                 }
 
+                Expr::String(str) => {
+                    self.emit_bytecode(ByteCode::PushString);
+                    if str.len() > 255 {
+                        panic!("string too long!");
+                    }
+                    self.emit_byte(str.len() as u8);
+                    self.emit_raw_bytes(&mut str.as_bytes().to_vec());
+                }
+
                 Expr::Grouping(expr) => self.do_emit(vec![*expr], environment, locals),
 
                 Expr::Block { exprs } => self.do_emit(exprs, environment, locals),
@@ -102,7 +111,7 @@ impl Codegen {
                     }
                     self.emit_byte(*index);
 
-                    if name.len() > 64 {
+                    if name.len() > 255 {
                         panic!("function name too long!");
                     }
                     self.emit_byte(name.len() as u8);

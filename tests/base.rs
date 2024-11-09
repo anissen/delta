@@ -34,6 +34,15 @@ fn boolean_false() {
 }
 
 #[test]
+fn strings() {
+    assert_ok(r#""""#, vm::Value::String("".to_string()));
+    assert_ok(
+        r#""hello world""#,
+        vm::Value::String("hello world".to_string()),
+    );
+}
+
+#[test]
 fn modulo_integer() {
     assert_ok(r"4 % 2", vm::Value::Integer(0));
     assert_ok(r"5 % 2", vm::Value::Integer(1));

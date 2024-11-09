@@ -19,6 +19,7 @@ pub enum TokenKind {
     Slash,
     Space,
     Star,
+    String,
     Tab,
     True,
 }

@@ -7,6 +7,7 @@ pub enum Expr {
     Grouping(Box<Expr>),
     Integer(i32),
     Float(f32),
+    String(String),
     Function {
         params: Vec<Token>, // TODO(anissen): Do we also need type information here?
         expr: Box<Expr>,

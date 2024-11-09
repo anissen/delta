@@ -1,12 +1,15 @@
+use core::str;
+
 use crate::bytecodes::ByteCode;
 
 // TODO(anissen): See https://github.com/brightly-salty/rox/blob/master/src/value.rs
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Value {
     True,
     False,
     Integer(i32),
     Float(f32),
+    String(String),
     Function(u8),
 }
 
@@ -95,6 +98,17 @@ impl VirtualMachine {
                 ByteCode::PushFloat => {
                     let value = self.read_f32();
                     self.push_float(value);
+                }
+
+                ByteCode::PushString => {
+                    let string_length = self.program[self.program_counter];
+                    self.program_counter += 1;
+                    let value_bytes: Vec<u8> = self.program
+                        [self.program_counter..self.program_counter + (string_length as usize)]
+                        .into();
+                    self.program_counter += string_length as usize;
+                    let string = String::from_utf8(value_bytes).unwrap();
+                    self.push_string(string);
                 }
 
                 ByteCode::Addition => {
@@ -201,22 +215,26 @@ impl VirtualMachine {
                     println!("index is: {}", index);
                     let stack_index = self.current_call_frame().stack_index;
                     println!("slots is: {}", stack_index);
-                    let value = self.stack.get((stack_index + index) as usize).unwrap();
-                    self.stack.push(*value);
+                    let value = self
+                        .stack
+                        .get((stack_index + index) as usize)
+                        .unwrap()
+                        .clone();
+                    self.stack.push(value);
                 }
 
                 ByteCode::SetLocalValue => {
                     let index = self.read_byte();
                     let stack_index = self.current_call_frame().stack_index;
-                    let value = self.peek(0);
+                    let value = self.peek(0).clone();
                     println!("set local: insert {:?} at index {}", value, index);
                     let actual_index = (stack_index + index) as usize;
                     println!("actual_index: {}", actual_index);
 
                     if actual_index < self.stack.len() {
-                        self.stack[actual_index] = *value;
+                        self.stack[actual_index] = value;
                     } else if actual_index == self.stack.len() {
-                        self.stack.push(*value);
+                        self.stack.push(value);
                     } else {
                         panic!("Trying to set local value outside stack size");
                     }
@@ -384,5 +402,9 @@ impl VirtualMachine {
 
     fn push_integer(&mut self, value: i32) {
         self.stack.push(Value::Integer(value));
+    }
+
+    fn push_string(&mut self, value: String) {
+        self.stack.push(Value::String(value));
     }
 }

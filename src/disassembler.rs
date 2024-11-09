@@ -55,6 +55,18 @@ impl Disassembler {
                     ]);
                 }
 
+                ByteCode::PushString => {
+                    let string_length = self.program[self.program_counter];
+                    self.program_counter += 1;
+                    let value_bytes: Vec<u8> = self.program
+                        [self.program_counter..self.program_counter + (string_length as usize)]
+                        .into();
+                    self.program_counter += string_length as usize;
+                    let string = String::from_utf8(value_bytes).unwrap();
+
+                    res.push(vec![format!("push_string: {}", string)]);
+                }
+
                 ByteCode::Addition => {
                     res.push(vec!["add".to_string()]);
                 }

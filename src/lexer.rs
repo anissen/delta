@@ -61,7 +61,10 @@ impl<'a> Lexer {
                 // start: self.start,
                 // length: self.current - self.start,
             };
-            let lexeme = source[self.start..self.current].to_string();
+            let lexeme = match result {
+                Ok(TokenKind::String) => source[self.start + 1..self.current - 1].to_string(), // drop quotes
+                _ => source[self.start..self.current].to_string(),
+            };
 
             match result {
                 Ok(kind) => {
@@ -91,7 +94,7 @@ impl<'a> Lexer {
         }
     }
 
-    fn scan_next(&mut self) -> Result<TokenKind, ()> {
+    fn scan_next(&mut self) -> Result<TokenKind, String> {
         let char = self.advance();
         match char {
             ' ' => self.spaces(),
@@ -111,13 +114,14 @@ impl<'a> Lexer {
             ')' => Ok(TokenKind::RightParen),
             '\t' => Ok(TokenKind::Tab),
             '\n' => Ok(TokenKind::NewLine),
+            '\"' => self.string(),
             c if self.is_letter(c) => Ok(self.identifier()),
             c if self.is_digit(c) => Ok(self.number()),
-            _ => Err(()),
+            _ => Err(format!("Unexpected token: {}", char)),
         }
     }
 
-    fn spaces(&mut self) -> Result<TokenKind, ()> {
+    fn spaces(&mut self) -> Result<TokenKind, String> {
         let mut spaces = 1;
         while !self.is_at_end() && self.peek() == ' ' {
             self.advance();
@@ -126,7 +130,7 @@ impl<'a> Lexer {
         match spaces {
             1 => Ok(TokenKind::Space),
             4 => Ok(TokenKind::Tab), // HACK because Zed cannot handle hard tabs correctly. Scanning for '\t' should be sufficient.
-            _ => Err(()),
+            _ => Err("Unexpected whitespace".to_string()),
         }
     }
 
@@ -169,6 +173,21 @@ impl<'a> Lexer {
             self.advance();
         }
         TokenKind::Comment
+    }
+
+    fn string(&mut self) -> Result<TokenKind, String> {
+        loop {
+            if self.is_at_end() {
+                return Err("Unclosed string literal".to_string());
+            } else if self.peek() == '\n' {
+                return Err("String literal must be single line".to_string());
+            } else if self.peek() == '\"' {
+                self.advance();
+                break;
+            }
+            self.advance();
+        }
+        Ok(TokenKind::String)
     }
 
     fn matches(&mut self, c: char) -> bool {
