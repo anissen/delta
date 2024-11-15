@@ -87,6 +87,10 @@ impl Disassembler {
                     res.push(vec!["mod".to_string()]);
                 }
 
+                ByteCode::StringConcat => {
+                    res.push(vec!["str_concat".to_string()]);
+                }
+
                 ByteCode::Equals => {
                     res.push(vec!["eq".to_string()]);
                 }

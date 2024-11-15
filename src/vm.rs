@@ -194,6 +194,23 @@ impl VirtualMachine {
                     }
                 }
 
+                ByteCode::StringConcat => {
+                    let right = self.pop_any();
+                    let left = self.pop_any();
+
+                    match (left, right) {
+                        (Value::String(left), Value::String(right)) => {
+                            self.push_string(left + &right);
+                        }
+
+                        (Value::String(left), Value::Integer(right)) => {
+                            self.push_string(left + &right.to_string());
+                        }
+
+                        _ => panic!("incompatible types for string concatenation"),
+                    }
+                }
+
                 ByteCode::Equals => {
                     let right = self.pop_any();
                     let left = self.pop_any();

@@ -56,4 +56,5 @@ pub enum BinaryOperator {
     Multiplication,
     Division,
     Modulus,
+    StringConcat,
 }

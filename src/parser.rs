@@ -5,7 +5,7 @@ use crate::tokens::Token;
 use crate::tokens::TokenKind;
 use crate::tokens::TokenKind::{
     BackSlash, Bang, Comment, Equal, EqualEqual, False, Float, Identifier, Integer, LeftParen,
-    Minus, NewLine, Percent, Pipe, Plus, RightParen, Slash, Space, Star, True,
+    Minus, NewLine, Percent, Pipe, Plus, RightParen, Slash, Space, Star, StringConcat, True,
 };
 
 pub struct Parser {
@@ -87,7 +87,7 @@ impl Parser {
     }
 
     fn comparison(&mut self) -> Result<Option<Expr>, String> {
-        let expr = self.term()?;
+        let expr = self.string_concat()?;
         if expr.is_some() && self.matches(&[EqualEqual]) {
             let token = self.previous();
             let right = self.comparison()?;
@@ -99,6 +99,21 @@ impl Parser {
         } else {
             Ok(expr)
         }
+    }
+
+    fn string_concat(&mut self) -> Result<Option<Expr>, String> {
+        let mut expr = self.term()?;
+        while expr.is_some() && self.matches(&[StringConcat]) {
+            let token = self.previous();
+            let right = self.term()?;
+            expr = Some(Expr::Binary {
+                left: Box::new(expr.unwrap()),
+                operator: BinaryOperator::StringConcat,
+                token,
+                right: Box::new(right.unwrap()),
+            });
+        }
+        Ok(expr)
     }
 
     fn term(&mut self) -> Result<Option<Expr>, String> {

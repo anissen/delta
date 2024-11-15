@@ -179,6 +179,8 @@ impl Codegen {
                         BinaryOperator::Division => self.emit_bytecode(ByteCode::Division),
 
                         BinaryOperator::Modulus => self.emit_bytecode(ByteCode::Modulo),
+
+                        BinaryOperator::StringConcat => self.emit_bytecode(ByteCode::StringConcat),
                     }
                 }
             };
