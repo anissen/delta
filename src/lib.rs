@@ -27,10 +27,28 @@ pub fn run(source: &String, file_name: Option<&String>) -> Result<Option<vm::Val
     println!("{}", source);
 
     println!("\n# lexing =>");
-    let tokens = lexer::lex(source)?;
-    tokens
-        .iter()
-        .for_each(|token| println!("token: {:?} ({:?})", token.kind, token.lexeme));
+    let tokens = lexer::lex(source);
+    let (tokens, syntax_errors): (Vec<tokens::Token>, Vec<tokens::Token>) =
+        tokens.into_iter().partition(|token| match token.kind {
+            tokens::TokenKind::SyntaxError(_) => false,
+            _ => true,
+        });
+    syntax_errors.iter().for_each(|token| match token.kind {
+        tokens::TokenKind::SyntaxError(description) => {
+            println!(
+                "\n⚠️ syntax error: {} at {:?} ({:?})\n",
+                description, token.lexeme, token.position
+            )
+        }
+        _ => panic!(),
+    });
+
+    tokens.iter().for_each(|token| {
+        println!(
+            "token: {:?} at '{}' (line {}, column: {})",
+            token.kind, token.lexeme, token.position.line, token.position.column
+        )
+    });
 
     println!("\n# parsing =>");
     let ast = parser::parse(tokens)?;
@@ -49,6 +67,16 @@ pub fn run(source: &String, file_name: Option<&String>) -> Result<Option<vm::Val
 
     println!("\n# vm =>");
     let result = vm::run(bytecodes);
+
+    syntax_errors.iter().for_each(|token| match token.kind {
+        tokens::TokenKind::SyntaxError(description) => {
+            println!(
+                "\n⚠️ syntax error: {} at {:?} ({:?})\n",
+                description, token.lexeme, token.position
+            )
+        }
+        _ => panic!(),
+    });
 
     Ok(result)
 }

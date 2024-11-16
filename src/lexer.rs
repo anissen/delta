@@ -8,35 +8,10 @@ struct Lexer {
     column: usize,
     string_interpolation: bool,
     tokens: Vec<Token>,
-    errors: Vec<Error>,
 }
 
-#[derive(Debug, Clone)]
-pub struct Error {
-    pub position: Span,
-    pub lexeme: String,      // TODO(anissen): Should probably be &'a str,
-    pub description: String, // TODO(anissen): Should probably be &'a str,
-}
-
-type Errors = Vec<Error>;
-
-// TODO(anissen): Ideally, I would like to return `Result<Vec<Token>, Errors>`
-// and have the caller handle it gracefully, but I can't figure out how.
-pub fn lex(source: &str) -> Result<Vec<Token>, String> {
-    match Lexer::new().scan_tokens(source) {
-        Ok(tokens) => Ok(tokens),
-
-        Err(errors) => Err(errors
-            .into_iter()
-            .map(|err| {
-                format!(
-                    "! syntax error at '{}' (line {}, column {}): {}",
-                    err.lexeme, err.position.line, err.position.column, err.description
-                )
-            })
-            .collect::<Vec<String>>()
-            .join("\n")),
-    }
+pub fn lex(source: &str) -> Vec<Token> {
+    Lexer::new().scan_tokens(source)
 }
 
 impl<'a> Lexer {
@@ -49,42 +24,43 @@ impl<'a> Lexer {
             column: 0,
             string_interpolation: false,
             tokens: vec![],
-            errors: vec![],
         }
     }
 
-    fn scan_tokens(&mut self, source: &'a str) -> Result<Vec<Token>, Errors> {
+    fn scan_tokens(&mut self, source: &'a str) -> Vec<Token> {
         self.source = source.chars().collect();
 
         while !self.is_at_end() {
             self.start = self.current;
-            self.scan_next();
+            let token_kind = self.scan_next();
+            let lexeme = self.source[self.start..self.current].iter().collect();
+            let token = match token_kind {
+                TokenKind::String => self.get_string_token(lexeme),
+                _ => self.get_token_from_lexeme(token_kind, lexeme),
+            };
+            self.add_token(token);
         }
 
-        if !self.errors.is_empty() {
-            Err(self.errors.clone()) // HACK
-        } else {
-            Ok(self.tokens.clone()) // HACK
-        }
+        self.tokens.clone()
     }
 
     fn add_token_kind(&mut self, kind: TokenKind) {
         let lexeme = self.source[self.start..self.current].iter().collect();
-        self.add_token_kind_with_lexeme(kind, lexeme);
+        let token = self.get_token_from_lexeme(kind, lexeme);
+        self.add_token(token);
     }
 
-    fn add_token_kind_with_lexeme(&mut self, kind: TokenKind, lexeme: String) {
+    fn get_token_from_lexeme(&mut self, kind: TokenKind, lexeme: String) -> Token {
         let position = Span {
             line: self.line,
             column: self.column,
         };
 
-        let token = Token {
+        Token {
             kind,
             position,
             lexeme,
-        };
-        self.add_token(token);
+        }
     }
 
     fn add_token(&mut self, token: Token) {
@@ -98,76 +74,50 @@ impl<'a> Lexer {
         }
     }
 
-    fn add_error(&mut self, description: String) {
-        let position = Span {
-            line: self.line,
-            column: self.column,
-        };
-        let lexeme = self.source[self.start..self.current].iter().collect();
-        self.errors.push(Error {
-            position,
-            lexeme,
-            description,
-        })
-    }
-
-    fn scan_next(&mut self) {
+    fn scan_next(&mut self) -> TokenKind {
         let char = self.advance();
-        // TODO(anissen): This can hopefully be cleaned up somewhat -- e.g. have a set of simple cases that just return a tokenkind and a more advanced that handles tokens itself.
         match char {
             ' ' => self.spaces(),
-            '+' => self.add_token_kind(TokenKind::Plus),
-            '-' if self.is_digit(self.peek()) => {
-                let number = self.number();
-                self.add_token_kind(number)
-            }
-            '-' => self.add_token_kind(TokenKind::Minus),
-            '*' => self.add_token_kind(TokenKind::Star),
-            '/' => self.add_token_kind(TokenKind::Slash),
-            '%' => self.add_token_kind(TokenKind::Percent),
-            '\\' => self.add_token_kind(TokenKind::BackSlash),
-            '!' => self.add_token_kind(TokenKind::Bang),
-            '=' if self.matches('=') => self.add_token_kind(TokenKind::EqualEqual),
-            '=' => self.add_token_kind(TokenKind::Equal),
-            '#' => {
-                let comment = self.comment();
-                self.add_token_kind(comment)
-            }
-            '|' => self.add_token_kind(TokenKind::Pipe),
-            '(' => self.add_token_kind(TokenKind::LeftParen),
-            ')' => self.add_token_kind(TokenKind::RightParen),
-            '{' => self.add_token_kind(TokenKind::LeftBrace),
+            '+' => TokenKind::Plus,
+            '-' if self.is_digit(self.peek()) => self.number(),
+            '-' => TokenKind::Minus,
+            '*' => TokenKind::Star,
+            '/' => TokenKind::Slash,
+            '%' => TokenKind::Percent,
+            '\\' => TokenKind::BackSlash,
+            '!' => TokenKind::Bang,
+            '=' if self.matches('=') => TokenKind::EqualEqual,
+            '=' => TokenKind::Equal,
+            '#' => self.comment(),
+            '|' => TokenKind::Pipe,
+            '(' => TokenKind::LeftParen,
+            ')' => TokenKind::RightParen,
+            '{' => TokenKind::LeftBrace,
             '}' if self.string_interpolation => {
                 self.add_token_kind(TokenKind::StringConcat);
                 self.string_interpolation = false;
-                self.string();
+                self.string()
             }
-            '}' => self.add_token_kind(TokenKind::RightBrace),
-            '\t' => self.add_token_kind(TokenKind::Tab),
-            '\n' => self.add_token_kind(TokenKind::NewLine),
+            '}' => TokenKind::RightBrace,
+            '\t' => TokenKind::Tab,
+            '\n' => TokenKind::NewLine,
             '\"' => self.string(),
-            c if self.is_letter(c) => {
-                let identifier = self.identifier();
-                self.add_token_kind(identifier)
-            }
-            c if self.is_digit(c) => {
-                let number = self.number();
-                self.add_token_kind(number)
-            }
-            _ => self.add_error(format!("Unexpected token: {}", char)),
+            c if self.is_letter(c) => self.identifier(),
+            c if self.is_digit(c) => self.number(),
+            _ => TokenKind::SyntaxError("Unexpected token"),
         }
     }
 
-    fn spaces(&mut self) {
+    fn spaces(&mut self) -> TokenKind {
         let mut spaces = 1;
         while !self.is_at_end() && self.peek() == ' ' {
             self.advance();
             spaces += 1;
         }
         match spaces {
-            1 => self.add_token_kind(TokenKind::Space),
-            4 => self.add_token_kind(TokenKind::Tab), // HACK because Zed cannot handle hard tabs correctly. Scanning for '\t' should be sufficient.
-            _ => self.add_error("Unexpected whitespace".to_string()),
+            1 => TokenKind::Space,
+            4 => TokenKind::Tab, // HACK because Zed cannot handle hard tabs correctly. Scanning for '\t' should be sufficient.
+            _ => TokenKind::SyntaxError("Unexpected whitespace"),
         }
     }
 
@@ -212,15 +162,13 @@ impl<'a> Lexer {
         TokenKind::Comment
     }
 
-    fn string(&mut self) {
+    fn string(&mut self) -> TokenKind {
         loop {
             if self.is_at_end() {
-                return self.add_error("Unterminated string".to_string());
+                return TokenKind::SyntaxError("Unterminated string");
             } else {
                 match self.peek() {
-                    '\n' => {
-                        return self.add_error("String literal must be single line".to_string())
-                    }
+                    '\n' => return TokenKind::SyntaxError("String literal must be single line"),
                     '\"' => {
                         self.advance();
                         break;
@@ -229,13 +177,13 @@ impl<'a> Lexer {
                         let lexeme = self.source[self.start + 1..self.current]
                             .iter()
                             .collect::<String>();
-                        self.add_string_token(lexeme);
+                        let string_token = self.get_string_token(lexeme);
+                        self.add_token(string_token);
 
-                        self.advance(); // Skip '{'
-                        self.add_token_kind(TokenKind::StringConcat);
                         self.start = self.current;
+                        self.advance();
                         self.string_interpolation = true;
-                        return;
+                        return TokenKind::StringConcat;
                     }
                     _ => (), // no-op
                 }
@@ -243,19 +191,22 @@ impl<'a> Lexer {
             }
         }
 
-        let lexeme = self.source[self.start + 1..self.current - 1]
-            .iter()
-            .collect::<String>();
-        self.add_string_token(lexeme);
+        self.start += 1;
+        TokenKind::String
     }
 
-    fn add_string_token(&mut self, value: String) {
-        let escaped = value
+    fn get_string_token(&mut self, value: String) -> Token {
+        let escaped_value = self.escape_string(value);
+        self.get_token_from_lexeme(TokenKind::String, escaped_value)
+    }
+
+    fn escape_string(&mut self, value: String) -> String {
+        value
+            .trim_start_matches("\"")
+            .trim_end_matches("\"")
             .replace("\\n", "\n")
             .replace("\\t", "\t")
-            .replace("\\\'", "\'");
-
-        self.add_token_kind_with_lexeme(TokenKind::String, escaped);
+            .replace("\\\'", "\'")
     }
 
     fn matches(&mut self, c: char) -> bool {

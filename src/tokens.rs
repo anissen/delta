@@ -23,7 +23,7 @@ pub enum TokenKind {
     Star,
     String,
     StringConcat,
-    // SyntaxError,
+    SyntaxError(&'static str),
     Tab,
     True,
 }
