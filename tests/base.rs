@@ -77,7 +77,7 @@ x / y",
 }
 
 #[test]
-fn comparison_positive_integers() {
+fn equality_positive_integers() {
     assert_ok(r"0 == 0", vm::Value::True);
     assert_ok(r"1 == 1", vm::Value::True);
     assert_ok(r"5 == 5", vm::Value::True);
@@ -86,7 +86,12 @@ fn comparison_positive_integers() {
 }
 
 #[test]
-fn comparison_negative_integers() {
+fn inequality_positive_integers() {
+    assert_ok(r"2 != 4", vm::Value::True);
+}
+
+#[test]
+fn equality_negative_integers() {
     assert_ok(r"-0 == -0", vm::Value::True);
     assert_ok(r"-1 == -1", vm::Value::True);
     assert_ok(r"-5 == -5", vm::Value::True);
@@ -95,7 +100,12 @@ fn comparison_negative_integers() {
 }
 
 #[test]
-fn comparison_integer_expressions() {
+fn inequality_negative_integers() {
+    assert_ok(r"-2 != -4", vm::Value::True);
+}
+
+#[test]
+fn equality_integer_expressions() {
     assert_ok(r"1 + 2 == 3", vm::Value::True);
     assert_ok(r"3 == 1 + 2", vm::Value::True);
     assert_ok(r"2 + 1 == 1 + 2", vm::Value::True);
@@ -104,7 +114,12 @@ fn comparison_integer_expressions() {
 }
 
 #[test]
-fn comparison_positive_floats() {
+fn inequality_integer_expressions() {
+    assert_ok(r"2 != 1 + 2", vm::Value::True);
+}
+
+#[test]
+fn equality_positive_floats() {
     assert_ok(r"0.0 == 0.0", vm::Value::True);
     assert_ok(r"5.4 == 5.4", vm::Value::True);
     assert_ok(r"123.456789 == 123.456789", vm::Value::True);
@@ -113,7 +128,12 @@ fn comparison_positive_floats() {
 }
 
 #[test]
-fn comparison_negative_floats() {
+fn inequality_positive_floats() {
+    assert_ok(r"2.3 != 5.4", vm::Value::True);
+}
+
+#[test]
+fn equality_negative_floats() {
     assert_ok(r"-0.0 == -0.0", vm::Value::True);
     assert_ok(r"-0.3 == -0.3", vm::Value::True);
     assert_ok(r"-5.4 == -5.4", vm::Value::True);
@@ -124,12 +144,52 @@ fn comparison_negative_floats() {
 }
 
 #[test]
-fn comparison_booleans() {
+fn inequality_negative_floats() {
+    assert_ok(r"-2.3 != -5.4", vm::Value::True);
+}
+
+#[test]
+fn equality_booleans() {
     assert_ok(r"true == true", vm::Value::True);
     assert_ok(r"false == false", vm::Value::True);
 
     assert_ok(r"true == false", vm::Value::False);
     assert_ok(r"false == true", vm::Value::False);
+}
+
+#[test]
+fn inequality_booleans() {
+    assert_ok(r"true != false", vm::Value::True);
+}
+
+#[test]
+fn equality_strings() {
+    assert_ok(r#""" == """#, vm::Value::True);
+    assert_ok(r#""Hello!" == "Hello!""#, vm::Value::True);
+
+    assert_ok(r#""Hello" == "World""#, vm::Value::False);
+    assert_ok(r#""42" == 42"#, vm::Value::False);
+}
+
+#[test]
+fn inequality_strings() {
+    assert_ok(r#""Hello" != "World""#, vm::Value::True);
+}
+
+#[test]
+fn string_interpolation() {
+    assert_ok(
+        r#""Hello {40 + 2}""#,
+        vm::Value::String("Hello 42".to_string()),
+    );
+    assert_ok(
+        r#""Hello {(40 + 2) / 2}""#,
+        vm::Value::String("Hello 21".to_string()),
+    );
+    assert_ok(
+        r#""{2} * {2 + 1} == {2 * (2 + 1)}""#,
+        vm::Value::String("2 * 3 == 6".to_string()),
+    );
 }
 
 // #[test]

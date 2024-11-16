@@ -102,21 +102,61 @@ is_5 = \v
     )
 }
 
-// #[test]
-// fn indexes_are_off() {
-//     assert_ok(
-//         r"
-// add = \v1 v2
-//     v1 + v2
+#[test]
+fn string_function() {
+    assert_ok(
+        r"
+is_5 = \v
+    v == 5
 
-// is_even = \v3
-//     v3 % 2 == 0
+5 | is_5",
+        vm::Value::True,
+    )
+}
 
-// is_odd = \v4
-//     res = v4 | is_even
-//     !res
+#[test]
+fn string_interpolation_function() {
+    assert_ok(
+        r#"
+greeting = \name
+    "Hello {name}!"
 
-// 5 | is_odd",
-//         vm::Value::True,
-//     )
-// }
+"John" | greeting
+"#,
+        vm::Value::String("Hello John!".to_string()),
+    )
+}
+
+#[test]
+#[ignore = "not yet supported"] // TODO(anissen): Fix this
+fn string_interpolation_function_call() {
+    assert_ok(
+        r#"
+add = \v1 v2
+    v1 + v2
+
+"result is {40 | add 2}!"
+"#,
+        vm::Value::String("result is 42".to_string()),
+    )
+}
+
+#[test]
+#[ignore = "not yet fixed"] // TODO(anissen): Fix this
+fn indexes_are_off() {
+    assert_ok(
+        r"
+add = \v1 v2
+    v1 + v2
+
+is_even = \v3
+    v3 % 2 == 0
+
+is_odd = \v4
+    res = v4 | is_even
+    !res
+
+5 | is_odd",
+        vm::Value::True,
+    )
+}

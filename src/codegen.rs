@@ -140,6 +140,10 @@ impl Codegen {
 
                     match token.kind {
                         TokenKind::EqualEqual => self.emit_bytecode(ByteCode::Equals),
+                        TokenKind::BangEqual => {
+                            self.emit_bytecode(ByteCode::Equals);
+                            self.emit_bytecode(ByteCode::Not);
+                        }
                         _ => panic!("unexpected comparison operator"),
                     }
                 }

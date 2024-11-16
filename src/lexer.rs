@@ -85,8 +85,15 @@ impl<'a> Lexer {
             '/' => TokenKind::Slash,
             '%' => TokenKind::Percent,
             '\\' => TokenKind::BackSlash,
+            '!' if self.peek() == '=' => {
+                self.advance();
+                TokenKind::BangEqual
+            }
             '!' => TokenKind::Bang,
-            '=' if self.matches('=') => TokenKind::EqualEqual,
+            '=' if self.matches('=') => {
+                self.advance();
+                TokenKind::EqualEqual
+            }
             '=' => TokenKind::Equal,
             '#' => self.comment(),
             '|' => TokenKind::Pipe,

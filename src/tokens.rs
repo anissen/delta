@@ -2,6 +2,7 @@
 pub enum TokenKind {
     BackSlash,
     Bang,
+    BangEqual,
     Comment,
     Equal,
     EqualEqual,

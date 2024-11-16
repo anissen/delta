@@ -4,8 +4,9 @@ use crate::expressions::UnaryOperator;
 use crate::tokens::Token;
 use crate::tokens::TokenKind;
 use crate::tokens::TokenKind::{
-    BackSlash, Bang, Comment, Equal, EqualEqual, False, Float, Identifier, Integer, LeftParen,
-    Minus, NewLine, Percent, Pipe, Plus, RightParen, Slash, Space, Star, StringConcat, True,
+    BackSlash, Bang, BangEqual, Comment, Equal, EqualEqual, False, Float, Identifier, Integer,
+    LeftParen, Minus, NewLine, Percent, Pipe, Plus, RightParen, Slash, Space, Star, StringConcat,
+    True,
 };
 
 pub struct Parser {
@@ -88,7 +89,7 @@ impl Parser {
 
     fn comparison(&mut self) -> Result<Option<Expr>, String> {
         let expr = self.string_concat()?;
-        if expr.is_some() && self.matches(&[EqualEqual]) {
+        if expr.is_some() && self.matches(&[EqualEqual, BangEqual]) {
             let token = self.previous();
             let right = self.comparison()?;
             Ok(Some(Expr::Comparison {
