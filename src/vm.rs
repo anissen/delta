@@ -114,10 +114,10 @@ impl VirtualMachine {
                 ByteCode::Addition => {
                     let right = self.pop_any();
                     let left = self.pop_any();
-                    match (right, left) {
-                        (Value::Float(right), Value::Float(left)) => self.push_float(left + right),
+                    match (left, right) {
+                        (Value::Float(left), Value::Float(right)) => self.push_float(left + right),
 
-                        (Value::Integer(right), Value::Integer(left)) => {
+                        (Value::Integer(left), Value::Integer(right)) => {
                             self.stack.push(Value::Integer(left + right))
                         }
 
@@ -128,10 +128,10 @@ impl VirtualMachine {
                 ByteCode::Subtraction => {
                     let right = self.pop_any();
                     let left = self.pop_any();
-                    match (right, left) {
-                        (Value::Float(right), Value::Float(left)) => self.push_float(left - right),
+                    match (left, right) {
+                        (Value::Float(left), Value::Float(right)) => self.push_float(left - right),
 
-                        (Value::Integer(right), Value::Integer(left)) => {
+                        (Value::Integer(left), Value::Integer(right)) => {
                             self.stack.push(Value::Integer(left - right))
                         }
 
@@ -142,10 +142,10 @@ impl VirtualMachine {
                 ByteCode::Multiplication => {
                     let right = self.pop_any();
                     let left = self.pop_any();
-                    match (right, left) {
-                        (Value::Float(right), Value::Float(left)) => self.push_float(left * right),
+                    match (left, right) {
+                        (Value::Float(left), Value::Float(right)) => self.push_float(left * right),
 
-                        (Value::Integer(right), Value::Integer(left)) => {
+                        (Value::Integer(left), Value::Integer(right)) => {
                             self.push_integer(left * right)
                         }
 
@@ -156,9 +156,8 @@ impl VirtualMachine {
                 ByteCode::Division => {
                     let right = self.pop_any();
                     let left = self.pop_any();
-
-                    match (right, left) {
-                        (Value::Float(right), Value::Float(left)) => {
+                    match (left, right) {
+                        (Value::Float(left), Value::Float(right)) => {
                             if right == 0.0 {
                                 self.push_float(0.0);
                             } else {
@@ -166,7 +165,7 @@ impl VirtualMachine {
                             }
                         }
 
-                        (Value::Integer(right), Value::Integer(left)) => {
+                        (Value::Integer(left), Value::Integer(right)) => {
                             if right == 0 {
                                 self.push_integer(0);
                             } else {

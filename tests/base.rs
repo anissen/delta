@@ -236,5 +236,5 @@ fn string_interpolation() {
 
 // #[test]
 // fn mixed_division() {
-//     assert_err(r"42.3 / 2", ...);
+//     assert_err(r"42.3 / 2", "incompatible types for division".to_string());
 // }
