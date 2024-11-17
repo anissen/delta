@@ -5,8 +5,8 @@ use crate::tokens::Token;
 use crate::tokens::TokenKind;
 use crate::tokens::TokenKind::{
     BackSlash, Bang, BangEqual, Comment, Equal, EqualEqual, False, Float, Identifier, Integer,
-    LeftParen, Minus, NewLine, Percent, Pipe, Plus, RightParen, Slash, Space, Star, StringConcat,
-    True,
+    LeftChevron, LeftChevronEqual, LeftParen, Minus, NewLine, Percent, Pipe, Plus, RightChevron,
+    RightChevronEqual, RightParen, Slash, Space, Star, StringConcat, True,
 };
 
 /*
@@ -162,8 +162,25 @@ impl Parser {
 
     // comparison → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
     fn comparison(&mut self) -> Result<Option<Expr>, String> {
-        // TODO(anissen): Implement
-        self.term()
+        let expr = self.term()?;
+        if expr.is_some()
+            && self.matches(&[
+                LeftChevron,
+                LeftChevronEqual,
+                RightChevron,
+                RightChevronEqual,
+            ])
+        {
+            let token = self.previous();
+            let right = self.term()?;
+            Ok(Some(Expr::Comparison {
+                left: Box::new(expr.unwrap()),
+                token,
+                right: Box::new(right.unwrap()),
+            }))
+        } else {
+            Ok(expr)
+        }
     }
 
     // term → factor ( ( "-" | "+" ) factor )* ;

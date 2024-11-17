@@ -92,6 +92,15 @@ fn equality_positive_integers() {
 }
 
 #[test]
+fn comparison_positive_integers() {
+    assert_ok(r"0 < 1", vm::Value::True);
+    assert_ok(r"0 <= 0", vm::Value::True);
+    assert_ok(r"0 >= 0", vm::Value::True);
+    assert_ok(r"3 > 2", vm::Value::True);
+    assert_ok(r"5 >= 5", vm::Value::True);
+}
+
+#[test]
 fn inequality_positive_integers() {
     assert_ok(r"2 != 4", vm::Value::True);
 }
@@ -103,6 +112,14 @@ fn equality_negative_integers() {
     assert_ok(r"-5 == -5", vm::Value::True);
 
     assert_ok(r"-3 == -5", vm::Value::False);
+}
+
+#[test]
+fn comparison_negative_integers() {
+    assert_ok(r"-0 > -1", vm::Value::True);
+    assert_ok(r"-0 <= -0", vm::Value::True);
+    assert_ok(r"-3 < -2", vm::Value::True);
+    assert_ok(r"-5 >= -5", vm::Value::True);
 }
 
 #[test]
@@ -131,6 +148,15 @@ fn equality_positive_floats() {
     assert_ok(r"123.456789 == 123.456789", vm::Value::True);
 
     assert_ok(r"12.3 == 12.0", vm::Value::False);
+}
+
+#[test]
+fn comparison_negative_floats() {
+    assert_ok(r"-0.9 > -1.0", vm::Value::True);
+    assert_ok(r"-0.0 <= -0.0", vm::Value::True);
+    assert_ok(r"-0.0 >= -0.0", vm::Value::True);
+    assert_ok(r"-3.45 < -2.34", vm::Value::True);
+    assert_ok(r"-5.67 >= -5.67", vm::Value::True);
 }
 
 #[test]
@@ -200,6 +226,11 @@ fn string_interpolation() {
     assert_ok(
         r#""result is {2 * 2 == 4}!""#,
         vm::Value::String("result is true!".to_string()),
+    );
+
+    assert_ok(
+        r#""result is {3 < 4} and {3.4 < 4.5}!""#,
+        vm::Value::String("result is true and true!".to_string()),
     );
 }
 

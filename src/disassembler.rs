@@ -95,6 +95,14 @@ impl Disassembler {
                     res.push(vec!["eq".to_string()]);
                 }
 
+                ByteCode::LessThan => {
+                    res.push(vec!["lt".to_string()]);
+                }
+
+                ByteCode::LessThanEquals => {
+                    res.push(vec!["lte".to_string()]);
+                }
+
                 ByteCode::Negation => {
                     res.push(vec!["neg".to_string()]);
                 }

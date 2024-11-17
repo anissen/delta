@@ -100,6 +100,10 @@ impl<'a> Lexer {
                 self.string()
             }
             '}' => TokenKind::RightBrace,
+            '<' if self.matches('=') => TokenKind::LeftChevronEqual,
+            '<' => TokenKind::LeftChevron,
+            '>' if self.matches('=') => TokenKind::RightChevronEqual,
+            '>' => TokenKind::RightChevron,
             '\t' => TokenKind::Tab,
             '\n' => TokenKind::NewLine,
             '\"' => self.string(),

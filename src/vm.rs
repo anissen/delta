@@ -225,6 +225,38 @@ impl VirtualMachine {
                     self.push_boolean(left == right)
                 }
 
+                ByteCode::LessThan => {
+                    let right = self.pop_any();
+                    let left = self.pop_any();
+                    match (left, right) {
+                        (Value::Float(left), Value::Float(right)) => {
+                            self.push_boolean(left < right);
+                        }
+
+                        (Value::Integer(left), Value::Integer(right)) => {
+                            self.push_boolean(left < right);
+                        }
+
+                        _ => panic!("incompatible types for less than comparison"),
+                    }
+                }
+
+                ByteCode::LessThanEquals => {
+                    let right = self.pop_any();
+                    let left = self.pop_any();
+                    match (left, right) {
+                        (Value::Float(left), Value::Float(right)) => {
+                            self.push_boolean(left <= right);
+                        }
+
+                        (Value::Integer(left), Value::Integer(right)) => {
+                            self.push_boolean(left <= right);
+                        }
+
+                        _ => panic!("incompatible types for less than equals comparison"),
+                    }
+                }
+
                 ByteCode::Negation => {
                     let value = self.pop_float();
                     self.push_float(-value);

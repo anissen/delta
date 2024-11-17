@@ -144,6 +144,16 @@ impl Codegen {
                             self.emit_bytecode(ByteCode::Equals);
                             self.emit_bytecode(ByteCode::Not);
                         }
+                        TokenKind::LeftChevron => self.emit_bytecode(ByteCode::LessThan),
+                        TokenKind::LeftChevronEqual => self.emit_bytecode(ByteCode::LessThanEquals),
+                        TokenKind::RightChevron => {
+                            self.emit_bytecode(ByteCode::LessThanEquals);
+                            self.emit_bytecode(ByteCode::Not);
+                        }
+                        TokenKind::RightChevronEqual => {
+                            self.emit_bytecode(ByteCode::LessThan);
+                            self.emit_bytecode(ByteCode::Not);
+                        }
                         _ => panic!("unexpected comparison operator"),
                     }
                 }
