@@ -9,6 +9,34 @@ use crate::tokens::TokenKind::{
     True,
 };
 
+/*
+program        → declaration* EOF ;
+declaration    → funDecl | varDecl | expression ;
+funDecl        → "\" IDENTIFIER IDENTIFIER* block ;
+varDecl        → IDENTIFIER "=" expression ;
+block          → "\n" INDENTATION declaration ("\n" INDENTATION declaration)* ;
+expression     → assignment ;
+assignment     → IDENTIFIER "=" logic_or ;
+logic_or       → logic_and ( "or" logic_and )* ;
+logic_and      → equality ( "and" equality )* ;
+equality       → comparison ( ( "!=" | "==" ) comparison )* ;
+comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
+term           → factor ( ( "-" | "+" ) factor )* ;
+factor         → unary ( ( "/" | "*" ) unary )* ;
+unary          → ( "!" | "-" ) unary | call ;
+call           → expression "|" primary expression? ;
+primary        → "true" | "false" | NUMBER | STRING | IDENTIFIER | "(" expression ")" ;
+---
+NUMBER         → DIGIT+ ( "." DIGIT+ )? ;
+STRING         → "\"" <any char except "\"">* "\"" ;
+IDENTIFIER     → ALPHA ( ALPHA | DIGIT )* ;
+ALPHA          → "a" ... "z" | "A" ... "Z" | "_" ;
+DIGIT          → "0" ... "9" ;
+---
+MISSING:
+- string concatenation
+*/
+
 pub struct Parser {
     tokens: Vec<Token>,
     current: usize,
@@ -66,8 +94,9 @@ impl Parser {
         self.assignment()
     }
 
+    // assignment → IDENTIFIER "=" logic_or ;
     fn assignment(&mut self) -> Result<Option<Expr>, String> {
-        let expr = self.comparison()?;
+        let expr = self.string_concat()?;
         if expr.is_some() && self.matches(&[Equal]) {
             match expr.unwrap() {
                 Expr::Value(name) => {
@@ -87,8 +116,37 @@ impl Parser {
         }
     }
 
-    fn comparison(&mut self) -> Result<Option<Expr>, String> {
-        let expr = self.string_concat()?;
+    // string_concat → STRING "{" expression "}";
+    fn string_concat(&mut self) -> Result<Option<Expr>, String> {
+        let mut expr = self.logic_or()?;
+        while expr.is_some() && self.matches(&[StringConcat]) {
+            let token = self.previous();
+            let right = self.logic_or()?;
+            expr = Some(Expr::Binary {
+                left: Box::new(expr.unwrap()),
+                operator: BinaryOperator::StringConcat,
+                token,
+                right: Box::new(right.unwrap()),
+            });
+        }
+        Ok(expr)
+    }
+
+    // logic_or → logic_and ( "or" logic_and )* ;
+    fn logic_or(&mut self) -> Result<Option<Expr>, String> {
+        // TODO(anissen): Implement
+        self.logic_and()
+    }
+
+    // logic_and → equality ( "and" equality )* ;
+    fn logic_and(&mut self) -> Result<Option<Expr>, String> {
+        // TODO(anissen): Implement
+        self.equality()
+    }
+
+    // equality → comparison ( ( "!=" | "==" ) comparison )* ;
+    fn equality(&mut self) -> Result<Option<Expr>, String> {
+        let expr = self.comparison()?;
         if expr.is_some() && self.matches(&[EqualEqual, BangEqual]) {
             let token = self.previous();
             let right = self.comparison()?;
@@ -102,21 +160,13 @@ impl Parser {
         }
     }
 
-    fn string_concat(&mut self) -> Result<Option<Expr>, String> {
-        let mut expr = self.term()?;
-        while expr.is_some() && self.matches(&[StringConcat]) {
-            let token = self.previous();
-            let right = self.term()?;
-            expr = Some(Expr::Binary {
-                left: Box::new(expr.unwrap()),
-                operator: BinaryOperator::StringConcat,
-                token,
-                right: Box::new(right.unwrap()),
-            });
-        }
-        Ok(expr)
+    // comparison → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
+    fn comparison(&mut self) -> Result<Option<Expr>, String> {
+        // TODO(anissen): Implement
+        self.term()
     }
 
+    // term → factor ( ( "-" | "+" ) factor )* ;
     fn term(&mut self) -> Result<Option<Expr>, String> {
         let mut expr = self.factor()?;
         while expr.is_some() && self.matches(&[Plus, Minus]) {
@@ -137,6 +187,7 @@ impl Parser {
         Ok(expr)
     }
 
+    // factor → unary ( ( "/" | "*" ) unary )* ;
     fn factor(&mut self) -> Result<Option<Expr>, String> {
         let mut expr = self.unary()?;
         while expr.is_some() && self.matches(&[Slash, Star, Percent]) {
@@ -158,6 +209,7 @@ impl Parser {
         Ok(expr)
     }
 
+    // unary → ( "!" | "-" ) unary | call ;
     fn unary(&mut self) -> Result<Option<Expr>, String> {
         if self.matches(&[Bang, Minus]) {
             let token = self.previous();
@@ -177,8 +229,9 @@ impl Parser {
         }
     }
 
+    // call → expression "|" primary expression? ;
     fn call(&mut self) -> Result<Option<Expr>, String> {
-        let expr = self.primary()?;
+        let expr = self.primary()?; // TODO(anissen): This ought to be an expression -- how can it be?
         if self.matches(&[Pipe]) {
             self.call_with_first_arg(expr.unwrap())
         } else {
@@ -192,8 +245,13 @@ impl Parser {
         // TODO(anissen): Check that function name exists and is a function
         let first_arg = expr;
         let mut args = vec![first_arg];
-        while !self.is_at_end() && !self.check(&NewLine) && !self.check(&Pipe) {
-            let arg = self.expression()?;
+        // TODO(anissen): Checking for string concatenation here does not feel right
+        while !self.is_at_end()
+            && !self.check(&NewLine)
+            && !self.check(&Pipe)
+            && !self.check(&StringConcat)
+        {
+            let arg = self.logic_or()?; // precedence after string concatenation
             if let Some(arg) = arg {
                 args.push(arg);
             }
@@ -255,6 +313,7 @@ impl Parser {
         }
     }
 
+    // primary → "true" | "false" | INTEGER | FLOAT | STRING | IDENTIFIER | "(" expression ")" ;
     fn primary(&mut self) -> Result<Option<Expr>, String> {
         if self.matches(&[Identifier]) {
             let lexeme = self.previous().lexeme;

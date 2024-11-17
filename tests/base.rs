@@ -55,6 +55,12 @@ fn modulo_float() {
 }
 
 #[test]
+fn division_by_zero() {
+    assert_ok(r"10 / 0", vm::Value::Integer(0));
+    assert_ok(r"54.32 / 0.0", vm::Value::Float(0.0));
+}
+
+#[test]
 fn integer_division_by_zero() {
     assert_ok(
         r"
@@ -189,6 +195,11 @@ fn string_interpolation() {
     assert_ok(
         r#""{2} * {2 + 1} == {2 * (2 + 1)}""#,
         vm::Value::String("2 * 3 == 6".to_string()),
+    );
+
+    assert_ok(
+        r#""result is {2 * 2 == 4}!""#,
+        vm::Value::String("result is true!".to_string()),
     );
 }
 

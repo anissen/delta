@@ -128,7 +128,6 @@ greeting = \name
 }
 
 #[test]
-#[ignore = "not yet supported"] // TODO(anissen): Fix this
 fn string_interpolation_function_call() {
     assert_ok(
         r#"
@@ -137,7 +136,7 @@ add = \v1 v2
 
 "result is {40 | add 2}!"
 "#,
-        vm::Value::String("result is 42".to_string()),
+        vm::Value::String("result is 42!".to_string()),
     )
 }
 

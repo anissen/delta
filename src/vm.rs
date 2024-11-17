@@ -207,6 +207,14 @@ impl VirtualMachine {
                             self.push_string(left + &right.to_string());
                         }
 
+                        (Value::String(left), Value::True) => {
+                            self.push_string(left + "true");
+                        }
+
+                        (Value::String(left), Value::False) => {
+                            self.push_string(left + "false");
+                        }
+
                         _ => panic!("incompatible types for string concatenation"),
                     }
                 }
