@@ -141,7 +141,6 @@ add = \v1 v2
 }
 
 #[test]
-#[ignore = "not yet fixed"] // TODO(anissen): Fix this
 fn indexes_are_off() {
     assert_ok(
         r"

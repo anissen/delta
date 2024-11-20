@@ -127,7 +127,7 @@ impl Codegen {
                     self.do_emit(vec![*expr], environment, locals);
                     self.emit_bytecode(ByteCode::SetLocalValue);
 
-                    let index = environment.len() as u8;
+                    let index = locals.len() as u8;
                     println!("insert value {} at index {}", value, index);
                     environment.insert(value.clone(), index);
                     locals.insert(value.clone());
