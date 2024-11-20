@@ -283,9 +283,16 @@ impl VirtualMachine {
                     let index = self.read_byte();
                     let stack_index = self.current_call_frame().stack_index;
                     let value = self.peek(0).clone();
-                    println!("set local: insert {:?} at index {}", value, index);
+                    println!(
+                        "set local value: index: {}, stack_index: {}, value: {:?}",
+                        index, stack_index, value
+                    );
                     let actual_index = (stack_index + index) as usize;
-                    println!("actual_index: {}", actual_index);
+                    println!(
+                        "stack length: {}, actual_index: {}",
+                        self.stack.len(),
+                        actual_index
+                    );
 
                     if actual_index < self.stack.len() {
                         self.stack[actual_index] = value;
@@ -312,17 +319,7 @@ impl VirtualMachine {
                 }
 
                 ByteCode::FunctionEnd => {
-                    let result = self.stack.pop().unwrap();
-
-                    // Pop the arguments from the stack
-                    let arity = self.current_call_frame().function.arity;
-                    self.discard(arity);
-
-                    // Push the return value
-                    self.stack.push(result);
-
-                    self.program_counter = self.current_call_frame().return_program_counter;
-                    self.call_stack.pop();
+                    self.pop_call_frame();
                 }
 
                 ByteCode::Call => {
@@ -378,6 +375,21 @@ impl VirtualMachine {
 
     fn current_call_frame(&self) -> &CallFrame {
         &self.call_stack[self.call_stack.len() - 1]
+    }
+
+    fn pop_call_frame(&mut self) {
+        let result = self.stack.pop().unwrap();
+
+        // Pop the arguments from the stack
+        let arity = self.current_call_frame().function.arity;
+        self.discard(arity);
+
+        // Push the return value
+        self.stack.push(result);
+
+        self.program_counter = self.current_call_frame().return_program_counter;
+
+        self.call_stack.pop();
     }
 
     // TODO(anissen): All the function below should be part of the CallFrame impl instead (see https://craftinginterpreters.com/calls-and-functions.html @ "We’ll start at the top and plow through it.")

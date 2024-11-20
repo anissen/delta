@@ -100,8 +100,8 @@ impl Codegen {
                     self.emit_bytecode(ByteCode::Call);
                     self.emit_byte(arg_count as u8);
                     println!(
-                        "call function '{}' with environment: {:?}",
-                        name, environment
+                        "call function '{}' with environment: {:?}, locals: {:?}",
+                        name, environment, locals
                     );
                     let index = environment.get(&name).unwrap();
                     if locals.contains(&name) {
