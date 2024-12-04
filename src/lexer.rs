@@ -20,8 +20,8 @@ impl<'a> Lexer {
             source: Vec::default(),
             start: 0,
             current: 0,
-            line: 0,
-            column: 0,
+            line: 1,
+            column: 1,
             string_interpolation: false,
             tokens: vec![],
         }
@@ -68,7 +68,7 @@ impl<'a> Lexer {
         self.tokens.push(token);
         if is_new_line {
             self.line += 1;
-            self.column = 0;
+            self.column = 1;
         } else {
             self.column += self.current - self.start;
         }
