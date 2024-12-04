@@ -141,20 +141,34 @@ add = \v1 v2
 }
 
 #[test]
-fn indexes_are_off() {
+fn local_variables_work() {
+    assert_ok(
+        r"
+v = 2
+
+is_even = \v
+    v % 2 == 0
+
+is_odd = \v
+    res = v | is_even
+    !res
+
+5 | is_odd",
+        vm::Value::True,
+    )
+}
+
+#[test]
+fn chained_function_calling() {
     assert_ok(
         r"
 add = \v1 v2
     v1 + v2
 
-is_even = \v3
-    v3 % 2 == 0
+is_even = \v
+    v % 2 == 0
 
-is_odd = \v4
-    res = v4 | is_even
-    !res
-
-5 | is_odd",
+3 | add 1 | is_even",
         vm::Value::True,
     )
 }

@@ -248,7 +248,7 @@ impl Parser {
 
     // call → expression "|" primary expression? ;
     fn call(&mut self) -> Result<Option<Expr>, String> {
-        let expr = self.primary()?; // TODO(anissen): This ought to be an expression -- how can it be?
+        let expr = self.primary()?;
         if self.matches(&[Pipe]) {
             self.call_with_first_arg(expr.unwrap())
         } else {
@@ -268,7 +268,7 @@ impl Parser {
             && !self.check(&Pipe)
             && !self.check(&StringConcat)
         {
-            let arg = self.logic_or()?; // precedence after string concatenation
+            let arg = self.primary()?; // precedence after string concatenation
             if let Some(arg) = arg {
                 args.push(arg);
             }
