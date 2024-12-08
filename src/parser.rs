@@ -319,6 +319,8 @@ impl Parser {
     fn whitespace(&mut self) -> Result<Option<Expr>, String> {
         if self.matches(&[NewLine, Comment]) {
             Ok(None)
+        } else if (self.is_at_end()) {
+            Ok(None)
         } else {
             let error = format!(
                 "Parse error of kind {:?} at {:?} ({:?})",
