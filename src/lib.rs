@@ -81,8 +81,12 @@ pub fn run(source: &String, file_name: Option<&String>) -> Result<Option<vm::Val
     let ast = parser::parse(tokens)?;
     println!("ast: {:?}", ast);
 
+    let context = program::Context::new();
+
+    // TODO(anissen): Should use `program` w. diagnostics
+
     println!("\n# code gen =>");
-    let bytecodes = codegen::codegen(ast);
+    let bytecodes = codegen::codegen(ast, &context);
     println!("byte codes: {:?}", bytecodes);
 
     println!("\n# disassembly =>");
@@ -93,7 +97,7 @@ pub fn run(source: &String, file_name: Option<&String>) -> Result<Option<vm::Val
     }
 
     println!("\n# vm =>");
-    let result = vm::run(bytecodes);
+    let result = vm::run(bytecodes, &context);
 
     syntax_errors.iter().for_each(|token| match token.kind {
         tokens::TokenKind::SyntaxError(description) => {
@@ -106,4 +110,5 @@ pub fn run(source: &String, file_name: Option<&String>) -> Result<Option<vm::Val
     });
 
     Ok(result)
+    // Ok(Some(vm::Value::True))
 }

@@ -21,7 +21,9 @@ pub enum ByteCode {
     FunctionStart,
     FunctionEnd, // TODO(anissen): Maybe FunctionDefinition + FunctionBodyStart + FunctionBodyEnd?
     // FunctionSignature,
+    // ForeignFunction,
     Call,
+    CallForeign,
 }
 
 impl From<ByteCode> for u8 {
@@ -55,8 +57,10 @@ impl TryFrom<u8> for ByteCode {
             value if value == ByteCode::StringConcat as u8 => Ok(Self::StringConcat),
             value if value == ByteCode::FunctionStart as u8 => Ok(Self::FunctionStart),
             value if value == ByteCode::FunctionEnd as u8 => Ok(Self::FunctionEnd),
+            // value if value == ByteCode::ForeignFunction as u8 => Ok(Self::ForeignFunction),
             // value if value == ByteCode::FunctionSignature as u8 => Ok(Self::FunctionSignature),
             value if value == ByteCode::Call as u8 => Ok(Self::Call),
+            value if value == ByteCode::CallForeign as u8 => Ok(Self::CallForeign),
             _ => Err(()),
         }
     }

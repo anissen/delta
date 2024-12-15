@@ -1,6 +1,7 @@
 use core::str;
 
 use crate::bytecodes::ByteCode;
+use crate::program::Context;
 
 // TODO(anissen): See https://github.com/brightly-salty/rox/blob/master/src/value.rs
 #[derive(Debug, Clone, PartialEq)]
@@ -35,8 +36,8 @@ pub struct VirtualMachine {
     verbose_logging: bool,
 }
 
-pub fn run(bytes: Vec<u8>) -> Option<Value> {
-    VirtualMachine::new(bytes).execute()
+pub fn run<'a>(bytes: Vec<u8>, context: &'a Context<'a>) -> Option<Value> {
+    VirtualMachine::new(bytes).execute(context)
 }
 
 impl VirtualMachine {
@@ -51,7 +52,7 @@ impl VirtualMachine {
         }
     }
 
-    pub fn execute(&mut self) -> Option<Value> {
+    pub fn execute<'a>(&mut self, context: &'a Context<'a>) -> Option<Value> {
         while self.program_counter < self.program.len() {
             let next = self.read_byte();
             let instruction = ByteCode::try_from(next);
@@ -354,6 +355,22 @@ impl VirtualMachine {
                     let function = self.functions[function_index as usize].clone(); // TODO(anissen): Clone hack
                     self.call(function, arity)
                 }
+
+                ByteCode::CallForeign => {
+                    let foreign_index = self.read_byte();
+                    let arity = self.read_byte();
+
+                    let name_length = self.read_byte();
+                    let value_bytes: Vec<u8> = self.program
+                        [self.program_counter..self.program_counter + (name_length as usize)]
+                        .into();
+                    self.program_counter += name_length as usize;
+                    let name = String::from_utf8(value_bytes).unwrap();
+
+                    println!("foreign function name: {}", name);
+
+                    context.call_foreign_function(name, &self.stack); // TODO(anissen): Should use index instead
+                }
             }
         }
         println!("End stack: {:?}", self.stack);
@@ -457,7 +474,7 @@ impl VirtualMachine {
         self.stack.push(v);
     }
 
-    fn pop_float(&mut self) -> f32 {
+    pub fn pop_float(&mut self) -> f32 {
         match self.stack.pop().unwrap() {
             Value::Float(f) => f,
             _ => panic!("expected float, encountered some other type"),

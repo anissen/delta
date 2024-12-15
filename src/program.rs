@@ -5,7 +5,7 @@ use crate::lexer;
 use crate::parser;
 use crate::tokens::TokenKind;
 use crate::vm;
-use crate::vm::VirtualMachine;
+// use crate::vm::VirtualMachine;
 
 // struct CallContext<'a> {
 //     vm: &'a mut VirtualMachine,
@@ -21,29 +21,55 @@ use crate::vm::VirtualMachine;
 //     }
 // }
 
+struct ForeignFunction<'a> {
+    index: u8,
+    function: Box<dyn Fn(&Vec<vm::Value>) + 'a>,
+}
+
 pub struct Context<'a> {
-    functions: HashMap<String, Box<dyn FnMut(f32) + 'a>>,
+    functions: HashMap<String, ForeignFunction<'a>>,
+    function_count: u8,
 }
 
 impl<'a> Context<'a> {
     pub fn new() -> Self {
         Self {
             functions: HashMap::new(),
+            function_count: 0,
         }
     }
 
-    pub fn add_foreign_function(&mut self, n: String, c: impl FnMut(f32) + 'a) {
-        self.functions.insert(n, Box::new(c));
+    pub fn add_foreign_function(&mut self, name: String, function: impl Fn(&Vec<vm::Value>) + 'a) {
+        self.functions.insert(
+            name,
+            ForeignFunction {
+                index: self.function_count,
+                function: Box::new(function),
+            },
+        );
+        self.function_count += 1;
     }
 
-    fn call_foreign_function(&mut self, name: String) {
-        if let Some(func) = self.functions.get_mut(&name) {
-            func(3.4)
+    pub fn has_function(&self, name: &String) -> bool {
+        self.functions.contains_key(name)
+    }
+
+    pub fn get_index(&self, name: &String) -> u8 {
+        self.functions.get(name).unwrap().index
+    }
+
+    pub fn get_function_names(&self) -> Vec<String> {
+        self.functions
+            .iter()
+            .map(|(k, _v)| k.clone())
+            .collect::<Vec<String>>()
+    }
+
+    pub fn call_foreign_function(&self, name: String, stack: &Vec<vm::Value>) {
+        if let Some(foreign) = self.functions.get(&name) {
+            let func = &foreign.function;
+            func(stack);
         }
-        // self.functions.iter_mut().for_each(|(n, f)| {
-        //     println!("function: {}", n);
-        //     f(4.2)
-        // });
     }
 }
 
@@ -71,10 +97,10 @@ impl<'a> Program<'a> {
             .map(|(k, _v)| k.clone())
             .collect::<Vec<String>>();
         println!("foreign functions: {:?}", foreign_functions);
-        Ok(codegen::codegen(ast))
+        Ok(codegen::codegen(ast, &self.context))
     }
 
     pub fn run(&self, bytecodes: Vec<u8>) -> Option<vm::Value> {
-        vm::run(bytecodes /* , self.context */)
+        vm::run(bytecodes, &self.context)
     }
 }

@@ -2,25 +2,28 @@ use std::collections::{HashMap, HashSet};
 
 use crate::bytecodes::ByteCode;
 use crate::expressions::{BinaryOperator, Expr, UnaryOperator};
+use crate::program::Context;
 use crate::tokens::TokenKind;
 
-pub struct Codegen {
+pub struct Codegen<'a> {
     bytes: Vec<u8>,
     function_count: u8,
+    context: &'a Context<'a>,
 }
 
-pub fn codegen(expressions: Vec<Expr>) -> Vec<u8> {
-    Codegen::new().emit(expressions)
+pub fn codegen<'a>(expressions: Vec<Expr>, context: &'a Context<'a>) -> Vec<u8> {
+    Codegen::new(&context).emit(expressions)
 }
 
 // TODO(anissen): Add a function overview mapping for each scope containing { name, arity, starting IP, source line number  }.
 // This will be used directly in the VM as well as for debug logging.
 
-impl Codegen {
-    fn new() -> Self {
+impl<'a> Codegen<'a> {
+    fn new(context: &'a Context<'a>) -> Self {
         Self {
             bytes: vec![],
             function_count: 0,
+            context,
         }
     }
 
@@ -97,25 +100,38 @@ impl Codegen {
                 Expr::Call { name, args } => {
                     let arg_count = args.len();
                     self.do_emit(args, environment, locals);
-                    self.emit_bytecode(ByteCode::Call);
-                    self.emit_byte(arg_count as u8);
-                    println!(
-                        "call function '{}' with environment: {:?}, locals: {:?}",
-                        name, environment, locals
-                    );
-                    let index = environment.get(&name).unwrap();
-                    if locals.contains(&name) {
-                        self.emit_byte(0);
-                    } else {
-                        self.emit_byte(1);
-                    }
-                    self.emit_byte(*index);
+                    if self.context.has_function(&name) {
+                        // TODO(anissen): Maybe this should be its own Expr instead?
+                        self.emit_bytecode(ByteCode::CallForeign);
+                        self.emit_byte(self.context.get_index(&name));
+                        self.emit_byte(arg_count as u8);
 
-                    if name.len() > 255 {
-                        panic!("function name too long!");
-                    }
-                    self.emit_byte(name.len() as u8);
-                    self.emit_raw_bytes(&mut name.as_bytes().to_vec());
+                        if name.len() > 255 {
+                            panic!("function name too long!");
+                        }
+                        self.emit_byte(name.len() as u8);
+                        self.emit_raw_bytes(&mut name.as_bytes().to_vec());
+                    } else {
+                        self.emit_bytecode(ByteCode::Call);
+                        self.emit_byte(arg_count as u8);
+                        println!(
+                            "call function '{}' with environment: {:?}, locals: {:?}",
+                            name, environment, locals
+                        );
+                        let index = environment.get(&name).unwrap();
+                        if locals.contains(&name) {
+                            self.emit_byte(0);
+                        } else {
+                            self.emit_byte(1);
+                        }
+                        self.emit_byte(*index);
+
+                        if name.len() > 255 {
+                            panic!("function name too long!");
+                        }
+                        self.emit_byte(name.len() as u8);
+                        self.emit_raw_bytes(&mut name.as_bytes().to_vec());
+                    };
                 }
 
                 Expr::Assignment {
@@ -200,6 +216,13 @@ impl Codegen {
             };
         }
     }
+
+    // pub fn emit_foreign_functions(&mut self, context: &'static Context<'static>) {
+    //     for (index, function) in context.get_function_names().into_iter().enumerate() {
+    //         self.emit_bytecode(ByteCode::ForeignFunction);
+    //         self.emit_byte(index as u8); // TODO: Handle overflow
+    //     }
+    // }
 
     pub fn emit(&mut self, expressions: Vec<Expr>) -> Vec<u8> {
         println!("emit with fresh environment");

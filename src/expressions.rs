@@ -16,6 +16,10 @@ pub enum Expr {
         name: String,
         args: Vec<Expr>, // TODO(anissen): Should arguments be named? E.g. `square value:5`.
     },
+    // ForeignCall {
+    //     name: String,
+    //     args: Vec<Expr>,
+    // },
     Assignment {
         value: String,
         token: Token,

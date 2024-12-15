@@ -160,6 +160,29 @@ impl Disassembler {
                         format!("(arg count: {}, function index: {})", arg_count, index),
                     ]);
                 }
+
+                ByteCode::CallForeign => {
+                    let foreign_index = self.program[self.program_counter];
+                    self.program_counter += 1;
+                    let arg_count = self.program[self.program_counter];
+                    self.program_counter += 1;
+
+                    let name_length = self.program[self.program_counter];
+                    self.program_counter += 1;
+                    let value_bytes: Vec<u8> = self.program
+                        [self.program_counter..self.program_counter + (name_length as usize)]
+                        .into();
+                    self.program_counter += name_length as usize;
+                    let name = String::from_utf8(value_bytes).unwrap();
+
+                    res.push(vec![
+                        format!("call foreign functino {}", name),
+                        format!(
+                            "(arg count: {}, foreign_index: {})",
+                            arg_count, foreign_index
+                        ),
+                    ]);
+                }
             }
         }
         res
