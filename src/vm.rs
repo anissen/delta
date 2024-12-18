@@ -65,7 +65,7 @@ impl VirtualMachine {
                 });
             }
         }
-        println!("self.functions: {:?}", self.functions);
+        // println!("self.functions: {:?}", self.functions);
 
         // Construct an initial call frame for the top-level code.
         self.call(
@@ -81,11 +81,13 @@ impl VirtualMachine {
         while self.program_counter < self.program.len() {
             let next = self.read_byte();
             let instruction = ByteCode::try_from(next).unwrap();
-            println!(
-                "\n=== Instruction: {:?} === (pc: {})",
-                instruction, self.program_counter
-            );
-            println!("Stack: {:?}", self.stack);
+            if self.verbose_logging {
+                println!(
+                    "\n=== Instruction: {:?} === (pc: {})",
+                    instruction, self.program_counter
+                );
+                println!("Stack: {:?}", self.stack);
+            }
             match instruction {
                 ByteCode::PushTrue => self.stack.push(Value::True),
 
@@ -269,9 +271,9 @@ impl VirtualMachine {
 
                 ByteCode::GetLocalValue => {
                     let index = self.read_byte();
-                    println!("index is: {}", index);
+                    // println!("index is: {}", index);
                     let stack_index = self.current_call_frame().stack_index;
-                    println!("slots is: {}", stack_index);
+                    // println!("slots is: {}", stack_index);
                     let value = self
                         .stack
                         .get((stack_index + index) as usize)
@@ -284,16 +286,16 @@ impl VirtualMachine {
                     let index = self.read_byte();
                     let stack_index = self.current_call_frame().stack_index;
                     let value = self.peek(0).clone();
-                    println!(
-                        "set local value: index: {}, stack_index: {}, value: {:?}",
-                        index, stack_index, value
-                    );
+                    // println!(
+                    //     "set local value: index: {}, stack_index: {}, value: {:?}",
+                    //     index, stack_index, value
+                    // );
                     let actual_index = (stack_index + index) as usize;
-                    println!(
-                        "stack length: {}, actual_index: {}",
-                        self.stack.len(),
-                        actual_index
-                    );
+                    // println!(
+                    //     "stack length: {}, actual_index: {}",
+                    //     self.stack.len(),
+                    //     actual_index
+                    // );
 
                     if actual_index < self.stack.len() {
                         self.stack[actual_index] = value;
@@ -306,7 +308,7 @@ impl VirtualMachine {
 
                 ByteCode::FunctionStart => {
                     let function_index = self.read_byte();
-                    println!("function_index: {}", function_index);
+                    // println!("function_index: {}", function_index);
 
                     // jump to function end HACK!
                     while self.program_counter < self.program.len() {
@@ -333,25 +335,27 @@ impl VirtualMachine {
                         .into();
                     self.program_counter += name_length as usize;
                     let name = String::from_utf8(value_bytes).unwrap();
-                    println!("function name: {}", name);
-                    println!("is_global: {}", is_global);
-                    println!("arity: {}", arity);
-                    println!("index: {}", index);
+                    if self.verbose_logging {
+                        println!("function name: {}", name);
+                        println!("is_global: {}", is_global);
+                        println!("arity: {}", arity);
+                        println!("index: {}", index);
+                    }
 
                     let corrected_index = if is_global {
                         index
                     } else {
                         self.current_call_frame().stack_index + index
                     };
-                    println!("corrected_index: {}", corrected_index);
+                    // println!("corrected_index: {}", corrected_index);
                     let value = self.stack.get(corrected_index as usize).unwrap();
-                    println!("value: {:?}", value);
+                    // println!("value: {:?}", value);
                     let function_index = match value {
                         Value::Function(f) => *f,
                         _ => panic!("expected function, encountered some other type"),
                     };
-                    println!("functions: {:?}", self.functions);
-                    println!("function_index: {:?}", function_index);
+                    // println!("functions: {:?}", self.functions);
+                    // println!("function_index: {:?}", function_index);
                     let function = self.functions[function_index as usize].clone(); // TODO(anissen): Clone hack
                     self.call(function, arity)
                 }
@@ -367,26 +371,28 @@ impl VirtualMachine {
                     self.program_counter += name_length as usize;
                     let name = String::from_utf8(value_bytes).unwrap();
 
-                    println!("foreign function name: {}", name);
+                    // println!("foreign function name: {}", name);
 
                     context.call_foreign_function(name, &self.stack); // TODO(anissen): Should use index instead
                 }
             }
         }
-        println!("End stack: {:?}", self.stack);
+        if self.verbose_logging {
+            println!("End stack: {:?}", self.stack);
+        }
         self.stack.pop()
     }
 
     fn call(&mut self, function: FunctionObj, arity: u8) {
-        println!("call function: {:?}", function);
-        println!("call with arity: {}", arity);
+        // println!("call function: {:?}", function);
+        // println!("call with arity: {}", arity);
         let ip = function.ip;
         self.call_stack.push(CallFrame {
             function,
             return_program_counter: self.program_counter,
             stack_index: (self.stack.len() - (arity as usize)) as u8,
         });
-        println!("call: {:?}", self.current_call_frame());
+        // println!("call: {:?}", self.current_call_frame());
         self.program_counter = ip;
     }
 
