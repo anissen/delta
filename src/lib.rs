@@ -10,12 +10,16 @@ pub mod vm;
 
 use std::{fs::File, io::Read};
 
-pub fn run_file(source_path: &String) -> Result<Option<vm::Value>, String> {
-    let mut file = File::open(source_path).expect("Unable to open file");
+pub fn read_file(path: &String) -> String {
+    let mut file = File::open(path).expect("Unable to open file");
     let mut source = String::new();
     file.read_to_string(&mut source)
         .expect("Error reading file.");
+    source
+}
 
+pub fn run_file(source_path: &String) -> Result<Option<vm::Value>, String> {
+    let source = read_file(source_path);
     run(&source, Some(source_path))
 }
 
