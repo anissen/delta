@@ -23,12 +23,15 @@ use crate::vm;
 
 struct ForeignFunction<'a> {
     index: u8,
-    function: Box<dyn Fn(&Vec<vm::Value>) + 'a>,
+    function: Box<dyn Fn(&Vec<vm::Value>) -> vm::Value + 'a>,
 }
+
+type ForeignValue<'a> = Box<dyn Fn() -> vm::Value + 'a>;
 
 pub struct Context<'a> {
     functions: HashMap<String, ForeignFunction<'a>>,
     function_count: u8,
+    values: HashMap<String, ForeignValue<'a>>,
 }
 
 impl<'a> Context<'a> {
@@ -36,10 +39,31 @@ impl<'a> Context<'a> {
         Self {
             functions: HashMap::new(),
             function_count: 0,
+            values: HashMap::new(),
         }
     }
 
-    pub fn add_foreign_function(&mut self, name: String, function: impl Fn(&Vec<vm::Value>) + 'a) {
+    pub fn add_value(&mut self, name: String, value: impl Fn() -> vm::Value + 'a) {
+        self.values.insert(name, Box::new(value));
+    }
+
+    pub fn has_value(&self, name: &String) -> bool {
+        self.values.contains_key(name)
+    }
+
+    pub fn get_value(&self, name: &String) -> vm::Value {
+        if let Some(value_func) = self.values.get(name) {
+            value_func()
+        } else {
+            vm::Value::False
+        }
+    }
+
+    pub fn add_function(
+        &mut self,
+        name: String,
+        function: impl Fn(&Vec<vm::Value>) -> vm::Value + 'a,
+    ) {
         self.functions.insert(
             name,
             ForeignFunction {
@@ -65,10 +89,12 @@ impl<'a> Context<'a> {
             .collect::<Vec<String>>()
     }
 
-    pub fn call_foreign_function(&self, name: String, stack: &Vec<vm::Value>) {
-        if let Some(foreign) = self.functions.get(&name) {
+    pub fn call_function(&self, name: &String, stack: &Vec<vm::Value>) -> vm::Value {
+        if let Some(foreign) = self.functions.get(name) {
             let func = &foreign.function;
-            func(stack);
+            func(stack)
+        } else {
+            vm::Value::False // TODO(anissen): Should this be an error?
         }
     }
 }

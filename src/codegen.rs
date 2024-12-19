@@ -46,10 +46,20 @@ impl<'a> Codegen<'a> {
                 Expr::Float(f) => self.emit_bytes(ByteCode::PushFloat, f.to_be_bytes()),
 
                 Expr::Value(name) => {
-                    println!("read value: {}", name);
-                    let index = environment.get(&name).unwrap();
-                    self.emit_bytecode(ByteCode::GetLocalValue);
-                    self.emit_byte(*index);
+                    if self.context.has_value(&name) {
+                        self.emit_bytecode(ByteCode::GetForeignValue);
+                        // TODO(anissen): Should (also) output index
+                        if name.len() > 255 {
+                            panic!("function name too long!");
+                        }
+                        self.emit_byte(name.len() as u8);
+                        self.emit_raw_bytes(&mut name.as_bytes().to_vec());
+                    } else {
+                        println!("read value: {}", name);
+                        let index = environment.get(&name).unwrap();
+                        self.emit_bytecode(ByteCode::GetLocalValue);
+                        self.emit_byte(*index);
+                    }
                 }
 
                 Expr::String(str) => {

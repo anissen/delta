@@ -282,6 +282,19 @@ impl VirtualMachine {
                     self.stack.push(value);
                 }
 
+                ByteCode::GetForeignValue => {
+                    let name_length = self.read_byte();
+                    let value_bytes: Vec<u8> = self.program
+                        [self.program_counter..self.program_counter + (name_length as usize)]
+                        .into();
+                    self.program_counter += name_length as usize;
+                    let name = String::from_utf8(value_bytes).unwrap();
+
+                    let value = context.get_value(&name);
+
+                    self.stack.push(value);
+                }
+
                 ByteCode::SetLocalValue => {
                     let index = self.read_byte();
                     let stack_index = self.current_call_frame().stack_index;
@@ -373,7 +386,11 @@ impl VirtualMachine {
 
                     // println!("foreign function name: {}", name);
 
-                    context.call_foreign_function(name, &self.stack); // TODO(anissen): Should use index instead
+                    let function_stack = self.pop_many(arity);
+                    let result = context.call_function(&name, &function_stack); // TODO(anissen): Should use index instead
+                    self.discard(arity); // TODO(anissen): This should not be necessary. I would expect pop_many to mutate the stack
+
+                    self.stack.push(result);
                 }
             }
         }
@@ -469,6 +486,10 @@ impl VirtualMachine {
         for _ in 0..count {
             self.stack.pop();
         }
+    }
+
+    fn pop_many(&mut self, count: u8) -> Vec<Value> {
+        self.stack.split_off(self.stack.len() - (count as usize))
     }
 
     fn pop_any(&mut self) -> Value {

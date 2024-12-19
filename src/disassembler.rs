@@ -117,6 +117,21 @@ impl Disassembler {
                     res.push(vec!["get_value".to_string(), format!("(index: {})", index)]);
                 }
 
+                ByteCode::GetForeignValue => {
+                    let name_length = self.program[self.program_counter];
+                    self.program_counter += 1;
+                    let value_bytes: Vec<u8> = self.program
+                        [self.program_counter..self.program_counter + (name_length as usize)]
+                        .into();
+                    self.program_counter += name_length as usize;
+                    let name = String::from_utf8(value_bytes).unwrap();
+
+                    res.push(vec![
+                        "get_foreign_value".to_string(),
+                        format!("(name: {})", name),
+                    ]);
+                }
+
                 ByteCode::SetLocalValue => {
                     let index = self.program[self.program_counter];
                     self.program_counter += 1;
