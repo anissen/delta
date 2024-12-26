@@ -1,5 +1,3 @@
-use core::str;
-
 use crate::bytecodes::ByteCode;
 use crate::program::Context;
 
@@ -114,6 +112,7 @@ impl VirtualMachine {
                     self.push_string(string);
                 }
 
+                // TODO(anissen): Should this be split into add_int + add_float for optimization?
                 ByteCode::Addition => {
                     let right = self.pop_any();
                     let left = self.pop_any();
@@ -374,7 +373,7 @@ impl VirtualMachine {
                 }
 
                 ByteCode::CallForeign => {
-                    let foreign_index = self.read_byte();
+                    let _foreign_index = self.read_byte();
                     let arity = self.read_byte();
 
                     let name_length = self.read_byte();

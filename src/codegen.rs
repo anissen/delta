@@ -146,7 +146,7 @@ impl<'a> Codegen<'a> {
 
                 Expr::Assignment {
                     value,
-                    token: _,
+                    _token: _,
                     expr,
                 } => {
                     println!("assignment with environment: {:?}", environment);
@@ -186,7 +186,7 @@ impl<'a> Codegen<'a> {
 
                 Expr::Unary {
                     operator,
-                    token: _,
+                    _token: _,
                     expr,
                 } => match operator {
                     UnaryOperator::Negation => {
@@ -203,7 +203,7 @@ impl<'a> Codegen<'a> {
                 Expr::Binary {
                     left,
                     operator,
-                    token: _,
+                    _token: _,
                     right,
                 } => {
                     self.do_emit(vec![*left, *right], environment, locals);

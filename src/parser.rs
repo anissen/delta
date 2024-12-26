@@ -104,7 +104,7 @@ impl Parser {
                     let value = self.assignment()?;
                     Ok(Some(Expr::Assignment {
                         value: name,
-                        token,
+                        _token: token,
                         expr: Box::new(value.unwrap()),
                     }))
                 }
@@ -125,7 +125,7 @@ impl Parser {
             expr = Some(Expr::Binary {
                 left: Box::new(expr.unwrap()),
                 operator: BinaryOperator::StringConcat,
-                token,
+                _token: token,
                 right: Box::new(right.unwrap()),
             });
         }
@@ -197,7 +197,7 @@ impl Parser {
             expr = Some(Expr::Binary {
                 left: Box::new(expr.unwrap()),
                 operator,
-                token,
+                _token: token,
                 right: Box::new(right.unwrap()),
             });
         }
@@ -219,7 +219,7 @@ impl Parser {
             expr = Some(Expr::Binary {
                 left: Box::new(expr.unwrap()),
                 operator,
-                token,
+                _token: token,
                 right: Box::new(right.unwrap()),
             });
         }
@@ -238,7 +238,7 @@ impl Parser {
             let right = self.unary()?;
             Ok(Some(Expr::Unary {
                 operator,
-                token,
+                _token: token,
                 expr: Box::new(right.unwrap()),
             }))
         } else {

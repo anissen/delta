@@ -22,7 +22,7 @@ pub enum Expr {
     // },
     Assignment {
         value: String,
-        token: Token,
+        _token: Token,
         expr: Box<Expr>,
     },
     Comparison {
@@ -32,13 +32,13 @@ pub enum Expr {
     },
     Unary {
         operator: UnaryOperator,
-        token: Token,
+        _token: Token,
         expr: Box<Expr>,
     },
     Binary {
         left: Box<Expr>,
         operator: BinaryOperator,
-        token: Token,
+        _token: Token,
         right: Box<Expr>,
     },
     Block {
