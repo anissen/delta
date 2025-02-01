@@ -44,7 +44,17 @@ pub enum Expr {
     Block {
         exprs: Vec<Expr>,
     },
+    Is {
+        expr: Box<Expr>,
+        arms: Vec<IsArm>,
+    },
     // TODO(anissen): Add an Error and/or Todo expression?
+}
+
+#[derive(Debug)]
+pub struct IsArm {
+    pub pattern: Expr,
+    pub block: Expr,
 }
 
 #[derive(Debug)]

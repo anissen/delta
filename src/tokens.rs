@@ -10,6 +10,7 @@ pub enum TokenKind {
     Float,
     Identifier,
     Integer,
+    KeywordIs,
     LeftBrace,
     LeftParen,
     LeftChevron,

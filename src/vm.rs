@@ -391,6 +391,15 @@ impl VirtualMachine {
 
                     self.stack.push(result);
                 }
+
+                ByteCode::JumpIfTrue => {
+                    let offset = self.read_byte();
+
+                    let condition = self.pop_boolean();
+                    if condition {
+                        self.program_counter += offset as usize;
+                    }
+                }
             }
         }
         if self.verbose_logging {

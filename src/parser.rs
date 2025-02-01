@@ -1,12 +1,13 @@
 use crate::expressions::BinaryOperator;
 use crate::expressions::Expr;
+use crate::expressions::IsArm;
 use crate::expressions::UnaryOperator;
 use crate::tokens::Token;
 use crate::tokens::TokenKind;
 use crate::tokens::TokenKind::{
     BackSlash, Bang, BangEqual, Comment, Equal, EqualEqual, False, Float, Identifier, Integer,
-    LeftChevron, LeftChevronEqual, LeftParen, Minus, NewLine, Percent, Pipe, Plus, RightChevron,
-    RightChevronEqual, RightParen, Slash, Space, Star, StringConcat, True,
+    KeywordIs, LeftChevron, LeftChevronEqual, LeftParen, Minus, NewLine, Percent, Pipe, Plus,
+    RightChevron, RightChevronEqual, RightParen, Slash, Space, Star, StringConcat, True,
 };
 
 /*
@@ -248,7 +249,7 @@ impl Parser {
 
     // call → expression "|" primary expression? ;
     fn call(&mut self) -> Result<Option<Expr>, String> {
-        let expr = self.primary()?;
+        let expr = self.is()?;
         if self.matches(&[Pipe]) {
             self.call_with_first_arg(expr.unwrap())
         } else {
@@ -306,14 +307,53 @@ impl Parser {
                 exprs.push(expr);
             }
             self.consume(&TokenKind::NewLine)?;
-            let matches_indentation =
-                (0..self.indentation).all(|_| self.matches(&[TokenKind::Tab])); // TODO(anissen): Should probably Err if indentation is wrong
+            let matches_indentation = (0..self.indentation).all(|i| {
+                self.tokens.len() > self.current + 1
+                    && self.tokens[self.current + i as usize].kind == TokenKind::Tab
+            }); // TODO(anissen): Should probably Err if indentation is wrong
             if !matches_indentation {
                 break;
             }
         }
         self.indentation -= 1;
         Ok(Some(Expr::Block { exprs }))
+    }
+
+    fn is(&mut self) -> Result<Option<Expr>, String> {
+        let expr = self.primary()?;
+        // if let Some(ex) = expr {
+        if self.matches(&[KeywordIs]) {
+            self.consume(&TokenKind::NewLine)?;
+            self.indentation += 1;
+            let mut arms = vec![];
+            while !self.is_at_end() {
+                println!("arm loop");
+                arms.push(self.is_arm()?);
+            }
+            self.indentation -= 1;
+            Ok(Some(Expr::Is {
+                expr: Box::new(expr.unwrap()),
+                arms,
+            }))
+        } else {
+            Ok(expr)
+        }
+    }
+
+    fn is_arm(&mut self) -> Result<IsArm, String> {
+        for _ in 0..self.indentation {
+            self.consume(&TokenKind::Tab)?;
+        }
+
+        if let Some(pattern) = self.primary()? {
+            if let Some(block) = self.block()? {
+                Ok(IsArm { pattern, block })
+            } else {
+                Err("Error parsing pattern of `is` arm".to_string())
+            }
+        } else {
+            Err("Error parsing block of `is` arm".to_string())
+        }
     }
 
     fn whitespace(&mut self) -> Result<Option<Expr>, String> {

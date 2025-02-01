@@ -1,11 +1,7 @@
 
-square = \v
-    v * v
 
-add = \v1 v2
-    v1 + v2
-
-add_one = \v
-    v | add 1
-
-5 | square | add_one
+true is
+	true
+		3
+	false
+		5

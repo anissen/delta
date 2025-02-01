@@ -191,12 +191,18 @@ impl Disassembler {
                     let name = String::from_utf8(value_bytes).unwrap();
 
                     res.push(vec![
-                        format!("call foreign functino {}", name),
+                        format!("call foreign function {}", name),
                         format!(
                             "(arg count: {}, foreign_index: {})",
                             arg_count, foreign_index
                         ),
                     ]);
+                }
+
+                ByteCode::JumpIfTrue => {
+                    let offset = self.program[self.program_counter];
+                    self.program_counter += 1;
+                    res.push(vec![format!("jump if true (offset: {})", offset)]);
                 }
             }
         }

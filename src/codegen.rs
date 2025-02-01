@@ -223,6 +223,56 @@ impl<'a> Codegen<'a> {
                         BinaryOperator::StringConcat => self.emit_bytecode(ByteCode::StringConcat),
                     }
                 }
+
+                Expr::Is { expr, arms } => {
+                    // self.do_emit(vec![*expr], environment, locals);
+                    let mut jump_to_end_offsets = vec![];
+                    for arm in arms {
+                        self.do_emit(vec![Expr::Integer(2)], environment, locals); // TODO(anissen): Should be `expr`
+
+                        self.do_emit(vec![arm.pattern], environment, locals);
+
+                        self.emit_bytecode(ByteCode::Equals);
+                        self.emit_bytecode(ByteCode::Not);
+                        let next_arm_offset = self.emit_jump_if_true();
+
+                        self.do_emit(vec![arm.block], environment, locals);
+
+                        self.emit_bytecode(ByteCode::PushTrue); // Hack to avoid having a jump instruction without arguments
+                        let end_offset = self.emit_jump_if_true();
+                        jump_to_end_offsets.push(end_offset);
+
+                        self.patch_jump_to_current_byte(next_arm_offset);
+                    }
+
+                    // TODO(anissen): default block goes here
+
+                    for offset in jump_to_end_offsets {
+                        self.patch_jump_to_current_byte(offset);
+                    }
+
+                    /*
+                    x is
+                        true
+                            y
+                        false
+                            z
+                    ==>
+                    x
+                    arm1.pattern
+                    jne arm2
+                    arm1.block
+                    goto end
+                    arm2: jne arm3
+                    arm2.block
+                    goto end
+                    arm3: jne arm4
+                    ...
+                    goto end
+                    default-block
+                    end:
+                    */
+                }
             };
         }
     }
@@ -257,5 +307,40 @@ impl<'a> Codegen<'a> {
 
     fn emit_raw_bytes(&mut self, bytes: &mut Vec<u8>) {
         self.bytes.append(bytes);
+    }
+
+    fn emit_jump_if_true(&mut self) -> usize {
+        self.emit_bytecode(ByteCode::JumpIfTrue);
+        self.emit_byte(0); // placeholder
+
+        // self.emit_bytes(
+        //     ByteCode::JumpIfTrue,
+        //     0_i32.to_be_bytes(), /* placeholder */
+        // );
+        self.bytes.len() - 1
+    }
+
+    // fn emit_unconditional_jump(&mut self) -> usize {
+    //     self.emit_bytecode(ByteCode::Jump);
+    //     self.emit_byte(0); // placeholder
+
+    //     // self.emit_bytes(
+    //     //     ByteCode::JumpIfTrue,
+    //     //     0_i32.to_be_bytes(), /* placeholder */
+    //     // );
+    //     self.bytes.len() - 1
+    // }
+
+    fn patch_jump_to_current_byte(&mut self, byte_offset: usize) {
+        let jump_offset = (self.bytes.len() - 1 - byte_offset) as u8;
+        // dbg!(byte_offset);
+        // dbg!(jump_offset);
+        // dbg!(&self.bytes);
+        if let Some(elem) = self.bytes.get_mut(byte_offset) {
+            *elem = jump_offset;
+            dbg!(&self.bytes);
+        } else {
+            panic!("Error trying to patch jump instruction");
+        }
     }
 }
