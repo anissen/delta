@@ -107,7 +107,7 @@ impl<'a> Lexer {
             '\t' => TokenKind::Tab,
             '\n' => TokenKind::NewLine,
             '\"' => self.string(),
-            'i' if self.matches('s') => TokenKind::KeywordIs,
+            'i' if self.matches('s') => TokenKind::KeywordIs, // TODO(anissen): This also matches is_a_dog etc.
             c if self.is_letter(c) => self.identifier(),
             c if self.is_digit(c) => self.number(),
             _ => TokenKind::SyntaxError("Unexpected token"),

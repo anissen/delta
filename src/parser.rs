@@ -298,15 +298,16 @@ impl Parser {
     fn block(&mut self) -> Result<Option<Expr>, String> {
         self.consume(&TokenKind::NewLine)?;
         self.indentation += 1;
-        for _ in 0..self.indentation {
-            self.consume(&TokenKind::Tab)?;
-        }
         let mut exprs = vec![];
         loop {
+            for _ in 0..self.indentation {
+                self.consume(&TokenKind::Tab)?;
+            }
             if let Some(expr) = self.expression()? {
                 exprs.push(expr);
             }
             self.consume(&TokenKind::NewLine)?;
+
             let matches_indentation = (0..self.indentation).all(|i| {
                 self.tokens.len() > self.current + 1
                     && self.tokens[self.current + i as usize].kind == TokenKind::Tab
@@ -321,7 +322,6 @@ impl Parser {
 
     fn is(&mut self) -> Result<Option<Expr>, String> {
         let expr = self.primary()?;
-        // if let Some(ex) = expr {
         if self.matches(&[KeywordIs]) {
             self.consume(&TokenKind::NewLine)?;
             self.indentation += 1;
