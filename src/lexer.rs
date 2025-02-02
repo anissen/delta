@@ -1,3 +1,5 @@
+use std::ops::Index;
+
 use crate::tokens::{Span, Token, TokenKind};
 
 struct Lexer {
@@ -107,9 +109,9 @@ impl<'a> Lexer {
             '\t' => TokenKind::Tab,
             '\n' => TokenKind::NewLine,
             '\"' => self.string(),
-            'i' if self.matches('s') => TokenKind::KeywordIs, // TODO(anissen): This also matches is_a_dog etc.
-            c if self.is_letter(c) => self.identifier(),
             c if self.is_digit(c) => self.number(),
+            _ if self.match_keyword(&"is".chars().collect()) => TokenKind::KeywordIs,
+            c if self.is_letter(c) => self.identifier(),
             _ => TokenKind::SyntaxError("Unexpected token"),
         }
     }
@@ -141,6 +143,28 @@ impl<'a> Lexer {
             "true" => TokenKind::True,
             "false" => TokenKind::False,
             _ => TokenKind::Identifier,
+        }
+    }
+
+    // TODO(anissen): `keyword` probably ought to be &str
+    fn match_keyword(&mut self, keyword: &Vec<char>) -> bool {
+        if self.source.len() <= self.current + keyword.len() {
+            false
+        } else {
+            // TODO(anissen): This char-by-char check does not work for multi-char characters (e.g. UTF8)
+            let matches_keyword = (0..keyword.len()).all(|i| self.peek_at(i) == keyword[i]);
+            if !matches_keyword {
+                false
+            } else {
+                let token_after_keyword = self.peek_at(keyword.len());
+                match token_after_keyword {
+                    '\0' | ' ' | '\n' => {
+                        self.advance_many(keyword.len() - 1);
+                        true
+                    }
+                    _ => false,
+                }
+            }
         }
     }
 
@@ -232,6 +256,14 @@ impl<'a> Lexer {
         }
     }
 
+    fn peek_at(&self, index: usize) -> char {
+        if self.is_at_end() {
+            Default::default()
+        } else {
+            self.source[self.current - 1 + index]
+        }
+    }
+
     fn peek_next(&self) -> char {
         if self.current >= self.source.len() {
             Default::default()
@@ -255,5 +287,11 @@ impl<'a> Lexer {
     fn advance(&mut self) -> char {
         self.current += 1;
         self.source[self.current - 1]
+    }
+
+    fn advance_many(&mut self, count: usize) {
+        for _ in 0..count {
+            self.advance();
+        }
     }
 }

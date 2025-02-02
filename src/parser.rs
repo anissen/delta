@@ -296,7 +296,7 @@ impl Parser {
     }
 
     fn block(&mut self) -> Result<Option<Expr>, String> {
-        self.consume(&TokenKind::NewLine)?;
+        self.consume(&NewLine)?;
         self.indentation += 1;
         let mut exprs = vec![];
         loop {
@@ -306,13 +306,14 @@ impl Parser {
             if let Some(expr) = self.expression()? {
                 exprs.push(expr);
             }
-            self.consume(&TokenKind::NewLine)?;
 
-            let matches_indentation = (0..self.indentation).all(|i| {
-                self.tokens.len() > self.current + 1
-                    && self.tokens[self.current + i as usize].kind == TokenKind::Tab
-            }); // TODO(anissen): Should probably Err if indentation is wrong
-            if !matches_indentation {
+            // Required when having nested blocks to avoid each consuming the newline
+            if self.check(&NewLine) {
+                self.consume(&NewLine)?;
+            }
+
+            if !self.matches_indentation() {
+                // TODO(anissen): Should probably Err if indentation is wrong
                 break;
             }
         }
@@ -323,12 +324,14 @@ impl Parser {
     fn is(&mut self) -> Result<Option<Expr>, String> {
         let expr = self.primary()?;
         if self.matches(&[KeywordIs]) {
-            self.consume(&TokenKind::NewLine)?;
+            self.consume(&NewLine)?;
             self.indentation += 1;
             let mut arms = vec![];
-            while !self.is_at_end() {
-                println!("arm loop");
+            while self.matches_indentation() {
                 arms.push(self.is_arm()?);
+            }
+            if arms.is_empty() {
+                panic!("is without any arms");
             }
             self.indentation -= 1;
             Ok(Some(Expr::Is {
@@ -407,6 +410,13 @@ impl Parser {
         } else {
             self.whitespace()
         }
+    }
+
+    fn matches_indentation(&self) -> bool {
+        (0..self.indentation as usize).all(|i| {
+            self.tokens.len() > self.current + 1
+                && self.tokens[self.current + i].kind == TokenKind::Tab
+        })
     }
 
     fn matches(&mut self, kinds: &[TokenKind]) -> bool {
