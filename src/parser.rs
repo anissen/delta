@@ -368,7 +368,7 @@ impl Parser {
             } else {
                 Err("Error parsing block of default `is` arm".to_string())
             }
-        } else if let Some(pattern) = self.primary()? {
+        } else if let Some(pattern) = self.expression()? {
             if let Some(block) = self.block()? {
                 Ok(IsArm {
                     pattern: Some(pattern),
