@@ -238,21 +238,26 @@ impl<'a> Codegen<'a> {
             Expr::Is { expr, arms } => {
                 let mut jump_to_end_offsets = vec![];
                 for arm in arms {
-                    self.emit_expr(expr, environment, locals);
+                    if let Some(pattern) = &arm.pattern {
+                        self.emit_expr(expr, environment, locals);
 
-                    self.emit_expr(&arm.pattern, environment, locals);
+                        self.emit_expr(&pattern, environment, locals);
 
-                    self.emit_bytecode(ByteCode::Equals);
-                    self.emit_bytecode(ByteCode::Not);
-                    let next_arm_offset = self.emit_jump_if_true();
+                        self.emit_bytecode(ByteCode::Equals);
+                        self.emit_bytecode(ByteCode::Not);
 
-                    self.emit_expr(&arm.block, environment, locals);
+                        let next_arm_offset = self.emit_jump_if_true();
 
-                    self.emit_bytecode(ByteCode::PushTrue); // Hack to avoid having a jump instruction without arguments
-                    let end_offset = self.emit_jump_if_true();
-                    jump_to_end_offsets.push(end_offset);
+                        self.emit_expr(&arm.block, environment, locals);
 
-                    self.patch_jump_to_current_byte(next_arm_offset);
+                        self.emit_bytecode(ByteCode::PushTrue); // Hack to avoid having a jump instruction without arguments
+                        let end_offset = self.emit_jump_if_true();
+                        jump_to_end_offsets.push(end_offset);
+
+                        self.patch_jump_to_current_byte(next_arm_offset);
+                    } else {
+                        self.emit_expr(&arm.block, environment, locals);
+                    }
                 }
 
                 // TODO(anissen): default block goes here

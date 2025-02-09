@@ -32,6 +32,7 @@ pub enum TokenKind {
     SyntaxError(&'static str),
     Tab,
     True,
+    Underscore,
 }
 
 #[derive(Debug, Clone)]

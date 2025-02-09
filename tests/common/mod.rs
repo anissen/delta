@@ -12,10 +12,10 @@ pub fn assert_ok(source: &str, expected: delta::vm::Value) {
     };
 }
 
-// pub fn assert_err(source: &str, expected: String) {
-//     match delta::run(&source.to_string(), None) {
-//         Ok(Some(result)) => assert!(false, "Expected result to be Err but was Ok: {:?}", result),
-//         Err(err) => assert!(err == expected),
-//         _ => panic!(),
-//     };
-// }
+pub fn assert_err(source: &str, expected: String) {
+    match delta::run(&source.to_string(), None) {
+        Ok(Some(result)) => assert!(false, "Expected result to be Err but was Ok: {:?}", result),
+        Err(err) => assert!(err == expected),
+        _ => panic!(),
+    };
+}

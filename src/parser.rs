@@ -327,11 +327,22 @@ impl Parser {
             self.consume(&NewLine)?;
             self.indentation += 1;
             let mut arms = vec![];
+            let mut has_default = false;
             while self.matches_indentation() {
-                arms.push(self.is_arm()?);
+                let arm = self.is_arm()?;
+                if has_default {
+                    if arm.pattern.is_none() {
+                        return Err("An `is` block cannot have multiple default arms.".to_string());
+                    } else {
+                        return Err("Unreachable due to default arm above.".to_string());
+                    }
+                }
+                has_default = arm.pattern.is_none();
+
+                arms.push(arm);
             }
             if arms.is_empty() {
-                panic!("is without any arms");
+                return Err("`is` block must have at least one arm".to_string());
             }
             self.indentation -= 1;
             Ok(Some(Expr::Is {
@@ -348,14 +359,26 @@ impl Parser {
             self.consume(&TokenKind::Tab)?;
         }
 
-        if let Some(pattern) = self.primary()? {
+        if self.matches(&[TokenKind::Underscore]) {
             if let Some(block) = self.block()? {
-                Ok(IsArm { pattern, block })
+                Ok(IsArm {
+                    pattern: None,
+                    block,
+                })
             } else {
-                Err("Error parsing pattern of `is` arm".to_string())
+                Err("Error parsing block of default `is` arm".to_string())
+            }
+        } else if let Some(pattern) = self.primary()? {
+            if let Some(block) = self.block()? {
+                Ok(IsArm {
+                    pattern: Some(pattern),
+                    block,
+                })
+            } else {
+                Err("Error parsing block of `is` arm".to_string())
             }
         } else {
-            Err("Error parsing block of `is` arm".to_string())
+            Err("Error parsing pattern of `is` arm".to_string())
         }
     }
 

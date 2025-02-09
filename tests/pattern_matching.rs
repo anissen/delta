@@ -1,6 +1,6 @@
 mod common;
 
-use common::assert_ok;
+use common::{assert_err, assert_ok};
 use delta::vm;
 
 #[test]
@@ -61,3 +61,44 @@ match = \v
     );
 }
 
+#[test]
+fn pattern_matching_default() {
+    assert_ok(
+        r#"
+3 is
+    2
+        "nope"
+    _
+        "yes"
+"#,
+        vm::Value::String("yes".to_string()),
+    );
+}
+
+#[test]
+fn multiple_default_patterns() {
+    assert_err(
+        r#"
+3 is
+    _
+        "ok"
+    _
+        "not okay"
+"#,
+        "An `is` block cannot have multiple default arms.".to_string(),
+    );
+}
+
+#[test]
+fn arm_after_default_pattern() {
+    assert_err(
+        r#"
+3 is
+    _
+        "ok"
+    3
+        "not okay"
+"#,
+        "Unreachable due to default arm above.".to_string(),
+    );
+}

@@ -104,6 +104,7 @@ impl<'a> Lexer {
             '<' => TokenKind::LeftChevron,
             '>' if self.matches('=') => TokenKind::RightChevronEqual,
             '>' => TokenKind::RightChevron,
+            '_' => TokenKind::Underscore,
             '\t' => TokenKind::Tab,
             '\n' => TokenKind::NewLine,
             '\"' => self.string(),

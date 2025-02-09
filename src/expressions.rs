@@ -53,7 +53,7 @@ pub enum Expr {
 
 #[derive(Debug)]
 pub struct IsArm {
-    pub pattern: Expr,
+    pub pattern: Option<Expr>,
     pub block: Expr,
 }
 
