@@ -3,9 +3,10 @@ use crate::bytecodes::ByteCode;
 pub struct Disassembler {
     program: Vec<u8>,
     program_counter: usize,
+    last_program_counter: usize,
 }
 
-pub fn disassemble(bytes: Vec<u8>) -> Vec<Vec<String>> {
+pub fn disassemble(bytes: Vec<u8>) {
     Disassembler::new(bytes).disassemble()
 }
 
@@ -14,42 +15,44 @@ impl Disassembler {
         Self {
             program: bytes,
             program_counter: 0,
+            last_program_counter: 0,
         }
     }
 
-    pub fn disassemble(&mut self) -> Vec<Vec<String>> {
-        let mut res = vec![];
+    fn read_i32(&mut self) -> i32 {
+        let value_bytes: [u8; 4] = self.program[self.program_counter..self.program_counter + 4]
+            .try_into()
+            .unwrap();
+        self.program_counter += 4;
+        i32::from_be_bytes(value_bytes)
+    }
 
+    fn print(&mut self, values: Vec<String>) {
+        println!("{} \t{:?}", self.last_program_counter, values);
+    }
+
+    pub fn disassemble(&mut self) {
         while self.program_counter < self.program.len() {
             let instruction = ByteCode::try_from(self.program[self.program_counter]).unwrap();
+            self.last_program_counter = self.program_counter;
             self.program_counter += 1;
+            // self.print(vec![format!("> byte: {}", self.program_counter)]);
             match instruction {
-                ByteCode::PushTrue => res.push(vec!["push_true".to_string()]),
+                ByteCode::PushTrue => self.print(vec!["push_true".to_string()]),
 
-                ByteCode::PushFalse => res.push(vec!["push_false".to_string()]),
+                ByteCode::PushFalse => self.print(vec!["push_false".to_string()]),
 
                 ByteCode::PushInteger => {
-                    let value_bytes: [u8; 4] = self.program
-                        [self.program_counter..self.program_counter + 4]
-                        .try_into()
-                        .unwrap();
-                    self.program_counter += 4;
-                    let raw = i32::from_be_bytes(value_bytes);
-                    res.push(vec![
+                    let value = self.read_i32();
+                    self.print(vec![
                         "push_integer".to_string(),
-                        format!("(value: {})", raw),
+                        format!("(value: {})", value),
                     ]);
                 }
 
                 ByteCode::PushFloat => {
-                    let value_bytes: [u8; 4] = self.program
-                        [self.program_counter..self.program_counter + 4]
-                        .try_into()
-                        .unwrap();
-                    let raw = u32::from_be_bytes(value_bytes);
-                    let value: f32 = f32::from_bits(raw);
-                    self.program_counter += 4;
-                    res.push(vec![
+                    let value = self.read_i32();
+                    self.print(vec![
                         "push_float".to_string(),
                         format!("(value: {})", value),
                     ]);
@@ -64,57 +67,57 @@ impl Disassembler {
                     self.program_counter += string_length as usize;
                     let string = String::from_utf8(value_bytes).unwrap();
 
-                    res.push(vec![format!("push_string: {}", string)]);
+                    self.print(vec![format!("push_string: {}", string)]);
                 }
 
                 ByteCode::Addition => {
-                    res.push(vec!["add".to_string()]);
+                    self.print(vec!["add".to_string()]);
                 }
 
                 ByteCode::Subtraction => {
-                    res.push(vec!["sub".to_string()]);
+                    self.print(vec!["sub".to_string()]);
                 }
 
                 ByteCode::Multiplication => {
-                    res.push(vec!["mult".to_string()]);
+                    self.print(vec!["mult".to_string()]);
                 }
 
                 ByteCode::Division => {
-                    res.push(vec!["div".to_string()]);
+                    self.print(vec!["div".to_string()]);
                 }
 
                 ByteCode::Modulo => {
-                    res.push(vec!["mod".to_string()]);
+                    self.print(vec!["mod".to_string()]);
                 }
 
                 ByteCode::StringConcat => {
-                    res.push(vec!["str_concat".to_string()]);
+                    self.print(vec!["str_concat".to_string()]);
                 }
 
                 ByteCode::Equals => {
-                    res.push(vec!["eq".to_string()]);
+                    self.print(vec!["eq".to_string()]);
                 }
 
                 ByteCode::LessThan => {
-                    res.push(vec!["lt".to_string()]);
+                    self.print(vec!["lt".to_string()]);
                 }
 
                 ByteCode::LessThanEquals => {
-                    res.push(vec!["lte".to_string()]);
+                    self.print(vec!["lte".to_string()]);
                 }
 
                 ByteCode::Negation => {
-                    res.push(vec!["neg".to_string()]);
+                    self.print(vec!["neg".to_string()]);
                 }
 
                 ByteCode::Not => {
-                    res.push(vec!["not".to_string()]);
+                    self.print(vec!["not".to_string()]);
                 }
 
                 ByteCode::GetLocalValue => {
                     let index = self.program[self.program_counter]; // TODO(anissen): Make helper function to read bytes and increment program counter
                     self.program_counter += 1;
-                    res.push(vec!["get_value".to_string(), format!("(index: {})", index)]);
+                    self.print(vec!["get_value".to_string(), format!("(index: {})", index)]);
                 }
 
                 ByteCode::GetForeignValue => {
@@ -126,7 +129,7 @@ impl Disassembler {
                     self.program_counter += name_length as usize;
                     let name = String::from_utf8(value_bytes).unwrap();
 
-                    res.push(vec![
+                    self.print(vec![
                         "get_foreign_value".to_string(),
                         format!("(name: {})", name),
                     ]);
@@ -135,7 +138,7 @@ impl Disassembler {
                 ByteCode::SetLocalValue => {
                     let index = self.program[self.program_counter];
                     self.program_counter += 1;
-                    res.push(vec!["set_value".to_string(), format!("(index: {})", index)]);
+                    self.print(vec!["set_value".to_string(), format!("(index: {})", index)]);
                 }
 
                 ByteCode::FunctionStart => {
@@ -143,7 +146,7 @@ impl Disassembler {
                     self.program_counter += 1;
                     let param_count = self.program[self.program_counter];
                     self.program_counter += 1;
-                    res.push(vec![
+                    self.print(vec![
                         format!("function"),
                         format!("(function index: {})", function_index),
                         format!("(params: {})", param_count),
@@ -151,7 +154,7 @@ impl Disassembler {
                 }
 
                 ByteCode::FunctionEnd => {
-                    res.push(vec!["ret".to_string()]);
+                    self.print(vec!["ret".to_string()]);
                 }
 
                 ByteCode::Call => {
@@ -170,7 +173,7 @@ impl Disassembler {
                     self.program_counter += name_length as usize;
                     let name = String::from_utf8(value_bytes).unwrap();
 
-                    res.push(vec![
+                    self.print(vec![
                         format!("call {} (is_global: {})", name, is_global),
                         format!("(arg count: {}, function index: {})", arg_count, index),
                     ]);
@@ -190,7 +193,7 @@ impl Disassembler {
                     self.program_counter += name_length as usize;
                     let name = String::from_utf8(value_bytes).unwrap();
 
-                    res.push(vec![
+                    self.print(vec![
                         format!("call foreign function {}", name),
                         format!(
                             "(arg count: {}, foreign_index: {})",
@@ -200,12 +203,14 @@ impl Disassembler {
                 }
 
                 ByteCode::JumpIfTrue => {
-                    let offset = self.program[self.program_counter];
-                    self.program_counter += 1;
-                    res.push(vec![format!("jump if true (offset: {})", offset)]);
+                    let offset = self.read_i32();
+                    self.print(vec![format!(
+                        "jump if true (offset: {}, to byte {})",
+                        offset,
+                        self.program_counter + offset as usize
+                    )]);
                 }
             }
         }
-        res
     }
 }

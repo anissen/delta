@@ -1,5 +1,3 @@
-use std::ops::Index;
-
 use crate::tokens::{Span, Token, TokenKind};
 
 struct Lexer {
@@ -121,11 +119,17 @@ impl<'a> Lexer {
         while !self.is_at_end() && self.peek() == ' ' {
             self.advance();
             spaces += 1;
+            if spaces == 4 {
+                // Need to split multiple indentations into tabs
+                break;
+            }
         }
         match spaces {
             1 => TokenKind::Space,
             4 => TokenKind::Tab, // HACK because Zed cannot handle hard tabs correctly. Scanning for '\t' should be sufficient.
-            _ => TokenKind::SyntaxError("Unexpected whitespace"),
+            _ => TokenKind::SyntaxError(
+                "Unexpected whitespace (number of spaces more than 1 and less than 4)",
+            ),
         }
     }
 

@@ -1,7 +1,15 @@
+res = 2 is
+	4
+		"nope"
+	3
+		"no"
+	2
+		true is
+			true
+				"oh yes"
+			false
+				"oh no"
+	1
+		"also no"
 
-
-true is
-	true
-		3
-	false
-		5
+"result is '{res}'"

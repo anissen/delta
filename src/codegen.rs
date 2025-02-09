@@ -321,16 +321,9 @@ impl<'a> Codegen<'a> {
     }
 
     fn emit_jump_if_true(&mut self) -> usize {
-        self.emit_bytecode(ByteCode::JumpIfTrue);
-        self.emit_byte(0); // placeholder
-
-        // TODO(anissen): Byte code offset should be 4 bytes instead of 1 (see below)
-
-        // self.emit_bytes(
-        //     ByteCode::JumpIfTrue,
-        //     0_i32.to_be_bytes(), /* placeholder */
-        // );
-        self.bytes.len() - 1
+        let bytes = 0_i32.to_be_bytes();
+        self.emit_bytes(ByteCode::JumpIfTrue, bytes /* placeholder */);
+        self.bytes.len() - bytes.len()
     }
 
     // fn emit_unconditional_jump(&mut self) -> usize {
@@ -345,11 +338,11 @@ impl<'a> Codegen<'a> {
     // }
 
     fn patch_jump_to_current_byte(&mut self, byte_offset: usize) {
-        let jump_offset = (self.bytes.len() - 1 - byte_offset) as u8;
-        if let Some(elem) = self.bytes.get_mut(byte_offset) {
-            *elem = jump_offset;
-        } else {
-            panic!("Error trying to patch jump instruction");
-        }
+        // byte offset is the start of 4 bytes that indicate the jump offset
+        let jump_instruction_bytes = 4;
+        let jump_offset = (self.bytes.len() - (byte_offset + jump_instruction_bytes)) as i32;
+        jump_offset
+            .to_be_bytes()
+            .swap_with_slice(&mut self.bytes[byte_offset..byte_offset + 4]);
     }
 }

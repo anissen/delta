@@ -94,11 +94,12 @@ pub fn run(source: &String, file_name: Option<&String>) -> Result<Option<vm::Val
     println!("byte codes: {:?}", bytecodes);
 
     println!("\n# disassembly =>");
-    let disassembled = disassembler::disassemble(bytecodes.clone());
-    println!("disassembled:");
-    for ele in disassembled {
-        println!("{:?}", ele);
-    }
+    disassembler::disassemble(bytecodes.clone());
+    // let disassembled = disassembler::disassemble(bytecodes.clone());
+    // println!("disassembled:");
+    // for ele in disassembled {
+    //     println!("{:?}", ele);
+    // }
 
     println!("\n# vm =>");
     let result = vm::run(bytecodes, &context);

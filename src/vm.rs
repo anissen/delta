@@ -393,7 +393,7 @@ impl VirtualMachine {
                 }
 
                 ByteCode::JumpIfTrue => {
-                    let offset = self.read_byte();
+                    let offset = self.read_i32();
 
                     let condition = self.pop_boolean();
                     if condition {

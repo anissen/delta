@@ -234,6 +234,46 @@ fn string_interpolation() {
     );
 }
 
+#[test]
+fn pattern_matching_integers() {
+    assert_ok(
+        r#"
+2 is
+    1
+       	"no"
+    2
+       	"yes"
+    3
+       	"also no"
+"#,
+        vm::Value::String("yes".to_string()),
+    );
+}
+
+#[test]
+fn nested_pattern_matching_integers() {
+    assert_ok(
+        r#"
+res = 2 is
+	4
+		"nope"
+	3
+		"no"
+	2
+		true is
+			true
+				"oh yes"
+			false
+				"oh no"
+	1
+		"also no"
+
+"result is '{res}'"
+"#,
+        vm::Value::String("result is 'oh yes'".to_string()),
+    );
+}
+
 // #[test]
 // fn mixed_division() {
 //     assert_err(r"42.3 / 2", "incompatible types for division".to_string());
