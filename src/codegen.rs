@@ -239,54 +239,35 @@ impl<'a> Codegen<'a> {
                 let mut jump_to_end_offsets = vec![];
                 for arm in arms {
                     if let Some(pattern) = &arm.pattern {
+                        // Non-default pattern arm
+
+                        // Emit expression and pattern and compare
                         self.emit_expr(expr, environment, locals);
-
                         self.emit_expr(&pattern, environment, locals);
-
                         self.emit_bytecode(ByteCode::Equals);
-                        self.emit_bytecode(ByteCode::Not);
 
-                        let next_arm_offset = self.emit_jump_if_true();
+                        // Jump to next arm if not equal
+                        let next_arm_offset = self.emit_jump_if_false();
 
+                        // Otherwise execute arm block
                         self.emit_expr(&arm.block, environment, locals);
 
-                        self.emit_bytecode(ByteCode::PushTrue); // Hack to avoid having a jump instruction without arguments
-                        let end_offset = self.emit_jump_if_true();
+                        // Jump to end of `is` block
+                        let end_offset = self.emit_unconditional_jump();
                         jump_to_end_offsets.push(end_offset);
 
+                        // Patch jump to next arm now that we know its position
                         self.patch_jump_to_current_byte(next_arm_offset);
                     } else {
+                        // Default pattern arm
                         self.emit_expr(&arm.block, environment, locals);
                     }
                 }
 
-                // TODO(anissen): default block goes here
-
+                // Patch all jumps to end of `is` block now that we know where it ends
                 for offset in jump_to_end_offsets {
                     self.patch_jump_to_current_byte(offset);
                 }
-
-                /*
-                x is
-                    true
-                        y
-                    false
-                        z
-                ==>
-                x
-                arm1.pattern
-                jne arm2
-                arm1.block
-                goto end
-                arm2: jne arm3
-                arm2.block
-                goto end
-                arm3: jne arm4
-                ...
-                goto end
-                default-block
-                end:
-                */
             }
         };
     }
@@ -325,22 +306,17 @@ impl<'a> Codegen<'a> {
         self.bytes.append(bytes);
     }
 
-    fn emit_jump_if_true(&mut self) -> usize {
+    fn emit_jump_if_false(&mut self) -> usize {
         let bytes = 0_i32.to_be_bytes();
-        self.emit_bytes(ByteCode::JumpIfTrue, bytes /* placeholder */);
+        self.emit_bytes(ByteCode::JumpIfFalse, bytes /* placeholder */);
         self.bytes.len() - bytes.len()
     }
 
-    // fn emit_unconditional_jump(&mut self) -> usize {
-    //     self.emit_bytecode(ByteCode::Jump);
-    //     self.emit_byte(0); // placeholder
-
-    //     // self.emit_bytes(
-    //     //     ByteCode::JumpIfTrue,
-    //     //     0_i32.to_be_bytes(), /* placeholder */
-    //     // );
-    //     self.bytes.len() - 1
-    // }
+    fn emit_unconditional_jump(&mut self) -> usize {
+        let bytes = 0_i32.to_be_bytes();
+        self.emit_bytes(ByteCode::Jump, bytes /* placeholder */);
+        self.bytes.len() - bytes.len()
+    }
 
     fn patch_jump_to_current_byte(&mut self, byte_offset: usize) {
         // byte offset is the start of 4 bytes that indicate the jump offset

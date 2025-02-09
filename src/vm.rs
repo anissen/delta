@@ -392,11 +392,25 @@ impl VirtualMachine {
                     self.stack.push(result);
                 }
 
+                ByteCode::Jump => {
+                    let offset = self.read_i32();
+                    self.program_counter += offset as usize;
+                }
+
                 ByteCode::JumpIfTrue => {
                     let offset = self.read_i32();
 
                     let condition = self.pop_boolean();
                     if condition {
+                        self.program_counter += offset as usize;
+                    }
+                }
+
+                ByteCode::JumpIfFalse => {
+                    let offset = self.read_i32();
+
+                    let condition = self.pop_boolean();
+                    if !condition {
                         self.program_counter += offset as usize;
                     }
                 }

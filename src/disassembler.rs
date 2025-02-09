@@ -202,10 +202,28 @@ impl Disassembler {
                     ]);
                 }
 
+                ByteCode::Jump => {
+                    let offset = self.read_i32();
+                    self.print(vec![format!(
+                        "jump (offset: {}, to byte {})",
+                        offset,
+                        self.program_counter + offset as usize
+                    )]);
+                }
+
                 ByteCode::JumpIfTrue => {
                     let offset = self.read_i32();
                     self.print(vec![format!(
                         "jump if true (offset: {}, to byte {})",
+                        offset,
+                        self.program_counter + offset as usize
+                    )]);
+                }
+
+                ByteCode::JumpIfFalse => {
+                    let offset = self.read_i32();
+                    self.print(vec![format!(
+                        "jump if false (offset: {}, to byte {})",
                         offset,
                         self.program_counter + offset as usize
                     )]);

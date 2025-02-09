@@ -25,7 +25,9 @@ pub enum ByteCode {
     Call,
     CallForeign,
     GetForeignValue,
+    Jump,
     JumpIfTrue,
+    JumpIfFalse,
 }
 
 impl From<ByteCode> for u8 {
@@ -64,7 +66,9 @@ impl TryFrom<u8> for ByteCode {
             value if value == ByteCode::Call as u8 => Ok(Self::Call),
             value if value == ByteCode::CallForeign as u8 => Ok(Self::CallForeign),
             value if value == ByteCode::GetForeignValue as u8 => Ok(Self::GetForeignValue),
+            value if value == ByteCode::Jump as u8 => Ok(Self::Jump),
             value if value == ByteCode::JumpIfTrue as u8 => Ok(Self::JumpIfTrue),
+            value if value == ByteCode::JumpIfFalse as u8 => Ok(Self::JumpIfFalse),
             _ => Err(()),
         }
     }

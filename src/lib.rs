@@ -91,15 +91,11 @@ pub fn run(source: &String, file_name: Option<&String>) -> Result<Option<vm::Val
 
     println!("\n# code gen =>");
     let bytecodes = codegen::codegen(ast, &context);
+    println!("byte code length: {}", bytecodes.len());
     println!("byte codes: {:?}", bytecodes);
 
     println!("\n# disassembly =>");
     disassembler::disassemble(bytecodes.clone());
-    // let disassembled = disassembler::disassemble(bytecodes.clone());
-    // println!("disassembled:");
-    // for ele in disassembled {
-    //     println!("{:?}", ele);
-    // }
 
     println!("\n# vm =>");
     let result = vm::run(bytecodes, &context);
