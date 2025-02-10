@@ -1,5 +1,4 @@
 use std::process::exit;
-// https://github.com/brightly-salty/rox/
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
@@ -10,13 +9,10 @@ fn main() {
     }
 
     let source_path = &args[1];
-
     let result = delta::run_file(source_path);
     match result {
         Ok(Some(value)) => println!("Result: {:?}", value),
-
         Ok(None) => println!("Result: N/A"),
-
         Err(err) => println!("Error(s) occured:\n{}", err),
     }
 }

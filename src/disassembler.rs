@@ -27,6 +27,24 @@ impl Disassembler {
         i32::from_be_bytes(value_bytes)
     }
 
+    fn read_byte(&mut self) -> u8 {
+        let value = self.program[self.program_counter];
+        self.program_counter += 1;
+        value
+    }
+
+    fn read_string(&mut self) -> String {
+        let length = self.read_byte();
+        self.read_string_bytes(length as usize)
+    }
+
+    fn read_string_bytes(&mut self, length: usize) -> String {
+        let bytes: Vec<u8> =
+            self.program[self.program_counter..self.program_counter + length].into();
+        self.program_counter += length;
+        String::from_utf8(bytes).unwrap()
+    }
+
     fn print(&mut self, values: Vec<String>) {
         println!("{} \t{:?}", self.last_program_counter, values);
     }
@@ -59,8 +77,7 @@ impl Disassembler {
                 }
 
                 ByteCode::PushString => {
-                    let string_length = self.program[self.program_counter];
-                    self.program_counter += 1;
+                    let string_length = self.read_byte();
                     let value_bytes: Vec<u8> = self.program
                         [self.program_counter..self.program_counter + (string_length as usize)]
                         .into();
@@ -121,13 +138,7 @@ impl Disassembler {
                 }
 
                 ByteCode::GetForeignValue => {
-                    let name_length = self.program[self.program_counter];
-                    self.program_counter += 1;
-                    let value_bytes: Vec<u8> = self.program
-                        [self.program_counter..self.program_counter + (name_length as usize)]
-                        .into();
-                    self.program_counter += name_length as usize;
-                    let name = String::from_utf8(value_bytes).unwrap();
+                    let name = self.read_string();
 
                     self.print(vec![
                         "get_foreign_value".to_string(),
@@ -136,16 +147,13 @@ impl Disassembler {
                 }
 
                 ByteCode::SetLocalValue => {
-                    let index = self.program[self.program_counter];
-                    self.program_counter += 1;
+                    let index = self.read_byte();
                     self.print(vec!["set_value".to_string(), format!("(index: {})", index)]);
                 }
 
                 ByteCode::FunctionStart => {
-                    let function_index = self.program[self.program_counter];
-                    self.program_counter += 1;
-                    let param_count = self.program[self.program_counter];
-                    self.program_counter += 1;
+                    let function_index = self.read_byte();
+                    let param_count = self.read_byte();
                     self.print(vec![
                         format!("function"),
                         format!("(function index: {})", function_index),
@@ -158,20 +166,10 @@ impl Disassembler {
                 }
 
                 ByteCode::Call => {
-                    let arg_count = self.program[self.program_counter];
-                    self.program_counter += 1;
-                    let is_global = self.program[self.program_counter];
-                    self.program_counter += 1;
-                    let index = self.program[self.program_counter];
-                    self.program_counter += 1;
-
-                    let name_length = self.program[self.program_counter];
-                    self.program_counter += 1;
-                    let value_bytes: Vec<u8> = self.program
-                        [self.program_counter..self.program_counter + (name_length as usize)]
-                        .into();
-                    self.program_counter += name_length as usize;
-                    let name = String::from_utf8(value_bytes).unwrap();
+                    let arg_count = self.read_byte();
+                    let is_global = self.read_byte();
+                    let index = self.read_byte();
+                    let name = self.read_string();
 
                     self.print(vec![
                         format!("call {} (is_global: {})", name, is_global),
@@ -180,18 +178,9 @@ impl Disassembler {
                 }
 
                 ByteCode::CallForeign => {
-                    let foreign_index = self.program[self.program_counter];
-                    self.program_counter += 1;
-                    let arg_count = self.program[self.program_counter];
-                    self.program_counter += 1;
-
-                    let name_length = self.program[self.program_counter];
-                    self.program_counter += 1;
-                    let value_bytes: Vec<u8> = self.program
-                        [self.program_counter..self.program_counter + (name_length as usize)]
-                        .into();
-                    self.program_counter += name_length as usize;
-                    let name = String::from_utf8(value_bytes).unwrap();
+                    let foreign_index = self.read_byte();
+                    let arg_count = self.read_byte();
+                    let name = self.read_string();
 
                     self.print(vec![
                         format!("call foreign function {}", name),

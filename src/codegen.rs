@@ -45,7 +45,6 @@ impl<'a> Codegen<'a> {
         locals: &mut HashSet<String>,
     ) {
         // TODO(anissen): Make this a proper return type.
-        println!("do_emit with expr: {:?}", expr);
         match expr {
             Expr::Boolean(true) => self.emit_bytecode(ByteCode::PushTrue),
 
@@ -60,12 +59,12 @@ impl<'a> Codegen<'a> {
                     self.emit_bytecode(ByteCode::GetForeignValue);
                     // TODO(anissen): Should (also) output index
                     if name.len() > 255 {
+                        // TODO(anissen): Should add error to a error reporter instead
                         panic!("function name too long!");
                     }
                     self.emit_byte(name.len() as u8);
                     self.emit_raw_bytes(&mut name.as_bytes().to_vec());
                 } else {
-                    println!("read value: {}", name);
                     let index = environment.get(name).unwrap();
                     self.emit_bytecode(ByteCode::GetLocalValue);
                     self.emit_byte(*index);
@@ -75,6 +74,7 @@ impl<'a> Codegen<'a> {
             Expr::String(str) => {
                 self.emit_bytecode(ByteCode::PushString);
                 if str.len() > 255 {
+                    // TODO(anissen): Should add error to a error reporter instead
                     panic!("string too long!");
                 }
                 self.emit_byte(str.len() as u8);
@@ -92,7 +92,6 @@ impl<'a> Codegen<'a> {
                 self.emit_bytecode(ByteCode::FunctionStart);
 
                 for (index, param) in params.iter().enumerate() {
-                    println!("set param: {}", param.lexeme);
                     function_environment.insert(param.lexeme.clone(), index as u8);
 
                     function_locals.insert(param.lexeme.clone());
@@ -111,7 +110,6 @@ impl<'a> Codegen<'a> {
                 // write_bytes(function_signatures)
                 // write_bytes(bytes)
 
-                println!("function_environment: {:?}", function_environment);
                 self.emit_expr(expr, &mut function_environment, &mut function_locals);
 
                 self.emit_bytecode(ByteCode::FunctionEnd);
@@ -135,10 +133,6 @@ impl<'a> Codegen<'a> {
                 } else {
                     self.emit_bytecode(ByteCode::Call);
                     self.emit_byte(arg_count as u8);
-                    println!(
-                        "call function '{}' with environment: {:?}, locals: {:?}",
-                        name, environment, locals
-                    );
                     let index = environment.get(name).unwrap();
                     if locals.contains(name) {
                         self.emit_byte(0);
@@ -160,19 +154,16 @@ impl<'a> Codegen<'a> {
                 _token: _,
                 expr,
             } => {
-                println!("assignment with environment: {:?}", environment);
                 self.emit_expr(expr, environment, locals);
                 self.emit_bytecode(ByteCode::SetLocalValue);
 
                 let index = locals.len() as u8;
-                println!("insert value {} at index {}", value, index);
                 environment.insert(value.clone(), index);
                 locals.insert(value.clone());
                 self.emit_byte(index);
             }
 
             Expr::Comparison { left, token, right } => {
-                // println!("comparison, with environment: {:?}", environment);
                 self.emit_expr(left, environment, locals);
                 self.emit_expr(right, environment, locals);
 
@@ -205,7 +196,6 @@ impl<'a> Codegen<'a> {
                     self.emit_expr(expr, environment, locals);
                     self.emit_bytecode(ByteCode::Negation);
                 }
-
                 UnaryOperator::Not => {
                     self.emit_expr(expr, environment, locals);
                     self.emit_bytecode(ByteCode::Not);
@@ -222,15 +212,10 @@ impl<'a> Codegen<'a> {
                 self.emit_expr(right, environment, locals);
                 match operator {
                     BinaryOperator::Addition => self.emit_bytecode(ByteCode::Addition),
-
                     BinaryOperator::Subtraction => self.emit_bytecode(ByteCode::Subtraction),
-
                     BinaryOperator::Multiplication => self.emit_bytecode(ByteCode::Multiplication),
-
                     BinaryOperator::Division => self.emit_bytecode(ByteCode::Division),
-
                     BinaryOperator::Modulus => self.emit_bytecode(ByteCode::Modulo),
-
                     BinaryOperator::StringConcat => self.emit_bytecode(ByteCode::StringConcat),
                 }
             }
@@ -272,15 +257,7 @@ impl<'a> Codegen<'a> {
         };
     }
 
-    // pub fn emit_foreign_functions(&mut self, context: &'static Context<'static>) {
-    //     for (index, function) in context.get_function_names().into_iter().enumerate() {
-    //         self.emit_bytecode(ByteCode::ForeignFunction);
-    //         self.emit_byte(index as u8); // TODO: Handle overflow
-    //     }
-    // }
-
     pub fn emit(&mut self, expressions: Vec<Expr>) -> Vec<u8> {
-        println!("emit with fresh environment");
         let environment = &mut HashMap::new();
         let locals = &mut HashSet::new();
         self.emit_exprs(&expressions, environment, locals);

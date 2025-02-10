@@ -63,7 +63,6 @@ impl VirtualMachine {
                 });
             }
         }
-        // println!("self.functions: {:?}", self.functions);
 
         // Construct an initial call frame for the top-level code.
         self.call(
@@ -102,13 +101,7 @@ impl VirtualMachine {
                 }
 
                 ByteCode::PushString => {
-                    let string_length = self.program[self.program_counter];
-                    self.program_counter += 1;
-                    let value_bytes: Vec<u8> = self.program
-                        [self.program_counter..self.program_counter + (string_length as usize)]
-                        .into();
-                    self.program_counter += string_length as usize;
-                    let string = String::from_utf8(value_bytes).unwrap();
+                    let string = self.read_string();
                     self.push_string(string);
                 }
 
@@ -198,7 +191,6 @@ impl VirtualMachine {
                 ByteCode::StringConcat => {
                     let right = self.pop_any();
                     let left = self.pop_any();
-
                     match (left, right) {
                         (Value::String(left), Value::String(right)) => {
                             self.push_string(left + &right);
@@ -270,9 +262,7 @@ impl VirtualMachine {
 
                 ByteCode::GetLocalValue => {
                     let index = self.read_byte();
-                    // println!("index is: {}", index);
                     let stack_index = self.current_call_frame().stack_index;
-                    // println!("slots is: {}", stack_index);
                     let value = self
                         .stack
                         .get((stack_index + index) as usize)
@@ -282,13 +272,7 @@ impl VirtualMachine {
                 }
 
                 ByteCode::GetForeignValue => {
-                    let name_length = self.read_byte();
-                    let value_bytes: Vec<u8> = self.program
-                        [self.program_counter..self.program_counter + (name_length as usize)]
-                        .into();
-                    self.program_counter += name_length as usize;
-                    let name = String::from_utf8(value_bytes).unwrap();
-
+                    let name = self.read_string();
                     let value = context.get_value(&name);
 
                     self.stack.push(value);
@@ -298,17 +282,7 @@ impl VirtualMachine {
                     let index = self.read_byte();
                     let stack_index = self.current_call_frame().stack_index;
                     let value = self.peek(0).clone();
-                    // println!(
-                    //     "set local value: index: {}, stack_index: {}, value: {:?}",
-                    //     index, stack_index, value
-                    // );
                     let actual_index = (stack_index + index) as usize;
-                    // println!(
-                    //     "stack length: {}, actual_index: {}",
-                    //     self.stack.len(),
-                    //     actual_index
-                    // );
-
                     if actual_index < self.stack.len() {
                         self.stack[actual_index] = value;
                     } else if actual_index == self.stack.len() {
@@ -320,7 +294,6 @@ impl VirtualMachine {
 
                 ByteCode::FunctionStart => {
                     let function_index = self.read_byte();
-                    // println!("function_index: {}", function_index);
 
                     // jump to function end HACK!
                     while self.program_counter < self.program.len() {
@@ -341,12 +314,7 @@ impl VirtualMachine {
                     let arity = self.read_byte();
                     let is_global = self.read_byte() == 1;
                     let index = self.read_byte(); // TODO(anissen): This seems off
-                    let name_length = self.read_byte();
-                    let value_bytes: Vec<u8> = self.program
-                        [self.program_counter..self.program_counter + (name_length as usize)]
-                        .into();
-                    self.program_counter += name_length as usize;
-                    let name = String::from_utf8(value_bytes).unwrap();
+                    let name = self.read_string();
                     if self.verbose_logging {
                         println!("function name: {}", name);
                         println!("is_global: {}", is_global);
@@ -359,15 +327,11 @@ impl VirtualMachine {
                     } else {
                         self.current_call_frame().stack_index + index
                     };
-                    // println!("corrected_index: {}", corrected_index);
                     let value = self.stack.get(corrected_index as usize).unwrap();
-                    // println!("value: {:?}", value);
                     let function_index = match value {
                         Value::Function(f) => *f,
                         _ => panic!("expected function, encountered some other type"),
                     };
-                    // println!("functions: {:?}", self.functions);
-                    // println!("function_index: {:?}", function_index);
                     let function = self.functions[function_index as usize].clone(); // TODO(anissen): Clone hack
                     self.call(function, arity)
                 }
@@ -375,15 +339,7 @@ impl VirtualMachine {
                 ByteCode::CallForeign => {
                     let _foreign_index = self.read_byte();
                     let arity = self.read_byte();
-
-                    let name_length = self.read_byte();
-                    let value_bytes: Vec<u8> = self.program
-                        [self.program_counter..self.program_counter + (name_length as usize)]
-                        .into();
-                    self.program_counter += name_length as usize;
-                    let name = String::from_utf8(value_bytes).unwrap();
-
-                    // println!("foreign function name: {}", name);
+                    let name = self.read_string();
 
                     let function_stack = self.pop_many(arity);
                     let result = context.call_function(&name, &function_stack); // TODO(anissen): Should use index instead
@@ -423,15 +379,12 @@ impl VirtualMachine {
     }
 
     fn call(&mut self, function: FunctionObj, arity: u8) {
-        // println!("call function: {:?}", function);
-        // println!("call with arity: {}", arity);
         let ip = function.ip;
         self.call_stack.push(CallFrame {
             function,
             return_program_counter: self.program_counter,
             stack_index: (self.stack.len() - (arity as usize)) as u8,
         });
-        // println!("call: {:?}", self.current_call_frame());
         self.program_counter = ip;
     }
 
@@ -488,6 +441,18 @@ impl VirtualMachine {
             println!("read_f32: {}", value);
         }
         value
+    }
+
+    fn read_string(&mut self) -> String {
+        let length = self.read_byte();
+        self.read_string_bytes(length as usize)
+    }
+
+    fn read_string_bytes(&mut self, length: usize) -> String {
+        let bytes: Vec<u8> =
+            self.program[self.program_counter..self.program_counter + length].into();
+        self.program_counter += length;
+        String::from_utf8(bytes).unwrap()
     }
 
     fn pop_boolean(&mut self) -> bool {

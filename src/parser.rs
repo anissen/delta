@@ -7,7 +7,8 @@ use crate::tokens::TokenKind;
 use crate::tokens::TokenKind::{
     BackSlash, Bang, BangEqual, Comment, Equal, EqualEqual, False, Float, Identifier, Integer,
     KeywordIs, LeftChevron, LeftChevronEqual, LeftParen, Minus, NewLine, Percent, Pipe, Plus,
-    RightChevron, RightChevronEqual, RightParen, Slash, Space, Star, StringConcat, True,
+    RightChevron, RightChevronEqual, RightParen, Slash, Space, Star, StringConcat, Tab, True,
+    Underscore,
 };
 
 /*
@@ -36,6 +37,7 @@ DIGIT          → "0" ... "9" ;
 ---
 MISSING:
 - string concatenation
+- is
 */
 
 pub struct Parser {
@@ -56,12 +58,12 @@ impl Parser {
             .into_iter()
             .filter(|token| !matches!(token.kind, Space))
             .collect();
-        let kinds: Vec<TokenKind> = non_whitespace_tokens
-            .clone()
-            .into_iter()
-            .map(|t| t.kind)
-            .collect();
-        println!("condensed tokens: {:?}", kinds);
+        // let kinds: Vec<TokenKind> = non_whitespace_tokens
+        //     .clone()
+        //     .into_iter()
+        //     .map(|t| t.kind)
+        //     .collect();
+        // println!("condensed tokens: {:?}", kinds);
         Self {
             tokens: non_whitespace_tokens,
             current: 0,
@@ -98,7 +100,7 @@ impl Parser {
     // assignment → IDENTIFIER "=" logic_or ;
     fn assignment(&mut self) -> Result<Option<Expr>, String> {
         let expr = self.string_concat()?;
-        if expr.is_some() && self.matches(&[Equal]) {
+        if expr.is_some() && self.matches(&Equal) {
             match expr.unwrap() {
                 Expr::Value(name) => {
                     let token = self.previous();
@@ -120,7 +122,7 @@ impl Parser {
     // string_concat → STRING "{" expression "}";
     fn string_concat(&mut self) -> Result<Option<Expr>, String> {
         let mut expr = self.logic_or()?;
-        while expr.is_some() && self.matches(&[StringConcat]) {
+        while expr.is_some() && self.matches(&StringConcat) {
             let token = self.previous();
             let right = self.logic_or()?;
             expr = Some(Expr::Binary {
@@ -148,7 +150,7 @@ impl Parser {
     // equality → comparison ( ( "!=" | "==" ) comparison )* ;
     fn equality(&mut self) -> Result<Option<Expr>, String> {
         let expr = self.comparison()?;
-        if expr.is_some() && self.matches(&[EqualEqual, BangEqual]) {
+        if expr.is_some() && self.matches_any(&[EqualEqual, BangEqual]) {
             let token = self.previous();
             let right = self.comparison()?;
             Ok(Some(Expr::Comparison {
@@ -165,7 +167,7 @@ impl Parser {
     fn comparison(&mut self) -> Result<Option<Expr>, String> {
         let expr = self.term()?;
         if expr.is_some()
-            && self.matches(&[
+            && self.matches_any(&[
                 LeftChevron,
                 LeftChevronEqual,
                 RightChevron,
@@ -187,7 +189,7 @@ impl Parser {
     // term → factor ( ( "-" | "+" ) factor )* ;
     fn term(&mut self) -> Result<Option<Expr>, String> {
         let mut expr = self.factor()?;
-        while expr.is_some() && self.matches(&[Plus, Minus]) {
+        while expr.is_some() && self.matches_any(&[Plus, Minus]) {
             let token = self.previous();
             let operator = match token.kind {
                 Plus => BinaryOperator::Addition,
@@ -208,7 +210,7 @@ impl Parser {
     // factor → unary ( ( "/" | "*" ) unary )* ;
     fn factor(&mut self) -> Result<Option<Expr>, String> {
         let mut expr = self.unary()?;
-        while expr.is_some() && self.matches(&[Slash, Star, Percent]) {
+        while expr.is_some() && self.matches_any(&[Slash, Star, Percent]) {
             let token = self.previous();
             let operator = match token.kind {
                 Slash => BinaryOperator::Division,
@@ -229,7 +231,7 @@ impl Parser {
 
     // unary → ( "!" | "-" ) unary | call ;
     fn unary(&mut self) -> Result<Option<Expr>, String> {
-        if self.matches(&[Bang, Minus]) {
+        if self.matches_any(&[Bang, Minus]) {
             let token = self.previous();
             let operator = match token.kind {
                 Bang => UnaryOperator::Not,
@@ -250,7 +252,7 @@ impl Parser {
     // call → expression "|" primary expression? ;
     fn call(&mut self) -> Result<Option<Expr>, String> {
         let expr = self.is()?;
-        if self.matches(&[Pipe]) {
+        if self.matches(&Pipe) {
             self.call_with_first_arg(expr.unwrap())
         } else {
             Ok(expr)
@@ -275,7 +277,7 @@ impl Parser {
             }
         }
         let call_expr = Expr::Call { name: lexeme, args };
-        if self.matches(&[Pipe]) {
+        if self.matches(&Pipe) {
             self.call_with_first_arg(call_expr)
         } else {
             Ok(Some(call_expr))
@@ -284,7 +286,7 @@ impl Parser {
 
     fn function(&mut self) -> Result<Option<Expr>, String> {
         let mut params = vec![];
-        while self.matches(&[TokenKind::Identifier]) {
+        while self.matches(&Identifier) {
             let param = self.previous();
             params.push(param);
         }
@@ -297,11 +299,11 @@ impl Parser {
 
     fn block(&mut self) -> Result<Option<Expr>, String> {
         self.consume(&NewLine)?;
-        self.indentation += 1;
+        self.increase_indentation();
         let mut exprs = vec![];
         loop {
             for _ in 0..self.indentation {
-                self.consume(&TokenKind::Tab)?;
+                self.consume(&Tab)?;
             }
             if let Some(expr) = self.expression()? {
                 exprs.push(expr);
@@ -317,15 +319,15 @@ impl Parser {
                 break;
             }
         }
-        self.indentation -= 1;
+        self.decrease_indentation();
         Ok(Some(Expr::Block { exprs }))
     }
 
     fn is(&mut self) -> Result<Option<Expr>, String> {
         let expr = self.primary()?;
-        if self.matches(&[KeywordIs]) {
+        if self.matches(&KeywordIs) {
             self.consume(&NewLine)?;
-            self.indentation += 1;
+            self.increase_indentation();
             let mut arms = vec![];
             let mut has_default = false;
             while self.matches_indentation() {
@@ -344,7 +346,7 @@ impl Parser {
             if arms.is_empty() {
                 return Err("`is` block must have at least one arm".to_string());
             }
-            self.indentation -= 1;
+            self.decrease_indentation();
             Ok(Some(Expr::Is {
                 expr: Box::new(expr.unwrap()),
                 arms,
@@ -356,10 +358,10 @@ impl Parser {
 
     fn is_arm(&mut self) -> Result<IsArm, String> {
         for _ in 0..self.indentation {
-            self.consume(&TokenKind::Tab)?;
+            self.consume(&Tab)?;
         }
 
-        if self.matches(&[TokenKind::Underscore]) {
+        if self.matches(&Underscore) {
             if let Some(block) = self.block()? {
                 Ok(IsArm {
                     pattern: None,
@@ -383,7 +385,7 @@ impl Parser {
     }
 
     fn whitespace(&mut self) -> Result<Option<Expr>, String> {
-        if self.matches(&[NewLine, Comment]) {
+        if self.matches_any(&[NewLine, Comment]) {
             Ok(None)
         } else if self.is_at_end() {
             Ok(None)
@@ -400,35 +402,35 @@ impl Parser {
 
     // primary → "true" | "false" | INTEGER | FLOAT | STRING | IDENTIFIER | "(" expression ")" ;
     fn primary(&mut self) -> Result<Option<Expr>, String> {
-        if self.matches(&[Identifier]) {
+        if self.matches(&Identifier) {
             let lexeme = self.previous().lexeme;
             Ok(Some(Expr::Value(lexeme)))
-        } else if self.matches(&[Integer]) {
+        } else if self.matches(&Integer) {
             let lexeme = self.previous().lexeme;
             let value = lexeme.parse::<i32>();
             match value {
                 Ok(value) => Ok(Some(Expr::Integer(value))),
                 Err(err) => Err(err.to_string()),
             }
-        } else if self.matches(&[Float]) {
+        } else if self.matches(&Float) {
             let lexeme = self.previous().lexeme;
             let value = lexeme.parse::<f32>();
             match value {
                 Ok(value) => Ok(Some(Expr::Float(value))),
                 Err(err) => Err(err.to_string()),
             }
-        } else if self.matches(&[False]) {
+        } else if self.matches(&False) {
             Ok(Some(Expr::Boolean(false)))
-        } else if self.matches(&[True]) {
+        } else if self.matches(&True) {
             Ok(Some(Expr::Boolean(true)))
-        } else if self.matches(&[TokenKind::String]) {
+        } else if self.matches(&TokenKind::String) {
             let lexeme = self.previous().lexeme;
             Ok(Some(Expr::String(lexeme)))
-        } else if self.matches(&[LeftParen]) {
+        } else if self.matches(&LeftParen) {
             let expr = self.expression()?;
             self.consume(&RightParen)?;
             Ok(Some(Expr::Grouping(Box::new(expr.unwrap()))))
-        } else if self.matches(&[BackSlash]) {
+        } else if self.matches(&BackSlash) {
             self.function()
         } else {
             self.whitespace()
@@ -437,19 +439,21 @@ impl Parser {
 
     fn matches_indentation(&self) -> bool {
         (0..self.indentation as usize).all(|i| {
-            self.tokens.len() > self.current + 1
-                && self.tokens[self.current + i].kind == TokenKind::Tab
+            self.tokens.len() > self.current + 1 && self.tokens[self.current + i].kind == Tab
         })
     }
 
-    fn matches(&mut self, kinds: &[TokenKind]) -> bool {
-        for kind in kinds {
-            if self.check(kind) {
-                self.advance();
-                return true;
-            }
+    fn matches_any(&mut self, kinds: &[TokenKind]) -> bool {
+        kinds.iter().any(|k| self.matches(k))
+    }
+
+    fn matches(&mut self, kind: &TokenKind) -> bool {
+        if self.check(kind) {
+            self.advance();
+            true
+        } else {
+            false
         }
-        false
     }
 
     fn consume(&mut self, kind: &TokenKind) -> Result<Token, String> {
@@ -486,5 +490,13 @@ impl Parser {
 
     fn previous(&self) -> Token {
         self.tokens[self.current - 1].clone()
+    }
+
+    fn increase_indentation(&mut self) {
+        self.indentation += 1;
+    }
+
+    fn decrease_indentation(&mut self) {
+        self.indentation -= 1;
     }
 }

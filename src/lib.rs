@@ -50,12 +50,13 @@ pub fn run_file(source_path: &String) -> Result<Option<vm::Value>, String> {
 
 // TODO(anissen): Make a concept of diagnostics (containing just syntax error for now)
 pub fn run(source: &String, file_name: Option<&String>) -> Result<Option<vm::Value>, String> {
+    let verbose = false;
+
     let default_file_name = "n/a".to_string();
     println!(
         "\n# source (file: {}) =>",
         file_name.unwrap_or(&default_file_name)
     );
-    println!("{}", source);
 
     println!("\n# lexing =>");
     let tokens = lexer::lex(source);
@@ -74,16 +75,20 @@ pub fn run(source: &String, file_name: Option<&String>) -> Result<Option<vm::Val
         _ => panic!(),
     });
 
-    tokens.iter().for_each(|token| {
-        println!(
-            "token: {:?} at '{}' (line {}, column: {})",
-            token.kind, token.lexeme, token.position.line, token.position.column
-        )
-    });
+    if verbose {
+        tokens.iter().for_each(|token| {
+            println!(
+                "token: {:?} at '{}' (line {}, column: {})",
+                token.kind, token.lexeme, token.position.line, token.position.column
+            )
+        });
+    }
 
     println!("\n# parsing =>");
     let ast = parser::parse(tokens)?;
-    println!("ast: {:?}", ast);
+    if verbose {
+        println!("ast: {:?}", ast);
+    }
 
     let context = program::Context::new();
 
@@ -91,8 +96,10 @@ pub fn run(source: &String, file_name: Option<&String>) -> Result<Option<vm::Val
 
     println!("\n# code gen =>");
     let bytecodes = codegen::codegen(ast, &context);
-    println!("byte code length: {}", bytecodes.len());
-    println!("byte codes: {:?}", bytecodes);
+    if verbose {
+        println!("byte code length: {}", bytecodes.len());
+        println!("byte codes: {:?}", bytecodes);
+    }
 
     println!("\n# disassembly =>");
     disassembler::disassemble(bytecodes.clone());
@@ -111,5 +118,4 @@ pub fn run(source: &String, file_name: Option<&String>) -> Result<Option<vm::Val
     });
 
     Ok(result)
-    // Ok(Some(vm::Value::True))
 }
