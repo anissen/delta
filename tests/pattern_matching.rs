@@ -104,6 +104,18 @@ fn expression_pattern_matching() {
 }
 
 #[test]
+fn pattern_matching_capture() {
+    assert_ok(
+        r#"
+2 is
+    value
+        "value captured is {value}"
+"#,
+        vm::Value::String("value captured is 2".to_string()),
+    );
+}
+
+#[test]
 fn multiple_default_patterns() {
     assert_err(
         r#"

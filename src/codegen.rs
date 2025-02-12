@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 use crate::bytecodes::ByteCode;
 use crate::expressions::{BinaryOperator, Expr, UnaryOperator};
 use crate::program::Context;
-use crate::tokens::TokenKind;
+use crate::tokens::{Token, TokenKind};
 
 pub struct Codegen<'a> {
     bytes: Vec<u8>,
@@ -65,9 +65,13 @@ impl<'a> Codegen<'a> {
                     self.emit_byte(name.len() as u8);
                     self.emit_raw_bytes(&mut name.as_bytes().to_vec());
                 } else {
-                    let index = environment.get(name).unwrap();
-                    self.emit_bytecode(ByteCode::GetLocalValue);
-                    self.emit_byte(*index);
+                    if let Some(index) = environment.get(name) {
+                        self.emit_bytecode(ByteCode::GetLocalValue);
+                        self.emit_byte(*index);
+                    } else {
+                        println!("name not found in scope: {}", name);
+                        panic!("name not found in scope");
+                    }
                 }
             }
 
@@ -226,23 +230,40 @@ impl<'a> Codegen<'a> {
                     if let Some(pattern) = &arm.pattern {
                         // Non-default pattern arm
 
-                        // Emit expression and pattern and compare
-                        self.emit_expr(expr, environment, locals);
-                        self.emit_expr(&pattern, environment, locals);
-                        self.emit_bytecode(ByteCode::Equals);
+                        match pattern {
+                            Expr::Value(identifier) => {
+                                // TODO(anissen): This duplicates Assignment!
+                                self.emit_expr(expr, environment, locals);
+                                self.emit_bytecode(ByteCode::SetLocalValue);
 
-                        // Jump to next arm if not equal
-                        let next_arm_offset = self.emit_jump_if_false();
+                                let index = locals.len() as u8;
+                                environment.insert(identifier.clone(), index);
+                                locals.insert(identifier.clone());
+                                self.emit_byte(index);
 
-                        // Otherwise execute arm block
-                        self.emit_expr(&arm.block, environment, locals);
+                                // Execute arm block
+                                self.emit_expr(&arm.block, environment, locals);
+                            }
+                            _ => {
+                                // Emit expression and pattern and compare
+                                self.emit_expr(expr, environment, locals);
+                                self.emit_expr(&pattern, environment, locals);
+                                self.emit_bytecode(ByteCode::Equals);
 
-                        // Jump to end of `is` block
-                        let end_offset = self.emit_unconditional_jump();
-                        jump_to_end_offsets.push(end_offset);
+                                // Jump to next arm if not equal
+                                let next_arm_offset = self.emit_jump_if_false();
 
-                        // Patch jump to next arm now that we know its position
-                        self.patch_jump_to_current_byte(next_arm_offset);
+                                // Otherwise execute arm block
+                                self.emit_expr(&arm.block, environment, locals);
+
+                                // Jump to end of `is` block
+                                let end_offset = self.emit_unconditional_jump();
+                                jump_to_end_offsets.push(end_offset);
+
+                                // Patch jump to next arm now that we know its position
+                                self.patch_jump_to_current_byte(next_arm_offset);
+                            }
+                        };
                     } else {
                         // Default pattern arm
                         self.emit_expr(&arm.block, environment, locals);
