@@ -97,9 +97,9 @@ impl Parser {
         self.assignment()
     }
 
-    // assignment → IDENTIFIER "=" logic_or ;
+    // assignment → IDENTIFIER "=" logic_or
     fn assignment(&mut self) -> Result<Option<Expr>, String> {
-        let expr = self.string_concat()?;
+        let expr = self.is()?;
         if expr.is_some() && self.matches(&Equal) {
             match expr.unwrap() {
                 Expr::Value(name) => {
@@ -119,7 +119,74 @@ impl Parser {
         }
     }
 
-    // string_concat → STRING "{" expression "}";
+    // is → string_concat "is" NEWLINE is_arm* | string_concat
+    fn is(&mut self) -> Result<Option<Expr>, String> {
+        let expr = self.string_concat()?;
+        if self.matches(&KeywordIs) {
+            self.consume(&NewLine)?;
+            self.increase_indentation();
+            let mut arms = vec![];
+            let mut has_default = false;
+            while self.matches_indentation() {
+                let arm = self.is_arm()?;
+                if has_default {
+                    if arm.pattern.is_none() {
+                        return Err("An `is` block cannot have multiple default arms.".to_string());
+                    } else {
+                        return Err("Unreachable due to default arm above.".to_string());
+                    }
+                }
+                has_default = arm.pattern.is_none();
+
+                // TODO(anissen): Check for multiple capture arms or arms after a capture arm
+
+                arms.push(arm);
+            }
+            if arms.is_empty() {
+                return Err("`is` block must have at least one arm".to_string());
+            }
+            self.decrease_indentation();
+            Ok(Some(Expr::Is {
+                expr: Box::new(expr.unwrap()),
+                arms,
+            }))
+        } else {
+            Ok(expr)
+        }
+    }
+
+    // is_arm → INDENT ( ( "_" | expression ) block )
+    fn is_arm(&mut self) -> Result<IsArm, String> {
+        for _ in 0..self.indentation {
+            self.consume(&Tab)?;
+        }
+
+        if self.matches(&Underscore) {
+            // Default arm
+            if let Some(block) = self.block()? {
+                Ok(IsArm {
+                    pattern: None,
+                    block,
+                })
+            } else {
+                Err("Error parsing block of default `is` arm".to_string())
+            }
+        } else if let Some(pattern) = self.expression()? {
+            // Non-default arm
+            if let Some(block) = self.block()? {
+                Ok(IsArm {
+                    pattern: Some(pattern),
+                    block,
+                })
+            } else {
+                Err("Error parsing block of `is` arm".to_string())
+            }
+        } else {
+            Err("Error parsing pattern of `is` arm".to_string())
+        }
+    }
+
+    // string_concat → STRING "{" logic_or "}";
     fn string_concat(&mut self) -> Result<Option<Expr>, String> {
         let mut expr = self.logic_or()?;
         while expr.is_some() && self.matches(&StringConcat) {
@@ -249,9 +316,9 @@ impl Parser {
         }
     }
 
-    // call → expression "|" primary expression? ;
+    // call → primary "|" primary* | primary
     fn call(&mut self) -> Result<Option<Expr>, String> {
-        let expr = self.is()?;
+        let expr = self.primary()?;
         if self.matches(&Pipe) {
             self.call_with_first_arg(expr.unwrap())
         } else {
@@ -284,6 +351,7 @@ impl Parser {
         }
     }
 
+    // function → IDENTIFIER* block
     fn function(&mut self) -> Result<Option<Expr>, String> {
         let mut params = vec![];
         while self.matches(&Identifier) {
@@ -297,6 +365,7 @@ impl Parser {
         }))
     }
 
+    // block → NEWLINE (INDENT expression NEWLINE?)*
     fn block(&mut self) -> Result<Option<Expr>, String> {
         self.consume(&NewLine)?;
         self.increase_indentation();
@@ -323,67 +392,7 @@ impl Parser {
         Ok(Some(Expr::Block { exprs }))
     }
 
-    fn is(&mut self) -> Result<Option<Expr>, String> {
-        let expr = self.primary()?;
-        if self.matches(&KeywordIs) {
-            self.consume(&NewLine)?;
-            self.increase_indentation();
-            let mut arms = vec![];
-            let mut has_default = false;
-            while self.matches_indentation() {
-                let arm = self.is_arm()?;
-                if has_default {
-                    if arm.pattern.is_none() {
-                        return Err("An `is` block cannot have multiple default arms.".to_string());
-                    } else {
-                        return Err("Unreachable due to default arm above.".to_string());
-                    }
-                }
-                has_default = arm.pattern.is_none();
-
-                arms.push(arm);
-            }
-            if arms.is_empty() {
-                return Err("`is` block must have at least one arm".to_string());
-            }
-            self.decrease_indentation();
-            Ok(Some(Expr::Is {
-                expr: Box::new(expr.unwrap()),
-                arms,
-            }))
-        } else {
-            Ok(expr)
-        }
-    }
-
-    fn is_arm(&mut self) -> Result<IsArm, String> {
-        for _ in 0..self.indentation {
-            self.consume(&Tab)?;
-        }
-
-        if self.matches(&Underscore) {
-            if let Some(block) = self.block()? {
-                Ok(IsArm {
-                    pattern: None,
-                    block,
-                })
-            } else {
-                Err("Error parsing block of default `is` arm".to_string())
-            }
-        } else if let Some(pattern) = self.expression()? {
-            if let Some(block) = self.block()? {
-                Ok(IsArm {
-                    pattern: Some(pattern),
-                    block,
-                })
-            } else {
-                Err("Error parsing block of `is` arm".to_string())
-            }
-        } else {
-            Err("Error parsing pattern of `is` arm".to_string())
-        }
-    }
-
+    // whitespace → NEWLINE | COMMENT
     fn whitespace(&mut self) -> Result<Option<Expr>, String> {
         if self.matches_any(&[NewLine, Comment]) {
             Ok(None)

@@ -90,6 +90,20 @@ fn pattern_matching_expression() {
 }
 
 #[test]
+fn expression_pattern_matching() {
+    assert_ok(
+        r#"
+2 + 2 is
+    4
+        "yes"
+    _
+        "no"
+"#,
+        vm::Value::String("yes".to_string()),
+    );
+}
+
+#[test]
 fn multiple_default_patterns() {
     assert_err(
         r#"
