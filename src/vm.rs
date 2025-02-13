@@ -222,6 +222,12 @@ impl VirtualMachine {
                     self.push_boolean(left && right)
                 }
 
+                ByteCode::BooleanOr => {
+                    let right = self.pop_boolean();
+                    let left = self.pop_boolean();
+                    self.push_boolean(left || right)
+                }
+
                 ByteCode::Equals => {
                     let right = self.pop_any();
                     let left = self.pop_any();

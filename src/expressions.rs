@@ -82,4 +82,5 @@ pub enum BinaryOperator {
     Modulus,
     StringConcat,
     BooleanAnd,
+    BooleanOr,
 }

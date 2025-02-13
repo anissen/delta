@@ -21,6 +21,7 @@ pub enum ByteCode {
     BooleanAnd,
     FunctionStart,
     FunctionEnd, // TODO(anissen): Maybe FunctionDefinition + FunctionBodyStart + FunctionBodyEnd?
+    BooleanOr,   // TODO(anissen): Temp position to fix bytecode -- should be moved up to BooleanAnd
     // FunctionSignature,
     // ForeignFunction,
     Call,
@@ -61,6 +62,7 @@ impl TryFrom<u8> for ByteCode {
             value if value == ByteCode::Subtraction as u8 => Ok(Self::Subtraction),
             value if value == ByteCode::StringConcat as u8 => Ok(Self::StringConcat),
             value if value == ByteCode::BooleanAnd as u8 => Ok(Self::BooleanAnd),
+            value if value == ByteCode::BooleanOr as u8 => Ok(Self::BooleanOr),
             value if value == ByteCode::FunctionStart as u8 => Ok(Self::FunctionStart),
             value if value == ByteCode::FunctionEnd as u8 => Ok(Self::FunctionEnd),
             // value if value == ByteCode::ForeignFunction as u8 => Ok(Self::ForeignFunction),

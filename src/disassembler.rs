@@ -115,6 +115,10 @@ impl Disassembler {
                     self.print(vec!["and".to_string()]);
                 }
 
+                ByteCode::BooleanOr => {
+                    self.print(vec!["or".to_string()]);
+                }
+
                 ByteCode::Equals => {
                     self.print(vec!["eq".to_string()]);
                 }

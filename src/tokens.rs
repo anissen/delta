@@ -11,6 +11,7 @@ pub enum TokenKind {
     Identifier,
     Integer,
     KeywordAnd,
+    KeywordOr,
     KeywordIs,
     KeywordIf,
     LeftBrace,

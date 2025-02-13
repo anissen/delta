@@ -45,6 +45,27 @@ fn boolean_and() {
 }
 
 #[test]
+fn boolean_or() {
+    assert_ok(r"true or true", vm::Value::True);
+    assert_ok(r"true or false", vm::Value::True);
+    assert_ok(r"false or true", vm::Value::True);
+    assert_ok(r"false or false", vm::Value::False);
+    assert_ok(r"false or true or false", vm::Value::True);
+
+    assert_ok(r"2 > 3 or 2 > 1", vm::Value::True);
+}
+
+#[test]
+fn boolean_mixed_logic() {
+    assert_ok(r"false or (true and true)", vm::Value::True);
+    assert_ok(r"true and (false or true)", vm::Value::True);
+    assert_ok(r"true and (false and true)", vm::Value::False);
+    assert_ok(r"true and (false or false)", vm::Value::False);
+    assert_ok(r"(true or false) and (false or true)", vm::Value::True);
+    assert_ok(r"false or (true and (false or true))", vm::Value::True);
+}
+
+#[test]
 fn strings() {
     assert_ok(r#""""#, vm::Value::String("".to_string()));
     assert_ok(

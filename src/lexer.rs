@@ -112,6 +112,7 @@ impl<'a> Lexer {
             _ if self.match_keyword(&"is".chars().collect()) => TokenKind::KeywordIs,
             _ if self.match_keyword(&"if".chars().collect()) => TokenKind::KeywordIf,
             _ if self.match_keyword(&"and".chars().collect()) => TokenKind::KeywordAnd,
+            _ if self.match_keyword(&"or".chars().collect()) => TokenKind::KeywordOr,
             c if self.is_letter(c) => self.identifier(),
             _ => TokenKind::SyntaxError("Unexpected token"),
         }
