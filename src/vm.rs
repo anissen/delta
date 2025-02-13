@@ -415,9 +415,6 @@ impl VirtualMachine {
     fn read_byte(&mut self) -> u8 {
         let byte = self.program[self.program_counter];
         self.program_counter += 1;
-        if self.verbose_logging {
-            println!("read_byte: {}", byte);
-        }
         byte
     }
 
@@ -432,18 +429,12 @@ impl VirtualMachine {
     fn read_i32(&mut self) -> i32 {
         let raw = self.read_4bytes();
         let value = i32::from_be_bytes(raw);
-        if self.verbose_logging {
-            println!("read_i32: {}", value);
-        }
         value
     }
 
     fn read_f32(&mut self) -> f32 {
         let raw = u32::from_be_bytes(self.read_4bytes());
         let value = f32::from_bits(raw);
-        if self.verbose_logging {
-            println!("read_f32: {}", value);
-        }
         value
     }
 
