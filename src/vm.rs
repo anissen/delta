@@ -200,6 +200,10 @@ impl VirtualMachine {
                             self.push_string(left + &right.to_string());
                         }
 
+                        (Value::String(left), Value::Float(right)) => {
+                            self.push_string(left + &right.to_string());
+                        }
+
                         (Value::String(left), Value::True) => {
                             self.push_string(left + "true");
                         }

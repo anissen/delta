@@ -222,6 +222,10 @@ fn string_interpolation() {
         r#""{2} * {2 + 1} == {2 * (2 + 1)}""#,
         vm::Value::String("2 * 3 == 6".to_string()),
     );
+    assert_ok(
+        r#""float value is {0.1 + 0.2}""#,
+        vm::Value::String("float value is 0.3".to_string()),
+    );
 
     assert_ok(
         r#""result is {2 * 2 == 4}!""#,
