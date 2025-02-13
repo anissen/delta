@@ -110,6 +110,7 @@ impl<'a> Lexer {
             '\"' => self.string(),
             c if self.is_digit(c) => self.number(),
             _ if self.match_keyword(&"is".chars().collect()) => TokenKind::KeywordIs,
+            _ if self.match_keyword(&"if".chars().collect()) => TokenKind::KeywordIf,
             c if self.is_letter(c) => self.identifier(),
             _ => TokenKind::SyntaxError("Unexpected token"),
         }

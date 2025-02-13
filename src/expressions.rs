@@ -53,8 +53,18 @@ pub enum Expr {
 
 #[derive(Debug)]
 pub struct IsArm {
-    pub pattern: Option<Expr>,
+    pub pattern: IsArmPattern,
     pub block: Expr,
+}
+
+#[derive(Debug)]
+pub enum IsArmPattern {
+    Expression(Expr),
+    Capture {
+        identifier: String,
+        condition: Option<Expr>,
+    },
+    Default,
 }
 
 #[derive(Debug)]

@@ -1,9 +1,9 @@
 use std::collections::{HashMap, HashSet};
 
 use crate::bytecodes::ByteCode;
-use crate::expressions::{BinaryOperator, Expr, UnaryOperator};
+use crate::expressions::{BinaryOperator, Expr, IsArmPattern, UnaryOperator};
 use crate::program::Context;
-use crate::tokens::{Token, TokenKind};
+use crate::tokens::TokenKind;
 
 pub struct Codegen<'a> {
     bytes: Vec<u8>,
@@ -225,30 +225,48 @@ impl<'a> Codegen<'a> {
             }
 
             Expr::Is { expr, arms } => {
+                // TODO(anissen): This repeats `expr`, which we need to avoid. Save to a local value instead.
                 let mut jump_to_end_offsets = vec![];
                 for arm in arms {
-                    if let Some(pattern) = &arm.pattern {
-                        // Non-default pattern arm
+                    match &arm.pattern {
+                        IsArmPattern::Expression(pattern) => {
+                            // Emit expression and pattern and compare
+                            self.emit_expr(expr, environment, locals);
+                            self.emit_expr(&pattern, environment, locals);
+                            self.emit_bytecode(ByteCode::Equals);
 
-                        match pattern {
-                            Expr::Value(identifier) => {
-                                // TODO(anissen): This duplicates Assignment!
+                            // Jump to next arm if not equal
+                            let next_arm_offset = self.emit_jump_if_false();
+
+                            // Otherwise execute arm block
+                            self.emit_expr(&arm.block, environment, locals);
+
+                            // Jump to end of `is` block
+                            let end_offset = self.emit_unconditional_jump();
+                            jump_to_end_offsets.push(end_offset);
+
+                            // Patch jump to next arm now that we know its position
+                            self.patch_jump_to_current_byte(next_arm_offset);
+                        }
+
+                        IsArmPattern::Capture {
+                            identifier,
+                            condition,
+                        } => {
+                            // TODO(anissen): This duplicates Assignment!
+                            self.emit_expr(expr, environment, locals);
+                            self.emit_bytecode(ByteCode::SetLocalValue);
+
+                            let index = locals.len() as u8;
+                            environment.insert(identifier.clone(), index);
+                            locals.insert(identifier.clone());
+                            self.emit_byte(index);
+
+                            if let Some(condition) = condition {
+                                // dbg!(condition);
+                                // Emit expression and condition and compare
                                 self.emit_expr(expr, environment, locals);
-                                self.emit_bytecode(ByteCode::SetLocalValue);
-
-                                let index = locals.len() as u8;
-                                environment.insert(identifier.clone(), index);
-                                locals.insert(identifier.clone());
-                                self.emit_byte(index);
-
-                                // Execute arm block
-                                self.emit_expr(&arm.block, environment, locals);
-                            }
-                            _ => {
-                                // Emit expression and pattern and compare
-                                self.emit_expr(expr, environment, locals);
-                                self.emit_expr(&pattern, environment, locals);
-                                self.emit_bytecode(ByteCode::Equals);
+                                self.emit_expr(condition, environment, locals);
 
                                 // Jump to next arm if not equal
                                 let next_arm_offset = self.emit_jump_if_false();
@@ -262,12 +280,18 @@ impl<'a> Codegen<'a> {
 
                                 // Patch jump to next arm now that we know its position
                                 self.patch_jump_to_current_byte(next_arm_offset);
+                            } else {
+                                // Otherwise execute arm block
+                                self.emit_expr(&arm.block, environment, locals);
+
+                                // Jump to end of `is` block
+                                let end_offset = self.emit_unconditional_jump();
+                                jump_to_end_offsets.push(end_offset);
                             }
-                        };
-                    } else {
-                        // Default pattern arm
-                        self.emit_expr(&arm.block, environment, locals);
-                    }
+                        }
+
+                        IsArmPattern::Default => self.emit_expr(&arm.block, environment, locals),
+                    };
                 }
 
                 // Patch all jumps to end of `is` block now that we know where it ends

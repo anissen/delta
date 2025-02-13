@@ -116,6 +116,62 @@ fn pattern_matching_capture() {
 }
 
 #[test]
+fn pattern_matching_capture_guard() {
+    assert_ok(
+        r#"
+2 is
+    1
+        "no
+    other if other >= 2
+        "value captured is {other}"
+"#,
+        vm::Value::String("value captured is 2".to_string()),
+    );
+}
+
+#[test]
+fn pattern_matching_multiple_capture_guards() {
+    assert_ok(
+        r#"
+2.3 is
+    other if other <= 2
+        "nope"
+    other if other >= 2
+        "value captured is {other}"
+"#,
+        vm::Value::String("value captured is 2.3".to_string()),
+    );
+}
+
+#[test]
+#[ignore = "not yet implemented"]
+fn pattern_matching_complex_capture_guard() {
+    assert_ok(
+        r#"
+2.5 is
+    other if other >= 2 and other < 2
+        "captured {other}"
+"#,
+        vm::Value::String("captured 2.5".to_string()),
+    );
+}
+
+#[test]
+#[ignore = "not yet implemented"]
+fn pattern_matching_capture_non_boolean_guard() {
+    assert_err(
+        r#"
+2 is
+    1
+        "no
+    other if 2 + 2 # not a boolean expression
+        "value captured is {other}"
+"#,
+        "Expected expression to be boolean".to_string(),
+    );
+}
+
+#[test]
 fn multiple_default_patterns() {
     assert_err(
         r#"

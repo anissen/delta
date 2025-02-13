@@ -1,13 +1,14 @@
 use crate::expressions::BinaryOperator;
 use crate::expressions::Expr;
 use crate::expressions::IsArm;
+use crate::expressions::IsArmPattern;
 use crate::expressions::UnaryOperator;
 use crate::tokens::Token;
 use crate::tokens::TokenKind;
 use crate::tokens::TokenKind::{
     BackSlash, Bang, BangEqual, Comment, Equal, EqualEqual, False, Float, Identifier, Integer,
-    KeywordIs, LeftChevron, LeftChevronEqual, LeftParen, Minus, NewLine, Percent, Pipe, Plus,
-    RightChevron, RightChevronEqual, RightParen, Slash, Space, Star, StringConcat, Tab, True,
+    KeywordIf, KeywordIs, LeftChevron, LeftChevronEqual, LeftParen, Minus, NewLine, Percent, Pipe,
+    Plus, RightChevron, RightChevronEqual, RightParen, Slash, Space, Star, StringConcat, Tab, True,
     Underscore,
 };
 
@@ -130,13 +131,14 @@ impl Parser {
             while self.matches_indentation() {
                 let arm = self.is_arm()?;
                 if has_default {
-                    if arm.pattern.is_none() {
-                        return Err("An `is` block cannot have multiple default arms.".to_string());
-                    } else {
-                        return Err("Unreachable due to default arm above.".to_string());
-                    }
+                    return match arm.pattern {
+                        IsArmPattern::Default => {
+                            Err("An `is` block cannot have multiple default arms.".to_string())
+                        }
+                        _ => Err("Unreachable due to default arm above.".to_string()),
+                    };
                 }
-                has_default = arm.pattern.is_none();
+                has_default = matches!(arm.pattern, IsArmPattern::Default);
 
                 // TODO(anissen): Check for multiple capture arms or arms after a capture arm
 
@@ -161,28 +163,36 @@ impl Parser {
             self.consume(&Tab)?;
         }
 
-        if self.matches(&Underscore) {
-            // Default arm
-            if let Some(block) = self.block()? {
-                Ok(IsArm {
-                    pattern: None,
-                    block,
-                })
-            } else {
-                Err("Error parsing block of default `is` arm".to_string())
-            }
+        let pattern = if self.matches(&Underscore) {
+            Ok(IsArmPattern::Default)
         } else if let Some(pattern) = self.expression()? {
-            // Non-default arm
-            if let Some(block) = self.block()? {
-                Ok(IsArm {
-                    pattern: Some(pattern),
-                    block,
-                })
-            } else {
-                Err("Error parsing block of `is` arm".to_string())
+            match pattern {
+                Expr::Value(identifier) => {
+                    let condition = if self.matches(&KeywordIf) {
+                        self.expression()?
+                    } else {
+                        None
+                    };
+                    Ok(IsArmPattern::Capture {
+                        identifier,
+                        condition,
+                    })
+                }
+                _ => Ok(IsArmPattern::Expression(pattern)),
             }
         } else {
             Err("Error parsing pattern of `is` arm".to_string())
+        };
+
+        match pattern {
+            Ok(pattern) => {
+                if let Some(block) = self.block()? {
+                    Ok(IsArm { pattern, block })
+                } else {
+                    Err("Error parsing block of `is` arm".to_string())
+                }
+            }
+            Err(err) => Err(err),
         }
     }
 
