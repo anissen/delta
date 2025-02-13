@@ -81,4 +81,5 @@ pub enum BinaryOperator {
     Division,
     Modulus,
     StringConcat,
+    BooleanAnd,
 }

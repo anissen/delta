@@ -134,9 +134,9 @@ fn pattern_matching_multiple_capture_guards() {
     assert_ok(
         r#"
 2.3 is
-    other if other <= 2
+    other if other <= 2.0
         "nope"
-    other if other >= 2
+    other if other >= 2.0
         "value captured is {other}"
 "#,
         vm::Value::String("value captured is 2.3".to_string()),
@@ -144,12 +144,11 @@ fn pattern_matching_multiple_capture_guards() {
 }
 
 #[test]
-#[ignore = "not yet implemented"]
 fn pattern_matching_complex_capture_guard() {
     assert_ok(
         r#"
 2.5 is
-    other if other >= 2 and other < 2
+    other if other >= 2.0 and other < 3.0
         "captured {other}"
 "#,
         vm::Value::String("captured 2.5".to_string()),

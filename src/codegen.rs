@@ -221,6 +221,7 @@ impl<'a> Codegen<'a> {
                     BinaryOperator::Division => self.emit_bytecode(ByteCode::Division),
                     BinaryOperator::Modulus => self.emit_bytecode(ByteCode::Modulo),
                     BinaryOperator::StringConcat => self.emit_bytecode(ByteCode::StringConcat),
+                    BinaryOperator::BooleanAnd => self.emit_bytecode(ByteCode::BooleanAnd),
                 }
             }
 

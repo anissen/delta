@@ -111,6 +111,10 @@ impl Disassembler {
                     self.print(vec!["str_concat".to_string()]);
                 }
 
+                ByteCode::BooleanAnd => {
+                    self.print(vec!["and".to_string()]);
+                }
+
                 ByteCode::Equals => {
                     self.print(vec!["eq".to_string()]);
                 }

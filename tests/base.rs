@@ -34,6 +34,17 @@ fn boolean_false() {
 }
 
 #[test]
+fn boolean_and() {
+    assert_ok(r"true and true", vm::Value::True);
+    assert_ok(r"true and false", vm::Value::False);
+    assert_ok(r"false and true", vm::Value::False);
+    assert_ok(r"false and false", vm::Value::False);
+    assert_ok(r"true and true and true", vm::Value::True);
+
+    assert_ok(r"2 <= 3 and 2 > 1", vm::Value::True);
+}
+
+#[test]
 fn strings() {
     assert_ok(r#""""#, vm::Value::String("".to_string()));
     assert_ok(

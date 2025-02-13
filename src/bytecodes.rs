@@ -18,6 +18,7 @@ pub enum ByteCode {
     SetLocalValue,
     Subtraction,
     StringConcat,
+    BooleanAnd,
     FunctionStart,
     FunctionEnd, // TODO(anissen): Maybe FunctionDefinition + FunctionBodyStart + FunctionBodyEnd?
     // FunctionSignature,
@@ -59,6 +60,7 @@ impl TryFrom<u8> for ByteCode {
             value if value == ByteCode::SetLocalValue as u8 => Ok(Self::SetLocalValue),
             value if value == ByteCode::Subtraction as u8 => Ok(Self::Subtraction),
             value if value == ByteCode::StringConcat as u8 => Ok(Self::StringConcat),
+            value if value == ByteCode::BooleanAnd as u8 => Ok(Self::BooleanAnd),
             value if value == ByteCode::FunctionStart as u8 => Ok(Self::FunctionStart),
             value if value == ByteCode::FunctionEnd as u8 => Ok(Self::FunctionEnd),
             // value if value == ByteCode::ForeignFunction as u8 => Ok(Self::ForeignFunction),

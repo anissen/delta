@@ -7,9 +7,9 @@ use crate::tokens::Token;
 use crate::tokens::TokenKind;
 use crate::tokens::TokenKind::{
     BackSlash, Bang, BangEqual, Comment, Equal, EqualEqual, False, Float, Identifier, Integer,
-    KeywordIf, KeywordIs, LeftChevron, LeftChevronEqual, LeftParen, Minus, NewLine, Percent, Pipe,
-    Plus, RightChevron, RightChevronEqual, RightParen, Slash, Space, Star, StringConcat, Tab, True,
-    Underscore,
+    KeywordAnd, KeywordIf, KeywordIs, LeftChevron, LeftChevronEqual, LeftParen, Minus, NewLine,
+    Percent, Pipe, Plus, RightChevron, RightChevronEqual, RightParen, Slash, Space, Star,
+    StringConcat, Tab, True, Underscore,
 };
 
 /*
@@ -218,10 +218,21 @@ impl Parser {
         self.logic_and()
     }
 
-    // logic_and → equality ( "and" equality )* ;
+    // logic_and → equality ( "and" logic_or )* ;
     fn logic_and(&mut self) -> Result<Option<Expr>, String> {
-        // TODO(anissen): Implement
-        self.equality()
+        let expr = self.equality()?;
+        if self.matches(&KeywordAnd) {
+            let token = self.previous();
+            let right = self.logic_or()?;
+            Ok(Some(Expr::Binary {
+                left: Box::new(expr.unwrap()),
+                operator: BinaryOperator::BooleanAnd,
+                _token: token,
+                right: Box::new(right.unwrap()),
+            }))
+        } else {
+            Ok(expr)
+        }
     }
 
     // equality → comparison ( ( "!=" | "==" ) comparison )* ;
