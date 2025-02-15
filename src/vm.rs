@@ -15,7 +15,7 @@ pub enum Value {
 #[derive(Debug, Clone)]
 struct FunctionObj {
     arity: u8,
-    ip: usize, // TODO(anissen): Is ip required?
+    ip: u32,
 }
 
 #[derive(Debug)]
@@ -46,34 +46,56 @@ impl VirtualMachine {
             functions: Vec::new(),
             stack: Vec::new(),
             call_stack: Vec::new(),
-            verbose_logging: false,
+            verbose_logging: true,
         }
     }
 
     pub fn execute<'a>(&mut self, context: &'a Context<'a>) -> Option<Value> {
-        while self.program_counter < self.program.len() {
-            let next = self.read_byte();
-            let instruction = ByteCode::try_from(next);
-            if let Ok(ByteCode::FunctionStart) = instruction {
-                let _function_index = self.read_byte();
-                let arity = self.read_byte();
-                self.functions.push(FunctionObj {
-                    arity,
-                    ip: self.program_counter,
-                });
-            }
+        // while self.program_counter < self.program.len() {
+        //     let next = self.read_byte();
+        //     let instruction = ByteCode::try_from(next);
+        //     if let Ok(ByteCode::FunctionSignature) = instruction {
+        //         let function_position = self.read_u32();
+        //         self.functions.push(FunctionObj {
+        //             arity: 1, // TODO(anissen): We need the arity!
+        //             ip: function_position,
+        //         });
+        //     }
+        // }
+
+        dbg!(self.program_counter);
+        dbg!(self.program.len());
+        if self.program_counter >= self.program.len() {
+            return None;
+        }
+        while let Ok(ByteCode::FunctionSignature) = ByteCode::try_from(self.read_byte()) {
+            let function_position = self.read_u32();
+            let arity = self.read_byte();
+            self.functions.push(FunctionObj {
+                arity,
+                ip: function_position,
+            });
+        }
+        let main_start = self.program_counter - 1;
+
+        for ele in &mut self.functions {
+            // fix offsets
+            ele.ip += self.program_counter as u32 + 7; // 7 for function index, arity, jump, offset
+            dbg!(&ele);
         }
 
         // Construct an initial call frame for the top-level code.
         self.call(
             FunctionObj {
                 arity: 0,
-                ip: self.program.len(), // TODO(anissen): Hack to avoid infinite loops
+                ip: self.program.len() as u32, // main_start as u32,
             },
             0,
         );
 
-        self.program_counter = 0;
+        // self.program_counter = main_start;
+        // dbg!(&self.program_counter);
+        self.program_counter = main_start;
 
         while self.program_counter < self.program.len() {
             let next = self.read_byte();
@@ -81,7 +103,8 @@ impl VirtualMachine {
             if self.verbose_logging {
                 println!(
                     "\n=== Instruction: {:?} === (pc: {})",
-                    instruction, self.program_counter
+                    instruction,
+                    self.program_counter - 1
                 );
                 println!("Stack: {:?}", self.stack);
             }
@@ -308,16 +331,21 @@ impl VirtualMachine {
                     }
                 }
 
+                ByteCode::FunctionSignature => {
+                    panic!("this shouldn't happen")
+                }
+
                 ByteCode::FunctionStart => {
                     let function_index = self.read_byte();
+                    // dbg!(function_index);
+                    self.read_byte(); // arity
 
-                    // jump to function end HACK!
-                    while self.program_counter < self.program.len() {
-                        let instruction = self.read_byte();
-                        if let Ok(ByteCode::FunctionEnd) = ByteCode::try_from(instruction) {
-                            break;
-                        }
-                    }
+                    // while self.program_counter < self.program.len() {
+                    //     let instruction = self.read_byte();
+                    //     if let Ok(ByteCode::FunctionEnd) = ByteCode::try_from(instruction) {
+                    //         break;
+                    //     }
+                    // }
 
                     self.stack.push(Value::Function(function_index));
                 }
@@ -401,7 +429,7 @@ impl VirtualMachine {
             return_program_counter: self.program_counter,
             stack_index: (self.stack.len() - (arity as usize)) as u8,
         });
-        self.program_counter = ip;
+        self.program_counter = ip as usize;
     }
 
     fn current_call_frame(&self) -> &CallFrame {
@@ -440,14 +468,17 @@ impl VirtualMachine {
 
     fn read_i32(&mut self) -> i32 {
         let raw = self.read_4bytes();
-        let value = i32::from_be_bytes(raw);
-        value
+        i32::from_be_bytes(raw)
+    }
+
+    fn read_u32(&mut self) -> u32 {
+        let raw = self.read_4bytes();
+        u32::from_be_bytes(raw)
     }
 
     fn read_f32(&mut self) -> f32 {
         let raw = u32::from_be_bytes(self.read_4bytes());
-        let value = f32::from_bits(raw);
-        value
+        f32::from_bits(raw)
     }
 
     fn read_string(&mut self) -> String {

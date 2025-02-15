@@ -27,6 +27,14 @@ impl Disassembler {
         i32::from_be_bytes(value_bytes)
     }
 
+    fn read_u32(&mut self) -> u32 {
+        let value_bytes: [u8; 4] = self.program[self.program_counter..self.program_counter + 4]
+            .try_into()
+            .unwrap();
+        self.program_counter += 4;
+        u32::from_be_bytes(value_bytes)
+    }
+
     fn read_byte(&mut self) -> u8 {
         let value = self.program[self.program_counter];
         self.program_counter += 1;
@@ -157,6 +165,16 @@ impl Disassembler {
                 ByteCode::SetLocalValue => {
                     let index = self.read_byte();
                     self.print(vec!["set_value".to_string(), format!("(index: {})", index)]);
+                }
+
+                ByteCode::FunctionSignature => {
+                    let function_position = self.read_u32();
+                    let arity = self.read_byte();
+                    self.print(vec![
+                        format!("function sinature"),
+                        format!("(function position: {})", function_position),
+                        format!("(arity: {})", arity),
+                    ]);
                 }
 
                 ByteCode::FunctionStart => {

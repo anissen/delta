@@ -20,14 +20,18 @@ varDecl        → IDENTIFIER "=" expression ;
 block          → "\n" INDENTATION declaration ("\n" INDENTATION declaration)* ;
 expression     → assignment ;
 assignment     → IDENTIFIER "=" logic_or ;
-logic_or       → logic_and ( "or" logic_and )* ;
-logic_and      → equality ( "and" equality )* ;
+is             → string_concat "is" NEWLINE is_arm* | string_concat ;
+is_arm         → INDENT ( ( "_" | expression ) block ) ;
+logic_or       → logic_and ( "or" logic_or )* ;
+logic_and      → equality ( "and" logic_or )* ;
 equality       → comparison ( ( "!=" | "==" ) comparison )* ;
 comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
+block          → NEWLINE (INDENT expression NEWLINE?)*
 term           → factor ( ( "-" | "+" ) factor )* ;
 factor         → unary ( ( "/" | "*" ) unary )* ;
 unary          → ( "!" | "-" ) unary | call ;
-call           → expression "|" primary expression? ;
+call           → call → primary "|" call_with_first_arg | primary ;
+call_with_first_arg → IDENTIFIER primary* ;
 primary        → "true" | "false" | NUMBER | STRING | IDENTIFIER | "(" expression ")" ;
 ---
 NUMBER         → DIGIT+ ( "." DIGIT+ )? ;
@@ -37,8 +41,6 @@ ALPHA          → "a" ... "z" | "A" ... "Z" | "_" ;
 DIGIT          → "0" ... "9" ;
 ---
 MISSING:
-- string concatenation
-- is
 */
 
 pub struct Parser {
@@ -348,7 +350,7 @@ impl Parser {
         }
     }
 
-    // call → primary "|" primary* | primary
+    // call → primary "|" call_with_first_arg | primary
     fn call(&mut self) -> Result<Option<Expr>, String> {
         let expr = self.primary()?;
         if self.matches(&Pipe) {
@@ -358,6 +360,7 @@ impl Parser {
         }
     }
 
+    // call_with_first_arg → IDENTIFIER primary*
     fn call_with_first_arg(&mut self, expr: Expr) -> Result<Option<Expr>, String> {
         self.consume(&Identifier)?;
         let lexeme = self.previous().lexeme;

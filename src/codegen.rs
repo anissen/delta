@@ -5,8 +5,16 @@ use crate::expressions::{BinaryOperator, Expr, IsArmPattern, UnaryOperator};
 use crate::program::Context;
 use crate::tokens::TokenKind;
 
+#[derive(Debug, Clone)]
+struct FunctionSignature {
+    // name: String,
+    byte_position: u32,
+    arity: u8,
+}
+
 pub struct Codegen<'a> {
     bytes: Vec<u8>,
+    function_signatures: Vec<FunctionSignature>,
     function_count: u8,
     context: &'a Context<'a>,
 }
@@ -22,6 +30,7 @@ impl<'a> Codegen<'a> {
     fn new(context: &'a Context<'a>) -> Self {
         Self {
             bytes: vec![],
+            function_signatures: vec![],
             function_count: 0,
             context,
         }
@@ -94,6 +103,10 @@ impl<'a> Codegen<'a> {
                 let mut function_locals = HashSet::new();
 
                 self.emit_bytecode(ByteCode::FunctionStart);
+                self.function_signatures.push(FunctionSignature {
+                    byte_position: self.bytes.len() as u32 - 1,
+                    arity: params.len() as u8,
+                });
 
                 for (index, param) in params.iter().enumerate() {
                     function_environment.insert(param.lexeme.clone(), index as u8);
@@ -107,6 +120,8 @@ impl<'a> Codegen<'a> {
 
                 self.emit_byte(params.len() as u8); // TODO(anissen): Guard against overflow
 
+                let jump_to_end = self.emit_unconditional_jump();
+
                 // emit function signatures here?
                 // e.g.
                 // function_signatures = []
@@ -117,6 +132,8 @@ impl<'a> Codegen<'a> {
                 self.emit_expr(expr, &mut function_environment, &mut function_locals);
 
                 self.emit_bytecode(ByteCode::FunctionEnd);
+
+                self.patch_jump_to_current_byte(jump_to_end);
             }
 
             Expr::Call { name, args } => {
@@ -305,10 +322,24 @@ impl<'a> Codegen<'a> {
     }
 
     pub fn emit(&mut self, expressions: Vec<Expr>) -> Vec<u8> {
+        // self.emit_function_signatures();
+
         let environment = &mut HashMap::new();
         let locals = &mut HashSet::new();
         self.emit_exprs(&expressions, environment, locals);
-        self.bytes.clone()
+
+        let copy = self.bytes.clone(); // TODO(anissen): This is ugly! :'(
+        self.bytes.clear();
+
+        for ele in self.function_signatures.clone() {
+            self.emit_bytecode(ByteCode::FunctionSignature);
+            for byte in ele.byte_position.to_be_bytes() {
+                self.emit_byte(byte);
+            }
+            self.emit_byte(ele.arity);
+        }
+
+        [self.bytes.clone(), copy].concat()
     }
 
     fn emit_byte(&mut self, byte: u8) {
