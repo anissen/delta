@@ -350,7 +350,7 @@ impl<'a> Codegen<'a> {
         self.emit_byte(code.into());
     }
 
-    fn emit_bytes(&mut self, code: ByteCode, value: [u8; 4]) {
+    fn emit_bytes<const COUNT: usize>(&mut self, code: ByteCode, value: [u8; COUNT]) {
         self.emit_bytecode(code);
         for byte in value {
             self.emit_byte(byte);
@@ -362,23 +362,29 @@ impl<'a> Codegen<'a> {
     }
 
     fn emit_jump_if_false(&mut self) -> usize {
-        let bytes = 0_i32.to_be_bytes();
+        let bytes = 0_i16.to_be_bytes();
         self.emit_bytes(ByteCode::JumpIfFalse, bytes /* placeholder */);
         self.bytes.len() - bytes.len()
     }
 
     fn emit_unconditional_jump(&mut self) -> usize {
-        let bytes = 0_i32.to_be_bytes();
+        let bytes = 0_i16.to_be_bytes();
         self.emit_bytes(ByteCode::Jump, bytes /* placeholder */);
         self.bytes.len() - bytes.len()
     }
 
     fn patch_jump_to_current_byte(&mut self, byte_offset: usize) {
-        // byte offset is the start of 4 bytes that indicate the jump offset
-        let jump_instruction_bytes = 4;
-        let jump_offset = (self.bytes.len() - (byte_offset + jump_instruction_bytes)) as i32;
-        jump_offset
+        // byte offset is the start of 2 bytes that indicate the jump offset
+        let jump_instruction_bytes = 2;
+        let jump_offset = (self.bytes.len() - (byte_offset + jump_instruction_bytes)) as isize;
+        if jump_offset < i16::MIN as isize {
+            dbg!(jump_offset);
+            panic!("Jump offset is too small");
+        } else if jump_offset > i16::MAX as isize {
+            panic!("Jump offset is too large");
+        }
+        (jump_offset as i16)
             .to_be_bytes()
-            .swap_with_slice(&mut self.bytes[byte_offset..byte_offset + 4]);
+            .swap_with_slice(&mut self.bytes[byte_offset..byte_offset + 2]);
     }
 }

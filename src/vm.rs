@@ -80,7 +80,7 @@ impl VirtualMachine {
 
         for ele in &mut self.functions {
             // fix offsets
-            ele.ip += self.program_counter as u32 + 7; // 7 for function index, arity, jump, offset
+            ele.ip += self.program_counter as u32 + 5; // 5 for function index, arity, jump, offset
             dbg!(&ele);
         }
 
@@ -393,12 +393,12 @@ impl VirtualMachine {
                 }
 
                 ByteCode::Jump => {
-                    let offset = self.read_i32();
+                    let offset = self.read_i16();
                     self.program_counter += offset as usize;
                 }
 
                 ByteCode::JumpIfTrue => {
-                    let offset = self.read_i32();
+                    let offset = self.read_i16();
 
                     let condition = self.pop_boolean();
                     if condition {
@@ -407,7 +407,7 @@ impl VirtualMachine {
                 }
 
                 ByteCode::JumpIfFalse => {
-                    let offset = self.read_i32();
+                    let offset = self.read_i16();
 
                     let condition = self.pop_boolean();
                     if !condition {
@@ -458,12 +458,25 @@ impl VirtualMachine {
         byte
     }
 
+    fn read_2bytes(&mut self) -> [u8; 2] {
+        let value_bytes: [u8; 2] = self.program[self.program_counter..self.program_counter + 2]
+            .try_into()
+            .unwrap();
+        self.program_counter += 2;
+        value_bytes
+    }
+
     fn read_4bytes(&mut self) -> [u8; 4] {
         let value_bytes: [u8; 4] = self.program[self.program_counter..self.program_counter + 4]
             .try_into()
             .unwrap();
         self.program_counter += 4;
         value_bytes
+    }
+
+    fn read_i16(&mut self) -> i16 {
+        let raw = self.read_2bytes();
+        i16::from_be_bytes(raw)
     }
 
     fn read_i32(&mut self) -> i32 {

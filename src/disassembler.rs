@@ -19,6 +19,14 @@ impl Disassembler {
         }
     }
 
+    fn read_i16(&mut self) -> i16 {
+        let value_bytes: [u8; 2] = self.program[self.program_counter..self.program_counter + 2]
+            .try_into()
+            .unwrap();
+        self.program_counter += 2;
+        i16::from_be_bytes(value_bytes)
+    }
+
     fn read_i32(&mut self) -> i32 {
         let value_bytes: [u8; 4] = self.program[self.program_counter..self.program_counter + 4]
             .try_into()
@@ -218,7 +226,7 @@ impl Disassembler {
                 }
 
                 ByteCode::Jump => {
-                    let offset = self.read_i32();
+                    let offset = self.read_i16();
                     self.print(vec![format!(
                         "jump (offset: {}, to byte {})",
                         offset,
@@ -227,7 +235,7 @@ impl Disassembler {
                 }
 
                 ByteCode::JumpIfTrue => {
-                    let offset = self.read_i32();
+                    let offset = self.read_i16();
                     self.print(vec![format!(
                         "jump if true (offset: {}, to byte {})",
                         offset,
@@ -236,7 +244,7 @@ impl Disassembler {
                 }
 
                 ByteCode::JumpIfFalse => {
-                    let offset = self.read_i32();
+                    let offset = self.read_i16();
                     self.print(vec![format!(
                         "jump if false (offset: {}, to byte {})",
                         offset,
