@@ -12,8 +12,11 @@ struct FunctionSignature {
     arity: u8,
 }
 
-pub struct Codegen<'a> {
     bytes: Vec<u8>,
+
+pub struct Codegen<'a> {
+    //bytes: Vec<u8>,
+    bytecode_builder: BytecodeBuilder,
     function_signatures: Vec<FunctionSignature>,
     function_count: u8,
     context: &'a Context<'a>,
@@ -29,7 +32,8 @@ pub fn codegen<'a>(expressions: Vec<Expr>, context: &'a Context<'a>) -> Vec<u8> 
 impl<'a> Codegen<'a> {
     fn new(context: &'a Context<'a>) -> Self {
         Self {
-            bytes: vec![],
+            //bytes: vec![],
+            bytecode_builder: BytecodeBuilder::new(),
             function_signatures: vec![],
             function_count: 0,
             context,
@@ -55,28 +59,34 @@ impl<'a> Codegen<'a> {
     ) {
         // TODO(anissen): Make this a proper return type.
         match expr {
-            Expr::Boolean(true) => self.emit_bytecode(ByteCode::PushTrue),
+            Expr::Boolean(true) => self.bytecode_builder.emit_bytecode(ByteCode::PushTrue),
 
-            Expr::Boolean(false) => self.emit_bytecode(ByteCode::PushFalse),
+            Expr::Boolean(false) => self.bytecode_builder.emit_bytecode(ByteCode::PushFalse),
 
-            Expr::Integer(i) => self.emit_bytes(ByteCode::PushInteger, i.to_be_bytes()),
+            Expr::Integer(i) => self
+                .bytecode_builder
+                .emit_bytes(ByteCode::PushInteger, i.to_be_bytes()),
 
-            Expr::Float(f) => self.emit_bytes(ByteCode::PushFloat, f.to_be_bytes()),
+            Expr::Float(f) => self
+                .bytecode_builder
+                .emit_bytes(ByteCode::PushFloat, f.to_be_bytes()),
 
             Expr::Value(name) => {
                 if self.context.has_value(&name) {
-                    self.emit_bytecode(ByteCode::GetForeignValue);
+                    self.bytecode_builder
+                        .emit_bytecode(ByteCode::GetForeignValue);
                     // TODO(anissen): Should (also) output index
                     if name.len() > 255 {
                         // TODO(anissen): Should add error to a error reporter instead
                         panic!("function name too long!");
                     }
-                    self.emit_byte(name.len() as u8);
-                    self.emit_raw_bytes(&mut name.as_bytes().to_vec());
+                    self.bytecode_builder.emit_byte(name.len() as u8);
+                    self.bytecode_builder
+                        .emit_raw_bytes(&mut name.as_bytes().to_vec());
                 } else {
                     if let Some(index) = environment.get(name) {
-                        self.emit_bytecode(ByteCode::GetLocalValue);
-                        self.emit_byte(*index);
+                        self.bytecode_builder.emit_bytecode(ByteCode::GetLocalValue);
+                        self.bytecode_builder.emit_byte(*index);
                     } else {
                         println!("name not found in scope: {}", name);
                         panic!("name not found in scope");
@@ -85,13 +95,14 @@ impl<'a> Codegen<'a> {
             }
 
             Expr::String(str) => {
-                self.emit_bytecode(ByteCode::PushString);
+                self.bytecode_builder.emit_bytecode(ByteCode::PushString);
                 if str.len() > 255 {
                     // TODO(anissen): Should add error to a error reporter instead
                     panic!("string too long!");
                 }
-                self.emit_byte(str.len() as u8);
-                self.emit_raw_bytes(&mut str.as_bytes().to_vec());
+                self.bytecode_builder.emit_byte(str.len() as u8);
+                self.bytecode_builder
+                    .emit_raw_bytes(&mut str.as_bytes().to_vec());
             }
 
             Expr::Grouping(expr) => self.emit_expr(expr, environment, locals),
@@ -102,9 +113,9 @@ impl<'a> Codegen<'a> {
                 let mut function_environment = environment.clone();
                 let mut function_locals = HashSet::new();
 
-                self.emit_bytecode(ByteCode::FunctionStart);
+                self.bytecode_builder.emit_bytecode(ByteCode::Function);
                 self.function_signatures.push(FunctionSignature {
-                    byte_position: self.bytes.len() as u32 - 1,
+                    byte_position: self.bytecode_builder.bytes.len() as u32 - 1,
                     arity: params.len() as u8,
                 });
 
@@ -115,12 +126,12 @@ impl<'a> Codegen<'a> {
                 }
                 // bytecodes: function start, function index, param count, function body, function end
 
-                self.emit_byte(self.function_count);
+                self.bytecode_builder.emit_byte(self.function_count);
                 self.function_count += 1;
 
-                self.emit_byte(params.len() as u8); // TODO(anissen): Guard against overflow
+                self.bytecode_builder.emit_byte(params.len() as u8); // TODO(anissen): Guard against overflow
 
-                let jump_to_end = self.emit_unconditional_jump();
+                let jump_to_end = self.bytecode_builder.emit_unconditional_jump();
 
                 // emit function signatures here?
                 // e.g.
@@ -131,9 +142,10 @@ impl<'a> Codegen<'a> {
 
                 self.emit_expr(expr, &mut function_environment, &mut function_locals);
 
-                self.emit_bytecode(ByteCode::FunctionEnd);
+                self.bytecode_builder.emit_bytecode(ByteCode::Return);
 
-                self.patch_jump_to_current_byte(jump_to_end);
+                self.bytecode_builder
+                    .patch_jump_to_current_byte(jump_to_end);
             }
 
             Expr::Call { name, args } => {
@@ -142,31 +154,34 @@ impl<'a> Codegen<'a> {
 
                 if self.context.has_function(&name) {
                     // TODO(anissen): Maybe this should be its own Expr instead?
-                    self.emit_bytecode(ByteCode::CallForeign);
-                    self.emit_byte(self.context.get_index(&name));
-                    self.emit_byte(arg_count as u8);
+                    self.bytecode_builder.emit_bytecode(ByteCode::CallForeign);
+                    self.bytecode_builder
+                        .emit_byte(self.context.get_index(&name));
+                    self.bytecode_builder.emit_byte(arg_count as u8);
 
                     if name.len() > 255 {
                         panic!("function name too long!");
                     }
-                    self.emit_byte(name.len() as u8);
-                    self.emit_raw_bytes(&mut name.as_bytes().to_vec());
+                    self.bytecode_builder.emit_byte(name.len() as u8);
+                    self.bytecode_builder
+                        .emit_raw_bytes(&mut name.as_bytes().to_vec());
                 } else {
-                    self.emit_bytecode(ByteCode::Call);
-                    self.emit_byte(arg_count as u8);
+                    self.bytecode_builder.emit_bytecode(ByteCode::Call);
+                    self.bytecode_builder.emit_byte(arg_count as u8);
                     let index = environment.get(name).unwrap();
                     if locals.contains(name) {
-                        self.emit_byte(0);
+                        self.bytecode_builder.emit_byte(0);
                     } else {
-                        self.emit_byte(1);
+                        self.bytecode_builder.emit_byte(1);
                     }
-                    self.emit_byte(*index);
+                    self.bytecode_builder.emit_byte(*index);
 
                     if name.len() > 255 {
                         panic!("function name too long!");
                     }
-                    self.emit_byte(name.len() as u8);
-                    self.emit_raw_bytes(&mut name.as_bytes().to_vec());
+                    self.bytecode_builder.emit_byte(name.len() as u8);
+                    self.bytecode_builder
+                        .emit_raw_bytes(&mut name.as_bytes().to_vec());
                 };
             }
 
@@ -176,12 +191,12 @@ impl<'a> Codegen<'a> {
                 expr,
             } => {
                 self.emit_expr(expr, environment, locals);
-                self.emit_bytecode(ByteCode::SetLocalValue);
+                self.bytecode_builder.emit_bytecode(ByteCode::SetLocalValue);
 
                 let index = locals.len() as u8;
                 environment.insert(value.clone(), index);
                 locals.insert(value.clone());
-                self.emit_byte(index);
+                self.bytecode_builder.emit_byte(index);
             }
 
             Expr::Comparison { left, token, right } => {
@@ -189,20 +204,25 @@ impl<'a> Codegen<'a> {
                 self.emit_expr(right, environment, locals);
 
                 match token.kind {
-                    TokenKind::EqualEqual => self.emit_bytecode(ByteCode::Equals),
+                    TokenKind::EqualEqual => self.bytecode_builder.emit_bytecode(ByteCode::Equals),
                     TokenKind::BangEqual => {
-                        self.emit_bytecode(ByteCode::Equals);
-                        self.emit_bytecode(ByteCode::Not);
+                        self.bytecode_builder.emit_bytecode(ByteCode::Equals);
+                        self.bytecode_builder.emit_bytecode(ByteCode::Not);
                     }
-                    TokenKind::LeftChevron => self.emit_bytecode(ByteCode::LessThan),
-                    TokenKind::LeftChevronEqual => self.emit_bytecode(ByteCode::LessThanEquals),
+                    TokenKind::LeftChevron => {
+                        self.bytecode_builder.emit_bytecode(ByteCode::LessThan)
+                    }
+                    TokenKind::LeftChevronEqual => self
+                        .bytecode_builder
+                        .emit_bytecode(ByteCode::LessThanEquals),
                     TokenKind::RightChevron => {
-                        self.emit_bytecode(ByteCode::LessThanEquals);
-                        self.emit_bytecode(ByteCode::Not);
+                        self.bytecode_builder
+                            .emit_bytecode(ByteCode::LessThanEquals);
+                        self.bytecode_builder.emit_bytecode(ByteCode::Not);
                     }
                     TokenKind::RightChevronEqual => {
-                        self.emit_bytecode(ByteCode::LessThan);
-                        self.emit_bytecode(ByteCode::Not);
+                        self.bytecode_builder.emit_bytecode(ByteCode::LessThan);
+                        self.bytecode_builder.emit_bytecode(ByteCode::Not);
                     }
                     _ => panic!("unexpected comparison operator"),
                 }
@@ -215,11 +235,11 @@ impl<'a> Codegen<'a> {
             } => match operator {
                 UnaryOperator::Negation => {
                     self.emit_expr(expr, environment, locals);
-                    self.emit_bytecode(ByteCode::Negation);
+                    self.bytecode_builder.emit_bytecode(ByteCode::Negation);
                 }
                 UnaryOperator::Not => {
                     self.emit_expr(expr, environment, locals);
-                    self.emit_bytecode(ByteCode::Not);
+                    self.bytecode_builder.emit_bytecode(ByteCode::Not);
                 }
             },
 
@@ -232,14 +252,30 @@ impl<'a> Codegen<'a> {
                 self.emit_expr(left, environment, locals);
                 self.emit_expr(right, environment, locals);
                 match operator {
-                    BinaryOperator::Addition => self.emit_bytecode(ByteCode::Addition),
-                    BinaryOperator::Subtraction => self.emit_bytecode(ByteCode::Subtraction),
-                    BinaryOperator::Multiplication => self.emit_bytecode(ByteCode::Multiplication),
-                    BinaryOperator::Division => self.emit_bytecode(ByteCode::Division),
-                    BinaryOperator::Modulus => self.emit_bytecode(ByteCode::Modulo),
-                    BinaryOperator::StringConcat => self.emit_bytecode(ByteCode::StringConcat),
-                    BinaryOperator::BooleanAnd => self.emit_bytecode(ByteCode::BooleanAnd),
-                    BinaryOperator::BooleanOr => self.emit_bytecode(ByteCode::BooleanOr),
+                    BinaryOperator::Addition => {
+                        self.bytecode_builder.emit_bytecode(ByteCode::Addition)
+                    }
+                    BinaryOperator::Subtraction => {
+                        self.bytecode_builder.emit_bytecode(ByteCode::Subtraction)
+                    }
+                    BinaryOperator::Multiplication => self
+                        .bytecode_builder
+                        .emit_bytecode(ByteCode::Multiplication),
+                    BinaryOperator::Division => {
+                        self.bytecode_builder.emit_bytecode(ByteCode::Division)
+                    }
+                    BinaryOperator::Modulus => {
+                        self.bytecode_builder.emit_bytecode(ByteCode::Modulo)
+                    }
+                    BinaryOperator::StringConcat => {
+                        self.bytecode_builder.emit_bytecode(ByteCode::StringConcat)
+                    }
+                    BinaryOperator::BooleanAnd => {
+                        self.bytecode_builder.emit_bytecode(ByteCode::BooleanAnd)
+                    }
+                    BinaryOperator::BooleanOr => {
+                        self.bytecode_builder.emit_bytecode(ByteCode::BooleanOr)
+                    }
                 }
             }
 
@@ -252,20 +288,21 @@ impl<'a> Codegen<'a> {
                             // Emit expression and pattern and compare
                             self.emit_expr(expr, environment, locals);
                             self.emit_expr(&pattern, environment, locals);
-                            self.emit_bytecode(ByteCode::Equals);
+                            self.bytecode_builder.emit_bytecode(ByteCode::Equals);
 
                             // Jump to next arm if not equal
-                            let next_arm_offset = self.emit_jump_if_false();
+                            let next_arm_offset = self.bytecode_builder.emit_jump_if_false();
 
                             // Otherwise execute arm block
                             self.emit_expr(&arm.block, environment, locals);
 
                             // Jump to end of `is` block
-                            let end_offset = self.emit_unconditional_jump();
+                            let end_offset = self.bytecode_builder.emit_unconditional_jump();
                             jump_to_end_offsets.push(end_offset);
 
                             // Patch jump to next arm now that we know its position
-                            self.patch_jump_to_current_byte(next_arm_offset);
+                            self.bytecode_builder
+                                .patch_jump_to_current_byte(next_arm_offset);
                         }
 
                         IsArmPattern::Capture {
@@ -274,12 +311,12 @@ impl<'a> Codegen<'a> {
                         } => {
                             // TODO(anissen): This duplicates Assignment!
                             self.emit_expr(expr, environment, locals);
-                            self.emit_bytecode(ByteCode::SetLocalValue);
+                            self.bytecode_builder.emit_bytecode(ByteCode::SetLocalValue);
 
                             let index = locals.len() as u8;
                             environment.insert(identifier.clone(), index);
                             locals.insert(identifier.clone());
-                            self.emit_byte(index);
+                            self.bytecode_builder.emit_byte(index);
 
                             if let Some(condition) = condition {
                                 // dbg!(condition);
@@ -288,23 +325,24 @@ impl<'a> Codegen<'a> {
                                 self.emit_expr(condition, environment, locals);
 
                                 // Jump to next arm if not equal
-                                let next_arm_offset = self.emit_jump_if_false();
+                                let next_arm_offset = self.bytecode_builder.emit_jump_if_false();
 
                                 // Otherwise execute arm block
                                 self.emit_expr(&arm.block, environment, locals);
 
                                 // Jump to end of `is` block
-                                let end_offset = self.emit_unconditional_jump();
+                                let end_offset = self.bytecode_builder.emit_unconditional_jump();
                                 jump_to_end_offsets.push(end_offset);
 
                                 // Patch jump to next arm now that we know its position
-                                self.patch_jump_to_current_byte(next_arm_offset);
+                                self.bytecode_builder
+                                    .patch_jump_to_current_byte(next_arm_offset);
                             } else {
                                 // Otherwise execute arm block
                                 self.emit_expr(&arm.block, environment, locals);
 
                                 // Jump to end of `is` block
-                                let end_offset = self.emit_unconditional_jump();
+                                let end_offset = self.bytecode_builder.emit_unconditional_jump();
                                 jump_to_end_offsets.push(end_offset);
                             }
                         }
@@ -315,7 +353,7 @@ impl<'a> Codegen<'a> {
 
                 // Patch all jumps to end of `is` block now that we know where it ends
                 for offset in jump_to_end_offsets {
-                    self.patch_jump_to_current_byte(offset);
+                    self.bytecode_builder.patch_jump_to_current_byte(offset);
                 }
             }
         };
@@ -328,19 +366,40 @@ impl<'a> Codegen<'a> {
         let locals = &mut HashSet::new();
         self.emit_exprs(&expressions, environment, locals);
 
-        let copy = self.bytes.clone(); // TODO(anissen): This is ugly! :'(
-        self.bytes.clear();
+        let mut signature_builder = BytecodeBuilder::new();
 
         for ele in self.function_signatures.clone() {
-            self.emit_bytecode(ByteCode::FunctionSignature);
+            signature_builder.emit_bytecode(ByteCode::FunctionSignature);
             for byte in ele.byte_position.to_be_bytes() {
-                self.emit_byte(byte);
+                signature_builder.emit_byte(byte);
             }
-            self.emit_byte(ele.arity);
+            signature_builder.emit_byte(ele.arity);
         }
 
-        [self.bytes.clone(), copy].concat()
+        [signature_builder.bytes, self.bytecode_builder.bytes.clone()].concat()
     }
+}
+
+struct BytecodeBuilder {
+    bytes: Vec<u8>,
+}
+
+impl BytecodeBuilder {
+    fn new() -> Self {
+        Self { bytes: Vec::new() }
+    }
+
+    fn emit(&mut self, byte: u8) {
+        self.bytes.push(byte);
+    }
+
+    // fn emit_u16(&mut self, value: u16) {
+    //     self.bytes.extend_from_slice(&value.to_le_bytes());
+    // }
+
+    // fn emit_u32(&mut self, value: u32) {
+    //     self.bytes.extend_from_slice(&value.to_le_bytes());
+    // }
 
     fn emit_byte(&mut self, byte: u8) {
         self.bytes.push(byte);
@@ -350,6 +409,7 @@ impl<'a> Codegen<'a> {
         self.emit_byte(code.into());
     }
 
+    // TODO(anissen): This could maybe be improved by accepting a value of type T and calling to_le_bytes() on it
     fn emit_bytes<const COUNT: usize>(&mut self, code: ByteCode, value: [u8; COUNT]) {
         self.emit_bytecode(code);
         for byte in value {

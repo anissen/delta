@@ -335,7 +335,7 @@ impl VirtualMachine {
                     panic!("this shouldn't happen")
                 }
 
-                ByteCode::FunctionStart => {
+                ByteCode::Function => {
                     let function_index = self.read_byte();
                     // dbg!(function_index);
                     self.read_byte(); // arity
@@ -350,7 +350,7 @@ impl VirtualMachine {
                     self.stack.push(Value::Function(function_index));
                 }
 
-                ByteCode::FunctionEnd => {
+                ByteCode::Return => {
                     self.pop_call_frame();
                 }
 

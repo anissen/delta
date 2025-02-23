@@ -185,7 +185,7 @@ impl Disassembler {
                     ]);
                 }
 
-                ByteCode::FunctionStart => {
+                ByteCode::Function => {
                     let function_index = self.read_byte();
                     let param_count = self.read_byte();
                     self.print(vec![
@@ -195,7 +195,7 @@ impl Disassembler {
                     ]);
                 }
 
-                ByteCode::FunctionEnd => {
+                ByteCode::Return => {
                     self.print(vec!["ret".to_string()]);
                 }
 
