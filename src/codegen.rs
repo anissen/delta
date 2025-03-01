@@ -205,13 +205,7 @@ impl<'a> Codegen<'a> {
                 _token: _,
                 expr,
             } => {
-                self.emit_expr(expr, environment, locals);
-                self.bytecode.add_op(ByteCode::SetLocalValue);
-
-                let index = locals.len() as u8;
-                environment.insert(value.clone(), index);
-                locals.insert(value.clone());
-                self.bytecode.add_byte(index);
+                self.emit_assignment(value, expr, environment, locals);
             }
 
             Expr::Comparison { left, token, right } => {
@@ -311,17 +305,9 @@ impl<'a> Codegen<'a> {
                             identifier,
                             condition,
                         } => {
-                            // TODO(anissen): This duplicates Assignment!
-                            self.emit_expr(expr, environment, locals);
-                            self.bytecode.add_op(ByteCode::SetLocalValue);
-
-                            let index = locals.len() as u8;
-                            environment.insert(identifier.clone(), index);
-                            locals.insert(identifier.clone());
-                            self.bytecode.add_byte(index);
+                            self.emit_assignment(identifier, expr, environment, locals);
 
                             if let Some(condition) = condition {
-                                // dbg!(condition);
                                 // Emit expression and condition and compare
                                 self.emit_expr(expr, environment, locals);
                                 self.emit_expr(condition, environment, locals);
@@ -358,6 +344,22 @@ impl<'a> Codegen<'a> {
                 }
             }
         };
+    }
+
+    fn emit_assignment(
+        &mut self,
+        value: &String,
+        expr: &Expr,
+        environment: &mut HashMap<String, u8>,
+        locals: &mut HashSet<String>,
+    ) {
+        self.emit_expr(expr, environment, locals);
+        self.bytecode.add_op(ByteCode::SetLocalValue);
+
+        let index = locals.len() as u8;
+        environment.insert(value.clone(), index);
+        locals.insert(value.clone());
+        self.bytecode.add_byte(index);
     }
 
     // fn create_function_chunk(
