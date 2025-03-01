@@ -16,6 +16,18 @@ add = \v1 v2
 }
 
 #[test]
+fn function_calling_parentheses() {
+    assert_ok(
+        r"
+add = \v1 v2
+    v1 + v2
+
+(5 | add 3)",
+        vm::Value::Integer(8),
+    );
+}
+
+#[test]
 fn nested_function_calling() {
     assert_ok(
         r"

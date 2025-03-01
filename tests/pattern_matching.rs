@@ -197,3 +197,20 @@ fn arm_after_default_pattern() {
         "Unreachable due to default arm above.".to_string(),
     );
 }
+
+#[test]
+fn pattern_matching_function_call() {
+    assert_ok(
+        r#"
+add = \v1 v2
+    v1 + v2
+
+(2 | add 3) is
+    5
+       	"yes"
+    _
+        "no"
+"#,
+        vm::Value::String("yes".to_string()),
+    );
+}

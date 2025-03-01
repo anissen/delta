@@ -372,6 +372,7 @@ impl Parser {
             && !self.check(&NewLine)
             && !self.check(&Pipe)
             && !self.check(&StringConcat)
+            && !self.check(&RightParen)
         {
             let arg = self.primary()?; // precedence after string concatenation
             if let Some(arg) = arg {
