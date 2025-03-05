@@ -116,7 +116,13 @@ impl<'a> Codegen<'a> {
 
             Expr::Grouping(expr) => self.emit_expr(expr, environment, locals),
 
-            Expr::Block { exprs } => self.emit_exprs(exprs, environment, locals),
+            Expr::Block { exprs } => {
+                let mut block_environment = environment.clone();
+                let mut block_locals = locals.clone();
+
+                // Emit block with its own environment and locals
+                self.emit_exprs(exprs, &mut block_environment, &mut block_locals);
+            }
 
             Expr::Function { params, expr } => {
                 /*
@@ -157,6 +163,7 @@ impl<'a> Codegen<'a> {
                 // write_bytes(function_signatures)
                 // write_bytes(bytes)
 
+                // TODO(anissen): Expr is already a block, so we shouldn't need to create new environment and locals
                 self.emit_expr(expr, &mut function_environment, &mut function_locals);
 
                 self.bytecode.add_op(ByteCode::Return);

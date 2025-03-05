@@ -214,3 +214,76 @@ add = \v1 v2
         vm::Value::String("yes".to_string()),
     );
 }
+
+#[test]
+fn pattern_matching_with_locals() {
+    assert_ok(
+        r#"
+match = \v
+    x = 3
+    v + x is
+        4
+            y = 5
+            x + y + v
+
+"result is {1 | match}"
+"#,
+        vm::Value::String("result is 9".to_string()),
+    );
+}
+
+#[test]
+fn pattern_matching_with_more_locals() {
+    assert_ok(
+        r#"
+square = \v
+    v * v
+
+match = \v
+    x = 2
+    v + x is
+       	3
+            y = 4
+            v + y
+        4
+           	z = v + x + 5
+           	z | square
+        5
+           	w = 6
+           	w2 = 7
+           	x + w + w2
+
+"result is {1 | match}, {2 | match} and {3 | match}"
+"#,
+        vm::Value::String("result is 5, 81 and 15".to_string()),
+    );
+}
+
+#[test]
+fn pattern_matching_with_even_more_locals() {
+    assert_ok(
+        r#"
+square = \v
+    v * v
+
+match = \v
+    x = 2
+    res = v + x is
+       	3
+            y = 4
+            v + y
+        4
+           	z = v + x + 5
+           	z | square
+        captured
+           	w = 6
+           	w2 = 7
+           	captured + x + w + w2
+    val = 8
+    res + val
+
+"result is {1 | match}, {2 | match} and {3 | match}"
+"#,
+        vm::Value::String("result is 13, 89 and 28".to_string()),
+    );
+}
