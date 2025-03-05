@@ -1,7 +1,7 @@
 mod common;
 
 use common::{assert_err, assert_ok};
-use delta::vm;
+use delta::vm::Value;
 
 #[test]
 fn pattern_matching_integers() {
@@ -15,7 +15,7 @@ fn pattern_matching_integers() {
     3
        	"also no"
 "#,
-        vm::Value::String("yes".to_string()),
+        Value::String("yes".to_string()),
     );
 }
 
@@ -39,7 +39,7 @@ res = 2 is
 
 "result is '{res}'"
 "#,
-        vm::Value::String("result is 'oh yes'".to_string()),
+        Value::String("result is 'oh yes'".to_string()),
     );
 }
 
@@ -57,7 +57,7 @@ match = \v
 
 "result is {2 | match}"
 "#,
-        vm::Value::String("result is 25".to_string()),
+        Value::String("result is 25".to_string()),
     );
 }
 
@@ -71,7 +71,7 @@ fn pattern_matching_default() {
     _
         "yes"
 "#,
-        vm::Value::String("yes".to_string()),
+        Value::String("yes".to_string()),
     );
 }
 
@@ -85,7 +85,7 @@ fn pattern_matching_expression() {
     _
         "no"
 "#,
-        vm::Value::String("yes".to_string()),
+        Value::String("yes".to_string()),
     );
 }
 
@@ -99,7 +99,7 @@ fn expression_pattern_matching() {
     _
         "no"
 "#,
-        vm::Value::String("yes".to_string()),
+        Value::String("yes".to_string()),
     );
 }
 
@@ -111,7 +111,7 @@ fn pattern_matching_capture() {
     value
         "value captured is {value}"
 "#,
-        vm::Value::String("value captured is 2".to_string()),
+        Value::String("value captured is 2".to_string()),
     );
 }
 
@@ -125,7 +125,7 @@ fn pattern_matching_capture_guard() {
     other if other >= 2
         "value captured is {other}"
 "#,
-        vm::Value::String("value captured is 2".to_string()),
+        Value::String("value captured is 2".to_string()),
     );
 }
 
@@ -139,7 +139,7 @@ fn pattern_matching_multiple_capture_guards() {
     other if other >= 2.0
         "value captured is {other}"
 "#,
-        vm::Value::String("value captured is 2.3".to_string()),
+        Value::String("value captured is 2.3".to_string()),
     );
 }
 
@@ -151,7 +151,7 @@ fn pattern_matching_complex_capture_guard() {
     other if other >= 2.0 and other < 3.0
         "captured {other}"
 "#,
-        vm::Value::String("captured 2.5".to_string()),
+        Value::String("captured 2.5".to_string()),
     );
 }
 
@@ -211,7 +211,7 @@ add = \v1 v2
     _
         "no"
 "#,
-        vm::Value::String("yes".to_string()),
+        Value::String("yes".to_string()),
     );
 }
 
@@ -228,7 +228,7 @@ match = \v
 
 "result is {1 | match}"
 "#,
-        vm::Value::String("result is 9".to_string()),
+        Value::String("result is 9".to_string()),
     );
 }
 
@@ -255,7 +255,7 @@ match = \v
 
 "result is {1 | match}, {2 | match} and {3 | match}"
 "#,
-        vm::Value::String("result is 5, 81 and 15".to_string()),
+        Value::String("result is 5, 81 and 15".to_string()),
     );
 }
 
@@ -284,6 +284,6 @@ match = \v
 
 "result is {1 | match}, {2 | match} and {3 | match}"
 "#,
-        vm::Value::String("result is 13, 89 and 28".to_string()),
+        Value::String("result is 13, 89 and 28".to_string()),
     );
 }

@@ -1,7 +1,7 @@
 pub mod common;
 
 use common::assert_ok;
-use delta::vm;
+use delta::vm::Value;
 
 #[test]
 fn function_calling() {
@@ -11,7 +11,7 @@ add = \v1 v2
     v1 + v2
 
 5 | add 3",
-        vm::Value::Integer(8),
+        Value::Integer(8),
     );
 }
 
@@ -23,7 +23,7 @@ add = \v1 v2
     v1 + v2
 
 (5 | add 3)",
-        vm::Value::Integer(8),
+        Value::Integer(8),
     );
 }
 
@@ -38,7 +38,7 @@ add_one = \v
     v | add 1
 
 5 | add_one",
-        vm::Value::Integer(6),
+        Value::Integer(6),
     )
 }
 
@@ -50,7 +50,7 @@ add_one = \v
     v + 1
 
 5 | add_one | add_one",
-        vm::Value::Integer(7),
+        Value::Integer(7),
     )
 }
 
@@ -68,7 +68,7 @@ add_one = \v
     v | add 1
 
 5 | square | add 3 | add_one",
-        vm::Value::Integer(29),
+        Value::Integer(29),
     )
 }
 
@@ -82,7 +82,7 @@ add_one = \v
     v + y
 
 5 | add_one",
-        vm::Value::Integer(6),
+        Value::Integer(6),
     )
 }
 
@@ -98,7 +98,7 @@ add_one = \v
     v | add x
 
 5 | add_one",
-        vm::Value::Integer(6),
+        Value::Integer(6),
     )
 }
 
@@ -110,7 +110,7 @@ is_5 = \v
     v == 5
 
 5 | is_5",
-        vm::Value::True,
+        Value::True,
     )
 }
 
@@ -122,7 +122,7 @@ is_5 = \v
     v == 5
 
 5 | is_5",
-        vm::Value::True,
+        Value::True,
     )
 }
 
@@ -135,7 +135,7 @@ greeting = \name
 
 "John" | greeting
 "#,
-        vm::Value::String("Hello John!".to_string()),
+        Value::String("Hello John!".to_string()),
     )
 }
 
@@ -148,7 +148,7 @@ add = \v1 v2
 
 "result is {40 | add 2}!"
 "#,
-        vm::Value::String("result is 42!".to_string()),
+        Value::String("result is 42!".to_string()),
     )
 }
 
@@ -166,7 +166,7 @@ is_odd = \v
     !res
 
 5 | is_odd",
-        vm::Value::True,
+        Value::True,
     )
 }
 
@@ -181,6 +181,6 @@ is_even = \v
     v % 2 == 0
 
 3 | add 1 | is_even",
-        vm::Value::True,
+        Value::True,
     )
 }
