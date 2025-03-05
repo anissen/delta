@@ -93,9 +93,7 @@ impl<'a> Codegen<'a> {
                         .add_byte_array(name.as_bytes());
                 } else {
                     if let Some(index) = environment.get(name) {
-                        self.bytecode
-                            .add_op(ByteCode::GetLocalValue)
-                            .add_byte(*index);
+                        self.emit_get_local_value(*index);
                     } else {
                         println!("name not found in scope: {}", name);
                         panic!("name not found in scope");
@@ -295,9 +293,7 @@ impl<'a> Codegen<'a> {
                         // to avoid emitting the same value multiple times
                         self.emit_expr(expr, environment, locals);
                         let index = locals.len() as u8;
-                        self.bytecode
-                            .add_op(ByteCode::SetLocalValue)
-                            .add_byte(index);
+                        self.emit_set_local_value(index);
                         index
                     }
                 };
@@ -307,9 +303,7 @@ impl<'a> Codegen<'a> {
                     match &arm.pattern {
                         IsArmPattern::Expression(pattern) => {
                             // Emit expression and pattern and compare
-                            self.bytecode
-                                .add_op(ByteCode::GetLocalValue)
-                                .add_byte(index); // TODO(anissen): Make this a helper function
+                            self.emit_get_local_value(index);
                             self.emit_expr(&pattern, environment, locals);
                             self.bytecode.add_op(ByteCode::Equals);
 
@@ -335,9 +329,7 @@ impl<'a> Codegen<'a> {
 
                             if let Some(condition) = condition {
                                 // Emit expression and condition and compare
-                                self.bytecode
-                                    .add_op(ByteCode::GetLocalValue)
-                                    .add_byte(index);
+                                self.emit_get_local_value(index);
                                 self.emit_expr(condition, environment, locals);
 
                                 // Jump to next arm if not equal
@@ -384,12 +376,24 @@ impl<'a> Codegen<'a> {
         locals: &mut HashSet<String>,
     ) {
         self.emit_expr(expr, environment, locals);
-        self.bytecode.add_op(ByteCode::SetLocalValue);
 
         let index = locals.len() as u8;
         environment.insert(value.clone(), index);
         locals.insert(value.clone());
-        self.bytecode.add_byte(index);
+
+        self.emit_set_local_value(index);
+    }
+
+    fn emit_set_local_value(&mut self, index: u8) {
+        self.bytecode
+            .add_op(ByteCode::SetLocalValue)
+            .add_byte(index);
+    }
+
+    fn emit_get_local_value(&mut self, index: u8) {
+        self.bytecode
+            .add_op(ByteCode::GetLocalValue)
+            .add_byte(index);
     }
 
     // fn create_function_chunk(
