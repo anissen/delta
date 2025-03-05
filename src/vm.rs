@@ -439,9 +439,8 @@ impl VirtualMachine {
     fn pop_call_frame(&mut self) {
         let result = self.stack.pop().unwrap();
 
-        // Pop the arguments from the stack
-        let arity = self.current_call_frame().function.arity;
-        self.discard(arity);
+        // Pop the stack back to the call frame's stack index
+        self.discard(self.stack.len() as u8 - self.current_call_frame().stack_index);
 
         // Push the return value
         self.stack.push(result);

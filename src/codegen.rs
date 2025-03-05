@@ -277,13 +277,32 @@ impl<'a> Codegen<'a> {
             }
 
             Expr::Is { expr, arms } => {
-                // TODO(anissen): This repeats `expr`, which we need to avoid. Save to a local value instead.
+                let index = match **expr {
+                    Expr::Value(ref value) => {
+                        // If the value is already in the environment, use its index
+                        let index_option = environment.get(value);
+                        *index_option.unwrap()
+                    }
+                    _ => {
+                        // Otherwise, emit the expression and add it to the locals
+                        // to avoid emitting the same value multiple times
+                        self.emit_expr(expr, environment, locals);
+                        let index = locals.len() as u8;
+                        self.bytecode
+                            .add_op(ByteCode::SetLocalValue)
+                            .add_byte(index);
+                        index
+                    }
+                };
+
                 let mut jump_to_end_offsets = vec![];
                 for arm in arms {
                     match &arm.pattern {
                         IsArmPattern::Expression(pattern) => {
                             // Emit expression and pattern and compare
-                            self.emit_expr(expr, environment, locals);
+                            self.bytecode
+                                .add_op(ByteCode::GetLocalValue)
+                                .add_byte(index); // TODO(anissen): Make this a helper function
                             self.emit_expr(&pattern, environment, locals);
                             self.bytecode.add_op(ByteCode::Equals);
 
@@ -309,7 +328,9 @@ impl<'a> Codegen<'a> {
 
                             if let Some(condition) = condition {
                                 // Emit expression and condition and compare
-                                self.emit_expr(expr, environment, locals);
+                                self.bytecode
+                                    .add_op(ByteCode::GetLocalValue)
+                                    .add_byte(index);
                                 self.emit_expr(condition, environment, locals);
 
                                 // Jump to next arm if not equal
@@ -334,7 +355,9 @@ impl<'a> Codegen<'a> {
                             }
                         }
 
-                        IsArmPattern::Default => self.emit_expr(&arm.block, environment, locals),
+                        IsArmPattern::Default => {
+                            self.emit_expr(&arm.block, environment, locals);
+                        }
                     };
                 }
 
