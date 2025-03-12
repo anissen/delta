@@ -4,27 +4,27 @@ use crate::bytecodes::ByteCode;
 use crate::diagnostics::{Diagnostics, Message};
 use crate::expressions::{BinaryOperator, Expr, IsArmPattern, UnaryOperator};
 use crate::program::Context;
-use crate::tokens::TokenKind;
+use crate::tokens::{Span, Token, TokenKind};
 
 #[derive(Debug, Clone)]
 struct FunctionSignature {
-    // name: String,
-    byte_position: u32,
-    arity: u8,
+    byte_position: u32, // TODO(anissen): Should be an index into the function chunks vector.
 }
 
-struct FunctionChunk {
+#[derive(Debug)]
+struct FunctionChunk<'a> {
     local_count: u8,
     bytes: Vec<u8>,
     function_name: String,
-    line: u16,
+    position: &'a Span,
+    byte_position: u32,
 }
 
 pub struct Codegen<'a> {
     bytecode: BytecodeBuilder,
     function_signatures: Vec<FunctionSignature>,
     function_count: u8,
-    function_chunks: Vec<FunctionChunk>,
+    function_chunks: Vec<FunctionChunk<'a>>,
     context: &'a Context<'a>,
     diagnostics: &'a mut Diagnostics<'a>,
 }
@@ -135,52 +135,11 @@ impl<'a> Codegen<'a> {
                 self.emit_exprs(exprs, &mut block_environment, &mut block_locals);
             }
 
-            Expr::Function { params, expr } => {
-                /*
-                TODO:
-                Create function chunk
-                Output Function(id) bytecode
-                */
-
-                // self.create_function_chunk(params, expr, environment, locals);
-
-                let mut function_environment = environment.clone();
-                let mut function_locals = HashSet::new();
-
-                self.bytecode.add_op(ByteCode::Function);
-                self.function_signatures.push(FunctionSignature {
-                    byte_position: self.bytecode.bytes.len() as u32 - 1,
-                    arity: params.len() as u8,
-                });
-
-                for (index, param) in params.iter().enumerate() {
-                    function_environment.insert(param.lexeme.clone(), index as u8);
-
-                    function_locals.insert(param.lexeme.clone());
-                }
-                // bytecodes: function start, function index, param count, function body, function end
-
-                self.bytecode.add_byte(self.function_count);
-                self.function_count += 1;
-
-                self.bytecode.add_byte(params.len() as u8); // TODO(anissen): Guard against overflow
-
-                let jump_to_end = self.bytecode.add_unconditional_jump();
-
-                // emit function signatures here?
-                // e.g.
-                // function_signatures = []
-                // bytes = emit(expr, ...) // also populates function_signatures
-                // write_bytes(function_signatures)
-                // write_bytes(bytes)
-
-                // TODO(anissen): Expr is already a block, so we shouldn't need to create new environment and locals
-                self.emit_expr(expr, &mut function_environment, &mut function_locals);
-
-                self.bytecode.add_op(ByteCode::Return);
-
-                self.bytecode.patch_jump_to_current_byte(jump_to_end);
-            }
+            Expr::Function {
+                slash,
+                params,
+                expr,
+            } => self.emit_function(slash, None, params, expr, environment, locals),
 
             Expr::Call { name, args } => {
                 let arg_count = args.len();
@@ -215,11 +174,11 @@ impl<'a> Codegen<'a> {
             }
 
             Expr::Assignment {
-                value,
-                _token: _,
+                name,
+                _operator: _,
                 expr,
             } => {
-                self.emit_assignment(value, expr, environment, locals);
+                self.emit_assignment(name, expr, environment, locals);
             }
 
             Expr::Comparison { left, token, right } => {
@@ -379,16 +338,28 @@ impl<'a> Codegen<'a> {
 
     fn emit_assignment(
         &mut self,
-        value: &String,
+        name: &Token,
         expr: &'a Expr,
         environment: &mut HashMap<String, u8>,
         locals: &mut HashSet<String>,
     ) {
-        self.emit_expr(expr, environment, locals);
+        match expr {
+            Expr::Function {
+                slash,
+                params,
+                expr,
+            } => {
+                self.emit_function(&slash, Some(&name), &params, &expr, environment, locals);
+            }
+
+            _ => {
+                self.emit_expr(expr, environment, locals);
+            }
+        }
 
         let index = locals.len() as u8;
-        environment.insert(value.clone(), index);
-        locals.insert(value.clone());
+        environment.insert(name.lexeme.clone(), index);
+        locals.insert(name.lexeme.clone());
 
         self.emit_set_local_value(index);
     }
@@ -405,26 +376,110 @@ impl<'a> Codegen<'a> {
             .add_byte(index);
     }
 
-    // fn create_function_chunk(
-    //     &mut self,
-    //     params: Vec<String>,
-    //     expr: Expr,
-    //     environment: &mut HashMap<String, u32>,
-    //     locals: &mut HashSet<String>,
-    // ) {
-    //     if params.len() > u8::MAX.into() {
-    //         panic!("Too many parameters");
-    //     }
+    fn emit_function(
+        &mut self,
+        slash: &'a Token,
+        name: Option<&Token>,
+        params: &Vec<Token>,
+        expr: &'a Expr,
+        environment: &mut HashMap<String, u8>,
+        locals: &mut HashSet<String>,
+    ) {
+        /*
+        TODO:
+        Create function chunk
+        Output Function(id) bytecode
+        */
 
-    //     let function_chunk = FunctionChunk {
-    //         function_name: "Unknown".to_string(),
-    //         line: 0,
-    //         local_count: params.len() as u8,
-    //         bytes: vec![],
-    //     };
+        let mut function_environment = environment.clone();
+        let mut function_locals = HashSet::new();
 
-    //     self.function_chunks.push(function_chunk);
-    // }
+        self.bytecode.add_op(ByteCode::Function);
+        self.function_signatures.push(FunctionSignature {
+            byte_position: self.bytecode.bytes.len() as u32 - 1,
+        });
+
+        self.create_function_chunk(name, &slash.position, params, expr, environment, locals);
+
+        for (index, param) in params.iter().enumerate() {
+            function_environment.insert(param.lexeme.clone(), index as u8);
+
+            function_locals.insert(param.lexeme.clone());
+        }
+        // bytecodes: function start, function index, param count, function body, function end
+
+        self.bytecode.add_byte(self.function_count);
+        self.function_count += 1;
+
+        self.bytecode.add_byte(params.len() as u8); // TODO(anissen): Guard against overflow
+
+        let jump_to_end = self.bytecode.add_unconditional_jump();
+
+        // emit function signatures here?
+        // e.g.
+        // function_signatures = []
+        // bytes = emit(expr, ...) // also populates function_signatures
+        // write_bytes(function_signatures)
+        // write_bytes(bytes)
+
+        // TODO(anissen): Expr is already a block, so we shouldn't need to create new environment and locals
+        self.emit_expr(expr, &mut function_environment, &mut function_locals);
+
+        self.bytecode.add_op(ByteCode::Return);
+
+        self.bytecode.patch_jump_to_current_byte(jump_to_end);
+    }
+
+    fn create_function_chunk(
+        &mut self,
+        name: Option<&Token>,
+        position: &'a Span,
+        params: &Vec<Token>,
+        expr: &Expr,
+        environment: &mut HashMap<String, u8>,
+        locals: &mut HashSet<String>,
+    ) {
+        if params.len() > u8::MAX.into() {
+            panic!("Too many parameters");
+        }
+
+        let lexeme = match name {
+            Some(name) => name.lexeme.clone(),
+            None => "(unnamed)".to_string(),
+        };
+
+        let mut function_environment = environment.clone();
+        let mut function_locals = HashSet::new();
+
+        let byte_position = self.bytecode.bytes.len() as u32 - 1;
+
+        let mut bytecode = BytecodeBuilder::new();
+        bytecode.add_op(ByteCode::Function);
+
+        for (index, param) in params.iter().enumerate() {
+            function_environment.insert(param.lexeme.clone(), index as u8);
+            function_locals.insert(param.lexeme.clone());
+        }
+
+        // TODO(anissen): Expr is already a block, so we shouldn't need to create new environment and locals
+        // TODO(anissen): Combine bytecode, environment and locals into a single struct
+        // self.emit_expr(
+        //     expr,
+        //     &mut bytecode,
+        //     &mut function_environment,
+        //     &mut function_locals,
+        // );
+
+        let function_chunk = FunctionChunk {
+            function_name: lexeme,
+            position,
+            local_count: params.len() as u8,
+            byte_position,
+            bytes: vec![],
+        };
+
+        self.function_chunks.push(function_chunk);
+    }
 
     pub fn emit(&mut self, expressions: &'a Vec<Expr>) -> Vec<u8> {
         // self.emit_function_signatures();
@@ -440,7 +495,11 @@ impl<'a> Codegen<'a> {
             for byte in ele.byte_position.to_be_bytes() {
                 signature_builder.add_byte(byte);
             }
-            signature_builder.add_byte(ele.arity);
+        }
+
+        println!("Function chunks:");
+        for ele in &self.function_chunks {
+            println!("{:?}", ele);
         }
 
         [signature_builder.bytes, self.bytecode.bytes.clone()].concat()

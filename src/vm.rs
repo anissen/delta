@@ -14,7 +14,6 @@ pub enum Value {
 
 #[derive(Debug, Clone)]
 struct FunctionObj {
-    arity: u8,
     ip: u32,
 }
 
@@ -70,9 +69,8 @@ impl VirtualMachine {
         }
         while let Ok(ByteCode::FunctionSignature) = ByteCode::try_from(self.read_byte()) {
             let function_position = self.read_u32();
-            let arity = self.read_byte();
+
             self.functions.push(FunctionObj {
-                arity,
                 ip: function_position,
             });
         }
@@ -87,7 +85,6 @@ impl VirtualMachine {
         // Construct an initial call frame for the top-level code.
         self.call(
             FunctionObj {
-                arity: 0,
                 ip: self.program.len() as u32, // main_start as u32,
             },
             0,

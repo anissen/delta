@@ -11,6 +11,7 @@ pub enum Expr {
     Float(f32),
     String(String),
     Function {
+        slash: Token,
         params: Vec<Token>, // TODO(anissen): Do we also need type information here?
         expr: Box<Expr>,
     },
@@ -23,8 +24,8 @@ pub enum Expr {
     //     args: Vec<Expr>,
     // },
     Assignment {
-        value: String,
-        _token: Token,
+        name: Token,
+        _operator: Token,
         expr: Box<Expr>,
     },
     Comparison {
@@ -63,7 +64,7 @@ pub struct IsArm {
 pub enum IsArmPattern {
     Expression(Expr),
     Capture {
-        identifier: String,
+        identifier: Token,
         condition: Option<Expr>,
     },
     Default,

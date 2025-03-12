@@ -106,11 +106,11 @@ impl Parser {
         if expr.is_some() && self.matches(&Equal) {
             match expr.unwrap() {
                 Expr::Value { name } => {
-                    let token = self.previous();
+                    let operator = self.previous();
                     let value = self.assignment()?;
                     Ok(Some(Expr::Assignment {
-                        value: name.lexeme,
-                        _token: token,
+                        name,
+                        _operator: operator,
                         expr: Box::new(value.unwrap()),
                     }))
                 }
@@ -176,7 +176,7 @@ impl Parser {
                         None
                     };
                     Ok(IsArmPattern::Capture {
-                        identifier: name.lexeme,
+                        identifier: name,
                         condition,
                     })
                 }
@@ -389,6 +389,7 @@ impl Parser {
 
     // function → IDENTIFIER* block
     fn function(&mut self) -> Result<Option<Expr>, String> {
+        let slash = self.previous();
         let mut params = vec![];
         while self.matches(&Identifier) {
             let param = self.previous();
@@ -396,6 +397,7 @@ impl Parser {
         }
         let expr = self.block()?;
         Ok(Some(Expr::Function {
+            slash,
             params,
             expr: Box::new(expr.unwrap()),
         }))

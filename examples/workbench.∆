@@ -1,7 +1,11 @@
-2 + 2 is
-	1
-		"no"
-	2
-		"also no"
-	other
-		"i captured this value: {other}"
+
+square = \v
+    tmp = v * v
+    tmp
+
+match = \v
+	inner_add = \v2 v3
+		v2 + v3
+	v | inner_add 1
+
+"result is {3 | match}"

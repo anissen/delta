@@ -177,11 +177,9 @@ impl Disassembler {
 
                 ByteCode::FunctionSignature => {
                     let function_position = self.read_u32();
-                    let arity = self.read_byte();
                     self.print(vec![
                         format!("function sinature"),
                         format!("(function position: {})", function_position),
-                        format!("(arity: {})", arity),
                     ]);
                 }
 
