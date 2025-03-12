@@ -385,12 +385,6 @@ impl<'a> Codegen<'a> {
         environment: &mut HashMap<String, u8>,
         locals: &mut HashSet<String>,
     ) {
-        /*
-        TODO:
-        Create function chunk
-        Output Function(id) bytecode
-        */
-
         let mut function_environment = environment.clone();
         let mut function_locals = HashSet::new();
 
@@ -414,13 +408,6 @@ impl<'a> Codegen<'a> {
         self.bytecode.add_byte(params.len() as u8); // TODO(anissen): Guard against overflow
 
         let jump_to_end = self.bytecode.add_unconditional_jump();
-
-        // emit function signatures here?
-        // e.g.
-        // function_signatures = []
-        // bytes = emit(expr, ...) // also populates function_signatures
-        // write_bytes(function_signatures)
-        // write_bytes(bytes)
 
         // TODO(anissen): Expr is already a block, so we shouldn't need to create new environment and locals
         self.emit_expr(expr, &mut function_environment, &mut function_locals);
@@ -482,8 +469,6 @@ impl<'a> Codegen<'a> {
     }
 
     pub fn emit(&mut self, expressions: &'a Vec<Expr>) -> Vec<u8> {
-        // self.emit_function_signatures();
-
         let environment = &mut HashMap::new();
         let locals = &mut HashSet::new();
         self.emit_exprs(expressions, environment, locals);

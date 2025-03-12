@@ -21,7 +21,6 @@ struct FunctionObj {
 struct CallFrame {
     return_program_counter: usize,
     stack_index: u8,
-    function: FunctionObj,
 }
 
 pub struct VirtualMachine {
@@ -50,20 +49,6 @@ impl VirtualMachine {
     }
 
     pub fn execute<'a>(&mut self, context: &'a Context<'a>) -> Option<Value> {
-        // while self.program_counter < self.program.len() {
-        //     let next = self.read_byte();
-        //     let instruction = ByteCode::try_from(next);
-        //     if let Ok(ByteCode::FunctionSignature) = instruction {
-        //         let function_position = self.read_u32();
-        //         self.functions.push(FunctionObj {
-        //             arity: 1, // TODO(anissen): We need the arity!
-        //             ip: function_position,
-        //         });
-        //     }
-        // }
-
-        dbg!(self.program_counter);
-        dbg!(self.program.len());
         if self.program_counter >= self.program.len() {
             return None;
         }
@@ -90,8 +75,6 @@ impl VirtualMachine {
             0,
         );
 
-        // self.program_counter = main_start;
-        // dbg!(&self.program_counter);
         self.program_counter = main_start;
 
         while self.program_counter < self.program.len() {
@@ -334,15 +317,7 @@ impl VirtualMachine {
 
                 ByteCode::Function => {
                     let function_index = self.read_byte();
-                    // dbg!(function_index);
                     self.read_byte(); // arity
-
-                    // while self.program_counter < self.program.len() {
-                    //     let instruction = self.read_byte();
-                    //     if let Ok(ByteCode::FunctionEnd) = ByteCode::try_from(instruction) {
-                    //         break;
-                    //     }
-                    // }
 
                     self.stack.push(Value::Function(function_index));
                 }
@@ -422,7 +397,6 @@ impl VirtualMachine {
     fn call(&mut self, function: FunctionObj, arity: u8) {
         let ip = function.ip;
         self.call_stack.push(CallFrame {
-            function,
             return_program_counter: self.program_counter,
             stack_index: (self.stack.len() - (arity as usize)) as u8,
         });
