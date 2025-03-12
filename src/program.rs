@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::codegen;
+use crate::diagnostics::Diagnostics;
 use crate::lexer;
 use crate::parser;
 use crate::tokens::TokenKind;
@@ -109,6 +110,7 @@ impl<'a> Program<'a> {
     }
 
     pub fn compile(&self, source: &String) -> Result<Vec<u8>, String> {
+        let mut diagnostics = Diagnostics::new();
         let tokens = lexer::lex(&source);
         let non_error_tokens = tokens
             .into_iter()
@@ -123,7 +125,7 @@ impl<'a> Program<'a> {
             .map(|(k, _v)| k.clone())
             .collect::<Vec<String>>();
         println!("foreign functions: {:?}", foreign_functions);
-        Ok(codegen::codegen(ast, &self.context))
+        Ok(codegen::codegen(&ast, &self.context, &mut diagnostics))
     }
 
     pub fn run(&self, bytecodes: Vec<u8>) -> Option<vm::Value> {

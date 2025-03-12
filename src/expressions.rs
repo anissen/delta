@@ -2,7 +2,9 @@ use crate::tokens::Token;
 
 #[derive(Debug)]
 pub enum Expr {
-    Value(String),
+    Value {
+        name: Token,
+    },
     Boolean(bool),
     Grouping(Box<Expr>),
     Integer(i32),

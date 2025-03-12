@@ -43,7 +43,7 @@ DIGIT          → "0" ... "9" ;
 MISSING:
 */
 
-pub struct Parser {
+struct Parser {
     tokens: Vec<Token>,
     current: usize,
     indentation: u8,
@@ -105,11 +105,11 @@ impl Parser {
         let expr = self.is()?;
         if expr.is_some() && self.matches(&Equal) {
             match expr.unwrap() {
-                Expr::Value(name) => {
+                Expr::Value { name } => {
                     let token = self.previous();
                     let value = self.assignment()?;
                     Ok(Some(Expr::Assignment {
-                        value: name,
+                        value: name.lexeme,
                         _token: token,
                         expr: Box::new(value.unwrap()),
                     }))
@@ -169,14 +169,14 @@ impl Parser {
             Ok(IsArmPattern::Default)
         } else if let Some(pattern) = self.expression()? {
             match pattern {
-                Expr::Value(identifier) => {
+                Expr::Value { name } => {
                     let condition = if self.matches(&KeywordIf) {
                         self.expression()?
                     } else {
                         None
                     };
                     Ok(IsArmPattern::Capture {
-                        identifier,
+                        identifier: name.lexeme,
                         condition,
                     })
                 }
@@ -448,8 +448,8 @@ impl Parser {
     // primary → "true" | "false" | INTEGER | FLOAT | STRING | IDENTIFIER | "(" expression ")" ;
     fn primary(&mut self) -> Result<Option<Expr>, String> {
         if self.matches(&Identifier) {
-            let lexeme = self.previous().lexeme;
-            Ok(Some(Expr::Value(lexeme)))
+            let name = self.previous();
+            Ok(Some(Expr::Value { name }))
         } else if self.matches(&Integer) {
             let lexeme = self.previous().lexeme;
             let value = lexeme.parse::<i32>();

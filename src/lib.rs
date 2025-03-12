@@ -1,5 +1,6 @@
 mod bytecodes;
 mod codegen;
+mod diagnostics;
 mod disassembler;
 mod expressions;
 mod lexer;
@@ -9,6 +10,8 @@ mod tokens;
 pub mod vm;
 
 use std::{fs::File, io::Read};
+
+use diagnostics::Diagnostics;
 
 pub fn read_file(path: &String) -> String {
     let mut file = File::open(path).expect("Unable to open file");
@@ -51,6 +54,8 @@ pub fn run_file(source_path: &String) -> Result<Option<vm::Value>, String> {
 // TODO(anissen): Make a concept of diagnostics (containing just syntax error for now)
 pub fn run(source: &String, file_name: Option<&String>) -> Result<Option<vm::Value>, String> {
     let verbose = false;
+
+    let mut diagnostics = Diagnostics::new();
 
     let default_file_name = "n/a".to_string();
     println!(
@@ -95,7 +100,7 @@ pub fn run(source: &String, file_name: Option<&String>) -> Result<Option<vm::Val
     // TODO(anissen): Should use `program` w. diagnostics
 
     println!("\n# code gen =>");
-    let bytecodes = codegen::codegen(ast, &context);
+    let bytecodes = codegen::codegen(&ast, &context, &mut diagnostics);
     if verbose {
         println!("byte code length: {}", bytecodes.len());
         println!("byte codes: {:?}", bytecodes);

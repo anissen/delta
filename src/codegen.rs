@@ -1,6 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use crate::bytecodes::ByteCode;
+use crate::diagnostics::{Diagnostics, Message};
 use crate::expressions::{BinaryOperator, Expr, IsArmPattern, UnaryOperator};
 use crate::program::Context;
 use crate::tokens::TokenKind;
@@ -25,29 +26,35 @@ pub struct Codegen<'a> {
     function_count: u8,
     function_chunks: Vec<FunctionChunk>,
     context: &'a Context<'a>,
+    diagnostics: &'a mut Diagnostics<'a>,
 }
 
-pub fn codegen<'a>(expressions: Vec<Expr>, context: &'a Context<'a>) -> Vec<u8> {
-    Codegen::new(&context).emit(expressions)
+pub fn codegen<'a>(
+    expressions: &'a Vec<Expr>,
+    context: &'a Context<'a>,
+    diagnostics: &'a mut Diagnostics<'a>,
+) -> Vec<u8> {
+    Codegen::new(&context, diagnostics).emit(expressions)
 }
 
 // TODO(anissen): Add a function overview mapping for each scope containing { name, arity, starting IP, source line number  }.
 // This will be used directly in the VM as well as for debug logging.
 
 impl<'a> Codegen<'a> {
-    fn new(context: &'a Context<'a>) -> Self {
+    fn new(context: &'a Context<'a>, diagnostics: &'a mut Diagnostics<'a>) -> Self {
         Self {
             bytecode: BytecodeBuilder::new(),
             function_signatures: vec![],
             function_count: 0,
             function_chunks: vec![],
             context,
+            diagnostics,
         }
     }
 
     fn emit_exprs(
         &mut self,
-        expressions: &Vec<Expr>,
+        expressions: &'a Vec<Expr>,
         environment: &mut HashMap<String, u8>,
         locals: &mut HashSet<String>,
     ) {
@@ -58,11 +65,10 @@ impl<'a> Codegen<'a> {
 
     fn emit_expr(
         &mut self,
-        expr: &Expr,
+        expr: &'a Expr,
         environment: &mut HashMap<String, u8>,
         locals: &mut HashSet<String>,
     ) {
-        // TODO(anissen): Make this a proper return type.
         match expr {
             Expr::Boolean(true) => {
                 self.bytecode.add_op(ByteCode::PushTrue);
@@ -80,23 +86,30 @@ impl<'a> Codegen<'a> {
                 self.bytecode.add_op(ByteCode::PushFloat).add_f32(f);
             }
 
-            Expr::Value(name) => {
-                if self.context.has_value(&name) {
+            Expr::Value { name } => {
+                let lexeme = &name.lexeme;
+                if self.context.has_value(lexeme) {
                     // TODO(anissen): Should (also) output index
-                    if name.len() > 255 {
-                        // TODO(anissen): Should add error to a error reporter instead
-                        panic!("function name too long!");
+                    if lexeme.len() > 255 {
+                        let message = Message::new(
+                            format!("Function name too long: {}", lexeme),
+                            &name.position,
+                        );
+                        self.diagnostics.add_error(message);
                     }
                     self.bytecode
                         .add_op(ByteCode::GetForeignValue)
-                        .add_byte(name.len() as u8)
-                        .add_byte_array(name.as_bytes());
+                        .add_byte(lexeme.len() as u8)
+                        .add_byte_array(lexeme.as_bytes());
                 } else {
-                    if let Some(index) = environment.get(name) {
+                    if let Some(index) = environment.get(lexeme) {
                         self.emit_get_local_value(*index);
                     } else {
-                        println!("name not found in scope: {}", name);
-                        panic!("name not found in scope");
+                        let msg = Message::new(
+                            format!("Name not found in scope: {}", lexeme),
+                            &name.position,
+                        );
+                        self.diagnostics.add_error(msg);
                     }
                 }
             }
@@ -179,16 +192,10 @@ impl<'a> Codegen<'a> {
                         .add_op(ByteCode::CallForeign)
                         .add_byte(self.context.get_index(&name))
                         .add_byte(arg_count as u8);
-
-                    if name.len() > 255 {
-                        panic!("function name too long!");
-                    }
-                    self.bytecode
-                        .add_byte(name.len() as u8)
-                        .add_byte_array(name.as_bytes());
                 } else {
-                    self.bytecode.add_op(ByteCode::Call);
-                    self.bytecode.add_byte(arg_count as u8);
+                    self.bytecode
+                        .add_op(ByteCode::Call)
+                        .add_byte(arg_count as u8);
                     let index = environment.get(name).unwrap();
                     if locals.contains(name) {
                         self.bytecode.add_byte(0);
@@ -196,13 +203,15 @@ impl<'a> Codegen<'a> {
                         self.bytecode.add_byte(1);
                     }
                     self.bytecode.add_byte(*index);
-
-                    if name.len() > 255 {
-                        panic!("function name too long!");
-                    }
-                    self.bytecode.add_byte(name.len() as u8);
-                    self.bytecode.add_byte_array(name.as_bytes());
                 };
+
+                if name.len() > 255 {
+                    panic!("function name too long!");
+                    // let msg = Message::new(format!("Function name too long: {}", name), ;
+                }
+                self.bytecode
+                    .add_byte(name.len() as u8)
+                    .add_byte_array(name.as_bytes());
             }
 
             Expr::Assignment {
@@ -283,9 +292,9 @@ impl<'a> Codegen<'a> {
 
             Expr::Is { expr, arms } => {
                 let index = match **expr {
-                    Expr::Value(ref value) => {
+                    Expr::Value { ref name } => {
                         // If the value is already in the environment, use its index
-                        let index_option = environment.get(value);
+                        let index_option = environment.get(&name.lexeme);
                         *index_option.unwrap()
                     }
                     _ => {
@@ -371,7 +380,7 @@ impl<'a> Codegen<'a> {
     fn emit_assignment(
         &mut self,
         value: &String,
-        expr: &Expr,
+        expr: &'a Expr,
         environment: &mut HashMap<String, u8>,
         locals: &mut HashSet<String>,
     ) {
@@ -417,12 +426,12 @@ impl<'a> Codegen<'a> {
     //     self.function_chunks.push(function_chunk);
     // }
 
-    pub fn emit(&mut self, expressions: Vec<Expr>) -> Vec<u8> {
+    pub fn emit(&mut self, expressions: &'a Vec<Expr>) -> Vec<u8> {
         // self.emit_function_signatures();
 
         let environment = &mut HashMap::new();
         let locals = &mut HashSet::new();
-        self.emit_exprs(&expressions, environment, locals);
+        self.emit_exprs(expressions, environment, locals);
 
         let mut signature_builder = BytecodeBuilder::new();
 
