@@ -52,7 +52,7 @@ pub fn run_file(source_path: &String) -> Result<Option<vm::Value>, String> {
 */
 
 // TODO(anissen): Make a concept of diagnostics (containing just syntax error for now)
-pub fn run(source: &String, file_name: Option<&String>) -> Result<Option<vm::Value>, String> {
+pub fn run(source: &str, file_name: Option<&String>) -> Result<Option<vm::Value>, String> {
     let verbose = false;
 
     let mut diagnostics = Diagnostics::new();

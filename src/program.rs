@@ -35,6 +35,12 @@ pub struct Context<'a> {
     values: HashMap<String, ForeignValue<'a>>,
 }
 
+impl Default for Context<'_> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<'a> Context<'a> {
     pub fn new() -> Self {
         Self {
@@ -84,10 +90,7 @@ impl<'a> Context<'a> {
     }
 
     pub fn get_function_names(&self) -> Vec<String> {
-        self.functions
-            .iter()
-            .map(|(k, _v)| k.clone())
-            .collect::<Vec<String>>()
+        self.functions.keys().cloned().collect::<Vec<String>>()
     }
 
     pub fn call_function(&self, name: &String, stack: &Vec<vm::Value>) -> vm::Value {
@@ -109,20 +112,19 @@ impl<'a> Program<'a> {
         Self { context }
     }
 
-    pub fn compile(&self, source: &String) -> Result<Vec<u8>, String> {
+    pub fn compile(&self, source: &str) -> Result<Vec<u8>, String> {
         let mut diagnostics = Diagnostics::new();
-        let tokens = lexer::lex(&source);
+        let tokens = lexer::lex(source);
         let non_error_tokens = tokens
             .into_iter()
             .filter(|t| !matches!(t.kind, TokenKind::SyntaxError(_)))
             .collect();
         let ast = parser::parse(non_error_tokens)?;
-        // context.call_foreign_function("dummy".to_string());
         let foreign_functions = self
             .context
             .functions
-            .iter()
-            .map(|(k, _v)| k.clone())
+            .keys()
+            .cloned()
             .collect::<Vec<String>>();
         println!("foreign functions: {:?}", foreign_functions);
         Ok(codegen::codegen(&ast, &self.context, &mut diagnostics))

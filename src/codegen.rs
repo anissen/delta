@@ -34,7 +34,7 @@ pub fn codegen<'a>(
     context: &'a Context<'a>,
     diagnostics: &'a mut Diagnostics<'a>,
 ) -> Vec<u8> {
-    Codegen::new(&context, diagnostics).emit(expressions)
+    Codegen::new(context, diagnostics).emit(expressions)
 }
 
 // TODO(anissen): Add a function overview mapping for each scope containing { name, arity, starting IP, source line number  }.
@@ -101,16 +101,14 @@ impl<'a> Codegen<'a> {
                         .add_op(ByteCode::GetForeignValue)
                         .add_byte(lexeme.len() as u8)
                         .add_byte_array(lexeme.as_bytes());
+                } else if let Some(index) = environment.get(lexeme) {
+                    self.emit_get_local_value(*index);
                 } else {
-                    if let Some(index) = environment.get(lexeme) {
-                        self.emit_get_local_value(*index);
-                    } else {
-                        let msg = Message::new(
-                            format!("Name not found in scope: {}", lexeme),
-                            &name.position,
-                        );
-                        self.diagnostics.add_error(msg);
-                    }
+                    let msg = Message::new(
+                        format!("Name not found in scope: {}", lexeme),
+                        &name.position,
+                    );
+                    self.diagnostics.add_error(msg);
                 }
             }
 
@@ -145,11 +143,11 @@ impl<'a> Codegen<'a> {
                 let arg_count = args.len();
                 self.emit_exprs(args, environment, locals);
 
-                if self.context.has_function(&name) {
+                if self.context.has_function(name) {
                     // TODO(anissen): Maybe this should be its own Expr instead?
                     self.bytecode
                         .add_op(ByteCode::CallForeign)
-                        .add_byte(self.context.get_index(&name))
+                        .add_byte(self.context.get_index(name))
                         .add_byte(arg_count as u8);
                 } else {
                     self.bytecode
@@ -272,7 +270,7 @@ impl<'a> Codegen<'a> {
                         IsArmPattern::Expression(pattern) => {
                             // Emit expression and pattern and compare
                             self.emit_get_local_value(index);
-                            self.emit_expr(&pattern, environment, locals);
+                            self.emit_expr(pattern, environment, locals);
                             self.bytecode.add_op(ByteCode::Equals);
 
                             // Jump to next arm if not equal
@@ -349,7 +347,7 @@ impl<'a> Codegen<'a> {
                 params,
                 expr,
             } => {
-                self.emit_function(&slash, Some(&name), &params, &expr, environment, locals);
+                self.emit_function(slash, Some(name), params, expr, environment, locals);
             }
 
             _ => {

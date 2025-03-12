@@ -14,7 +14,7 @@ pub fn lex(source: &str) -> Vec<Token> {
     Lexer::new().scan_tokens(source)
 }
 
-impl<'a> Lexer {
+impl Lexer {
     fn new() -> Self {
         Self {
             source: Vec::default(),
@@ -27,7 +27,7 @@ impl<'a> Lexer {
         }
     }
 
-    fn scan_tokens(&mut self, source: &'a str) -> Vec<Token> {
+    fn scan_tokens(&mut self, source: &str) -> Vec<Token> {
         self.source = source.chars().collect();
 
         while !self.is_at_end() {
