@@ -432,9 +432,7 @@ impl Parser {
 
     // whitespace → NEWLINE | COMMENT
     fn whitespace(&mut self) -> Result<Option<Expr>, String> {
-        if self.matches_any(&[NewLine, Comment]) {
-            Ok(None)
-        } else if self.is_at_end() {
+        if self.matches_any(&[NewLine, Comment]) || self.is_at_end() {
             Ok(None)
         } else {
             let error = format!(

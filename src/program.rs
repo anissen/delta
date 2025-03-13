@@ -22,12 +22,13 @@ use crate::vm;
 //     }
 // }
 
+type ForeignValue<'a> = Box<dyn Fn() -> vm::Value + 'a>;
+type ForeignFn<'a> = Box<dyn Fn(&Vec<vm::Value>) -> vm::Value + 'a>;
+
 struct ForeignFunction<'a> {
     index: u8,
-    function: Box<dyn Fn(&Vec<vm::Value>) -> vm::Value + 'a>,
+    function: ForeignFn<'a>,
 }
-
-type ForeignValue<'a> = Box<dyn Fn() -> vm::Value + 'a>;
 
 pub struct Context<'a> {
     functions: HashMap<String, ForeignFunction<'a>>,

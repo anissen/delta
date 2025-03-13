@@ -109,10 +109,10 @@ impl Lexer {
             '\n' => TokenKind::NewLine,
             '\"' => self.string(),
             c if self.is_digit(c) => self.number(),
-            _ if self.match_keyword(&"is".chars().collect()) => TokenKind::KeywordIs,
-            _ if self.match_keyword(&"if".chars().collect()) => TokenKind::KeywordIf,
-            _ if self.match_keyword(&"and".chars().collect()) => TokenKind::KeywordAnd,
-            _ if self.match_keyword(&"or".chars().collect()) => TokenKind::KeywordOr,
+            _ if self.match_keyword("is") => TokenKind::KeywordIs,
+            _ if self.match_keyword("if") => TokenKind::KeywordIf,
+            _ if self.match_keyword("and") => TokenKind::KeywordAnd,
+            _ if self.match_keyword("or") => TokenKind::KeywordOr,
             c if self.is_letter(c) => self.identifier(),
             _ => TokenKind::SyntaxError("Unexpected token"),
         }
@@ -154,13 +154,15 @@ impl Lexer {
         }
     }
 
-    // TODO(anissen): `keyword` probably ought to be &str
-    fn match_keyword(&mut self, keyword: &Vec<char>) -> bool {
+    fn match_keyword(&mut self, keyword: &str) -> bool {
         if self.source.len() <= self.current + keyword.len() {
             false
         } else {
             // TODO(anissen): This char-by-char check does not work for multi-char characters (e.g. UTF8)
-            let matches_keyword = (0..keyword.len()).all(|i| self.peek_at(i) == keyword[i]);
+            let matches_keyword = keyword
+                .chars()
+                .enumerate()
+                .all(|(i, c)| self.peek_at(i) == c);
             if !matches_keyword {
                 false
             } else {
