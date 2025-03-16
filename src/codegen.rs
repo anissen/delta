@@ -6,11 +6,6 @@ use crate::expressions::{BinaryOperator, Expr, IsArmPattern, UnaryOperator};
 use crate::program::Context;
 use crate::tokens::{Span, Token, TokenKind};
 
-#[derive(Debug, Clone)]
-struct FunctionSignature {
-    byte_position: u32, // TODO(anissen): Should be an index into the function chunks vector.
-}
-
 #[derive(Debug)]
 struct FunctionChunk<'a> {
     local_count: u8,
@@ -55,7 +50,6 @@ impl Scope {
 }
 
 pub struct Codegen<'a> {
-    function_signatures: Vec<FunctionSignature>,
     function_count: u8,
     function_chunks: Vec<FunctionChunk<'a>>,
     context: &'a Context<'a>,
@@ -76,7 +70,6 @@ pub fn codegen<'a>(
 impl<'a> Codegen<'a> {
     fn new(context: &'a Context<'a>, diagnostics: &'a mut Diagnostics<'a>) -> Self {
         Self {
-            function_signatures: vec![],
             function_count: 0,
             function_chunks: vec![],
             context,
@@ -400,11 +393,6 @@ impl<'a> Codegen<'a> {
         scope: &mut Scope,
     ) {
         scope.bytecode.add_op(ByteCode::Function);
-
-        self.function_signatures.push(FunctionSignature {
-            byte_position: scope.bytecode.bytes.len() as u32 - 1,
-        });
-
         scope.bytecode.add_byte(self.function_chunks.len() as u8);
         scope.bytecode.add_byte(params.len() as u8); // TODO(anissen): Guard against overflow
 
@@ -478,23 +466,20 @@ impl<'a> Codegen<'a> {
 
         let mut signature_builder = BytecodeBuilder::new();
 
-        for ele in self.function_signatures.clone() {
-            signature_builder.add_op(ByteCode::FunctionSignature);
-            for byte in ele.byte_position.to_be_bytes() {
-                signature_builder.add_byte(byte);
-            }
-        }
 
         println!("Function chunks:");
         for ele in &self.function_chunks {
             println!("{:?}", ele);
+            signature_builder
+                .add_op(ByteCode::FunctionSignature)
+                .add_u32(ele.byte_position);
         }
 
         let mut bytecode = vec![];
-        bytecode = [bytecode, signature_builder.bytes].concat();
-        bytecode = [bytecode, scope.bytecode.bytes.clone()].concat();
+        bytecode.append(&mut signature_builder.bytes);
+        bytecode.append(&mut scope.bytecode.bytes);
         for ele in &self.function_chunks {
-            bytecode = [bytecode, ele.bytes.clone()].concat();
+            bytecode.append(&mut ele.bytes.clone());
         }
         bytecode
     }
@@ -529,9 +514,9 @@ impl BytecodeBuilder {
     //     self.add_bytes(&value.to_be_bytes())
     // }
 
-    // fn add_u32(&mut self, value: u32) -> &mut Self {
-    //     self.add_bytes(&value.to_be_bytes())
-    // }
+    fn add_u32(&mut self, value: u32) -> &mut Self {
+        self.add_bytes(&value.to_be_bytes())
+    }
 
     fn add_i32(&mut self, value: &i32) -> &mut Self {
         self.add_bytes(&value.to_be_bytes())
