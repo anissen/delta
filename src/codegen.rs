@@ -122,8 +122,7 @@ impl<'a> Codegen<'a> {
                     scope
                         .bytecode
                         .add_op(ByteCode::GetForeignValue)
-                        .add_byte(lexeme.len() as u8)
-                        .add_byte_array(lexeme.as_bytes());
+                        .add_string(lexeme);
                 } else if let Some(index) = scope.environment.get(lexeme) {
                     scope.bytecode.add_get_local_value(*index);
                 } else {
@@ -140,11 +139,7 @@ impl<'a> Codegen<'a> {
                     // TODO(anissen): Should add error to a error reporter instead
                     panic!("string too long!");
                 }
-                scope
-                    .bytecode
-                    .add_op(ByteCode::PushString)
-                    .add_byte(str.len() as u8)
-                    .add_byte_array(str.as_bytes());
+                scope.bytecode.add_op(ByteCode::PushString).add_string(str);
             }
 
             Expr::Grouping(expr) => self.emit_expr(expr, scope),
@@ -189,10 +184,7 @@ impl<'a> Codegen<'a> {
                     panic!("function name too long!");
                     // let msg = Message::new(format!("Function name too long: {}", name), ;
                 }
-                scope
-                    .bytecode
-                    .add_byte(name.len() as u8)
-                    .add_byte_array(name.as_bytes());
+                scope.bytecode.add_string(name);
             }
 
             Expr::Assignment {
@@ -454,9 +446,6 @@ impl<'a> Codegen<'a> {
             .add_op(ByteCode::FunctionChunk)
             .add_string(&lexeme);
 
-        // let tmp = format!("--- Start of {} ---", lexeme);
-        // scope.bytecode.add_byte_array(tmp.as_bytes());
-
         // TODO(anissen): We probably need a function header but this is redundant:
         // scope.bytecode.add_op(ByteCode::Function);
         // scope.bytecode.add_byte(self.function_chunks.len() as u8);
@@ -471,9 +460,6 @@ impl<'a> Codegen<'a> {
         self.emit_expr(body, scope);
 
         scope.bytecode.add_op(ByteCode::Return); // TODO(anissen): I may not need this, because I know the function bytecode length
-
-        // let tmp = format!("--- End of {} ---", lexeme);
-        // scope.bytecode.add_byte_array(tmp.as_bytes());
 
         let function_chunk = FunctionChunk {
             function_name: lexeme,
