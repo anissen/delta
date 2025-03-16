@@ -465,14 +465,30 @@ impl<'a> Codegen<'a> {
         self.emit_exprs(expressions, &mut scope);
 
         let mut signature_builder = BytecodeBuilder::new();
+        let mut signature_patches = Vec::new();
 
+        // TODO(anissen): We need to patch the function chunk bytecode positions in the function signatures
 
         println!("Function chunks:");
         for ele in &self.function_chunks {
             println!("{:?}", ele);
-            signature_builder
+            // signature_builder
+            //     .add_op(ByteCode::FunctionSignature)
+            //     .add_u32(ele.byte_position);
+            let signature_offset = signature_builder
                 .add_op(ByteCode::FunctionSignature)
-                .add_u32(ele.byte_position);
+                .get_patchable_i16_offset();
+            signature_patches.push(signature_offset);
+        }
+
+        {
+            let mut length = signature_builder.bytes.len() + scope.bytecode.bytes.len();
+            for (index, ele) in self.function_chunks.iter().enumerate() {
+                dbg!(&signature_builder.bytes);
+                signature_builder.patch_i16_offset(signature_patches[index], length as isize);
+                dbg!(&signature_builder.bytes);
+                length += ele.bytes.len();
+            }
         }
 
         let mut bytecode = vec![];
@@ -547,6 +563,43 @@ impl BytecodeBuilder {
         self.add_op(ByteCode::Jump)
             .add_bytes(&bytes /* placeholder */);
         self.bytes.len() - bytes.len()
+    }
+
+    // TODO: Create a PatchableOffset for this
+    // fn add_patchable_bytes(&mut self, bytes: u8) -> PatchableBytes {
+    //     let offset = self.bytes.len();
+    //     for byte in 0..bytes {
+    //         self.add_byte(0u8);
+    //     }
+    //     PatchableBytes {
+    //         offset,
+    //         length: bytes,
+    //     }
+    // }
+
+    // fn get_patchable_bytes(&mut self, index: u32, length: u8) -> PatchableBytes {
+    //     PatchableBytes {
+    //         index,
+    //         length,
+    //     }
+    // }
+
+    fn get_patchable_i16_offset(&mut self) -> usize {
+        let bytes = 0_i16.to_be_bytes();
+        self.add_bytes(&bytes /* placeholder */);
+        self.bytes.len() - bytes.len()
+    }
+
+    fn patch_i16_offset(&mut self, patchable_bytes: usize, new_offset: isize) {
+        // byte offset is the start of 2 bytes that indicate the jump offset
+        if new_offset < i16::MIN as isize {
+            panic!("New offset is too small");
+        } else if new_offset > i16::MAX as isize {
+            panic!("New offset is too large");
+        }
+        (new_offset as i16)
+            .to_be_bytes()
+            .swap_with_slice(&mut self.bytes[patchable_bytes..patchable_bytes + 2]);
     }
 
     fn add_set_local_value(&mut self, index: u8) -> &mut Self {

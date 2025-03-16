@@ -53,10 +53,10 @@ impl VirtualMachine {
             return None;
         }
         while let Ok(ByteCode::FunctionSignature) = ByteCode::try_from(self.read_byte()) {
-            let function_position = self.read_u32();
+            let function_position = self.read_i16();
 
             self.functions.push(FunctionObj {
-                ip: function_position,
+                ip: function_position as u32,
             });
         }
         let main_start = self.program_counter - 1;
@@ -317,7 +317,8 @@ impl VirtualMachine {
                 }
 
                 ByteCode::FunctionChunk => {
-                    panic!("FunctionChunk: this shouldn't happen")
+                    break; // TODO(anissen): Hack to terminate when global bytecode is done. Global should be wrapped in a function instead.
+                           // panic!("FunctionChunk: this shouldn't happen")
                 }
 
                 ByteCode::Function => {
