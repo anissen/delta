@@ -61,6 +61,7 @@ impl VirtualMachine {
         }
         let main_start = self.program_counter - 1;
 
+        // TODO(anissen): This ain't right!
         for ele in &mut self.functions {
             // fix offsets
             ele.ip += self.program_counter as u32 + 5; // 5 for function index, arity, jump, offset
@@ -312,7 +313,11 @@ impl VirtualMachine {
                 }
 
                 ByteCode::FunctionSignature => {
-                    panic!("this shouldn't happen")
+                    panic!("FunctionSignature: this shouldn't happen")
+                }
+
+                ByteCode::FunctionChunk => {
+                    panic!("FunctionChunk: this shouldn't happen")
                 }
 
                 ByteCode::Function => {

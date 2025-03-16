@@ -35,19 +35,21 @@ impl Scope {
         }
     }
 
-    fn nested(&mut self) -> Self {
-        Self {
-            bytecode: self.bytecode.clone(),
-            environment: self.environment.clone(),
-            locals: self.locals.clone(),
-        }
+    fn nested(&mut self) -> &mut Self {
+        self.environment = self.environment.clone();
+        self.locals = self.locals.clone();
+        self
     }
 
     fn function(&mut self) -> Self {
+        // self.bytecode = BytecodeBuilder::new();
+        // self.environment = self.environment.clone();
+        // self.locals = HashSet::new();
+        // self
         Self {
-            bytecode: self.bytecode.clone(),
+            bytecode: BytecodeBuilder::new(),
             environment: self.environment.clone(),
-            locals: HashSet::new(),
+            locals: self.locals.clone(),
         }
     }
 }
@@ -156,7 +158,7 @@ impl<'a> Codegen<'a> {
                 slash,
                 params,
                 expr,
-            } => self.emit_function(slash, None, params, expr, &mut scope.function()),
+            } => self.emit_function(slash, None, params, expr, scope),
 
             Expr::Call { name, args } => {
                 let arg_count = args.len();
@@ -368,7 +370,7 @@ impl<'a> Codegen<'a> {
                 params,
                 expr,
             } => {
-                self.emit_function(slash, Some(name), params, expr, &mut scope.function());
+                self.emit_function(slash, Some(name), params, expr, scope);
             }
 
             _ => {
@@ -402,47 +404,44 @@ impl<'a> Codegen<'a> {
         slash: &'a Token,
         name: Option<&Token>,
         params: &[Token],
-        expr: &'a Expr,
+        body: &'a Expr,
         scope: &mut Scope,
     ) {
         scope.bytecode.add_op(ByteCode::Function);
+
         self.function_signatures.push(FunctionSignature {
             byte_position: scope.bytecode.bytes.len() as u32 - 1,
         });
 
-        self.create_function_chunk(name, &slash.position, params, expr, scope);
-
-        for (index, param) in params.iter().enumerate() {
-            scope.environment.insert(param.lexeme.clone(), index as u8);
-            scope.locals.insert(param.lexeme.clone());
-        }
-        // bytecodes: function start, function index, param count, function body, function end
-
-        scope.bytecode.add_byte(self.function_count);
-        self.function_count += 1;
-
+        scope.bytecode.add_byte(self.function_chunks.len() as u8);
         scope.bytecode.add_byte(params.len() as u8); // TODO(anissen): Guard against overflow
 
-        let jump_to_end = scope.bytecode.add_unconditional_jump();
-
-        // TODO(anissen): Expr is already a block, so we shouldn't need to create new environment and locals
-        self.emit_expr(expr, scope);
-
-        scope.bytecode.add_op(ByteCode::Return);
-
-        scope.bytecode.patch_jump_to_current_byte(jump_to_end);
+        let byte_position = scope.bytecode.bytes.len() as u32 - 1;
+        self.create_function_chunk(
+            name,
+            &slash.position,
+            byte_position,
+            params,
+            body,
+            &mut scope.function(),
+        );
     }
 
     fn create_function_chunk(
         &mut self,
         name: Option<&Token>,
         position: &'a Span,
+        byte_position: u32,
         params: &[Token],
-        expr: &Expr,
+        body: &'a Expr,
         scope: &mut Scope,
     ) {
         if params.len() > u8::MAX.into() {
             panic!("Too many parameters");
+        }
+
+        if self.function_chunks.len() >= u8::MAX.into() {
+            panic!("Too many functions");
         }
 
         let lexeme = match name {
@@ -450,34 +449,38 @@ impl<'a> Codegen<'a> {
             None => "(unnamed)".to_string(),
         };
 
-        let mut function_environment = scope.environment.clone();
-        let mut function_locals = HashSet::new();
+        scope
+            .bytecode
+            .add_op(ByteCode::FunctionChunk)
+            .add_string(&lexeme);
 
-        let byte_position = scope.bytecode.bytes.len() as u32 - 1;
+        // let tmp = format!("--- Start of {} ---", lexeme);
+        // scope.bytecode.add_byte_array(tmp.as_bytes());
 
-        let mut bytecode = BytecodeBuilder::new();
-        bytecode.add_op(ByteCode::Function);
+        // TODO(anissen): We probably need a function header but this is redundant:
+        // scope.bytecode.add_op(ByteCode::Function);
+        // scope.bytecode.add_byte(self.function_chunks.len() as u8);
+        // scope.bytecode.add_byte(params.len() as u8); // TODO(anissen): Guard against overflow
 
         for (index, param) in params.iter().enumerate() {
-            function_environment.insert(param.lexeme.clone(), index as u8);
-            function_locals.insert(param.lexeme.clone());
+            scope.environment.insert(param.lexeme.clone(), index as u8);
+            scope.locals.insert(param.lexeme.clone());
         }
 
         // TODO(anissen): Expr is already a block, so we shouldn't need to create new environment and locals
-        // TODO(anissen): Combine bytecode, environment and locals into a single struct
-        // self.emit_expr(
-        //     expr,
-        //     &mut bytecode,
-        //     &mut function_environment,
-        //     &mut function_locals,
-        // );
+        self.emit_expr(body, scope);
+
+        scope.bytecode.add_op(ByteCode::Return); // TODO(anissen): I may not need this, because I know the function bytecode length
+
+        // let tmp = format!("--- End of {} ---", lexeme);
+        // scope.bytecode.add_byte_array(tmp.as_bytes());
 
         let function_chunk = FunctionChunk {
             function_name: lexeme,
             position,
             local_count: params.len() as u8,
             byte_position,
-            bytes: vec![],
+            bytes: scope.bytecode.bytes.clone(), // TODO(anissen): Should this be BytecodeBuilder or Scope instead?
         };
 
         self.function_chunks.push(function_chunk);
@@ -501,7 +504,13 @@ impl<'a> Codegen<'a> {
             println!("{:?}", ele);
         }
 
-        [signature_builder.bytes, scope.bytecode.bytes.clone()].concat()
+        let mut bytecode = vec![];
+        bytecode = [bytecode, signature_builder.bytes].concat();
+        bytecode = [bytecode, scope.bytecode.bytes.clone()].concat();
+        for ele in &self.function_chunks {
+            bytecode = [bytecode, ele.bytes.clone()].concat();
+        }
+        bytecode
     }
 }
 
@@ -548,6 +557,11 @@ impl BytecodeBuilder {
 
     fn add_byte_array(&mut self, bytes: &[u8]) {
         self.bytes.extend(bytes);
+    }
+
+    fn add_string(&mut self, value: &str) {
+        self.add_byte(value.len() as u8)
+            .add_byte_array(value.as_bytes());
     }
 
     fn add_jump_if_false(&mut self) -> usize {

@@ -183,6 +183,11 @@ impl Disassembler {
                     ]);
                 }
 
+                ByteCode::FunctionChunk => {
+                    let name = self.read_string();
+                    self.print(vec![format!("function chunk: {}", name)]);
+                }
+
                 ByteCode::Function => {
                     let function_index = self.read_byte();
                     let param_count = self.read_byte();
