@@ -325,6 +325,7 @@ impl VirtualMachine {
                     println!("FunctionChunk: {}", name);
                     // break; // TODO(anissen): Hack to terminate when global bytecode is done. Global should be wrapped in a function instead.
                     // panic!("FunctionChunk: this shouldn't happen")
+                    // break;
                 }
 
                 ByteCode::Function => {
@@ -356,7 +357,6 @@ impl VirtualMachine {
                         self.current_call_frame().stack_index + index
                     };
                     let value = self.stack.get(corrected_index as usize).unwrap();
-                    dbg!(value);
                     let function_index = match value {
                         Value::Function(f) => *f,
                         _ => panic!("expected function, encountered some other type"),

@@ -6,7 +6,7 @@ use crate::expressions::{BinaryOperator, Expr, IsArmPattern, UnaryOperator};
 use crate::program::Context;
 use crate::tokens::{Span, Token, TokenKind};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct FunctionChunk<'a> {
     local_count: u8,
     bytes: Vec<u8>,
@@ -393,8 +393,9 @@ impl<'a> Codegen<'a> {
         scope: &mut Scope,
     ) {
         scope.bytecode.add_op(ByteCode::Function);
-        scope.bytecode.add_byte(self.function_chunks.len() as u8);
+        scope.bytecode.add_byte(self.function_count as u8);
         scope.bytecode.add_byte(params.len() as u8); // TODO(anissen): Guard against overflow
+        self.function_count += 1;
 
         let byte_position = scope.bytecode.bytes.len() as u32 - 1;
         self.create_function_chunk(
@@ -444,6 +445,9 @@ impl<'a> Codegen<'a> {
             scope.locals.insert(param.lexeme.clone());
         }
 
+        let chunks = self.function_chunks.clone();
+        self.function_chunks = Vec::new();
+
         // TODO(anissen): Expr is already a block, so we shouldn't need to create new environment and locals
         self.emit_expr(body, scope);
 
@@ -457,7 +461,9 @@ impl<'a> Codegen<'a> {
             bytes: scope.bytecode.bytes.clone(), // TODO(anissen): Should this be BytecodeBuilder or Scope instead?
         };
 
-        self.function_chunks.push(function_chunk);
+        let new_chunks = self.function_chunks.clone();
+        // TODO(anissen): This works but is horrible
+        self.function_chunks = vec![chunks, vec![function_chunk], new_chunks].concat();
     }
 
     pub fn emit(&mut self, expressions: &'a Vec<Expr>) -> Vec<u8> {
@@ -467,10 +473,15 @@ impl<'a> Codegen<'a> {
         let mut signature_builder = BytecodeBuilder::new();
         let mut signature_patches = Vec::new();
 
+        scope.bytecode.add_op(ByteCode::Return); // HACK!
+
         // TODO(anissen): We need to patch the function chunk bytecode positions in the function signatures
 
+        // let reversed_function_chunks = self.function_chunks.clone();
+        // reversed_function_chunks.reversed(); // TODO(anissen): Hack?
+
         println!("Function chunks:");
-        for ele in &self.function_chunks {
+        for ele in self.function_chunks.iter() {
             println!("{:?}", ele);
             // signature_builder
             //     .add_op(ByteCode::FunctionSignature)
@@ -486,9 +497,9 @@ impl<'a> Codegen<'a> {
         {
             let mut length = signature_builder.bytes.len() + scope.bytecode.bytes.len();
             for (index, ele) in self.function_chunks.iter().enumerate() {
-                dbg!(&signature_builder.bytes);
+                // dbg!(&signature_builder.bytes);
                 signature_builder.patch_i16_offset(signature_patches[index], length as isize);
-                dbg!(&signature_builder.bytes);
+                // dbg!(&signature_builder.bytes);
                 length += ele.bytes.len();
             }
         }
@@ -496,7 +507,7 @@ impl<'a> Codegen<'a> {
         let mut bytecode = vec![];
         bytecode.append(&mut signature_builder.bytes);
         bytecode.append(&mut scope.bytecode.bytes);
-        for ele in &self.function_chunks {
+        for ele in self.function_chunks.iter() {
             bytecode.append(&mut ele.bytes.clone());
         }
         bytecode
@@ -618,7 +629,6 @@ impl BytecodeBuilder {
         let jump_instruction_bytes = 2;
         let jump_offset = (self.bytes.len() - (byte_offset + jump_instruction_bytes)) as isize;
         if jump_offset < i16::MIN as isize {
-            dbg!(jump_offset);
             panic!("Jump offset is too small");
         } else if jump_offset > i16::MAX as isize {
             panic!("Jump offset is too large");
