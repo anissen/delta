@@ -477,6 +477,8 @@ impl<'a> Codegen<'a> {
             //     .add_u32(ele.byte_position);
             let signature_offset = signature_builder
                 .add_op(ByteCode::FunctionSignature)
+                .add_string(&ele.function_name)
+                .add_byte(ele.local_count)
                 .get_patchable_i16_offset();
             signature_patches.push(signature_offset);
         }
@@ -542,13 +544,14 @@ impl BytecodeBuilder {
         self.add_bytes(&value.to_be_bytes())
     }
 
-    fn add_byte_array(&mut self, bytes: &[u8]) {
+    fn add_byte_array(&mut self, bytes: &[u8]) -> &mut Self {
         self.bytes.extend(bytes);
+        self
     }
 
-    fn add_string(&mut self, value: &str) {
+    fn add_string(&mut self, value: &str) -> &mut Self {
         self.add_byte(value.len() as u8)
-            .add_byte_array(value.as_bytes());
+            .add_byte_array(value.as_bytes())
     }
 
     fn add_jump_if_false(&mut self) -> usize {

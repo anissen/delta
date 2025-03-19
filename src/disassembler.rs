@@ -62,7 +62,11 @@ impl Disassembler {
     }
 
     fn print(&mut self, values: Vec<String>) {
-        println!("{} \t{:?}", self.last_program_counter, values);
+        print!("{} \t", self.last_program_counter);
+        for value in values {
+            print!("{} ", value);
+        }
+        println!();
     }
 
     pub fn disassemble(&mut self) {
@@ -100,7 +104,10 @@ impl Disassembler {
                     self.program_counter += string_length as usize;
                     let string = String::from_utf8(value_bytes).unwrap();
 
-                    self.print(vec![format!("push_string: {}", string)]);
+                    self.print(vec![
+                        "push_string".to_string(),
+                        format!("(value: '{}')", string),
+                    ]);
                 }
 
                 ByteCode::Addition => {
@@ -176,16 +183,20 @@ impl Disassembler {
                 }
 
                 ByteCode::FunctionSignature => {
+                    let name = self.read_string();
+                    let local_count = self.read_byte();
                     let function_position = self.read_i16();
                     self.print(vec![
-                        format!("function sinature"),
+                        format!("function signature"),
+                        format!("(name: {})", name),
+                        format!("(local count: {})", local_count),
                         format!("(function position: {})", function_position),
                     ]);
                 }
 
                 ByteCode::FunctionChunk => {
                     let name = self.read_string();
-                    self.print(vec![format!("function chunk: {}", name)]);
+                    self.print(vec![format!("=== function chunk: {} ===", name)]);
                 }
 
                 ByteCode::Function => {

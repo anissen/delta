@@ -53,6 +53,8 @@ impl VirtualMachine {
             return None;
         }
         while let Ok(ByteCode::FunctionSignature) = ByteCode::try_from(self.read_byte()) {
+            let name = self.read_string();
+            let local_count = self.read_byte();
             let function_position = self.read_i16();
 
             self.functions.push(FunctionObj {
@@ -62,11 +64,13 @@ impl VirtualMachine {
         let main_start = self.program_counter - 1;
 
         // TODO(anissen): This ain't right!
-        for ele in &mut self.functions {
-            // fix offsets
-            ele.ip += self.program_counter as u32 + 5; // 5 for function index, arity, jump, offset
-            dbg!(&ele);
-        }
+        // for ele in &mut self.functions {
+        //     // fix offsets
+        //     ele.ip += self.program_counter as u32;
+        //     dbg!(&ele);
+        // }
+
+        println!("Functions: {:?}", self.functions);
 
         // Construct an initial call frame for the top-level code.
         self.call(
@@ -317,8 +321,10 @@ impl VirtualMachine {
                 }
 
                 ByteCode::FunctionChunk => {
-                    break; // TODO(anissen): Hack to terminate when global bytecode is done. Global should be wrapped in a function instead.
-                           // panic!("FunctionChunk: this shouldn't happen")
+                    let name = self.read_string();
+                    println!("FunctionChunk: {}", name);
+                    // break; // TODO(anissen): Hack to terminate when global bytecode is done. Global should be wrapped in a function instead.
+                    // panic!("FunctionChunk: this shouldn't happen")
                 }
 
                 ByteCode::Function => {
@@ -350,6 +356,7 @@ impl VirtualMachine {
                         self.current_call_frame().stack_index + index
                     };
                     let value = self.stack.get(corrected_index as usize).unwrap();
+                    dbg!(value);
                     let function_index = match value {
                         Value::Function(f) => *f,
                         _ => panic!("expected function, encountered some other type"),
