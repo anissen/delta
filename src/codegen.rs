@@ -10,9 +10,8 @@ use crate::tokens::{Span, Token, TokenKind};
 struct FunctionChunk<'a> {
     local_count: u8,
     bytes: Vec<u8>,
-    function_name: String,
     position: &'a Span,
-    byte_position: u32,
+    function_name: String,
 }
 
 pub struct Scope {
@@ -37,10 +36,6 @@ impl Scope {
     }
 
     fn function(&mut self) -> Self {
-        // self.bytecode = BytecodeBuilder::new();
-        // self.environment = self.environment.clone();
-        // self.locals = HashSet::new();
-        // self
         Self {
             bytecode: BytecodeBuilder::new(),
             environment: self.environment.clone(),
@@ -370,20 +365,6 @@ impl<'a> Codegen<'a> {
         scope.bytecode.add_set_local_value(index);
     }
 
-    // fn emit_set_local_value(&mut self, index: u8) {
-    //     scope
-    //         .bytecode
-    //         .add_op(ByteCode::SetLocalValue)
-    //         .add_byte(index);
-    // }
-
-    // fn emit_get_local_value(&mut self, index: u8) {
-    //     scope
-    //         .bytecode
-    //         .add_op(ByteCode::GetLocalValue)
-    //         .add_byte(index);
-    // }
-
     fn emit_function(
         &mut self,
         slash: &'a Token,
@@ -392,27 +373,22 @@ impl<'a> Codegen<'a> {
         body: &'a Expr,
         scope: &mut Scope,
     ) {
+        if params.len() > u8::MAX.into() {
+            panic!("Too many parameters");
+        }
+
         scope.bytecode.add_op(ByteCode::Function);
         scope.bytecode.add_byte(self.function_count as u8);
-        scope.bytecode.add_byte(params.len() as u8); // TODO(anissen): Guard against overflow
+        scope.bytecode.add_byte(params.len() as u8);
         self.function_count += 1;
 
-        let byte_position = scope.bytecode.bytes.len() as u32 - 1;
-        self.create_function_chunk(
-            name,
-            &slash.position,
-            byte_position,
-            params,
-            body,
-            &mut scope.function(),
-        );
+        self.create_function_chunk(name, &slash.position, params, body, &mut scope.function());
     }
 
     fn create_function_chunk(
         &mut self,
         name: Option<&Token>,
         position: &'a Span,
-        byte_position: u32,
         params: &[Token],
         body: &'a Expr,
         scope: &mut Scope,
@@ -435,11 +411,6 @@ impl<'a> Codegen<'a> {
             .add_op(ByteCode::FunctionChunk)
             .add_string(&lexeme);
 
-        // TODO(anissen): We probably need a function header but this is redundant:
-        // scope.bytecode.add_op(ByteCode::Function);
-        // scope.bytecode.add_byte(self.function_chunks.len() as u8);
-        // scope.bytecode.add_byte(params.len() as u8); // TODO(anissen): Guard against overflow
-
         for (index, param) in params.iter().enumerate() {
             scope.environment.insert(param.lexeme.clone(), index as u8);
             scope.locals.insert(param.lexeme.clone());
@@ -451,13 +422,12 @@ impl<'a> Codegen<'a> {
         // TODO(anissen): Expr is already a block, so we shouldn't need to create new environment and locals
         self.emit_expr(body, scope);
 
-        scope.bytecode.add_op(ByteCode::Return); // TODO(anissen): I may not need this, because I know the function bytecode length
+        scope.bytecode.add_op(ByteCode::Return);
 
         let function_chunk = FunctionChunk {
             function_name: lexeme,
             position,
             local_count: params.len() as u8,
-            byte_position,
             bytes: scope.bytecode.bytes.clone(), // TODO(anissen): Should this be BytecodeBuilder or Scope instead?
         };
 
@@ -468,19 +438,6 @@ impl<'a> Codegen<'a> {
 
     pub fn emit(&mut self, expressions: &'a Vec<Expr>) -> Vec<u8> {
         let mut scope = Scope::new();
-        // let token = Token {
-        //     kind: TokenKind::True,
-        //     position: Span { line: 0, column: 0 },
-        //     lexeme: "main".to_string(),
-        // };
-        // let expr = Expr::Block {
-        //     exprs: vec![*expressions],
-        // };
-        // self.emit_function(&token, Some(&token), &[], expressions, &mut scope);
-        // self.emit_exprs(expressions, &mut scope);
-
-        // self.create_function_chunk(None, &token.position, 0, &[], expr, &mut scope);
-
         scope
             .bytecode
             .add_op(ByteCode::FunctionChunk)
@@ -490,30 +447,12 @@ impl<'a> Codegen<'a> {
 
         scope.bytecode.add_op(ByteCode::Return); // TODO(anissen): I may not need this, because I know the function bytecode length
 
-        // let function_chunk = FunctionChunk {
-        //     function_name: "main".to_string(),
-        //     position: &Span { line: 0, column: 0 },
-        //     local_count: 0,
-        //     byte_position: 0,
-        //     bytes: scope.bytecode.bytes.clone(), // TODO(anissen): Should this be BytecodeBuilder or Scope instead?
-        // };
-        // self.function_chunks.push(function_chunk);
-        // self.function_chunks = vec![vec![function_chunk], self.function_chunks.clone()].concat();
-
         let mut signature_builder = BytecodeBuilder::new();
         let mut signature_patches = Vec::new();
-
-        // TODO(anissen): We need to patch the function chunk bytecode positions in the function signatures
-
-        // let reversed_function_chunks = self.function_chunks.clone();
-        // reversed_function_chunks.reversed(); // TODO(anissen): Hack?
 
         println!("Function chunks:");
         for ele in self.function_chunks.iter() {
             println!("{:?}", ele);
-            // signature_builder
-            //     .add_op(ByteCode::FunctionSignature)
-            //     .add_u32(ele.byte_position);
             let signature_offset = signature_builder
                 .add_op(ByteCode::FunctionSignature)
                 .add_string(&ele.function_name)
@@ -525,9 +464,7 @@ impl<'a> Codegen<'a> {
         {
             let mut length = signature_builder.bytes.len() + scope.bytecode.bytes.len();
             for (index, ele) in self.function_chunks.iter().enumerate() {
-                // dbg!(&signature_builder.bytes);
                 signature_builder.patch_i16_offset(signature_patches[index], length as isize);
-                // dbg!(&signature_builder.bytes);
                 length += ele.bytes.len();
             }
         }
@@ -565,14 +502,6 @@ impl BytecodeBuilder {
     fn add_bytes<const COUNT: usize>(&mut self, value: &[u8; COUNT]) -> &mut Self {
         self.bytes.extend_from_slice(value);
         self
-    }
-
-    // fn add_u16(&mut self, value: u16) -> &mut Self {
-    //     self.add_bytes(&value.to_be_bytes())
-    // }
-
-    fn add_u32(&mut self, value: u32) -> &mut Self {
-        self.add_bytes(&value.to_be_bytes())
     }
 
     fn add_i32(&mut self, value: &i32) -> &mut Self {

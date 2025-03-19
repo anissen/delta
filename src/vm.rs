@@ -63,17 +63,8 @@ impl VirtualMachine {
         }
         let main_start = self.program_counter - 1;
 
-        // TODO(anissen): This ain't right!
-        // for ele in &mut self.functions {
-        //     // fix offsets
-        //     ele.ip += self.program_counter as u32;
-        //     dbg!(&ele);
-        // }
-
-        println!("Functions: {:?}", self.functions);
-
         // Construct an initial call frame for the top-level code.
-        self.program_counter = self.program.len();
+        self.program_counter = self.program.len(); // Set return IP to EOF.
         self.call(
             FunctionObj {
                 ip: main_start as u32,
@@ -322,9 +313,6 @@ impl VirtualMachine {
                 ByteCode::FunctionChunk => {
                     let name = self.read_string();
                     println!("FunctionChunk: {}", name);
-                    // break; // TODO(anissen): Hack to terminate when global bytecode is done. Global should be wrapped in a function instead.
-                    // panic!("FunctionChunk: this shouldn't happen")
-                    // break;
                 }
 
                 ByteCode::Function => {
