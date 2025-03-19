@@ -468,12 +468,40 @@ impl<'a> Codegen<'a> {
 
     pub fn emit(&mut self, expressions: &'a Vec<Expr>) -> Vec<u8> {
         let mut scope = Scope::new();
+        // let token = Token {
+        //     kind: TokenKind::True,
+        //     position: Span { line: 0, column: 0 },
+        //     lexeme: "main".to_string(),
+        // };
+        // let expr = Expr::Block {
+        //     exprs: vec![*expressions],
+        // };
+        // self.emit_function(&token, Some(&token), &[], expressions, &mut scope);
+        // self.emit_exprs(expressions, &mut scope);
+
+        // self.create_function_chunk(None, &token.position, 0, &[], expr, &mut scope);
+
+        scope
+            .bytecode
+            .add_op(ByteCode::FunctionChunk)
+            .add_string("main");
+
         self.emit_exprs(expressions, &mut scope);
+
+        scope.bytecode.add_op(ByteCode::Return); // TODO(anissen): I may not need this, because I know the function bytecode length
+
+        // let function_chunk = FunctionChunk {
+        //     function_name: "main".to_string(),
+        //     position: &Span { line: 0, column: 0 },
+        //     local_count: 0,
+        //     byte_position: 0,
+        //     bytes: scope.bytecode.bytes.clone(), // TODO(anissen): Should this be BytecodeBuilder or Scope instead?
+        // };
+        // self.function_chunks.push(function_chunk);
+        // self.function_chunks = vec![vec![function_chunk], self.function_chunks.clone()].concat();
 
         let mut signature_builder = BytecodeBuilder::new();
         let mut signature_patches = Vec::new();
-
-        scope.bytecode.add_op(ByteCode::Return); // HACK!
 
         // TODO(anissen): We need to patch the function chunk bytecode positions in the function signatures
 

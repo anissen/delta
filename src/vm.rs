@@ -73,14 +73,13 @@ impl VirtualMachine {
         println!("Functions: {:?}", self.functions);
 
         // Construct an initial call frame for the top-level code.
+        self.program_counter = self.program.len();
         self.call(
             FunctionObj {
-                ip: self.program.len() as u32, // main_start as u32,
+                ip: main_start as u32,
             },
             0,
         );
-
-        self.program_counter = main_start;
 
         while self.program_counter < self.program.len() {
             let next = self.read_byte();
@@ -430,6 +429,7 @@ impl VirtualMachine {
         self.stack.push(result);
 
         self.program_counter = self.current_call_frame().return_program_counter;
+        dbg!(self.program_counter);
 
         self.call_stack.pop();
     }
