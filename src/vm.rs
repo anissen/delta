@@ -48,34 +48,41 @@ impl VirtualMachine {
         }
     }
 
+    fn read_header(&mut self) {
+        // TODO(anissen): Read header here
+
+        self.read_functions();
+    }
+
+    fn read_functions(&mut self) {
+        while let Ok(ByteCode::FunctionSignature) = ByteCode::try_from(self.read_byte()) {
+            let name = self.read_string();
+            let local_count = self.read_byte();
+            let function_position = self.read_i16();
+
+            self.functions.push(FunctionObj {
+                ip: function_position as u32,
+            });
+        }
+    }
+
     pub fn execute<'a>(&mut self, context: &'a Context<'a>) -> Option<Value> {
+        self.read_header();
+
         if self.program_counter >= self.program.len() {
             return None;
         }
-        while let Ok(ByteCode::FunctionSignature) = ByteCode::try_from(self.read_byte()) {
-            let function_position = self.read_u32();
 
-            self.functions.push(FunctionObj {
-                ip: function_position,
-            });
-        }
         let main_start = self.program_counter - 1;
 
-        for ele in &mut self.functions {
-            // fix offsets
-            ele.ip += self.program_counter as u32 + 5; // 5 for function index, arity, jump, offset
-            dbg!(&ele);
-        }
-
         // Construct an initial call frame for the top-level code.
+        self.program_counter = self.program.len(); // Set return IP to EOF.
         self.call(
             FunctionObj {
-                ip: self.program.len() as u32, // main_start as u32,
+                ip: main_start as u32,
             },
             0,
         );
-
-        self.program_counter = main_start;
 
         while self.program_counter < self.program.len() {
             let next = self.read_byte();
@@ -312,7 +319,14 @@ impl VirtualMachine {
                 }
 
                 ByteCode::FunctionSignature => {
-                    panic!("this shouldn't happen")
+                    panic!("FunctionSignature: this shouldn't happen")
+                }
+
+                ByteCode::FunctionChunk => {
+                    let name = self.read_string();
+                    if self.verbose_logging {
+                        println!("FunctionChunk: {}", name);
+                    }
                 }
 
                 ByteCode::Function => {
@@ -338,12 +352,7 @@ impl VirtualMachine {
                         println!("index: {}", index);
                     }
 
-                    let corrected_index = if is_global {
-                        index
-                    } else {
-                        self.current_call_frame().stack_index + index
-                    };
-                    let value = self.stack.get(corrected_index as usize).unwrap();
+                    let value = self.stack.get(index as usize).unwrap();
                     let function_index = match value {
                         Value::Function(f) => *f,
                         _ => panic!("expected function, encountered some other type"),
@@ -386,6 +395,9 @@ impl VirtualMachine {
                         self.program_counter += offset as usize;
                     }
                 }
+            }
+            if self.verbose_logging {
+                println!("Stack: {:?}", self.stack);
             }
         }
         if self.verbose_logging {

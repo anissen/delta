@@ -7,23 +7,38 @@ use crate::program::Context;
 use crate::tokens::{Span, Token, TokenKind};
 
 #[derive(Debug, Clone)]
-struct FunctionSignature {
-    byte_position: u32, // TODO(anissen): Should be an index into the function chunks vector.
-}
-
-#[derive(Debug)]
 struct FunctionChunk<'a> {
     local_count: u8,
     bytes: Vec<u8>,
-    function_name: String,
     position: &'a Span,
-    byte_position: u32,
+    function_name: String,
+}
+
+pub struct Scope {
+    bytecode: BytecodeBuilder,
+    environment: HashMap<String, u8>,
+    locals: HashSet<String>,
+}
+
+impl Scope {
+    fn new() -> Self {
+        Self {
+            bytecode: BytecodeBuilder::new(),
+            environment: HashMap::new(),
+            locals: HashSet::new(),
+        }
+    }
+
+    fn function(&mut self) -> Self {
+        Self {
+            bytecode: BytecodeBuilder::new(),
+            environment: self.environment.clone(),
+            locals: HashSet::new(),
+        }
+    }
 }
 
 pub struct Codegen<'a> {
-    bytecode: BytecodeBuilder,
-    function_signatures: Vec<FunctionSignature>,
-    function_count: u8,
     function_chunks: Vec<FunctionChunk<'a>>,
     context: &'a Context<'a>,
     diagnostics: &'a mut Diagnostics<'a>,
@@ -43,47 +58,34 @@ pub fn codegen<'a>(
 impl<'a> Codegen<'a> {
     fn new(context: &'a Context<'a>, diagnostics: &'a mut Diagnostics<'a>) -> Self {
         Self {
-            bytecode: BytecodeBuilder::new(),
-            function_signatures: vec![],
-            function_count: 0,
             function_chunks: vec![],
             context,
             diagnostics,
         }
     }
 
-    fn emit_exprs(
-        &mut self,
-        expressions: &'a Vec<Expr>,
-        environment: &mut HashMap<String, u8>,
-        locals: &mut HashSet<String>,
-    ) {
+    fn emit_exprs(&mut self, expressions: &'a Vec<Expr>, scope: &mut Scope) {
         for expr in expressions {
-            self.emit_expr(expr, environment, locals);
+            self.emit_expr(expr, scope);
         }
     }
 
-    fn emit_expr(
-        &mut self,
-        expr: &'a Expr,
-        environment: &mut HashMap<String, u8>,
-        locals: &mut HashSet<String>,
-    ) {
+    fn emit_expr(&mut self, expr: &'a Expr, scope: &mut Scope) {
         match expr {
             Expr::Boolean(true) => {
-                self.bytecode.add_op(ByteCode::PushTrue);
+                scope.bytecode.add_op(ByteCode::PushTrue);
             }
 
             Expr::Boolean(false) => {
-                self.bytecode.add_op(ByteCode::PushFalse);
+                scope.bytecode.add_op(ByteCode::PushFalse);
             }
 
             Expr::Integer(i) => {
-                self.bytecode.add_op(ByteCode::PushInteger).add_i32(i);
+                scope.bytecode.add_op(ByteCode::PushInteger).add_i32(i);
             }
 
             Expr::Float(f) => {
-                self.bytecode.add_op(ByteCode::PushFloat).add_f32(f);
+                scope.bytecode.add_op(ByteCode::PushFloat).add_f32(f);
             }
 
             Expr::Value { name } => {
@@ -97,12 +99,12 @@ impl<'a> Codegen<'a> {
                         );
                         self.diagnostics.add_error(message);
                     }
-                    self.bytecode
+                    scope
+                        .bytecode
                         .add_op(ByteCode::GetForeignValue)
-                        .add_byte(lexeme.len() as u8)
-                        .add_byte_array(lexeme.as_bytes());
-                } else if let Some(index) = environment.get(lexeme) {
-                    self.emit_get_local_value(*index);
+                        .add_string(lexeme);
+                } else if let Some(index) = scope.environment.get(lexeme) {
+                    scope.bytecode.add_get_local_value(*index);
                 } else {
                     let msg = Message::new(
                         format!("Name not found in scope: {}", lexeme),
@@ -117,58 +119,56 @@ impl<'a> Codegen<'a> {
                     // TODO(anissen): Should add error to a error reporter instead
                     panic!("string too long!");
                 }
-                self.bytecode
-                    .add_op(ByteCode::PushString)
-                    .add_byte(str.len() as u8)
-                    .add_byte_array(str.as_bytes());
+                scope.bytecode.add_op(ByteCode::PushString).add_string(str);
             }
 
-            Expr::Grouping(expr) => self.emit_expr(expr, environment, locals),
+            Expr::Grouping(expr) => self.emit_expr(expr, scope),
 
             Expr::Block { exprs } => {
-                let mut block_environment = environment.clone();
-                let mut block_locals = locals.clone();
-
                 // Emit block with its own environment and locals
-                self.emit_exprs(exprs, &mut block_environment, &mut block_locals);
+                let locals = scope.locals.clone();
+                let environment = scope.environment.clone();
+                self.emit_exprs(exprs, scope);
+                scope.locals = locals;
+                scope.environment = environment;
             }
 
             Expr::Function {
                 slash,
                 params,
                 expr,
-            } => self.emit_function(slash, None, params, expr, environment, locals),
+            } => self.emit_function(slash, None, params, expr, scope),
 
             Expr::Call { name, args } => {
                 let arg_count = args.len();
-                self.emit_exprs(args, environment, locals);
+                self.emit_exprs(args, scope);
 
                 if self.context.has_function(name) {
                     // TODO(anissen): Maybe this should be its own Expr instead?
-                    self.bytecode
+                    scope
+                        .bytecode
                         .add_op(ByteCode::CallForeign)
                         .add_byte(self.context.get_index(name))
                         .add_byte(arg_count as u8);
                 } else {
-                    self.bytecode
+                    scope
+                        .bytecode
                         .add_op(ByteCode::Call)
                         .add_byte(arg_count as u8);
-                    let index = environment.get(name).unwrap();
-                    if locals.contains(name) {
-                        self.bytecode.add_byte(0);
+                    let index = scope.environment.get(name).unwrap();
+                    if scope.locals.contains(name) {
+                        scope.bytecode.add_byte(0);
                     } else {
-                        self.bytecode.add_byte(1);
+                        scope.bytecode.add_byte(1);
                     }
-                    self.bytecode.add_byte(*index);
+                    scope.bytecode.add_byte(*index);
                 };
 
                 if name.len() > 255 {
                     panic!("function name too long!");
                     // let msg = Message::new(format!("Function name too long: {}", name), ;
                 }
-                self.bytecode
-                    .add_byte(name.len() as u8)
-                    .add_byte_array(name.as_bytes());
+                scope.bytecode.add_string(name);
             }
 
             Expr::Assignment {
@@ -176,33 +176,38 @@ impl<'a> Codegen<'a> {
                 _operator: _,
                 expr,
             } => {
-                self.emit_assignment(name, expr, environment, locals);
+                self.emit_assignment(name, expr, scope);
             }
 
             Expr::Comparison { left, token, right } => {
-                self.emit_expr(left, environment, locals);
-                self.emit_expr(right, environment, locals);
+                self.emit_expr(left, scope);
+                self.emit_expr(right, scope);
 
                 match token.kind {
                     TokenKind::EqualEqual => {
-                        self.bytecode.add_op(ByteCode::Equals);
+                        scope.bytecode.add_op(ByteCode::Equals);
                     }
                     TokenKind::BangEqual => {
-                        self.bytecode.add_op(ByteCode::Equals).add_op(ByteCode::Not);
+                        scope
+                            .bytecode
+                            .add_op(ByteCode::Equals)
+                            .add_op(ByteCode::Not);
                     }
                     TokenKind::LeftChevron => {
-                        self.bytecode.add_op(ByteCode::LessThan);
+                        scope.bytecode.add_op(ByteCode::LessThan);
                     }
                     TokenKind::LeftChevronEqual => {
-                        self.bytecode.add_op(ByteCode::LessThanEquals);
+                        scope.bytecode.add_op(ByteCode::LessThanEquals);
                     }
                     TokenKind::RightChevron => {
-                        self.bytecode
+                        scope
+                            .bytecode
                             .add_op(ByteCode::LessThanEquals)
                             .add_op(ByteCode::Not);
                     }
                     TokenKind::RightChevronEqual => {
-                        self.bytecode
+                        scope
+                            .bytecode
                             .add_op(ByteCode::LessThan)
                             .add_op(ByteCode::Not);
                     }
@@ -216,12 +221,12 @@ impl<'a> Codegen<'a> {
                 expr,
             } => match operator {
                 UnaryOperator::Negation => {
-                    self.emit_expr(expr, environment, locals);
-                    self.bytecode.add_op(ByteCode::Negation);
+                    self.emit_expr(expr, scope);
+                    scope.bytecode.add_op(ByteCode::Negation);
                 }
                 UnaryOperator::Not => {
-                    self.emit_expr(expr, environment, locals);
-                    self.bytecode.add_op(ByteCode::Not);
+                    self.emit_expr(expr, scope);
+                    scope.bytecode.add_op(ByteCode::Not);
                 }
             },
 
@@ -231,19 +236,19 @@ impl<'a> Codegen<'a> {
                 _token: _,
                 right,
             } => {
-                self.emit_expr(left, environment, locals);
-                self.emit_expr(right, environment, locals);
+                self.emit_expr(left, scope);
+                self.emit_expr(right, scope);
                 match operator {
-                    BinaryOperator::Addition => self.bytecode.add_op(ByteCode::Addition),
-                    BinaryOperator::Subtraction => self.bytecode.add_op(ByteCode::Subtraction),
+                    BinaryOperator::Addition => scope.bytecode.add_op(ByteCode::Addition),
+                    BinaryOperator::Subtraction => scope.bytecode.add_op(ByteCode::Subtraction),
                     BinaryOperator::Multiplication => {
-                        self.bytecode.add_op(ByteCode::Multiplication)
+                        scope.bytecode.add_op(ByteCode::Multiplication)
                     }
-                    BinaryOperator::Division => self.bytecode.add_op(ByteCode::Division),
-                    BinaryOperator::Modulus => self.bytecode.add_op(ByteCode::Modulo),
-                    BinaryOperator::StringConcat => self.bytecode.add_op(ByteCode::StringConcat),
-                    BinaryOperator::BooleanAnd => self.bytecode.add_op(ByteCode::BooleanAnd),
-                    BinaryOperator::BooleanOr => self.bytecode.add_op(ByteCode::BooleanOr),
+                    BinaryOperator::Division => scope.bytecode.add_op(ByteCode::Division),
+                    BinaryOperator::Modulus => scope.bytecode.add_op(ByteCode::Modulo),
+                    BinaryOperator::StringConcat => scope.bytecode.add_op(ByteCode::StringConcat),
+                    BinaryOperator::BooleanAnd => scope.bytecode.add_op(ByteCode::BooleanAnd),
+                    BinaryOperator::BooleanOr => scope.bytecode.add_op(ByteCode::BooleanOr),
                 };
             }
 
@@ -251,15 +256,15 @@ impl<'a> Codegen<'a> {
                 let index = match **expr {
                     Expr::Value { ref name } => {
                         // If the value is already in the environment, use its index
-                        let index_option = environment.get(&name.lexeme);
+                        let index_option = scope.environment.get(&name.lexeme);
                         *index_option.unwrap()
                     }
                     _ => {
                         // Otherwise, emit the expression and add it to the locals
                         // to avoid emitting the same value multiple times
-                        self.emit_expr(expr, environment, locals);
-                        let index = locals.len() as u8;
-                        self.emit_set_local_value(index);
+                        self.emit_expr(expr, scope);
+                        let index = scope.locals.len() as u8;
+                        scope.bytecode.add_set_local_value(index);
                         index
                     }
                 };
@@ -269,109 +274,91 @@ impl<'a> Codegen<'a> {
                     match &arm.pattern {
                         IsArmPattern::Expression(pattern) => {
                             // Emit expression and pattern and compare
-                            self.emit_get_local_value(index);
-                            self.emit_expr(pattern, environment, locals);
-                            self.bytecode.add_op(ByteCode::Equals);
+                            scope.bytecode.add_get_local_value(index);
+                            self.emit_expr(pattern, scope);
+                            scope.bytecode.add_op(ByteCode::Equals);
 
                             // Jump to next arm if not equal
-                            let next_arm_offset = self.bytecode.add_jump_if_false();
+                            let next_arm_offset = scope.bytecode.add_jump_if_false();
 
                             // Otherwise execute arm block
-                            self.emit_expr(&arm.block, environment, locals);
+                            self.emit_expr(&arm.block, scope);
 
                             // Jump to end of `is` block
-                            let end_offset = self.bytecode.add_unconditional_jump();
+                            let end_offset = scope.bytecode.add_unconditional_jump();
                             jump_to_end_offsets.push(end_offset);
 
                             // Patch jump to next arm now that we know its position
-                            self.bytecode.patch_jump_to_current_byte(next_arm_offset);
+                            scope.bytecode.patch_jump_to_current_byte(next_arm_offset);
                         }
 
                         IsArmPattern::Capture {
                             identifier,
                             condition,
                         } => {
-                            self.emit_assignment(identifier, expr, environment, locals);
+                            self.emit_assignment(identifier, expr, scope);
 
                             if let Some(condition) = condition {
                                 // Emit expression and condition and compare
-                                self.emit_get_local_value(index);
-                                self.emit_expr(condition, environment, locals);
+                                scope.bytecode.add_get_local_value(index);
+                                self.emit_expr(condition, scope);
 
                                 // Jump to next arm if not equal
-                                let next_arm_offset = self.bytecode.add_jump_if_false();
+                                let next_arm_offset = scope.bytecode.add_jump_if_false();
 
                                 // Otherwise execute arm block
-                                self.emit_expr(&arm.block, environment, locals);
+                                self.emit_expr(&arm.block, scope);
 
                                 // Jump to end of `is` block
-                                let end_offset = self.bytecode.add_unconditional_jump();
+                                let end_offset = scope.bytecode.add_unconditional_jump();
                                 jump_to_end_offsets.push(end_offset);
 
                                 // Patch jump to next arm now that we know its position
-                                self.bytecode.patch_jump_to_current_byte(next_arm_offset);
+                                scope.bytecode.patch_jump_to_current_byte(next_arm_offset);
                             } else {
                                 // Otherwise execute arm block
-                                self.emit_expr(&arm.block, environment, locals);
+                                self.emit_expr(&arm.block, scope);
 
                                 // Jump to end of `is` block
-                                let end_offset = self.bytecode.add_unconditional_jump();
+                                let end_offset = scope.bytecode.add_unconditional_jump();
                                 jump_to_end_offsets.push(end_offset);
                             }
                         }
 
                         IsArmPattern::Default => {
-                            self.emit_expr(&arm.block, environment, locals);
+                            self.emit_expr(&arm.block, scope);
                         }
                     };
                 }
 
                 // Patch all jumps to end of `is` block now that we know where it ends
                 for offset in jump_to_end_offsets {
-                    self.bytecode.patch_jump_to_current_byte(offset);
+                    scope.bytecode.patch_jump_to_current_byte(offset);
                 }
             }
         };
     }
 
-    fn emit_assignment(
-        &mut self,
-        name: &Token,
-        expr: &'a Expr,
-        environment: &mut HashMap<String, u8>,
-        locals: &mut HashSet<String>,
-    ) {
+    fn emit_assignment(&mut self, name: &Token, expr: &'a Expr, scope: &mut Scope) {
         match expr {
             Expr::Function {
                 slash,
                 params,
                 expr,
             } => {
-                self.emit_function(slash, Some(name), params, expr, environment, locals);
+                self.emit_function(slash, Some(name), params, expr, scope);
             }
 
             _ => {
-                self.emit_expr(expr, environment, locals);
+                self.emit_expr(expr, scope);
             }
         }
 
-        let index = locals.len() as u8;
-        environment.insert(name.lexeme.clone(), index);
-        locals.insert(name.lexeme.clone());
+        let index = scope.locals.len() as u8;
+        scope.environment.insert(name.lexeme.clone(), index);
+        scope.locals.insert(name.lexeme.clone());
 
-        self.emit_set_local_value(index);
-    }
-
-    fn emit_set_local_value(&mut self, index: u8) {
-        self.bytecode
-            .add_op(ByteCode::SetLocalValue)
-            .add_byte(index);
-    }
-
-    fn emit_get_local_value(&mut self, index: u8) {
-        self.bytecode
-            .add_op(ByteCode::GetLocalValue)
-            .add_byte(index);
+        scope.bytecode.add_set_local_value(index);
     }
 
     fn emit_function(
@@ -379,40 +366,18 @@ impl<'a> Codegen<'a> {
         slash: &'a Token,
         name: Option<&Token>,
         params: &[Token],
-        expr: &'a Expr,
-        environment: &mut HashMap<String, u8>,
-        locals: &mut HashSet<String>,
+        body: &'a Expr,
+        scope: &mut Scope,
     ) {
-        let mut function_environment = environment.clone();
-        let mut function_locals = HashSet::new();
-
-        self.bytecode.add_op(ByteCode::Function);
-        self.function_signatures.push(FunctionSignature {
-            byte_position: self.bytecode.bytes.len() as u32 - 1,
-        });
-
-        self.create_function_chunk(name, &slash.position, params, expr, environment, locals);
-
-        for (index, param) in params.iter().enumerate() {
-            function_environment.insert(param.lexeme.clone(), index as u8);
-
-            function_locals.insert(param.lexeme.clone());
+        if params.len() > u8::MAX.into() {
+            panic!("Too many parameters");
         }
-        // bytecodes: function start, function index, param count, function body, function end
 
-        self.bytecode.add_byte(self.function_count);
-        self.function_count += 1;
+        scope.bytecode.add_op(ByteCode::Function);
+        scope.bytecode.add_byte(self.function_chunks.len() as u8);
+        scope.bytecode.add_byte(params.len() as u8);
 
-        self.bytecode.add_byte(params.len() as u8); // TODO(anissen): Guard against overflow
-
-        let jump_to_end = self.bytecode.add_unconditional_jump();
-
-        // TODO(anissen): Expr is already a block, so we shouldn't need to create new environment and locals
-        self.emit_expr(expr, &mut function_environment, &mut function_locals);
-
-        self.bytecode.add_op(ByteCode::Return);
-
-        self.bytecode.patch_jump_to_current_byte(jump_to_end);
+        self.create_function_chunk(name, &slash.position, params, body, &mut scope.function());
     }
 
     fn create_function_chunk(
@@ -420,12 +385,15 @@ impl<'a> Codegen<'a> {
         name: Option<&Token>,
         position: &'a Span,
         params: &[Token],
-        expr: &Expr,
-        environment: &mut HashMap<String, u8>,
-        locals: &mut HashSet<String>,
+        body: &'a Expr,
+        scope: &mut Scope,
     ) {
         if params.len() > u8::MAX.into() {
             panic!("Too many parameters");
+        }
+
+        if self.function_chunks.len() >= u8::MAX.into() {
+            panic!("Too many functions");
         }
 
         let lexeme = match name {
@@ -433,62 +401,77 @@ impl<'a> Codegen<'a> {
             None => "(unnamed)".to_string(),
         };
 
-        let mut function_environment = environment.clone();
-        let mut function_locals = HashSet::new();
+        let function_chunk_index = self.function_chunks.len();
+        let function_chunk = FunctionChunk {
+            function_name: lexeme.clone(),
+            position,
+            local_count: params.len() as u8,
+            bytes: vec![],
+        };
+        self.function_chunks.push(function_chunk);
 
-        let byte_position = self.bytecode.bytes.len() as u32 - 1;
-
-        let mut bytecode = BytecodeBuilder::new();
-        bytecode.add_op(ByteCode::Function);
+        scope
+            .bytecode
+            .add_op(ByteCode::FunctionChunk)
+            .add_string(&lexeme);
 
         for (index, param) in params.iter().enumerate() {
-            function_environment.insert(param.lexeme.clone(), index as u8);
-            function_locals.insert(param.lexeme.clone());
+            scope.environment.insert(param.lexeme.clone(), index as u8);
+            scope.locals.insert(param.lexeme.clone());
         }
 
         // TODO(anissen): Expr is already a block, so we shouldn't need to create new environment and locals
-        // TODO(anissen): Combine bytecode, environment and locals into a single struct
-        // self.emit_expr(
-        //     expr,
-        //     &mut bytecode,
-        //     &mut function_environment,
-        //     &mut function_locals,
-        // );
+        self.emit_expr(body, scope);
 
-        let function_chunk = FunctionChunk {
-            function_name: lexeme,
-            position,
-            local_count: params.len() as u8,
-            byte_position,
-            bytes: vec![],
-        };
+        scope.bytecode.add_op(ByteCode::Return);
 
-        self.function_chunks.push(function_chunk);
+        self.function_chunks[function_chunk_index].bytes = scope.bytecode.bytes.clone();
     }
 
     pub fn emit(&mut self, expressions: &'a Vec<Expr>) -> Vec<u8> {
-        let environment = &mut HashMap::new();
-        let locals = &mut HashSet::new();
-        self.emit_exprs(expressions, environment, locals);
+        let mut scope = Scope::new();
+        scope
+            .bytecode
+            .add_op(ByteCode::FunctionChunk)
+            .add_string("main");
+
+        self.emit_exprs(expressions, &mut scope);
+
+        scope.bytecode.add_op(ByteCode::Return); // TODO(anissen): I may not need this, because I know the function bytecode length
 
         let mut signature_builder = BytecodeBuilder::new();
+        let mut signature_patches = Vec::new();
 
-        for ele in self.function_signatures.clone() {
-            signature_builder.add_op(ByteCode::FunctionSignature);
-            for byte in ele.byte_position.to_be_bytes() {
-                signature_builder.add_byte(byte);
+        println!("Function chunks:");
+        for ele in self.function_chunks.iter() {
+            println!("{:?}", ele);
+            let signature_offset = signature_builder
+                .add_op(ByteCode::FunctionSignature)
+                .add_string(&ele.function_name)
+                .add_byte(ele.local_count)
+                .get_patchable_i16_offset();
+            signature_patches.push(signature_offset);
+        }
+
+        {
+            let mut length = signature_builder.bytes.len() + scope.bytecode.bytes.len();
+            for (index, ele) in self.function_chunks.iter().enumerate() {
+                signature_builder.patch_i16_offset(signature_patches[index], length as isize);
+                length += ele.bytes.len();
             }
         }
 
-        println!("Function chunks:");
-        for ele in &self.function_chunks {
-            println!("{:?}", ele);
+        let mut bytecode = vec![];
+        bytecode.append(&mut signature_builder.bytes);
+        bytecode.append(&mut scope.bytecode.bytes);
+        for ele in self.function_chunks.iter() {
+            bytecode.append(&mut ele.bytes.clone());
         }
-
-        [signature_builder.bytes, self.bytecode.bytes.clone()].concat()
+        bytecode
     }
 }
 
+#[derive(Clone)]
 struct BytecodeBuilder {
     bytes: Vec<u8>,
 }
@@ -513,14 +496,6 @@ impl BytecodeBuilder {
         self
     }
 
-    // fn add_u16(&mut self, value: u16) -> &mut Self {
-    //     self.add_bytes(&value.to_be_bytes())
-    // }
-
-    // fn add_u32(&mut self, value: u32) -> &mut Self {
-    //     self.add_bytes(&value.to_be_bytes())
-    // }
-
     fn add_i32(&mut self, value: &i32) -> &mut Self {
         self.add_bytes(&value.to_be_bytes())
     }
@@ -529,8 +504,14 @@ impl BytecodeBuilder {
         self.add_bytes(&value.to_be_bytes())
     }
 
-    fn add_byte_array(&mut self, bytes: &[u8]) {
+    fn add_byte_array(&mut self, bytes: &[u8]) -> &mut Self {
         self.bytes.extend(bytes);
+        self
+    }
+
+    fn add_string(&mut self, value: &str) -> &mut Self {
+        self.add_byte(value.len() as u8)
+            .add_byte_array(value.as_bytes())
     }
 
     fn add_jump_if_false(&mut self) -> usize {
@@ -547,12 +528,56 @@ impl BytecodeBuilder {
         self.bytes.len() - bytes.len()
     }
 
+    // TODO: Create a PatchableOffset for this
+    // fn add_patchable_bytes(&mut self, bytes: u8) -> PatchableBytes {
+    //     let offset = self.bytes.len();
+    //     for byte in 0..bytes {
+    //         self.add_byte(0u8);
+    //     }
+    //     PatchableBytes {
+    //         offset,
+    //         length: bytes,
+    //     }
+    // }
+
+    // fn get_patchable_bytes(&mut self, index: u32, length: u8) -> PatchableBytes {
+    //     PatchableBytes {
+    //         index,
+    //         length,
+    //     }
+    // }
+
+    fn get_patchable_i16_offset(&mut self) -> usize {
+        let bytes = 0_i16.to_be_bytes();
+        self.add_bytes(&bytes /* placeholder */);
+        self.bytes.len() - bytes.len()
+    }
+
+    fn patch_i16_offset(&mut self, patchable_bytes: usize, new_offset: isize) {
+        // byte offset is the start of 2 bytes that indicate the jump offset
+        if new_offset < i16::MIN as isize {
+            panic!("New offset is too small");
+        } else if new_offset > i16::MAX as isize {
+            panic!("New offset is too large");
+        }
+        (new_offset as i16)
+            .to_be_bytes()
+            .swap_with_slice(&mut self.bytes[patchable_bytes..patchable_bytes + 2]);
+    }
+
+    fn add_set_local_value(&mut self, index: u8) -> &mut Self {
+        self.add_op(ByteCode::SetLocalValue).add_byte(index)
+    }
+
+    fn add_get_local_value(&mut self, index: u8) -> &mut Self {
+        self.add_op(ByteCode::GetLocalValue).add_byte(index)
+    }
+
     fn patch_jump_to_current_byte(&mut self, byte_offset: usize) {
         // byte offset is the start of 2 bytes that indicate the jump offset
         let jump_instruction_bytes = 2;
         let jump_offset = (self.bytes.len() - (byte_offset + jump_instruction_bytes)) as isize;
         if jump_offset < i16::MIN as isize {
-            dbg!(jump_offset);
             panic!("Jump offset is too small");
         } else if jump_offset > i16::MAX as isize {
             panic!("Jump offset is too large");

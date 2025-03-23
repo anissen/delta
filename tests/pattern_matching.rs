@@ -263,8 +263,13 @@ match = \v
 fn pattern_matching_with_even_more_locals() {
     assert_ok(
         r#"
+x = 1
+y = 2
+
 square = \v
     v * v
+
+z = 3
 
 match = \v
     x = 2
@@ -281,6 +286,8 @@ match = \v
            	captured + x + w + w2
     val = 8
     res + val
+
+w = 4
 
 "result is {1 | match}, {2 | match} and {3 | match}"
 "#,
