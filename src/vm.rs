@@ -48,10 +48,13 @@ impl VirtualMachine {
         }
     }
 
-    pub fn execute<'a>(&mut self, context: &'a Context<'a>) -> Option<Value> {
-        if self.program_counter >= self.program.len() {
-            return None;
-        }
+    fn read_header(&mut self) {
+        // TODO(anissen): Read header here
+
+        self.read_functions();
+    }
+
+    fn read_functions(&mut self) {
         while let Ok(ByteCode::FunctionSignature) = ByteCode::try_from(self.read_byte()) {
             let name = self.read_string();
             let local_count = self.read_byte();
@@ -61,6 +64,15 @@ impl VirtualMachine {
                 ip: function_position as u32,
             });
         }
+    }
+
+    pub fn execute<'a>(&mut self, context: &'a Context<'a>) -> Option<Value> {
+        self.read_header();
+
+        if self.program_counter >= self.program.len() {
+            return None;
+        }
+
         let main_start = self.program_counter - 1;
 
         // Construct an initial call frame for the top-level code.
@@ -312,7 +324,9 @@ impl VirtualMachine {
 
                 ByteCode::FunctionChunk => {
                     let name = self.read_string();
-                    println!("FunctionChunk: {}", name);
+                    if self.verbose_logging {
+                        println!("FunctionChunk: {}", name);
+                    }
                 }
 
                 ByteCode::Function => {
@@ -415,7 +429,6 @@ impl VirtualMachine {
         self.stack.push(result);
 
         self.program_counter = self.current_call_frame().return_program_counter;
-        dbg!(self.program_counter);
 
         self.call_stack.pop();
     }

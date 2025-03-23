@@ -39,7 +39,6 @@ impl Scope {
 }
 
 pub struct Codegen<'a> {
-    function_count: u8,
     function_chunks: Vec<FunctionChunk<'a>>,
     context: &'a Context<'a>,
     diagnostics: &'a mut Diagnostics<'a>,
@@ -59,7 +58,6 @@ pub fn codegen<'a>(
 impl<'a> Codegen<'a> {
     fn new(context: &'a Context<'a>, diagnostics: &'a mut Diagnostics<'a>) -> Self {
         Self {
-            function_count: 0,
             function_chunks: vec![],
             context,
             diagnostics,
@@ -376,9 +374,8 @@ impl<'a> Codegen<'a> {
         }
 
         scope.bytecode.add_op(ByteCode::Function);
-        scope.bytecode.add_byte(self.function_count as u8);
+        scope.bytecode.add_byte(self.function_chunks.len() as u8);
         scope.bytecode.add_byte(params.len() as u8);
-        self.function_count += 1;
 
         self.create_function_chunk(name, &slash.position, params, body, &mut scope.function());
     }
@@ -404,6 +401,15 @@ impl<'a> Codegen<'a> {
             None => "(unnamed)".to_string(),
         };
 
+        let function_chunk_index = self.function_chunks.len();
+        let function_chunk = FunctionChunk {
+            function_name: lexeme.clone(),
+            position,
+            local_count: params.len() as u8,
+            bytes: vec![],
+        };
+        self.function_chunks.push(function_chunk);
+
         scope
             .bytecode
             .add_op(ByteCode::FunctionChunk)
@@ -414,24 +420,12 @@ impl<'a> Codegen<'a> {
             scope.locals.insert(param.lexeme.clone());
         }
 
-        let chunks = self.function_chunks.clone();
-        self.function_chunks = Vec::new();
-
         // TODO(anissen): Expr is already a block, so we shouldn't need to create new environment and locals
         self.emit_expr(body, scope);
 
         scope.bytecode.add_op(ByteCode::Return);
 
-        let function_chunk = FunctionChunk {
-            function_name: lexeme,
-            position,
-            local_count: params.len() as u8,
-            bytes: scope.bytecode.bytes.clone(), // TODO(anissen): Should this be BytecodeBuilder or Scope instead?
-        };
-
-        let new_chunks = self.function_chunks.clone();
-        // TODO(anissen): This works but is horrible
-        self.function_chunks = vec![chunks, vec![function_chunk], new_chunks].concat();
+        self.function_chunks[function_chunk_index].bytes = scope.bytecode.bytes.clone();
     }
 
     pub fn emit(&mut self, expressions: &'a Vec<Expr>) -> Vec<u8> {
