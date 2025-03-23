@@ -338,12 +338,7 @@ impl VirtualMachine {
                         println!("index: {}", index);
                     }
 
-                    let corrected_index = if is_global {
-                        index
-                    } else {
-                        self.current_call_frame().stack_index + index
-                    };
-                    let value = self.stack.get(corrected_index as usize).unwrap();
+                    let value = self.stack.get(index as usize).unwrap();
                     let function_index = match value {
                         Value::Function(f) => *f,
                         _ => panic!("expected function, encountered some other type"),
@@ -386,6 +381,9 @@ impl VirtualMachine {
                         self.program_counter += offset as usize;
                     }
                 }
+            }
+            if self.verbose_logging {
+                println!("Stack: {:?}", self.stack);
             }
         }
         if self.verbose_logging {

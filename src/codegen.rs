@@ -29,17 +29,11 @@ impl Scope {
         }
     }
 
-    fn nested(&mut self) -> &mut Self {
-        self.environment = self.environment.clone();
-        self.locals = self.locals.clone();
-        self
-    }
-
     fn function(&mut self) -> Self {
         Self {
             bytecode: BytecodeBuilder::new(),
             environment: self.environment.clone(),
-            locals: self.locals.clone(),
+            locals: HashSet::new(),
         }
     }
 }
@@ -134,7 +128,11 @@ impl<'a> Codegen<'a> {
 
             Expr::Block { exprs } => {
                 // Emit block with its own environment and locals
-                self.emit_exprs(exprs, &mut scope.nested());
+                let locals = scope.locals.clone();
+                let environment = scope.environment.clone();
+                self.emit_exprs(exprs, scope);
+                scope.locals = locals;
+                scope.environment = environment;
             }
 
             Expr::Function {

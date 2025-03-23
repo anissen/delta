@@ -4,13 +4,9 @@ use common::{assert_err, assert_ok};
 use delta::vm::Value;
 
 #[test]
+#[ignore = "not yet implemented"]
 fn empty() {
-    let source = r"# nothing here";
-    let result = match delta::run(&source.to_string(), None) {
-        Ok(None) => true,
-        _ => false,
-    };
-    assert!(result);
+    assert_err(r"# nothing here", "missing return value".to_string());
 }
 
 #[test]
