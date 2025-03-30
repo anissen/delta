@@ -9,7 +9,8 @@ fn main() {
     }
 
     let source_path = &args[1];
-    let result = delta::run_file(source_path);
+    let debug = args.contains(&"--debug".to_string());
+    let result = delta::run_file(source_path, debug);
     match result {
         Ok(Some(value)) => println!("Result: {:?}", value),
         Ok(None) => println!("Result: N/A"),

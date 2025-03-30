@@ -29,22 +29,22 @@ pub struct VirtualMachine {
     functions: Vec<FunctionObj>,
     stack: Vec<Value>,
     call_stack: Vec<CallFrame>,
-    verbose_logging: bool,
+    verbose: bool,
 }
 
-pub fn run<'a>(bytes: Vec<u8>, context: &'a Context<'a>) -> Option<Value> {
-    VirtualMachine::new(bytes).execute(context)
+pub fn run<'a>(bytes: Vec<u8>, context: &'a Context<'a>, verbose: bool) -> Option<Value> {
+    VirtualMachine::new(bytes, verbose).execute(context)
 }
 
 impl VirtualMachine {
-    fn new(bytes: Vec<u8>) -> Self {
+    fn new(bytes: Vec<u8>, verbose: bool) -> Self {
         Self {
             program: bytes,
             program_counter: 0,
             functions: Vec::new(),
             stack: Vec::new(),
             call_stack: Vec::new(),
-            verbose_logging: true,
+            verbose,
         }
     }
 
@@ -87,7 +87,7 @@ impl VirtualMachine {
         while self.program_counter < self.program.len() {
             let next = self.read_byte();
             let instruction = ByteCode::try_from(next).unwrap();
-            if self.verbose_logging {
+            if self.verbose {
                 println!(
                     "\n=== Instruction: {:?} === (pc: {})",
                     instruction,
@@ -324,7 +324,7 @@ impl VirtualMachine {
 
                 ByteCode::FunctionChunk => {
                     let name = self.read_string();
-                    if self.verbose_logging {
+                    if self.verbose {
                         println!("FunctionChunk: {}", name);
                     }
                 }
@@ -345,7 +345,7 @@ impl VirtualMachine {
                     let is_global = self.read_byte() == 1;
                     let index = self.read_byte(); // TODO(anissen): This seems off
                     let name = self.read_string();
-                    if self.verbose_logging {
+                    if self.verbose {
                         println!("function name: {}", name);
                         println!("is_global: {}", is_global);
                         println!("arity: {}", arity);
@@ -396,11 +396,11 @@ impl VirtualMachine {
                     }
                 }
             }
-            if self.verbose_logging {
+            if self.verbose {
                 println!("Stack: {:?}", self.stack);
             }
         }
-        if self.verbose_logging {
+        if self.verbose {
             println!("End stack: {:?}", self.stack);
         }
         self.stack.pop()

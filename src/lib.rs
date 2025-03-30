@@ -13,17 +13,19 @@ use std::{fs::File, io::Read};
 
 use diagnostics::Diagnostics;
 
-pub fn read_file(path: &String) -> String {
-    let mut file = File::open(path).expect("Unable to open file");
+pub fn read_file(path: &String) -> std::io::Result<String> {
+    let mut file = File::open(path)?;
     let mut source = String::new();
-    file.read_to_string(&mut source)
-        .expect("Error reading file.");
-    source
+    file.read_to_string(&mut source)?;
+    Ok(source)
 }
 
-pub fn run_file(source_path: &String) -> Result<Option<vm::Value>, String> {
+pub fn run_file(source_path: &String, debug: bool) -> Result<Option<vm::Value>, String> {
     let source = read_file(source_path);
-    run(&source, Some(source_path))
+    match source {
+        Ok(source) => run(&source, Some(source_path), debug),
+        Err(err) => Err(err.to_string()),
+    }
 }
 
 /*
@@ -52,9 +54,11 @@ pub fn run_file(source_path: &String) -> Result<Option<vm::Value>, String> {
 */
 
 // TODO(anissen): Make a concept of diagnostics (containing just syntax error for now)
-pub fn run(source: &str, file_name: Option<&String>) -> Result<Option<vm::Value>, String> {
-    let verbose = false;
-
+pub fn run(
+    source: &str,
+    file_name: Option<&String>,
+    debug: bool,
+) -> Result<Option<vm::Value>, String> {
     let mut diagnostics = Diagnostics::new();
 
     let default_file_name = "n/a".to_string();
@@ -64,7 +68,11 @@ pub fn run(source: &str, file_name: Option<&String>) -> Result<Option<vm::Value>
     );
 
     println!("\n# lexing =>");
+    let start = std::time::Instant::now();
     let tokens = lexer::lex(source);
+    let duration = start.elapsed();
+    println!("Elapsed: {:?}", duration);
+
     let (tokens, syntax_errors): (Vec<tokens::Token>, Vec<tokens::Token>) =
         tokens.into_iter().partition(|token| match token.kind {
             tokens::TokenKind::SyntaxError(_) => false,
@@ -80,7 +88,7 @@ pub fn run(source: &str, file_name: Option<&String>) -> Result<Option<vm::Value>
         _ => panic!(),
     });
 
-    if verbose {
+    if debug {
         tokens.iter().for_each(|token| {
             println!(
                 "token: {:?} at '{}' (line {}, column: {})",
@@ -90,8 +98,11 @@ pub fn run(source: &str, file_name: Option<&String>) -> Result<Option<vm::Value>
     }
 
     println!("\n# parsing =>");
+    let start = std::time::Instant::now();
     let ast = parser::parse(tokens)?;
-    if verbose {
+    let duration = start.elapsed();
+    println!("Elapsed: {:?}", duration);
+    if debug {
         println!("ast: {:?}", ast);
     }
 
@@ -100,17 +111,22 @@ pub fn run(source: &str, file_name: Option<&String>) -> Result<Option<vm::Value>
     // TODO(anissen): Should use `program` w. diagnostics
 
     println!("\n# code gen =>");
+    let start = std::time::Instant::now();
     let bytecodes = codegen::codegen(&ast, &context, &mut diagnostics);
-    if verbose {
+    let duration = start.elapsed();
+    println!("Elapsed: {:?}", duration);
+    if debug {
         println!("byte code length: {}", bytecodes.len());
         println!("byte codes: {:?}", bytecodes);
     }
 
-    println!("\n# disassembly =>");
-    disassembler::disassemble(bytecodes.clone());
+    if debug {
+        println!("\n# disassembly =>");
+        disassembler::disassemble(bytecodes.clone());
+    }
 
     println!("\n# vm =>");
-    let result = vm::run(bytecodes, &context);
+    let result = vm::run(bytecodes, &context, debug);
 
     syntax_errors.iter().for_each(|token| match token.kind {
         tokens::TokenKind::SyntaxError(description) => {

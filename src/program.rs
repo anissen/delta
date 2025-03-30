@@ -131,7 +131,7 @@ impl<'a> Program<'a> {
         Ok(codegen::codegen(&ast, &self.context, &mut diagnostics))
     }
 
-    pub fn run(&self, bytecodes: Vec<u8>) -> Option<vm::Value> {
-        vm::run(bytecodes, &self.context)
+    pub fn run(&self, bytecodes: Vec<u8>, debug: bool) -> Option<vm::Value> {
+        vm::run(bytecodes, &self.context, debug)
     }
 }

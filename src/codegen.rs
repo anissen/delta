@@ -442,9 +442,9 @@ impl<'a> Codegen<'a> {
         let mut signature_builder = BytecodeBuilder::new();
         let mut signature_patches = Vec::new();
 
-        println!("Function chunks:");
+        // println!("Function chunks:");
         for ele in self.function_chunks.iter() {
-            println!("{:?}", ele);
+            // println!("{:?}", ele);
             let signature_offset = signature_builder
                 .add_op(ByteCode::FunctionSignature)
                 .add_string(&ele.function_name)
