@@ -41,26 +41,25 @@ impl Scope {
 pub struct Codegen<'a> {
     function_chunks: Vec<FunctionChunk<'a>>,
     context: &'a Context<'a>,
-    diagnostics: &'a mut Diagnostics<'a>,
+    diagnostics: Diagnostics<'a>,
 }
 
 pub fn codegen<'a>(
     expressions: &'a Vec<Expr>,
     context: &'a Context<'a>,
-    diagnostics: &'a mut Diagnostics<'a>,
-) -> Vec<u8> {
-    Codegen::new(context, diagnostics).emit(expressions)
+) -> Result<Vec<u8>, Diagnostics<'a>> {
+    Codegen::new(context).emit(expressions)
 }
 
 // TODO(anissen): Add a function overview mapping for each scope containing { name, arity, starting IP, source line number  }.
 // This will be used directly in the VM as well as for debug logging.
 
 impl<'a> Codegen<'a> {
-    fn new(context: &'a Context<'a>, diagnostics: &'a mut Diagnostics<'a>) -> Self {
+    fn new(context: &'a Context<'a>) -> Self {
         Self {
             function_chunks: vec![],
             context,
-            diagnostics,
+            diagnostics: Diagnostics::new(),
         }
     }
 
@@ -151,17 +150,31 @@ impl<'a> Codegen<'a> {
                         .add_byte(self.context.get_index(name))
                         .add_byte(arg_count as u8);
                 } else {
-                    scope
-                        .bytecode
-                        .add_op(ByteCode::Call)
-                        .add_byte(arg_count as u8);
-                    let index = scope.environment.get(name).unwrap();
-                    if scope.locals.contains(name) {
-                        scope.bytecode.add_byte(0);
-                    } else {
-                        scope.bytecode.add_byte(1);
+                    match scope.environment.get(name) {
+                        Some(index) => {
+                            scope
+                                .bytecode
+                                .add_op(ByteCode::Call)
+                                .add_byte(arg_count as u8);
+                            if scope.locals.contains(name) {
+                                scope.bytecode.add_byte(0);
+                            } else {
+                                scope.bytecode.add_byte(1);
+                            }
+                            scope.bytecode.add_byte(*index);
+                        }
+                        None => {
+                            // let message = Message::new(
+                            //     format!("Unknown function: {}", name),
+                            //     &name.position,
+                            // );
+                            //
+                            // TODO(anissen): name should be token
+                            let message =
+                                Message::from_error(format!("Unknown function: {}", name));
+                            self.diagnostics.add_error(message);
+                        }
                     }
-                    scope.bytecode.add_byte(*index);
                 };
 
                 if name.len() > 255 {
@@ -346,19 +359,24 @@ impl<'a> Codegen<'a> {
                 params,
                 expr,
             } => {
+                // save function name to environment before entering function definition
+                let index = scope.locals.len() as u8;
+                scope.environment.insert(name.lexeme.clone(), index);
+                scope.locals.insert(name.lexeme.clone());
+
                 self.emit_function(slash, Some(name), params, expr, scope);
+                scope.bytecode.add_set_local_value(index);
             }
 
             _ => {
                 self.emit_expr(expr, scope);
+
+                let index = scope.locals.len() as u8;
+                scope.environment.insert(name.lexeme.clone(), index);
+                scope.locals.insert(name.lexeme.clone());
+                scope.bytecode.add_set_local_value(index);
             }
         }
-
-        let index = scope.locals.len() as u8;
-        scope.environment.insert(name.lexeme.clone(), index);
-        scope.locals.insert(name.lexeme.clone());
-
-        scope.bytecode.add_set_local_value(index);
     }
 
     fn emit_function(
@@ -428,7 +446,7 @@ impl<'a> Codegen<'a> {
         self.function_chunks[function_chunk_index].bytes = scope.bytecode.bytes.clone();
     }
 
-    pub fn emit(&mut self, expressions: &'a Vec<Expr>) -> Vec<u8> {
+    pub fn emit(&mut self, expressions: &'a Vec<Expr>) -> Result<Vec<u8>, Diagnostics<'a>> {
         let mut scope = Scope::new();
         scope
             .bytecode
@@ -436,9 +454,16 @@ impl<'a> Codegen<'a> {
             .add_string("main");
 
         self.emit_exprs(expressions, &mut scope);
-
         scope.bytecode.add_op(ByteCode::Return); // TODO(anissen): I may not need this, because I know the function bytecode length
 
+        if !self.diagnostics.has_errors() {
+            Ok(self.create_bytecode(&mut scope))
+        } else {
+            Err(self.diagnostics.clone())
+        }
+    }
+
+    fn create_bytecode(&mut self, scope: &mut Scope) -> Vec<u8> {
         let mut signature_builder = BytecodeBuilder::new();
         let mut signature_patches = Vec::new();
 

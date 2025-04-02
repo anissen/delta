@@ -112,9 +112,17 @@ pub fn run(
 
     println!("\n# code gen =>");
     let start = std::time::Instant::now();
-    let bytecodes = codegen::codegen(&ast, &context, &mut diagnostics);
+    let bytecodes = match codegen::codegen(&ast, &context) {
+        Ok(bytecodes) => bytecodes,
+        Err(diagnostics) => {
+            eprintln!("Errors: {:?}", diagnostics);
+            return Err("errors".to_string()); // TODO(anissen): Should return diagnostics
+        }
+    };
+
     let duration = start.elapsed();
     println!("Elapsed: {:?}", duration);
+
     if debug {
         println!("byte code length: {}", bytecodes.len());
         println!("byte codes: {:?}", bytecodes);

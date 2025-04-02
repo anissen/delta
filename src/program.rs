@@ -1,7 +1,9 @@
 use std::collections::HashMap;
 
 use crate::codegen;
+use crate::diagnostics;
 use crate::diagnostics::Diagnostics;
+use crate::diagnostics::Message;
 use crate::lexer;
 use crate::parser;
 use crate::tokens::TokenKind;
@@ -114,13 +116,22 @@ impl<'a> Program<'a> {
     }
 
     pub fn compile(&self, source: &str) -> Result<Vec<u8>, String> {
-        let mut diagnostics = Diagnostics::new();
         let tokens = lexer::lex(source);
         let non_error_tokens = tokens
             .into_iter()
             .filter(|t| !matches!(t.kind, TokenKind::SyntaxError(_)))
             .collect();
-        let ast = parser::parse(non_error_tokens)?;
+        let ast = match parser::parse(non_error_tokens) {
+            Ok(ast) => ast,
+            // Err(err) => {
+            //     let mut diagnostics = Diagnostics::new();
+            //     diagnostics.add_error(Message::from_error(err));
+            //     return Err(diagnostics);
+            Err(diagnostics) => {
+                eprintln!("Errors: {:?}", diagnostics);
+                return Err("errors".to_string()); // TODO(anissen): Should return diagnostics
+            }
+        };
         let foreign_functions = self
             .context
             .functions
@@ -128,7 +139,14 @@ impl<'a> Program<'a> {
             .cloned()
             .collect::<Vec<String>>();
         println!("foreign functions: {:?}", foreign_functions);
-        Ok(codegen::codegen(&ast, &self.context, &mut diagnostics))
+        let bytecodes = codegen::codegen(&ast, &self.context);
+        match bytecodes {
+            Ok(bytecodes) => Ok(bytecodes),
+            Err(diagnostics) => {
+                eprintln!("Errors: {:?}", diagnostics);
+                return Err("errors".to_string()); // TODO(anissen): Should return diagnostics
+            }
+        }
     }
 
     pub fn run(&self, bytecodes: Vec<u8>, debug: bool) -> Option<vm::Value> {
