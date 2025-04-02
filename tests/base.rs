@@ -265,3 +265,8 @@ fn string_interpolation() {
 fn mixed_division() {
     assert_err(r"42.3 / 2", "incompatible types for division".to_string());
 }
+
+#[test]
+fn undefined_variable() {
+    assert_err("x", "Name not found in scope: x".to_string());
+}

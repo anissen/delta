@@ -184,3 +184,88 @@ is_even = \v
         Value::True,
     )
 }
+
+#[test]
+fn calling_function_declared_later() {
+    assert_ok(
+        r"
+call_square = \v
+    v | square
+
+square = \v
+    v * v
+
+5 | call_square",
+        Value::Integer(25),
+    )
+}
+
+#[test]
+fn nested_function() {
+    assert_ok(
+        r#"
+match = \v
+	inner_add = \v2 v3
+		v2 + v3
+	v | inner_add 1
+
+"result is {3 | match}"
+"#,
+        Value::String("result is 4".to_string()),
+    )
+}
+
+#[test]
+fn recursive_function() {
+    assert_ok(
+        r"
+rec = \v
+	v is
+		n if n <= 0
+			n
+		_
+			v - 1 | rec
+
+2 | rec",
+        Value::Integer(0),
+    )
+}
+
+#[test]
+fn recursive_repeat_function() {
+    assert_ok(
+        r#"
+repeat = \str times
+	str | repeat_part "" times
+
+repeat_part = \str acc tt
+	tt is
+		t if t <= 1
+			acc
+		_
+			"{acc}{str}" | repeat_part str (tt - 1)
+
+"hey" | repeat 3
+"#,
+        Value::String("heyheyhey".to_string()),
+    )
+}
+
+#[test]
+fn nested_recursive_repeat_function() {
+    assert_ok(
+        r#"
+repeat = \str times
+	repeat_part = \acc tt
+		tt is
+			t if t <= 1
+				acc
+			_
+				"{acc}{str}" | repeat_part (tt - 1)
+	str | repeat_part times
+
+"yo" | repeat 3
+"#,
+        Value::String("yoyoyo".to_string()),
+    )
+}

@@ -4,8 +4,10 @@ use crate::codegen;
 use crate::diagnostics;
 use crate::diagnostics::Diagnostics;
 use crate::diagnostics::Message;
+use crate::disassembler;
 use crate::lexer;
 use crate::parser;
+use crate::tokens;
 use crate::tokens::TokenKind;
 use crate::vm;
 // use crate::vm::VirtualMachine;
@@ -115,23 +117,46 @@ impl<'a> Program<'a> {
         Self { context }
     }
 
-    pub fn compile(&self, source: &str) -> Result<Vec<u8>, String> {
+    pub fn compile(&self, source: &str, debug: bool) -> Result<Vec<u8>, String> {
+        println!("\n# lexing =>");
+        let start = std::time::Instant::now();
         let tokens = lexer::lex(source);
-        let non_error_tokens = tokens
-            .into_iter()
-            .filter(|t| !matches!(t.kind, TokenKind::SyntaxError(_)))
-            .collect();
-        let ast = match parser::parse(non_error_tokens) {
-            Ok(ast) => ast,
-            // Err(err) => {
-            //     let mut diagnostics = Diagnostics::new();
-            //     diagnostics.add_error(Message::from_error(err));
-            //     return Err(diagnostics);
-            Err(diagnostics) => {
-                eprintln!("Errors: {:?}", diagnostics);
-                return Err("errors".to_string()); // TODO(anissen): Should return diagnostics
+        let duration = start.elapsed();
+        println!("Elapsed: {:?}", duration);
+
+        let (tokens, syntax_errors): (Vec<tokens::Token>, Vec<tokens::Token>) =
+            tokens.into_iter().partition(|token| match token.kind {
+                tokens::TokenKind::SyntaxError(_) => false,
+                _ => true,
+            });
+        syntax_errors.iter().for_each(|token| match token.kind {
+            tokens::TokenKind::SyntaxError(description) => {
+                println!(
+                    "\n⚠️ syntax error: {} at {:?} ({:?})\n",
+                    description, token.lexeme, token.position
+                )
             }
-        };
+            _ => panic!(),
+        });
+
+        if debug {
+            tokens.iter().for_each(|token| {
+                println!(
+                    "token: {:?} at '{}' (line {}, column: {})",
+                    token.kind, token.lexeme, token.position.line, token.position.column
+                )
+            });
+        }
+
+        println!("\n# parsing =>");
+        let start = std::time::Instant::now();
+        let ast = parser::parse(tokens)?;
+        let duration = start.elapsed();
+        println!("Elapsed: {:?}", duration);
+        if debug {
+            println!("ast: {:?}", ast);
+        }
+
         let foreign_functions = self
             .context
             .functions
@@ -139,12 +164,27 @@ impl<'a> Program<'a> {
             .cloned()
             .collect::<Vec<String>>();
         println!("foreign functions: {:?}", foreign_functions);
+
+        // TODO(anissen): Should use `program` w. diagnostics
+
+        println!("\n# code gen =>");
+        let start = std::time::Instant::now();
         let bytecodes = codegen::codegen(&ast, &self.context);
+        let duration = start.elapsed();
+        println!("Elapsed: {:?}", duration);
+
         match bytecodes {
-            Ok(bytecodes) => Ok(bytecodes),
+            Ok(bytecodes) => {
+                if debug {
+                    println!("byte code length: {}", bytecodes.len());
+                    println!("byte codes: {:?}", bytecodes);
+                }
+
+                Ok(bytecodes)
+            }
             Err(diagnostics) => {
                 eprintln!("Errors: {:?}", diagnostics);
-                return Err("errors".to_string()); // TODO(anissen): Should return diagnostics
+                Err("errors".to_string()) // TODO(anissen): Should return diagnostics
             }
         }
     }
