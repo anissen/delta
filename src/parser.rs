@@ -1,3 +1,6 @@
+use crate::diagnostics;
+use crate::diagnostics::Diagnostics;
+use crate::diagnostics::Message;
 use crate::expressions::BinaryOperator;
 use crate::expressions::Expr;
 use crate::expressions::IsArm;
@@ -49,7 +52,7 @@ struct Parser {
     indentation: u8,
 }
 
-pub fn parse(tokens: Vec<Token>) -> Result<Vec<Expr>, String> {
+pub fn parse(tokens: Vec<Token>) -> Result<Vec<Expr>, Diagnostics> {
     Parser::new(tokens).parse()
 }
 
@@ -74,12 +77,16 @@ impl Parser {
         }
     }
 
-    fn parse(&mut self) -> Result<Vec<Expr>, String> {
+    fn parse(&mut self) -> Result<Vec<Expr>, Diagnostics> {
+        let mut diagnostics = Diagnostics::new();
         let mut expressions = Vec::new();
         loop {
-            let res = self.expression()?;
-            if let Some(expression) = res {
-                expressions.push(expression);
+            match self.expression() {
+                Ok(Some(expression)) => expressions.push(expression),
+                Ok(None) => (), // Should we do something here?
+                Err(err) => {
+                    diagnostics.add_error(Message::from_error(err));
+                }
             }
             // if let Ok(expression) = res {
             //     expressions.push(expression);
@@ -93,7 +100,11 @@ impl Parser {
                 break;
             }
         }
-        Ok(expressions)
+        if !diagnostics.has_errors() {
+            Ok(expressions)
+        } else {
+            Err(diagnostics)
+        }
     }
 
     fn expression(&mut self) -> Result<Option<Expr>, String> {
@@ -108,6 +119,15 @@ impl Parser {
                 Expr::Value { name } => {
                     let operator = self.previous();
                     let value = self.assignment()?;
+                    println!("Assigning value {}", name.lexeme);
+                    // match &value {
+                    //     Some(Expr::Function {
+                    //         slash,
+                    //         params,
+                    //         expr,
+                    //     }) => println!("Assigning function to value {}", name.lexeme),
+                    //     _ => (),
+                    // }
                     Ok(Some(Expr::Assignment {
                         name,
                         _operator: operator,
@@ -396,6 +416,8 @@ impl Parser {
             params.push(param);
         }
         let expr = self.block()?;
+        // TODO(anissen): Add function to some meta data?
+        println!("Parsed function: {:?}", slash);
         Ok(Some(Expr::Function {
             slash,
             params,

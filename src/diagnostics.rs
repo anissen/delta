@@ -1,34 +1,34 @@
 use crate::tokens::Span;
 
 #[derive(Debug, Clone)]
-pub struct Message<'a> {
+pub struct Message {
     content: String,
-    span: &'a Span,
+    span: Span,
 }
 
-impl<'a> Message<'a> {
-    pub fn new(content: String, span: &'a Span) -> Self {
+impl Message {
+    pub fn new(content: String, span: Span) -> Self {
         Message { content, span }
     }
     pub fn from_error(content: String) -> Self {
         Message {
             content,
-            span: &Span { line: 0, column: 0 },
+            span: Span { line: 0, column: 0 },
         }
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct Diagnostics<'a> {
-    errors: Vec<Message<'a>>,
+pub struct Diagnostics {
+    errors: Vec<Message>,
 }
 
-impl<'a> Diagnostics<'a> {
+impl Diagnostics {
     pub fn new() -> Self {
         Diagnostics { errors: Vec::new() }
     }
 
-    pub fn add_error(&mut self, message: Message<'a>) {
+    pub fn add_error(&mut self, message: Message) {
         self.errors.push(message);
     }
 

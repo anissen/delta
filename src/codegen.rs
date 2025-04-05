@@ -41,13 +41,13 @@ impl Scope {
 pub struct Codegen<'a> {
     function_chunks: Vec<FunctionChunk<'a>>,
     context: &'a Context<'a>,
-    diagnostics: Diagnostics<'a>,
+    diagnostics: Diagnostics,
 }
 
 pub fn codegen<'a>(
     expressions: &'a Vec<Expr>,
     context: &'a Context<'a>,
-) -> Result<Vec<u8>, Diagnostics<'a>> {
+) -> Result<Vec<u8>, Diagnostics> {
     Codegen::new(context).emit(expressions)
 }
 
@@ -94,7 +94,7 @@ impl<'a> Codegen<'a> {
                     if lexeme.len() > 255 {
                         let message = Message::new(
                             format!("Function name too long: {}", lexeme),
-                            &name.position,
+                            name.position.clone(),
                         );
                         self.diagnostics.add_error(message);
                     }
@@ -107,7 +107,7 @@ impl<'a> Codegen<'a> {
                 } else {
                     let msg = Message::new(
                         format!("Name not found in scope: {}", lexeme),
-                        &name.position,
+                        name.position.clone(),
                     );
                     self.diagnostics.add_error(msg);
                 }
@@ -446,7 +446,7 @@ impl<'a> Codegen<'a> {
         self.function_chunks[function_chunk_index].bytes = scope.bytecode.bytes.clone();
     }
 
-    pub fn emit(&mut self, expressions: &'a Vec<Expr>) -> Result<Vec<u8>, Diagnostics<'a>> {
+    pub fn emit(&mut self, expressions: &'a Vec<Expr>) -> Result<Vec<u8>, Diagnostics> {
         let mut scope = Scope::new();
         scope
             .bytecode

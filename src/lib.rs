@@ -12,6 +12,7 @@ pub mod vm;
 use std::{fs::File, io::Read};
 
 use diagnostics::Diagnostics;
+use program::Program;
 
 pub fn read_file(path: &String) -> std::io::Result<String> {
     let mut file = File::open(path)?;
@@ -59,92 +60,28 @@ pub fn run(
     file_name: Option<&String>,
     debug: bool,
 ) -> Result<Option<vm::Value>, String> {
-    let mut diagnostics = Diagnostics::new();
-
     let default_file_name = "n/a".to_string();
     println!(
         "\n# source (file: {}) =>",
         file_name.unwrap_or(&default_file_name)
     );
 
-    println!("\n# lexing =>");
-    let start = std::time::Instant::now();
-    let tokens = lexer::lex(source);
-    let duration = start.elapsed();
-    println!("Elapsed: {:?}", duration);
-
-    let (tokens, syntax_errors): (Vec<tokens::Token>, Vec<tokens::Token>) =
-        tokens.into_iter().partition(|token| match token.kind {
-            tokens::TokenKind::SyntaxError(_) => false,
-            _ => true,
-        });
-    syntax_errors.iter().for_each(|token| match token.kind {
-        tokens::TokenKind::SyntaxError(description) => {
-            println!(
-                "\n⚠️ syntax error: {} at {:?} ({:?})\n",
-                description, token.lexeme, token.position
-            )
-        }
-        _ => panic!(),
-    });
-
-    if debug {
-        tokens.iter().for_each(|token| {
-            println!(
-                "token: {:?} at '{}' (line {}, column: {})",
-                token.kind, token.lexeme, token.position.line, token.position.column
-            )
-        });
-    }
-
-    println!("\n# parsing =>");
-    let start = std::time::Instant::now();
-    let ast = parser::parse(tokens)?;
-    let duration = start.elapsed();
-    println!("Elapsed: {:?}", duration);
-    if debug {
-        println!("ast: {:?}", ast);
-    }
-
     let context = program::Context::new();
+    let program = Program::new(context);
+    match program.compile(source, debug) {
+        Ok(bytecodes) => {
+            if debug {
+                println!("\n# disassembly =>");
+                disassembler::disassemble(bytecodes.clone());
+            }
 
-    // TODO(anissen): Should use `program` w. diagnostics
+            let result = program.run(bytecodes, debug);
+            Ok(result)
+        }
 
-    println!("\n# code gen =>");
-    let start = std::time::Instant::now();
-    let bytecodes = match codegen::codegen(&ast, &context) {
-        Ok(bytecodes) => bytecodes,
         Err(diagnostics) => {
             eprintln!("Errors: {:?}", diagnostics);
-            return Err("errors".to_string()); // TODO(anissen): Should return diagnostics
+            Err("Some error".to_string())
         }
-    };
-
-    let duration = start.elapsed();
-    println!("Elapsed: {:?}", duration);
-
-    if debug {
-        println!("byte code length: {}", bytecodes.len());
-        println!("byte codes: {:?}", bytecodes);
     }
-
-    if debug {
-        println!("\n# disassembly =>");
-        disassembler::disassemble(bytecodes.clone());
-    }
-
-    println!("\n# vm =>");
-    let result = vm::run(bytecodes, &context, debug);
-
-    syntax_errors.iter().for_each(|token| match token.kind {
-        tokens::TokenKind::SyntaxError(description) => {
-            println!(
-                "\n⚠️ syntax error: {} at {:?} ({:?})\n",
-                description, token.lexeme, token.position
-            )
-        }
-        _ => panic!(),
-    });
-
-    Ok(result)
 }

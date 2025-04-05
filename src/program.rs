@@ -117,7 +117,7 @@ impl<'a> Program<'a> {
         Self { context }
     }
 
-    pub fn compile(&self, source: &str, debug: bool) -> Result<Vec<u8>, String> {
+    pub fn compile(&self, source: &str, debug: bool) -> Result<Vec<u8>, Diagnostics> {
         println!("\n# lexing =>");
         let start = std::time::Instant::now();
         let tokens = lexer::lex(source);
@@ -165,8 +165,6 @@ impl<'a> Program<'a> {
             .collect::<Vec<String>>();
         println!("foreign functions: {:?}", foreign_functions);
 
-        // TODO(anissen): Should use `program` w. diagnostics
-
         println!("\n# code gen =>");
         let start = std::time::Instant::now();
         let bytecodes = codegen::codegen(&ast, &self.context);
@@ -179,17 +177,17 @@ impl<'a> Program<'a> {
                     println!("byte code length: {}", bytecodes.len());
                     println!("byte codes: {:?}", bytecodes);
                 }
-
                 Ok(bytecodes)
             }
             Err(diagnostics) => {
                 eprintln!("Errors: {:?}", diagnostics);
-                Err("errors".to_string()) // TODO(anissen): Should return diagnostics
+                Err(diagnostics.clone())
             }
         }
     }
 
     pub fn run(&self, bytecodes: Vec<u8>, debug: bool) -> Option<vm::Value> {
+        println!("\n# vm =>");
         vm::run(bytecodes, &self.context, debug)
     }
 }
