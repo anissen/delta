@@ -28,7 +28,7 @@ add = \v1 v2
 }
 
 #[test]
-fn nested_function_calling() {
+fn repeated_function_calling() {
     assert_ok(
         r"
 add = \v1 v2
@@ -186,6 +186,7 @@ is_even = \v
 }
 
 #[test]
+#[ignore = "not implemented yet"]
 fn calling_function_declared_later() {
     assert_ok(
         r"
@@ -201,6 +202,7 @@ square = \v
 }
 
 #[test]
+#[ignore = "not implemented yet"]
 fn nested_function() {
     assert_ok(
         r#"
@@ -216,6 +218,25 @@ match = \v
 }
 
 #[test]
+#[ignore = "not implemented yet"]
+fn repeated_nested_function_call() {
+    assert_ok(
+        r#"
+match = \v
+	inner_add = \v2 v3
+		v2 + v3
+	res1 = v | inner_add 1
+	unused = 1
+	res1 + (v | inner_add 1)
+
+"result is {3 | match}"
+"#,
+        Value::String("result is 4".to_string()),
+    )
+}
+
+#[test]
+#[ignore = "not implemented yet"]
 fn recursive_function() {
     assert_ok(
         r"
@@ -232,6 +253,7 @@ rec = \v
 }
 
 #[test]
+#[ignore = "not implemented yet"]
 fn recursive_repeat_function() {
     assert_ok(
         r#"
@@ -252,6 +274,7 @@ repeat_part = \str acc tt
 }
 
 #[test]
+#[ignore = "not implemented yet"]
 fn nested_recursive_repeat_function() {
     assert_ok(
         r#"

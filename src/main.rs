@@ -14,6 +14,6 @@ fn main() {
     match result {
         Ok(Some(value)) => println!("Result: {:?}", value),
         Ok(None) => println!("Result: N/A"),
-        Err(err) => println!("Error(s) occured:\n{}", err),
+        Err(err) => println!("Error(s) occured:\n{}", err.to_string()),
     }
 }

@@ -2,8 +2,8 @@ use crate::tokens::Span;
 
 #[derive(Debug, Clone)]
 pub struct Message {
-    content: String,
-    span: Span,
+    pub content: String,
+    pub span: Span,
 }
 
 impl Message {
@@ -34,5 +34,20 @@ impl Diagnostics {
 
     pub fn has_errors(&self) -> bool {
         !self.errors.is_empty()
+    }
+
+    pub fn count(&self) -> usize {
+        self.errors.len()
+    }
+
+    pub fn get_errors(&self) -> Vec<Message> {
+        self.errors.clone()
+    }
+
+    pub fn to_string(&self) -> String {
+        self.errors
+            .iter()
+            .map(|f| format!("line {}: {}", f.span.line, f.content))
+            .collect()
     }
 }

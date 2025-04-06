@@ -85,7 +85,7 @@ impl Parser {
                 Ok(Some(expression)) => expressions.push(expression),
                 Ok(None) => (), // Should we do something here?
                 Err(err) => {
-                    diagnostics.add_error(Message::from_error(err));
+                    diagnostics.add_error(Message::new(err, self.previous().position));
                 }
             }
             // if let Ok(expression) = res {

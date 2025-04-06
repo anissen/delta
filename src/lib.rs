@@ -11,7 +11,7 @@ pub mod vm;
 
 use std::{fs::File, io::Read};
 
-use diagnostics::Diagnostics;
+use diagnostics::{Diagnostics, Message};
 use program::Program;
 
 pub fn read_file(path: &String) -> std::io::Result<String> {
@@ -21,11 +21,15 @@ pub fn read_file(path: &String) -> std::io::Result<String> {
     Ok(source)
 }
 
-pub fn run_file(source_path: &String, debug: bool) -> Result<Option<vm::Value>, String> {
+pub fn run_file(source_path: &String, debug: bool) -> Result<Option<vm::Value>, Diagnostics> {
     let source = read_file(source_path);
     match source {
         Ok(source) => run(&source, Some(source_path), debug),
-        Err(err) => Err(err.to_string()),
+        Err(err) => {
+            let mut diagnostics = Diagnostics::new();
+            diagnostics.add_error(Message::from_error(err.to_string()));
+            Err(diagnostics)
+        }
     }
 }
 
@@ -59,7 +63,7 @@ pub fn run(
     source: &str,
     file_name: Option<&String>,
     debug: bool,
-) -> Result<Option<vm::Value>, String> {
+) -> Result<Option<vm::Value>, Diagnostics> {
     let default_file_name = "n/a".to_string();
     println!(
         "\n# source (file: {}) =>",
@@ -79,9 +83,6 @@ pub fn run(
             Ok(result)
         }
 
-        Err(diagnostics) => {
-            eprintln!("Errors: {:?}", diagnostics);
-            Err("Some error".to_string())
-        }
+        Err(diagnostics) => Err(diagnostics),
     }
 }
