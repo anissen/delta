@@ -1,6 +1,6 @@
 mod bytecodes;
 mod codegen;
-mod diagnostics;
+pub mod diagnostics;
 mod disassembler;
 mod expressions;
 mod lexer;
@@ -79,6 +79,7 @@ pub fn run(
                 disassembler::disassemble(bytecodes.clone());
             }
 
+            println!("\n# vm =>");
             let result = program.run(bytecodes, debug);
             Ok(result)
         }

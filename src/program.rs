@@ -187,7 +187,6 @@ impl<'a> Program<'a> {
     }
 
     pub fn run(&self, bytecodes: Vec<u8>, debug: bool) -> Option<vm::Value> {
-        println!("\n# vm =>");
         vm::run(bytecodes, &self.context, debug)
     }
 }
