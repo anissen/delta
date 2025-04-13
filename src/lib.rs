@@ -7,6 +7,7 @@ mod lexer;
 mod parser;
 pub mod program;
 mod tokens;
+mod typer;
 pub mod vm;
 
 use std::{fs::File, io::Read};
