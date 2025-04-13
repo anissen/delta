@@ -78,6 +78,7 @@ impl Lexer {
         let char = self.advance();
         match char {
             ' ' => self.spaces(),
+            '+' if self.matches('.') => TokenKind::PlusDot,
             '+' => TokenKind::Plus,
             '-' if self.is_digit(self.peek()) => self.number(),
             '-' => TokenKind::Minus,

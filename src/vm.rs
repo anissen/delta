@@ -130,6 +130,12 @@ impl VirtualMachine {
                     }
                 }
 
+                ByteCode::FloatAddition => {
+                    let right = self.pop_float();
+                    let left = self.pop_float();
+                    self.stack.push(Value::Float(left + right))
+                }
+
                 ByteCode::Subtraction => {
                     let right = self.pop_any();
                     let left = self.pop_any();

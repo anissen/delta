@@ -126,6 +126,10 @@ impl Disassembler {
                     self.print(vec!["div".to_string()]);
                 }
 
+                ByteCode::FloatAddition => {
+                    self.print(vec!["add_float".to_string()]);
+                }
+
                 ByteCode::Modulo => {
                     self.print(vec!["mod".to_string()]);
                 }

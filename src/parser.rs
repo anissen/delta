@@ -11,8 +11,8 @@ use crate::tokens::TokenKind;
 use crate::tokens::TokenKind::{
     BackSlash, Bang, BangEqual, Comment, Equal, EqualEqual, False, Float, Identifier, Integer,
     KeywordAnd, KeywordIf, KeywordIs, KeywordOr, LeftChevron, LeftChevronEqual, LeftParen, Minus,
-    NewLine, Percent, Pipe, Plus, RightChevron, RightChevronEqual, RightParen, Slash, Space, Star,
-    StringConcat, Tab, True, Underscore,
+    NewLine, Percent, Pipe, Plus, PlusDot, RightChevron, RightChevronEqual, RightParen, Slash,
+    Space, Star, StringConcat, Tab, True, Underscore,
 };
 
 /*
@@ -310,10 +310,11 @@ impl Parser {
     // term → factor ( ( "-" | "+" ) factor )* ;
     fn term(&mut self) -> Result<Option<Expr>, String> {
         let mut expr = self.factor()?;
-        while expr.is_some() && self.matches_any(&[Plus, Minus]) {
+        while expr.is_some() && self.matches_any(&[Plus, PlusDot, Minus]) {
             let token = self.previous();
             let operator = match token.kind {
                 Plus => BinaryOperator::Addition,
+                PlusDot => BinaryOperator::FloatAddition,
                 Minus => BinaryOperator::Subtraction,
                 _ => panic!("unreachable"),
             };

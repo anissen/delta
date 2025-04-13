@@ -2,6 +2,7 @@
 pub enum ByteCode {
     Addition,
     Division,
+    FloatAddition,
     GetLocalValue,
     Multiplication,
     Negation,
@@ -44,6 +45,7 @@ impl TryFrom<u8> for ByteCode {
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
             value if value == ByteCode::Addition as u8 => Ok(Self::Addition),
+            value if value == ByteCode::FloatAddition as u8 => Ok(Self::FloatAddition),
             value if value == ByteCode::Division as u8 => Ok(Self::Division),
             value if value == ByteCode::GetLocalValue as u8 => Ok(Self::GetLocalValue),
             value if value == ByteCode::Multiplication as u8 => Ok(Self::Multiplication),
