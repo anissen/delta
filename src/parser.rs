@@ -6,6 +6,7 @@ use crate::expressions::Expr;
 use crate::expressions::IsArm;
 use crate::expressions::IsArmPattern;
 use crate::expressions::UnaryOperator;
+use crate::expressions::ValueType;
 use crate::tokens::Token;
 use crate::tokens::TokenKind;
 use crate::tokens::TokenKind::{
@@ -116,7 +117,7 @@ impl Parser {
         let expr = self.is()?;
         if expr.is_some() && self.matches(&Equal) {
             match expr.unwrap() {
-                Expr::Value { name } => {
+                Expr::Identifier { name } => {
                     let operator = self.previous();
                     let value = self.assignment()?;
                     println!("Assigning value {}", name.lexeme);
@@ -189,7 +190,7 @@ impl Parser {
             Ok(IsArmPattern::Default)
         } else if let Some(pattern) = self.expression()? {
             match pattern {
-                Expr::Value { name } => {
+                Expr::Identifier { name } => {
                     let condition = if self.matches(&KeywordIf) {
                         self.expression()?
                     } else {
@@ -419,10 +420,12 @@ impl Parser {
         let expr = self.block()?;
         // TODO(anissen): Add function to some meta data?
         println!("Parsed function: {:?}", slash);
-        Ok(Some(Expr::Function {
-            slash,
-            params,
-            expr: Box::new(expr.unwrap()),
+        Ok(Some(Expr::Value {
+            value: ValueType::Function {
+                slash,
+                params,
+                expr: Box::new(expr.unwrap()),
+            },
         }))
     }
 
@@ -472,28 +475,38 @@ impl Parser {
     fn primary(&mut self) -> Result<Option<Expr>, String> {
         if self.matches(&Identifier) {
             let name = self.previous();
-            Ok(Some(Expr::Value { name }))
+            Ok(Some(Expr::Identifier { name }))
         } else if self.matches(&Integer) {
             let lexeme = self.previous().lexeme;
             let value = lexeme.parse::<i32>();
             match value {
-                Ok(value) => Ok(Some(Expr::Integer(value))),
+                Ok(value) => Ok(Some(Expr::Value {
+                    value: ValueType::Integer(value),
+                })),
                 Err(err) => Err(err.to_string()),
             }
         } else if self.matches(&Float) {
             let lexeme = self.previous().lexeme;
             let value = lexeme.parse::<f32>();
             match value {
-                Ok(value) => Ok(Some(Expr::Float(value))),
+                Ok(value) => Ok(Some(Expr::Value {
+                    value: ValueType::Float(value),
+                })),
                 Err(err) => Err(err.to_string()),
             }
         } else if self.matches(&False) {
-            Ok(Some(Expr::Boolean(false)))
+            Ok(Some(Expr::Value {
+                value: ValueType::Boolean(false),
+            }))
         } else if self.matches(&True) {
-            Ok(Some(Expr::Boolean(true)))
+            Ok(Some(Expr::Value {
+                value: ValueType::Boolean(true),
+            }))
         } else if self.matches(&TokenKind::String) {
             let lexeme = self.previous().lexeme;
-            Ok(Some(Expr::String(lexeme)))
+            Ok(Some(Expr::Value {
+                value: ValueType::String(lexeme),
+            }))
         } else if self.matches(&LeftParen) {
             let expr = self.expression()?;
             self.consume(&RightParen)?;
