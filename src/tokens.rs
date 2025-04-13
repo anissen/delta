@@ -23,6 +23,7 @@ pub enum TokenKind {
     Percent,
     Pipe,
     Plus,
+    PlusDot,
     RightBrace,
     RightParen,
     RightChevron,

@@ -82,6 +82,7 @@ pub enum BinaryOperator {
     Subtraction,
     Multiplication,
     Division,
+    FloatAddition,
     Modulus,
     StringConcat,
     BooleanAnd,

@@ -258,6 +258,7 @@ impl<'a> Codegen<'a> {
                         scope.bytecode.add_op(ByteCode::Multiplication)
                     }
                     BinaryOperator::Division => scope.bytecode.add_op(ByteCode::Division),
+                    BinaryOperator::FloatAddition => scope.bytecode.add_op(ByteCode::FloatAddition),
                     BinaryOperator::Modulus => scope.bytecode.add_op(ByteCode::Modulo),
                     BinaryOperator::StringConcat => scope.bytecode.add_op(ByteCode::StringConcat),
                     BinaryOperator::BooleanAnd => scope.bytecode.add_op(ByteCode::BooleanAnd),
