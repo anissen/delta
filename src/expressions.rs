@@ -1,12 +1,8 @@
 use crate::tokens::Token;
 
 #[derive(Debug)]
-pub enum Expr {
-    Value {
-        name: Token,
-    },
+pub enum ValueType {
     Boolean(bool),
-    Grouping(Box<Expr>),
     Integer(i32),
     Float(f32),
     String(String),
@@ -14,6 +10,17 @@ pub enum Expr {
         slash: Token,
         params: Vec<Token>, // TODO(anissen): Do we also need type information here?
         expr: Box<Expr>,
+    },
+}
+
+#[derive(Debug)]
+pub enum Expr {
+    Identifier {
+        name: Token,
+    },
+    Grouping(Box<Expr>),
+    Value {
+        value: ValueType,
     },
     Call {
         name: String,

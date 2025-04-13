@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use crate::bytecodes::ByteCode;
 use crate::diagnostics::{Diagnostics, Message};
-use crate::expressions::{BinaryOperator, Expr, IsArmPattern, UnaryOperator};
+use crate::expressions::{BinaryOperator, Expr, IsArmPattern, UnaryOperator, ValueType};
 use crate::program::Context;
 use crate::tokens::{Span, Token, TokenKind};
 
@@ -71,23 +71,31 @@ impl<'a> Codegen<'a> {
 
     fn emit_expr(&mut self, expr: &'a Expr, scope: &mut Scope) {
         match expr {
-            Expr::Boolean(true) => {
+            Expr::Value {
+                value: ValueType::Boolean(true),
+            } => {
                 scope.bytecode.add_op(ByteCode::PushTrue);
             }
 
-            Expr::Boolean(false) => {
+            Expr::Value {
+                value: ValueType::Boolean(false),
+            } => {
                 scope.bytecode.add_op(ByteCode::PushFalse);
             }
 
-            Expr::Integer(i) => {
+            Expr::Value {
+                value: ValueType::Integer(i),
+            } => {
                 scope.bytecode.add_op(ByteCode::PushInteger).add_i32(i);
             }
 
-            Expr::Float(f) => {
+            Expr::Value {
+                value: ValueType::Float(f),
+            } => {
                 scope.bytecode.add_op(ByteCode::PushFloat).add_f32(f);
             }
 
-            Expr::Value { name } => {
+            Expr::Identifier { name } => {
                 let lexeme = &name.lexeme;
                 if self.context.has_value(lexeme) {
                     // TODO(anissen): Should (also) output index
@@ -113,7 +121,9 @@ impl<'a> Codegen<'a> {
                 }
             }
 
-            Expr::String(str) => {
+            Expr::Value {
+                value: ValueType::String(str),
+            } => {
                 if str.len() > 255 {
                     // TODO(anissen): Should add error to a error reporter instead
                     panic!("string too long!");
@@ -132,10 +142,13 @@ impl<'a> Codegen<'a> {
                 scope.environment = environment;
             }
 
-            Expr::Function {
-                slash,
-                params,
-                expr,
+            Expr::Value {
+                value:
+                    ValueType::Function {
+                        slash,
+                        params,
+                        expr,
+                    },
             } => self.emit_function(slash, None, params, expr, scope),
 
             Expr::Call { name, args } => {
@@ -268,7 +281,7 @@ impl<'a> Codegen<'a> {
 
             Expr::Is { expr, arms } => {
                 let index = match **expr {
-                    Expr::Value { ref name } => {
+                    Expr::Identifier { ref name } => {
                         // If the value is already in the environment, use its index
                         let index_option = scope.environment.get(&name.lexeme);
                         *index_option.unwrap()
@@ -355,10 +368,13 @@ impl<'a> Codegen<'a> {
 
     fn emit_assignment(&mut self, name: &Token, expr: &'a Expr, scope: &mut Scope) {
         match expr {
-            Expr::Function {
-                slash,
-                params,
-                expr,
+            Expr::Value {
+                value:
+                    ValueType::Function {
+                        slash,
+                        params,
+                        expr,
+                    },
             } => {
                 // save function name to environment before entering function definition
                 let index = scope.locals.len() as u8;
