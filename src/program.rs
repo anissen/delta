@@ -9,6 +9,7 @@ use crate::lexer;
 use crate::parser;
 use crate::tokens;
 use crate::tokens::TokenKind;
+use crate::typer;
 use crate::vm;
 // use crate::vm::VirtualMachine;
 
@@ -155,6 +156,16 @@ impl<'a> Program<'a> {
         println!("Elapsed: {:?}", duration);
         if debug {
             println!("ast: {:?}", ast);
+        }
+
+        println!("\n# typing =>");
+        let start = std::time::Instant::now();
+        // TODO(anissen): Diagnostics should be collected in each phase
+        let typed_ast = typer::type_check(&ast, &self.context)?;
+        let duration = start.elapsed();
+        println!("Elapsed: {:?}", duration);
+        if debug {
+            println!("typed ast: {:?}", typed_ast);
         }
 
         let foreign_functions = self
