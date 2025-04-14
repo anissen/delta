@@ -191,7 +191,7 @@ impl<'a> Program<'a> {
                 Ok(bytecodes)
             }
             Err(diagnostics) => {
-                eprintln!("Errors: {:?}", diagnostics);
+                eprintln!("Errors: {}", diagnostics.to_string());
                 Err(diagnostics.clone())
             }
         }

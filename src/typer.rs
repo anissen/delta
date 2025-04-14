@@ -1,12 +1,11 @@
-use std::collections::{HashMap, HashSet};
 use std::fmt;
 
-use crate::bytecodes::ByteCode;
 use crate::diagnostics::{Diagnostics, Message};
-use crate::expressions::{self, BinaryOperator, Expr, IsArmPattern, UnaryOperator, ValueType};
+use crate::expressions::{BinaryOperator, Expr, ValueType};
 use crate::program::Context;
-use crate::tokens::{Span, Token, TokenKind};
+use crate::tokens::{Span, Token};
 
+#[derive(PartialEq)]
 pub enum Type {
     TEMP_error,
     Boolean,
@@ -96,31 +95,21 @@ impl<'a> Typer<'a> {
     ) -> Type {
         match operator {
             BinaryOperator::Addition => {
-                match self.type_expr(left) {
-                    Type::Integer => (),
-                    left_type => self.diagnostics.add_error(Message::new(
-                        format!(
-                            "Expected left part of + to be an integer but was {}",
-                            left_type
-                        ),
-                        _token.position.clone(),
-                    )),
-                }
-
-                match self.type_expr(right) {
-                    Type::Integer => (),
-                    right_type => self.diagnostics.add_error(Message::new(
-                        format!(
-                            "Expected right part of + to be an integer but was {}",
-                            right_type
-                        ),
-                        _token.position.clone(),
-                    )),
-                }
-
+                self.expect_type(left, &Type::Integer, &_token.position);
+                self.expect_type(right, &Type::Integer, &_token.position);
                 Type::Integer
             }
             _ => Type::TEMP_error,
+        }
+    }
+
+    fn expect_type(&mut self, expression: &'a Expr, expected_type: &Type, position: &Span) {
+        let actual_type = self.type_expr(expression);
+        if actual_type != *expected_type {
+            self.diagnostics.add_error(Message::new(
+                format!("Expected {} but found {}", expected_type, actual_type),
+                position.clone(),
+            ))
         }
     }
 }
