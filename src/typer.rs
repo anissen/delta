@@ -1,3 +1,5 @@
+use std::any::Any;
+use std::collections::HashMap;
 use std::fmt;
 
 use crate::diagnostics::{Diagnostics, Message};
@@ -5,20 +7,22 @@ use crate::expressions::{BinaryOperator, Expr, ValueType};
 use crate::program::Context;
 use crate::tokens::{Span, Token};
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Copy, Clone)]
 pub enum Type {
     TEMP_error,
+    None,
     Boolean,
     Integer,
     Float,
     String,
-    Function,
+    Function, // TODO(anissen): Also need typed parameters and return type
 }
 
 impl fmt::Display for Type {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let type_name = match self {
             Type::TEMP_error => "TEMP",
+            Type::None => "N/A",
             Type::Boolean => "boolean",
             Type::Integer => "integer",
             Type::Float => "float",
@@ -45,6 +49,7 @@ pub fn type_check<'a>(
 pub struct Typer<'a> {
     context: &'a Context<'a>,
     diagnostics: Diagnostics,
+    identifiers: HashMap<&'a String, Type>,
 }
 
 impl<'a> Typer<'a> {
@@ -52,6 +57,7 @@ impl<'a> Typer<'a> {
         Self {
             context,
             diagnostics: Diagnostics::new(),
+            identifiers: HashMap::new(),
         }
     }
 
@@ -74,6 +80,18 @@ impl<'a> Typer<'a> {
                     expr,
                 } => Type::Function,
             },
+
+            Expr::Identifier { name } => *self.identifiers.get(&name.lexeme).unwrap_or(&Type::None),
+
+            Expr::Assignment {
+                name,
+                _operator,
+                expr,
+            } => {
+                let expr_type = self.type_expr(expr);
+                self.identifiers.insert(&name.lexeme, expr_type);
+                expr_type
+            }
 
             Expr::Binary {
                 left,
@@ -103,13 +121,22 @@ impl<'a> Typer<'a> {
         }
     }
 
+    fn error(&mut self, message: String, position: Span) {
+        self.diagnostics
+            .add_error(Message::new(message, position.clone()))
+    }
+
     fn expect_type(&mut self, expression: &'a Expr, expected_type: &Type, position: &Span) {
         let actual_type = self.type_expr(expression);
         if actual_type != *expected_type {
-            self.diagnostics.add_error(Message::new(
+            self.error(
                 format!("Expected {} but found {}", expected_type, actual_type),
                 position.clone(),
-            ))
+            );
+            // self.diagnostics.add_error(Message::new(
+            //     format!("Expected {} but found {}", expected_type, actual_type),
+            //     position.clone(),
+            // ))
         }
     }
 }
