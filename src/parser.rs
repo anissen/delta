@@ -375,20 +375,22 @@ impl Parser {
     // call → primary "|" call_with_first_arg | primary
     fn call(&mut self) -> Result<Option<Expr>, String> {
         let expr = self.primary()?;
+        let token = self.previous();
         if self.matches(&Pipe) {
-            self.call_with_first_arg(expr.unwrap())
+            self.call_with_first_arg(expr.unwrap(), token)
         } else {
             Ok(expr)
         }
     }
 
     // call_with_first_arg → IDENTIFIER primary*
-    fn call_with_first_arg(&mut self, expr: Expr) -> Result<Option<Expr>, String> {
+    fn call_with_first_arg(&mut self, expr: Expr, token: Token) -> Result<Option<Expr>, String> {
         self.consume(&Identifier)?;
         let lexeme = self.previous().lexeme;
         // TODO(anissen): Check that function name exists and is a function
         let first_arg = expr;
         let mut args = vec![first_arg];
+        let mut positions = vec![token.position];
         // TODO(anissen): Checking for string concatenation here does not feel right
         while !self.is_at_end()
             && !self.check(&NewLine)
@@ -399,11 +401,16 @@ impl Parser {
             let arg = self.primary()?; // precedence after string concatenation
             if let Some(arg) = arg {
                 args.push(arg);
+                positions.push(self.previous().position);
             }
         }
-        let call_expr = Expr::Call { name: lexeme, args };
+        let call_expr = Expr::Call {
+            name: lexeme,
+            args,
+            positions,
+        };
         if self.matches(&Pipe) {
-            self.call_with_first_arg(call_expr)
+            self.call_with_first_arg(call_expr, self.previous())
         } else {
             Ok(Some(call_expr))
         }

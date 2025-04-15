@@ -155,7 +155,11 @@ impl<'a> Typer<'a> {
 
             Expr::Block { exprs } => self.type_exprs(exprs, env, diagnostics),
 
-            Expr::Call { name, args } => {
+            Expr::Call {
+                name,
+                args,
+                positions,
+            } => {
                 let function_type = env.identifiers.get(name); // TODO(anissen): Should type_expr return a (type, scope) instead?
 
                 let mut new_env = TypeEnvironment::new();
@@ -168,16 +172,10 @@ impl<'a> Typer<'a> {
                     }) => {
                         for (index, arg) in args.iter().enumerate() {
                             let parameter = parameters[index].clone();
+                            let position = positions[index].clone();
                             // TODO(anissen): Provide a position with call and args
-                            let no_position = Span { line: 0, column: 0 };
                             // self.type_expr(arg, &mut new_env, diagnostics);
-                            self.expect_type(
-                                arg,
-                                &parameter,
-                                &no_position,
-                                &mut new_env,
-                                diagnostics,
-                            );
+                            self.expect_type(arg, &parameter, &position, &mut new_env, diagnostics);
                         }
 
                         *return_type.clone()
@@ -210,11 +208,9 @@ impl<'a> Typer<'a> {
             BinaryOperator::Addition | BinaryOperator::Multiplication => {
                 // if left or right is an identifier w. no type, assign integer to it
                 self.expect_type(left, &Type::Integer, &_token.position, env, diagnostics);
-                // dbg!(&left);
                 match left {
                     Expr::Identifier { name } => {
                         let typ = env.identifiers.get(&name.lexeme).unwrap();
-                        dbg!(&typ);
                         if typ == &Type::None {
                             env.identifiers.insert(name.lexeme.clone(), Type::Integer);
                         }

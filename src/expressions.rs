@@ -1,4 +1,4 @@
-use crate::tokens::Token;
+use crate::tokens::{Span, Token};
 
 #[derive(Debug)]
 pub enum ValueType {
@@ -25,6 +25,7 @@ pub enum Expr {
     Call {
         name: String,
         args: Vec<Expr>, // TODO(anissen): Should arguments be named? E.g. `square value:5`.
+        positions: Vec<Span>,
     },
     // ForeignCall {
     //     name: String,
