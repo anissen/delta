@@ -11,6 +11,7 @@ use crate::tokens::{Span, Token};
 #[derive(PartialEq, Clone, Debug)]
 pub enum Type {
     TEMP_error,
+    None,
     Boolean,
     Integer,
     Float,
@@ -25,6 +26,7 @@ impl fmt::Display for Type {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let type_name = match self {
             Type::TEMP_error => "TEMP",
+            Type::None => "N/A",
             Type::Boolean => "boolean",
             Type::Integer => "integer",
             Type::Float => "float",
@@ -93,10 +95,12 @@ impl<'a> Typer<'a> {
         expressions: &'a Vec<Expr>,
         env: &mut TypeEnvironment,
         diagnostics: &mut Diagnostics,
-    ) -> () {
+    ) -> Type {
+        let mut typ = Type::None;
         for expr in expressions {
-            self.type_expr(expr, env, diagnostics);
+            typ = self.type_expr(expr, env, diagnostics);
         }
+        typ
     }
 
     fn type_expr(
@@ -105,7 +109,6 @@ impl<'a> Typer<'a> {
         env: &mut TypeEnvironment,
         diagnostics: &mut Diagnostics,
     ) -> Type {
-        dbg!(&expression);
         match expression {
             Expr::Value { value } => match value {
                 ValueType::Boolean(_) => Type::Boolean,
@@ -119,10 +122,12 @@ impl<'a> Typer<'a> {
                 } => {
                     let mut new_env = TypeEnvironment::new();
                     new_env.identifiers = env.identifiers.clone(); // TODO(anissen): HAAACK!
+                    for p in params {
+                        new_env.identifiers.insert(p.lexeme.clone(), Type::None);
+                    }
                     let result = self.type_expr(expr, &mut new_env, diagnostics);
                     let mut param_types = vec![];
                     for p in params {
-                        dbg!(&p);
                         let typ = new_env.identifiers.get(&p.lexeme).unwrap().clone();
                         param_types.push(Box::new(typ));
                     }
@@ -148,6 +153,8 @@ impl<'a> Typer<'a> {
                 expr_type
             }
 
+            Expr::Block { exprs } => self.type_exprs(exprs, env, diagnostics),
+
             Expr::Call { name, args } => {
                 let function_type = env.identifiers.get(name); // TODO(anissen): Should type_expr return a (type, scope) instead?
 
@@ -159,7 +166,6 @@ impl<'a> Typer<'a> {
                         parameters,
                         return_type,
                     }) => {
-                        dbg!(&parameters);
                         for (index, arg) in args.iter().enumerate() {
                             let parameter = parameters[index].clone();
                             // TODO(anissen): Provide a position with call and args
@@ -202,8 +208,29 @@ impl<'a> Typer<'a> {
     ) -> Type {
         match operator {
             BinaryOperator::Addition | BinaryOperator::Multiplication => {
+                // if left or right is an identifier w. no type, assign integer to it
                 self.expect_type(left, &Type::Integer, &_token.position, env, diagnostics);
+                // dbg!(&left);
+                match left {
+                    Expr::Identifier { name } => {
+                        let typ = env.identifiers.get(&name.lexeme).unwrap();
+                        dbg!(&typ);
+                        if typ == &Type::None {
+                            env.identifiers.insert(name.lexeme.clone(), Type::Integer);
+                        }
+                    }
+                    _ => (),
+                }
                 self.expect_type(right, &Type::Integer, &_token.position, env, diagnostics);
+                match right {
+                    Expr::Identifier { name } => {
+                        let typ = env.identifiers.get(&name.lexeme).unwrap();
+                        if typ == &Type::None {
+                            env.identifiers.insert(name.lexeme.clone(), Type::Integer);
+                        }
+                    }
+                    _ => (),
+                }
                 Type::Integer
             }
             _ => Type::TEMP_error,
@@ -223,7 +250,7 @@ impl<'a> Typer<'a> {
         diagnostics: &mut Diagnostics,
     ) {
         let actual_type = self.type_expr(expression, env, diagnostics);
-        if actual_type != *expected_type {
+        if actual_type != Type::None && actual_type != *expected_type {
             self.error(
                 format!("Expected {} but found {}", expected_type, actual_type),
                 position.clone(),

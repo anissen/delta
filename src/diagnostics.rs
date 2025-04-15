@@ -49,7 +49,7 @@ impl Diagnostics {
     pub fn to_string(&self) -> String {
         self.errors
             .iter()
-            .map(|f| format!("line {}: {}\n", f.span.line, f.content))
+            .map(|f| format!("line {}.{}: {}\n", f.span.line, f.span.column, f.content))
             .collect()
     }
 }
