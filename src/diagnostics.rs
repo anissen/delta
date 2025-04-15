@@ -18,6 +18,8 @@ impl Message {
     }
 }
 
+// TODO(anissen): Consider making Message an enum type and handling actual error description and reporting elsewhere (e.g. errors.rs)
+
 #[derive(Debug, Clone)]
 pub struct Diagnostics {
     errors: Vec<Message>,
