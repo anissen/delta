@@ -43,6 +43,9 @@ pub enum TokenKind {
 pub struct Span {
     pub line: usize,
     pub column: usize,
+    // pub start: u32,
+    // pub end: u32,
+
     // start and end *can* be extracted from the lexeme
     // start: usize,
     // length: usize,
