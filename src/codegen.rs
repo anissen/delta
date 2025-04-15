@@ -151,7 +151,11 @@ impl<'a> Codegen<'a> {
                     },
             } => self.emit_function(slash, None, params, expr, scope),
 
-            Expr::Call { name, args } => {
+            Expr::Call {
+                name,
+                args,
+                positions,
+            } => {
                 let arg_count = args.len();
                 self.emit_exprs(args, scope);
 
