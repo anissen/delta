@@ -1,7 +1,5 @@
-use std::borrow::BorrowMut;
 use std::collections::HashMap;
 use std::fmt;
-use std::ops::Deref;
 
 use crate::diagnostics::{Diagnostics, Message};
 use crate::expressions::{BinaryOperator, Expr, ValueType};
@@ -208,24 +206,18 @@ impl<'a> Typer<'a> {
             BinaryOperator::Addition | BinaryOperator::Multiplication => {
                 // if left or right is an identifier w. no type, assign integer to it
                 self.expect_type(left, &Type::Integer, &_token.position, env, diagnostics);
-                match left {
-                    Expr::Identifier { name } => {
-                        let typ = env.identifiers.get(&name.lexeme).unwrap();
-                        if typ == &Type::None {
-                            env.identifiers.insert(name.lexeme.clone(), Type::Integer);
-                        }
+                if let Expr::Identifier { name } = left {
+                    let typ = env.identifiers.get(&name.lexeme).unwrap();
+                    if typ == &Type::None {
+                        env.identifiers.insert(name.lexeme.clone(), Type::Integer);
                     }
-                    _ => (),
                 }
                 self.expect_type(right, &Type::Integer, &_token.position, env, diagnostics);
-                match right {
-                    Expr::Identifier { name } => {
-                        let typ = env.identifiers.get(&name.lexeme).unwrap();
-                        if typ == &Type::None {
-                            env.identifiers.insert(name.lexeme.clone(), Type::Integer);
-                        }
+                if let Expr::Identifier { name } = right {
+                    let typ = env.identifiers.get(&name.lexeme).unwrap();
+                    if typ == &Type::None {
+                        env.identifiers.insert(name.lexeme.clone(), Type::Integer);
                     }
-                    _ => (),
                 }
                 Type::Integer
             }
