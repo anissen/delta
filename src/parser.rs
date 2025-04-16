@@ -1,4 +1,3 @@
-use crate::diagnostics;
 use crate::diagnostics::Diagnostics;
 use crate::diagnostics::Message;
 use crate::expressions::BinaryOperator;

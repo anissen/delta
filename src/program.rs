@@ -1,14 +1,10 @@
 use std::collections::HashMap;
 
 use crate::codegen;
-use crate::diagnostics;
 use crate::diagnostics::Diagnostics;
-use crate::diagnostics::Message;
-use crate::disassembler;
 use crate::lexer;
 use crate::parser;
 use crate::tokens;
-use crate::tokens::TokenKind;
 use crate::typer;
 use crate::vm;
 // use crate::vm::VirtualMachine;
