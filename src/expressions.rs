@@ -36,11 +36,6 @@ pub enum Expr {
         _operator: Token,
         expr: Box<Expr>,
     },
-    Comparison {
-        left: Box<Expr>,
-        token: Token,
-        right: Box<Expr>,
-    },
     Unary {
         operator: UnaryOperator,
         _token: Token,
@@ -85,14 +80,30 @@ pub enum UnaryOperator {
 }
 
 #[derive(Debug)]
+// TODO(anissen): Group operators in separate enums
 pub enum BinaryOperator {
+    // integer operations
     Addition,
     Subtraction,
     Multiplication,
     Division,
-    FloatAddition,
     Modulus,
-    StringConcat,
+
+    // boolean operators
     BooleanAnd,
     BooleanOr,
+
+    // float operations
+    FloatAddition,
+
+    // string operations
+    StringConcat,
+
+    // comparisons
+    Equal,
+    NotEqual,
+    LessThan,
+    LessThanEqual,
+    GreaterThan,
+    GreaterThanEqual,
 }

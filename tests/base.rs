@@ -16,7 +16,7 @@ fn plus_integer() {
 
 #[test]
 fn plus_float() {
-    assert_ok(r"1.1 + 2.2 + 3.3 + 4.4 + 5.5", Value::Float(16.5));
+    assert_ok(r"1.1 +. 2.2 +. 3.3 +. 4.4 +. 5.5", Value::Float(16.5));
 }
 
 #[test]
@@ -75,14 +75,14 @@ fn modulo_integer() {
 
 #[test]
 fn modulo_float() {
-    assert_ok(r"4.0 % 2.0", Value::Float(0.0));
-    assert_ok(r"5.4 % 2.1", Value::Float(1.2000003)); // Float errors, curses!
+    assert_ok(r"4.0 %. 2.0", Value::Float(0.0));
+    assert_ok(r"5.4 %. 2.1", Value::Float(1.2000003)); // Float errors, curses!
 }
 
 #[test]
 fn division_by_zero() {
     assert_ok(r"10 / 0", Value::Integer(0));
-    assert_ok(r"54.32 / 0.0", Value::Float(0.0));
+    assert_ok(r"54.32 /. 0.0", Value::Float(0.0));
 }
 
 #[test]
@@ -102,7 +102,7 @@ fn float_division_by_zero() {
         r"
 x = 42.3
 y = 0.0
-x / y",
+x /. y",
         Value::Float(0.0),
     );
 }
@@ -168,41 +168,41 @@ fn inequality_integer_expressions() {
 
 #[test]
 fn equality_positive_floats() {
-    assert_ok(r"0.0 == 0.0", Value::True);
-    assert_ok(r"5.4 == 5.4", Value::True);
-    assert_ok(r"123.456789 == 123.456789", Value::True);
+    assert_ok(r"0.0 ==. 0.0", Value::True);
+    assert_ok(r"5.4 ==. 5.4", Value::True);
+    assert_ok(r"123.456789 ==. 123.456789", Value::True);
 
-    assert_ok(r"12.3 == 12.0", Value::False);
+    assert_ok(r"12.3 ==. 12.0", Value::False);
 }
 
 #[test]
 fn comparison_negative_floats() {
-    assert_ok(r"-0.9 > -1.0", Value::True);
-    assert_ok(r"-0.0 <= -0.0", Value::True);
-    assert_ok(r"-0.0 >= -0.0", Value::True);
-    assert_ok(r"-3.45 < -2.34", Value::True);
-    assert_ok(r"-5.67 >= -5.67", Value::True);
+    assert_ok(r"-0.9 >. -1.0", Value::True);
+    assert_ok(r"-0.0 <=. -0.0", Value::True);
+    assert_ok(r"-0.0 >=. -0.0", Value::True);
+    assert_ok(r"-3.45 <. -2.34", Value::True);
+    assert_ok(r"-5.67 >=. -5.67", Value::True);
 }
 
 #[test]
 fn inequality_positive_floats() {
-    assert_ok(r"2.3 != 5.4", Value::True);
+    assert_ok(r"2.3 !=. 5.4", Value::True);
 }
 
 #[test]
 fn equality_negative_floats() {
-    assert_ok(r"-0.0 == -0.0", Value::True);
-    assert_ok(r"-0.3 == -0.3", Value::True);
-    assert_ok(r"-5.4 == -5.4", Value::True);
-    assert_ok(r"-123.456789 == -123.456789", Value::True);
+    assert_ok(r"-0.0 ==. -0.0", Value::True);
+    assert_ok(r"-0.3 ==. -0.3", Value::True);
+    assert_ok(r"-5.4 ==. -5.4", Value::True);
+    assert_ok(r"-123.456789 ==. -123.456789", Value::True);
 
-    assert_ok(r"-12.3 == -12.0", Value::False);
-    assert_ok(r"-12.3 == 12.3", Value::False);
+    assert_ok(r"-12.3 ==. -12.0", Value::False);
+    assert_ok(r"-12.3 ==. 12.3", Value::False);
 }
 
 #[test]
 fn inequality_negative_floats() {
-    assert_ok(r"-2.3 != -5.4", Value::True);
+    assert_ok(r"-2.3 !=. -5.4", Value::True);
 }
 
 #[test]
@@ -245,7 +245,7 @@ fn string_interpolation() {
         Value::String("2 * 3 == 6".to_string()),
     );
     assert_ok(
-        r#""float value is {0.1 + 0.2}""#,
+        r#""float value is {0.1 +. 0.2}""#,
         Value::String("float value is 0.3".to_string()),
     );
 
@@ -255,7 +255,7 @@ fn string_interpolation() {
     );
 
     assert_ok(
-        r#""result is {3 < 4} and {3.4 < 4.5}!""#,
+        r#""result is {3 < 4} and {3.4 <. 4.5}!""#,
         Value::String("result is true and true!".to_string()),
     );
 }
@@ -263,7 +263,7 @@ fn string_interpolation() {
 #[test]
 #[ignore = "not yet implemented"]
 fn mixed_division() {
-    assert_err(r"42.3 / 2", "incompatible types for division".to_string());
+    assert_err(r"42.3 /. 2", "incompatible types for division".to_string());
 }
 
 #[test]

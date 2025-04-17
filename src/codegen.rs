@@ -209,42 +209,6 @@ impl<'a> Codegen<'a> {
                 self.emit_assignment(name, expr, scope);
             }
 
-            Expr::Comparison { left, token, right } => {
-                self.emit_expr(left, scope);
-                self.emit_expr(right, scope);
-
-                match token.kind {
-                    TokenKind::EqualEqual => {
-                        scope.bytecode.add_op(ByteCode::Equals);
-                    }
-                    TokenKind::BangEqual => {
-                        scope
-                            .bytecode
-                            .add_op(ByteCode::Equals)
-                            .add_op(ByteCode::Not);
-                    }
-                    TokenKind::LeftChevron => {
-                        scope.bytecode.add_op(ByteCode::LessThan);
-                    }
-                    TokenKind::LeftChevronEqual => {
-                        scope.bytecode.add_op(ByteCode::LessThanEquals);
-                    }
-                    TokenKind::RightChevron => {
-                        scope
-                            .bytecode
-                            .add_op(ByteCode::LessThanEquals)
-                            .add_op(ByteCode::Not);
-                    }
-                    TokenKind::RightChevronEqual => {
-                        scope
-                            .bytecode
-                            .add_op(ByteCode::LessThan)
-                            .add_op(ByteCode::Not);
-                    }
-                    _ => panic!("unexpected comparison operator"),
-                }
-            }
-
             Expr::Unary {
                 operator,
                 _token: _,
@@ -280,6 +244,23 @@ impl<'a> Codegen<'a> {
                     BinaryOperator::StringConcat => scope.bytecode.add_op(ByteCode::StringConcat),
                     BinaryOperator::BooleanAnd => scope.bytecode.add_op(ByteCode::BooleanAnd),
                     BinaryOperator::BooleanOr => scope.bytecode.add_op(ByteCode::BooleanOr),
+                    BinaryOperator::Equal => scope.bytecode.add_op(ByteCode::Equals),
+                    BinaryOperator::NotEqual => scope
+                        .bytecode
+                        .add_op(ByteCode::Equals)
+                        .add_op(ByteCode::Not),
+                    BinaryOperator::LessThan => scope.bytecode.add_op(ByteCode::LessThan),
+                    BinaryOperator::LessThanEqual => {
+                        scope.bytecode.add_op(ByteCode::LessThanEquals)
+                    }
+                    BinaryOperator::GreaterThan => scope
+                        .bytecode
+                        .add_op(ByteCode::LessThanEquals)
+                        .add_op(ByteCode::Not),
+                    BinaryOperator::GreaterThanEqual => scope
+                        .bytecode
+                        .add_op(ByteCode::LessThan)
+                        .add_op(ByteCode::Not),
                 };
             }
 
