@@ -274,9 +274,15 @@ impl Parser {
         if expr.is_some() && self.matches_any(&[EqualEqual, BangEqual]) {
             let token = self.previous();
             let right = self.comparison()?;
-            Ok(Some(Expr::Comparison {
+            let operator = match token.kind {
+                EqualEqual => BinaryOperator::Equal,
+                BangEqual => BinaryOperator::NotEqual,
+                _ => panic!("unreachable"),
+            };
+            Ok(Some(Expr::Binary {
                 left: Box::new(expr.unwrap()),
-                token,
+                operator,
+                _token: token,
                 right: Box::new(right.unwrap()),
             }))
         } else {
@@ -297,9 +303,17 @@ impl Parser {
         {
             let token = self.previous();
             let right = self.term()?;
-            Ok(Some(Expr::Comparison {
+            let operator = match token.kind {
+                LeftChevron => BinaryOperator::LessThan,
+                LeftChevronEqual => BinaryOperator::LessThanEqual,
+                RightChevron => BinaryOperator::GreaterThan,
+                RightChevronEqual => BinaryOperator::GreaterThanEqual,
+                _ => panic!("unreachable"),
+            };
+            Ok(Some(Expr::Binary {
                 left: Box::new(expr.unwrap()),
-                token,
+                _token: token,
+                operator,
                 right: Box::new(right.unwrap()),
             }))
         } else {

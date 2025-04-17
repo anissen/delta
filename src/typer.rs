@@ -24,7 +24,7 @@ impl fmt::Display for Type {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let type_name = match self {
             Type::TEMP_error => "TEMP",
-            Type::None => "N/A",
+            Type::None => "???",
             Type::Boolean => "boolean",
             Type::Integer => "integer",
             Type::Float => "float",
@@ -137,7 +137,10 @@ impl<'a> Typer<'a> {
             },
 
             Expr::Identifier { name } => {
-                env.identifiers.get(&name.lexeme).unwrap().clone() // TODO(anissen): This clone would be nice to avoid
+                env.identifiers
+                    .get(&name.lexeme)
+                    .unwrap_or(&Type::None)
+                    .clone() // TODO(anissen): This clone would be nice to avoid
             }
 
             Expr::Assignment {
@@ -178,7 +181,11 @@ impl<'a> Typer<'a> {
 
                         *return_type.clone()
                     }
-                    _ => panic!("cannot type check function call"),
+                    Some(Type::None) => Type::None,
+                    _ => {
+                        dbg!(&function_type);
+                        panic!("cannot type check function call")
+                    }
                 }
             }
 
@@ -203,7 +210,11 @@ impl<'a> Typer<'a> {
         diagnostics: &mut Diagnostics,
     ) -> Type {
         match operator {
-            BinaryOperator::Addition | BinaryOperator::Multiplication => {
+            BinaryOperator::Addition
+            | BinaryOperator::Subtraction
+            | BinaryOperator::Multiplication
+            | BinaryOperator::Division
+            | BinaryOperator::Modulus => {
                 // if left or right is an identifier w. no type, assign integer to it
                 self.expect_type(left, &Type::Integer, &_token.position, env, diagnostics);
                 if let Expr::Identifier { name } = left {
@@ -220,6 +231,25 @@ impl<'a> Typer<'a> {
                     }
                 }
                 Type::Integer
+            }
+
+            BinaryOperator::FloatAddition => {
+                // if left or right is an identifier w. no type, assign integer to it
+                self.expect_type(left, &Type::Float, &_token.position, env, diagnostics);
+                if let Expr::Identifier { name } = left {
+                    let typ = env.identifiers.get(&name.lexeme).unwrap();
+                    if typ == &Type::None {
+                        env.identifiers.insert(name.lexeme.clone(), Type::Float);
+                    }
+                }
+                self.expect_type(right, &Type::Float, &_token.position, env, diagnostics);
+                if let Expr::Identifier { name } = right {
+                    let typ = env.identifiers.get(&name.lexeme).unwrap();
+                    if typ == &Type::None {
+                        env.identifiers.insert(name.lexeme.clone(), Type::Float);
+                    }
+                }
+                Type::Float
             }
             _ => Type::TEMP_error,
         }
