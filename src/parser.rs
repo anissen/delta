@@ -1,19 +1,18 @@
 use crate::diagnostics::Diagnostics;
 use crate::diagnostics::Message;
+use crate::expressions::ArithmeticOperations;
 use crate::expressions::BinaryOperator;
+use crate::expressions::BooleanOperations;
+use crate::expressions::Comparisons;
 use crate::expressions::Expr;
 use crate::expressions::IsArm;
 use crate::expressions::IsArmPattern;
+use crate::expressions::StringOperations;
 use crate::expressions::UnaryOperator;
 use crate::expressions::ValueType;
 use crate::tokens::Token;
 use crate::tokens::TokenKind;
-use crate::tokens::TokenKind::{
-    BackSlash, Bang, BangEqual, Comment, Equal, EqualEqual, False, Float, Identifier, Integer,
-    KeywordAnd, KeywordIf, KeywordIs, KeywordOr, LeftChevron, LeftChevronEqual, LeftParen, Minus,
-    NewLine, Percent, Pipe, Plus, PlusDot, RightChevron, RightChevronEqual, RightParen, Slash,
-    Space, Star, StringConcat, Tab, True, Underscore,
-};
+use crate::tokens::TokenKind::*;
 
 /*
 program        → declaration* EOF ;
@@ -226,7 +225,7 @@ impl Parser {
             let right = self.logic_or()?;
             expr = Some(Expr::Binary {
                 left: Box::new(expr.unwrap()),
-                operator: BinaryOperator::StringConcat,
+                operator: BinaryOperator::StringOperation(StringOperations::StringConcat),
                 _token: token,
                 right: Box::new(right.unwrap()),
             });
@@ -242,7 +241,7 @@ impl Parser {
             let right = self.logic_or()?;
             Ok(Some(Expr::Binary {
                 left: Box::new(expr.unwrap()),
-                operator: BinaryOperator::BooleanOr,
+                operator: BinaryOperator::BooleanOperation(BooleanOperations::Or),
                 _token: token,
                 right: Box::new(right.unwrap()),
             }))
@@ -259,7 +258,7 @@ impl Parser {
             let right = self.logic_or()?;
             Ok(Some(Expr::Binary {
                 left: Box::new(expr.unwrap()),
-                operator: BinaryOperator::BooleanAnd,
+                operator: BinaryOperator::BooleanOperation(BooleanOperations::And),
                 _token: token,
                 right: Box::new(right.unwrap()),
             }))
@@ -275,8 +274,10 @@ impl Parser {
             let token = self.previous();
             let right = self.comparison()?;
             let operator = match token.kind {
-                EqualEqual => BinaryOperator::Equal,
-                BangEqual => BinaryOperator::NotEqual,
+                EqualEqual => BinaryOperator::IntegerComparison(Comparisons::Equal),
+                EqualEqualDot => BinaryOperator::FloatComparison(Comparisons::Equal),
+                BangEqual => BinaryOperator::IntegerComparison(Comparisons::NotEqual),
+                BangEqualDot => BinaryOperator::FloatComparison(Comparisons::NotEqual),
                 _ => panic!("unreachable"),
             };
             Ok(Some(Expr::Binary {
@@ -296,18 +297,30 @@ impl Parser {
         if expr.is_some()
             && self.matches_any(&[
                 LeftChevron,
+                LeftChevronDot,
                 LeftChevronEqual,
+                LeftChevronEqualDot,
                 RightChevron,
+                RightChevronDot,
                 RightChevronEqual,
+                RightChevronEqualDot,
             ])
         {
             let token = self.previous();
             let right = self.term()?;
             let operator = match token.kind {
-                LeftChevron => BinaryOperator::LessThan,
-                LeftChevronEqual => BinaryOperator::LessThanEqual,
-                RightChevron => BinaryOperator::GreaterThan,
-                RightChevronEqual => BinaryOperator::GreaterThanEqual,
+                LeftChevron => BinaryOperator::IntegerComparison(Comparisons::LessThan),
+                LeftChevronDot => BinaryOperator::FloatComparison(Comparisons::LessThan),
+                LeftChevronEqual => BinaryOperator::IntegerComparison(Comparisons::LessThanEqual),
+                LeftChevronEqualDot => BinaryOperator::FloatComparison(Comparisons::LessThanEqual),
+                RightChevron => BinaryOperator::IntegerComparison(Comparisons::GreaterThan),
+                RightChevronDot => BinaryOperator::FloatComparison(Comparisons::GreaterThan),
+                RightChevronEqual => {
+                    BinaryOperator::IntegerComparison(Comparisons::GreaterThanEqual)
+                }
+                RightChevronEqualDot => {
+                    BinaryOperator::FloatComparison(Comparisons::GreaterThanEqual)
+                }
                 _ => panic!("unreachable"),
             };
             Ok(Some(Expr::Binary {
@@ -324,12 +337,13 @@ impl Parser {
     // term → factor ( ( "-" | "+" ) factor )* ;
     fn term(&mut self) -> Result<Option<Expr>, String> {
         let mut expr = self.factor()?;
-        while expr.is_some() && self.matches_any(&[Plus, PlusDot, Minus]) {
+        while expr.is_some() && self.matches_any(&[Plus, PlusDot, Minus, MinusDot]) {
             let token = self.previous();
             let operator = match token.kind {
-                Plus => BinaryOperator::Addition,
-                PlusDot => BinaryOperator::FloatAddition,
-                Minus => BinaryOperator::Subtraction,
+                Plus => BinaryOperator::IntegerOperation(ArithmeticOperations::Addition),
+                PlusDot => BinaryOperator::FloatOperation(ArithmeticOperations::Addition),
+                Minus => BinaryOperator::IntegerOperation(ArithmeticOperations::Subtraction),
+                MinusDot => BinaryOperator::FloatOperation(ArithmeticOperations::Subtraction),
                 _ => panic!("unreachable"),
             };
             let right = self.factor()?;
@@ -346,12 +360,17 @@ impl Parser {
     // factor → unary ( ( "/" | "*" ) unary )* ;
     fn factor(&mut self) -> Result<Option<Expr>, String> {
         let mut expr = self.unary()?;
-        while expr.is_some() && self.matches_any(&[Slash, Star, Percent]) {
+        while expr.is_some()
+            && self.matches_any(&[Slash, SlashDot, Star, StarDot, Percent, PercentDot])
+        {
             let token = self.previous();
             let operator = match token.kind {
-                Slash => BinaryOperator::Division,
-                Star => BinaryOperator::Multiplication,
-                Percent => BinaryOperator::Modulus,
+                Slash => BinaryOperator::IntegerOperation(ArithmeticOperations::Division),
+                SlashDot => BinaryOperator::FloatOperation(ArithmeticOperations::Division),
+                Star => BinaryOperator::IntegerOperation(ArithmeticOperations::Multiplication),
+                StarDot => BinaryOperator::FloatOperation(ArithmeticOperations::Multiplication),
+                Percent => BinaryOperator::IntegerOperation(ArithmeticOperations::Modulus),
+                PercentDot => BinaryOperator::FloatOperation(ArithmeticOperations::Modulus),
                 _ => panic!("unreachable"),
             };
             let right = self.unary()?;
@@ -522,7 +541,7 @@ impl Parser {
             Ok(Some(Expr::Value {
                 value: ValueType::Boolean(true),
             }))
-        } else if self.matches(&TokenKind::String) {
+        } else if self.matches(&TokenKind::Text) {
             let lexeme = self.previous().lexeme;
             Ok(Some(Expr::Value {
                 value: ValueType::String(lexeme),

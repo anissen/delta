@@ -1,33 +1,49 @@
 #[derive(Debug)]
 pub enum ByteCode {
-    Addition,
-    Division,
+    IntegerAddition,
+    IntegerSubtraction,
+    IntegerDivision,
+    IntegerMultiplication,
+    IntegerModulo,
+    IntegerEquals,
+    IntegerLessThan,
+    IntegerLessThanEquals,
+
     FloatAddition,
-    GetLocalValue,
-    Multiplication,
+    FloatSubtraction,
+    FloatDivision,
+    FloatMultiplication,
+    FloatModulo,
+    FloatEquals,
+    FloatLessThan,
+    FloatLessThanEquals,
+
+    StringConcat,
+
+    BooleanAnd,
+    BooleanOr,
+
     Negation,
-    Modulo,
-    Equals,
-    LessThan,
-    LessThanEquals,
     Not,
+
+    GetLocalValue,
+    SetLocalValue,
+
     PushTrue,
     PushFalse,
     PushFloat,
     PushInteger,
     PushString,
-    SetLocalValue,
-    Subtraction,
-    StringConcat,
-    BooleanAnd,
-    BooleanOr,
+
     FunctionSignature,
     FunctionChunk,
     Function,
     Return,
     Call,
+
     CallForeign,
     GetForeignValue,
+
     Jump,
     JumpIfTrue,
     JumpIfFalse,
@@ -44,39 +60,58 @@ impl TryFrom<u8> for ByteCode {
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
-            value if value == ByteCode::Addition as u8 => Ok(Self::Addition),
+            value if value == ByteCode::IntegerAddition as u8 => Ok(Self::IntegerAddition),
+            value if value == ByteCode::IntegerSubtraction as u8 => Ok(Self::IntegerSubtraction),
+            value if value == ByteCode::IntegerDivision as u8 => Ok(Self::IntegerDivision),
+            value if value == ByteCode::IntegerMultiplication as u8 => {
+                Ok(Self::IntegerMultiplication)
+            }
+            value if value == ByteCode::IntegerModulo as u8 => Ok(Self::IntegerModulo),
+            value if value == ByteCode::IntegerEquals as u8 => Ok(Self::IntegerEquals),
+            value if value == ByteCode::IntegerLessThan as u8 => Ok(Self::IntegerLessThan),
+            value if value == ByteCode::IntegerLessThanEquals as u8 => {
+                Ok(Self::IntegerLessThanEquals)
+            }
+
             value if value == ByteCode::FloatAddition as u8 => Ok(Self::FloatAddition),
-            value if value == ByteCode::Division as u8 => Ok(Self::Division),
-            value if value == ByteCode::GetLocalValue as u8 => Ok(Self::GetLocalValue),
-            value if value == ByteCode::Multiplication as u8 => Ok(Self::Multiplication),
+            value if value == ByteCode::FloatSubtraction as u8 => Ok(Self::FloatSubtraction),
+            value if value == ByteCode::FloatDivision as u8 => Ok(Self::FloatDivision),
+            value if value == ByteCode::FloatMultiplication as u8 => Ok(Self::FloatMultiplication),
+            value if value == ByteCode::FloatModulo as u8 => Ok(Self::FloatModulo),
+            value if value == ByteCode::FloatEquals as u8 => Ok(Self::FloatEquals),
+            value if value == ByteCode::FloatLessThan as u8 => Ok(Self::FloatLessThan),
+            value if value == ByteCode::FloatLessThanEquals as u8 => Ok(Self::FloatLessThanEquals),
+
+            value if value == ByteCode::StringConcat as u8 => Ok(Self::StringConcat),
+
+            value if value == ByteCode::BooleanAnd as u8 => Ok(Self::BooleanAnd),
+            value if value == ByteCode::BooleanOr as u8 => Ok(Self::BooleanOr),
+
             value if value == ByteCode::Negation as u8 => Ok(Self::Negation),
-            value if value == ByteCode::Modulo as u8 => Ok(Self::Modulo),
-            value if value == ByteCode::Equals as u8 => Ok(Self::Equals),
-            value if value == ByteCode::LessThan as u8 => Ok(Self::LessThan),
-            value if value == ByteCode::LessThanEquals as u8 => Ok(Self::LessThanEquals),
             value if value == ByteCode::Not as u8 => Ok(Self::Not),
+
+            value if value == ByteCode::GetLocalValue as u8 => Ok(Self::GetLocalValue),
+            value if value == ByteCode::SetLocalValue as u8 => Ok(Self::SetLocalValue),
+
             value if value == ByteCode::PushTrue as u8 => Ok(Self::PushTrue),
             value if value == ByteCode::PushFalse as u8 => Ok(Self::PushFalse),
             value if value == ByteCode::PushFloat as u8 => Ok(Self::PushFloat),
             value if value == ByteCode::PushInteger as u8 => Ok(Self::PushInteger),
             value if value == ByteCode::PushString as u8 => Ok(Self::PushString),
-            value if value == ByteCode::SetLocalValue as u8 => Ok(Self::SetLocalValue),
-            value if value == ByteCode::Subtraction as u8 => Ok(Self::Subtraction),
-            value if value == ByteCode::StringConcat as u8 => Ok(Self::StringConcat),
-            value if value == ByteCode::BooleanAnd as u8 => Ok(Self::BooleanAnd),
-            value if value == ByteCode::BooleanOr as u8 => Ok(Self::BooleanOr),
+
             value if value == ByteCode::FunctionSignature as u8 => Ok(Self::FunctionSignature),
             value if value == ByteCode::FunctionChunk as u8 => Ok(Self::FunctionChunk),
             value if value == ByteCode::Function as u8 => Ok(Self::Function),
             value if value == ByteCode::Return as u8 => Ok(Self::Return),
-            // value if value == ByteCode::ForeignFunction as u8 => Ok(Self::ForeignFunction),
-            // value if value == ByteCode::FunctionSignature as u8 => Ok(Self::FunctionSignature),
             value if value == ByteCode::Call as u8 => Ok(Self::Call),
+
             value if value == ByteCode::CallForeign as u8 => Ok(Self::CallForeign),
             value if value == ByteCode::GetForeignValue as u8 => Ok(Self::GetForeignValue),
+
             value if value == ByteCode::Jump as u8 => Ok(Self::Jump),
             value if value == ByteCode::JumpIfTrue as u8 => Ok(Self::JumpIfTrue),
             value if value == ByteCode::JumpIfFalse as u8 => Ok(Self::JumpIfFalse),
+
             _ => Err(()),
         }
     }

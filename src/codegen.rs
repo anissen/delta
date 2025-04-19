@@ -2,7 +2,10 @@ use std::collections::{HashMap, HashSet};
 
 use crate::bytecodes::ByteCode;
 use crate::diagnostics::{Diagnostics, Message};
-use crate::expressions::{BinaryOperator, Expr, IsArmPattern, UnaryOperator, ValueType};
+use crate::expressions::{
+    ArithmeticOperations, BinaryOperator, BooleanOperations, Comparisons, Expr, IsArmPattern,
+    StringOperations, UnaryOperator, ValueType,
+};
 use crate::program::Context;
 use crate::tokens::{Span, Token, TokenKind};
 
@@ -233,34 +236,95 @@ impl<'a> Codegen<'a> {
                 self.emit_expr(left, scope);
                 self.emit_expr(right, scope);
                 match operator {
-                    BinaryOperator::Addition => scope.bytecode.add_op(ByteCode::Addition),
-                    BinaryOperator::Subtraction => scope.bytecode.add_op(ByteCode::Subtraction),
-                    BinaryOperator::Multiplication => {
-                        scope.bytecode.add_op(ByteCode::Multiplication)
+                    BinaryOperator::IntegerOperation(integer_operation) => {
+                        match integer_operation {
+                            ArithmeticOperations::Addition => {
+                                scope.bytecode.add_op(ByteCode::IntegerAddition)
+                            }
+                            ArithmeticOperations::Subtraction => {
+                                scope.bytecode.add_op(ByteCode::IntegerSubtraction)
+                            }
+                            ArithmeticOperations::Multiplication => {
+                                scope.bytecode.add_op(ByteCode::IntegerMultiplication)
+                            }
+                            ArithmeticOperations::Division => {
+                                scope.bytecode.add_op(ByteCode::IntegerDivision)
+                            }
+                            ArithmeticOperations::Modulus => {
+                                scope.bytecode.add_op(ByteCode::IntegerModulo)
+                            }
+                        }
                     }
-                    BinaryOperator::Division => scope.bytecode.add_op(ByteCode::Division),
-                    BinaryOperator::FloatAddition => scope.bytecode.add_op(ByteCode::FloatAddition),
-                    BinaryOperator::Modulus => scope.bytecode.add_op(ByteCode::Modulo),
-                    BinaryOperator::StringConcat => scope.bytecode.add_op(ByteCode::StringConcat),
-                    BinaryOperator::BooleanAnd => scope.bytecode.add_op(ByteCode::BooleanAnd),
-                    BinaryOperator::BooleanOr => scope.bytecode.add_op(ByteCode::BooleanOr),
-                    BinaryOperator::Equal => scope.bytecode.add_op(ByteCode::Equals),
-                    BinaryOperator::NotEqual => scope
-                        .bytecode
-                        .add_op(ByteCode::Equals)
-                        .add_op(ByteCode::Not),
-                    BinaryOperator::LessThan => scope.bytecode.add_op(ByteCode::LessThan),
-                    BinaryOperator::LessThanEqual => {
-                        scope.bytecode.add_op(ByteCode::LessThanEquals)
+                    BinaryOperator::FloatOperation(float_operation) => match float_operation {
+                        ArithmeticOperations::Addition => {
+                            scope.bytecode.add_op(ByteCode::FloatAddition)
+                        }
+                        ArithmeticOperations::Subtraction => {
+                            scope.bytecode.add_op(ByteCode::FloatSubtraction)
+                        }
+                        ArithmeticOperations::Multiplication => {
+                            scope.bytecode.add_op(ByteCode::FloatMultiplication)
+                        }
+                        ArithmeticOperations::Division => {
+                            scope.bytecode.add_op(ByteCode::FloatDivision)
+                        }
+                        ArithmeticOperations::Modulus => {
+                            scope.bytecode.add_op(ByteCode::FloatModulo)
+                        }
+                    },
+                    BinaryOperator::BooleanOperation(boolean_operation) => {
+                        match boolean_operation {
+                            BooleanOperations::And => scope.bytecode.add_op(ByteCode::BooleanAnd),
+                            BooleanOperations::Or => scope.bytecode.add_op(ByteCode::BooleanOr),
+                        }
                     }
-                    BinaryOperator::GreaterThan => scope
-                        .bytecode
-                        .add_op(ByteCode::LessThanEquals)
-                        .add_op(ByteCode::Not),
-                    BinaryOperator::GreaterThanEqual => scope
-                        .bytecode
-                        .add_op(ByteCode::LessThan)
-                        .add_op(ByteCode::Not),
+                    BinaryOperator::StringOperation(string_operation) => match string_operation {
+                        StringOperations::StringConcat => {
+                            scope.bytecode.add_op(ByteCode::StringConcat)
+                        }
+                    },
+                    BinaryOperator::IntegerComparison(integer_comparison) => {
+                        match integer_comparison {
+                            Comparisons::Equal => scope.bytecode.add_op(ByteCode::IntegerEquals),
+                            Comparisons::NotEqual => scope
+                                .bytecode
+                                .add_op(ByteCode::IntegerEquals)
+                                .add_op(ByteCode::Not),
+                            Comparisons::LessThan => {
+                                scope.bytecode.add_op(ByteCode::IntegerLessThan)
+                            }
+                            Comparisons::LessThanEqual => {
+                                scope.bytecode.add_op(ByteCode::IntegerLessThanEquals)
+                            }
+                            Comparisons::GreaterThan => scope
+                                .bytecode
+                                .add_op(ByteCode::IntegerLessThanEquals)
+                                .add_op(ByteCode::Not),
+                            Comparisons::GreaterThanEqual => scope
+                                .bytecode
+                                .add_op(ByteCode::IntegerLessThan)
+                                .add_op(ByteCode::Not),
+                        }
+                    }
+                    BinaryOperator::FloatComparison(float_comparison) => match float_comparison {
+                        Comparisons::Equal => scope.bytecode.add_op(ByteCode::FloatEquals),
+                        Comparisons::NotEqual => scope
+                            .bytecode
+                            .add_op(ByteCode::FloatEquals)
+                            .add_op(ByteCode::Not),
+                        Comparisons::LessThan => scope.bytecode.add_op(ByteCode::FloatLessThan),
+                        Comparisons::LessThanEqual => {
+                            scope.bytecode.add_op(ByteCode::FloatLessThanEquals)
+                        }
+                        Comparisons::GreaterThan => scope
+                            .bytecode
+                            .add_op(ByteCode::FloatLessThanEquals)
+                            .add_op(ByteCode::Not),
+                        Comparisons::GreaterThanEqual => scope
+                            .bytecode
+                            .add_op(ByteCode::FloatLessThan)
+                            .add_op(ByteCode::Not),
+                    },
                 };
             }
 
@@ -288,7 +352,7 @@ impl<'a> Codegen<'a> {
                             // Emit expression and pattern and compare
                             scope.bytecode.add_get_local_value(index);
                             self.emit_expr(pattern, scope);
-                            scope.bytecode.add_op(ByteCode::Equals);
+                            scope.bytecode.add_op(ByteCode::IntegerEquals);
 
                             // Jump to next arm if not equal
                             let next_arm_offset = scope.bytecode.add_jump_if_false();

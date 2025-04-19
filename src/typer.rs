@@ -210,11 +210,7 @@ impl<'a> Typer<'a> {
         diagnostics: &mut Diagnostics,
     ) -> Type {
         match operator {
-            BinaryOperator::Addition
-            | BinaryOperator::Subtraction
-            | BinaryOperator::Multiplication
-            | BinaryOperator::Division
-            | BinaryOperator::Modulus => {
+            BinaryOperator::IntegerOperation(_) => {
                 // if left or right is an identifier w. no type, assign integer to it
                 self.expect_type(left, &Type::Integer, &_token.position, env, diagnostics);
                 if let Expr::Identifier { name } = left {
@@ -233,7 +229,7 @@ impl<'a> Typer<'a> {
                 Type::Integer
             }
 
-            BinaryOperator::FloatAddition => {
+            BinaryOperator::FloatOperation(_) => {
                 // if left or right is an identifier w. no type, assign integer to it
                 self.expect_type(left, &Type::Float, &_token.position, env, diagnostics);
                 if let Expr::Identifier { name } = left {
@@ -251,6 +247,7 @@ impl<'a> Typer<'a> {
                 }
                 Type::Float
             }
+
             _ => Type::TEMP_error,
         }
     }
