@@ -80,30 +80,41 @@ pub enum UnaryOperator {
 }
 
 #[derive(Debug)]
-// TODO(anissen): Group operators in separate enums
-pub enum BinaryOperator {
-    // integer operations
+pub enum ArithmeticOperations {
     Addition,
     Subtraction,
     Multiplication,
     Division,
     Modulus,
+}
 
-    // boolean operators
-    BooleanAnd,
-    BooleanOr,
+#[derive(Debug)]
+pub enum BooleanOperations {
+    And,
+    Or,
+}
 
-    // float operations
-    FloatAddition,
-
-    // string operations
+#[derive(Debug)]
+pub enum StringOperations {
     StringConcat,
+}
 
-    // comparisons
+#[derive(Debug)]
+pub enum Comparisons {
     Equal,
     NotEqual,
     LessThan,
     LessThanEqual,
     GreaterThan,
     GreaterThanEqual,
+}
+
+#[derive(Debug)]
+pub enum BinaryOperator {
+    IntegerOperation(ArithmeticOperations),
+    FloatOperation(ArithmeticOperations),
+    BooleanOperation(BooleanOperations),
+    StringOperation(StringOperations),
+    IntegerComparison(Comparisons),
+    FloatComparison(Comparisons),
 }

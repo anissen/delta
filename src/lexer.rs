@@ -35,7 +35,7 @@ impl Lexer {
             let token_kind = self.scan_next();
             let lexeme = self.source[self.start..self.current].iter().collect();
             let token = match token_kind {
-                TokenKind::String => self.get_string_token(lexeme),
+                TokenKind::Text => self.get_string_token(lexeme),
                 _ => self.get_token_from_lexeme(token_kind, lexeme),
             };
             self.add_token(token);
@@ -81,14 +81,30 @@ impl Lexer {
             '+' if self.matches('.') => TokenKind::PlusDot,
             '+' => TokenKind::Plus,
             '-' if self.is_digit(self.peek()) => self.number(),
+            '-' if self.matches('.') => TokenKind::MinusDot,
             '-' => TokenKind::Minus,
+            '*' if self.matches('.') => TokenKind::StarDot,
             '*' => TokenKind::Star,
+            '/' if self.matches('.') => TokenKind::SlashDot,
             '/' => TokenKind::Slash,
+            '%' if self.matches('.') => TokenKind::PercentDot,
             '%' => TokenKind::Percent,
             '\\' => TokenKind::BackSlash,
-            '!' if self.matches('=') => TokenKind::BangEqual,
+            '!' if self.matches('=') => {
+                if self.matches('.') {
+                    TokenKind::BangEqualDot
+                } else {
+                    TokenKind::BangEqual
+                }
+            }
             '!' => TokenKind::Bang,
-            '=' if self.matches('=') => TokenKind::EqualEqual,
+            '=' if self.matches('=') => {
+                if self.matches('.') {
+                    TokenKind::EqualEqualDot
+                } else {
+                    TokenKind::EqualEqual
+                }
+            }
             '=' => TokenKind::Equal,
             '#' => self.comment(),
             '|' => TokenKind::Pipe,
@@ -101,9 +117,23 @@ impl Lexer {
                 self.string()
             }
             '}' => TokenKind::RightBrace,
-            '<' if self.matches('=') => TokenKind::LeftChevronEqual,
+            '<' if self.matches('=') => {
+                if self.matches('.') {
+                    TokenKind::LeftChevronEqualDot
+                } else {
+                    TokenKind::LeftChevronEqual
+                }
+            }
+            '<' if self.matches('.') => TokenKind::LeftChevronDot,
             '<' => TokenKind::LeftChevron,
-            '>' if self.matches('=') => TokenKind::RightChevronEqual,
+            '>' if self.matches('=') => {
+                if self.matches('.') {
+                    TokenKind::RightChevronEqualDot
+                } else {
+                    TokenKind::RightChevronEqual
+                }
+            }
+            '>' if self.matches('.') => TokenKind::RightChevronDot,
             '>' => TokenKind::RightChevron,
             '_' => TokenKind::Underscore,
             '\t' => TokenKind::Tab,
@@ -233,12 +263,12 @@ impl Lexer {
         }
 
         self.start += 1;
-        TokenKind::String
+        TokenKind::Text
     }
 
     fn get_string_token(&mut self, value: String) -> Token {
         let escaped_value = self.escape_string(value);
-        self.get_token_from_lexeme(TokenKind::String, escaped_value)
+        self.get_token_from_lexeme(TokenKind::Text, escaped_value)
     }
 
     fn escape_string(&mut self, value: String) -> String {

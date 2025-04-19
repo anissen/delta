@@ -43,6 +43,14 @@ impl Disassembler {
         u32::from_be_bytes(value_bytes)
     }
 
+    fn read_f32(&mut self) -> f32 {
+        let value_bytes: [u8; 4] = self.program[self.program_counter..self.program_counter + 4]
+            .try_into()
+            .unwrap();
+        self.program_counter += 4;
+        f32::from_be_bytes(value_bytes)
+    }
+
     fn read_byte(&mut self) -> u8 {
         let value = self.program[self.program_counter];
         self.program_counter += 1;
@@ -89,7 +97,7 @@ impl Disassembler {
                 }
 
                 ByteCode::PushFloat => {
-                    let value = self.read_i32();
+                    let value = self.read_f32();
                     self.print(vec![
                         "push_float".to_string(),
                         format!("(value: {})", value),
@@ -110,28 +118,68 @@ impl Disassembler {
                     ]);
                 }
 
-                ByteCode::Addition => {
-                    self.print(vec!["add".to_string()]);
+                ByteCode::IntegerAddition => {
+                    self.print(vec!["int_add".to_string()]);
                 }
 
-                ByteCode::Subtraction => {
-                    self.print(vec!["sub".to_string()]);
+                ByteCode::IntegerSubtraction => {
+                    self.print(vec!["int_sub".to_string()]);
                 }
 
-                ByteCode::Multiplication => {
-                    self.print(vec!["mult".to_string()]);
+                ByteCode::IntegerMultiplication => {
+                    self.print(vec!["int_mult".to_string()]);
                 }
 
-                ByteCode::Division => {
-                    self.print(vec!["div".to_string()]);
+                ByteCode::IntegerDivision => {
+                    self.print(vec!["int_div".to_string()]);
+                }
+
+                ByteCode::IntegerModulo => {
+                    self.print(vec!["int_mod".to_string()]);
+                }
+
+                ByteCode::IntegerEquals => {
+                    self.print(vec!["int_eq".to_string()]);
+                }
+
+                ByteCode::IntegerLessThan => {
+                    self.print(vec!["int_lt".to_string()]);
+                }
+
+                ByteCode::IntegerLessThanEquals => {
+                    self.print(vec!["int_lte".to_string()]);
                 }
 
                 ByteCode::FloatAddition => {
-                    self.print(vec!["add_float".to_string()]);
+                    self.print(vec!["float_add".to_string()]);
                 }
 
-                ByteCode::Modulo => {
-                    self.print(vec!["mod".to_string()]);
+                ByteCode::FloatSubtraction => {
+                    self.print(vec!["float_sub".to_string()]);
+                }
+
+                ByteCode::FloatMultiplication => {
+                    self.print(vec!["float_mult".to_string()]);
+                }
+
+                ByteCode::FloatDivision => {
+                    self.print(vec!["float_div".to_string()]);
+                }
+
+                ByteCode::FloatModulo => {
+                    self.print(vec!["float_mod".to_string()]);
+                }
+
+                ByteCode::FloatEquals => {
+                    self.print(vec!["float_eq".to_string()]);
+                }
+
+                ByteCode::FloatLessThan => {
+                    self.print(vec!["float_lt".to_string()]);
+                }
+
+                ByteCode::FloatLessThanEquals => {
+                    self.print(vec!["float_lte".to_string()]);
                 }
 
                 ByteCode::StringConcat => {
@@ -144,18 +192,6 @@ impl Disassembler {
 
                 ByteCode::BooleanOr => {
                     self.print(vec!["or".to_string()]);
-                }
-
-                ByteCode::Equals => {
-                    self.print(vec!["eq".to_string()]);
-                }
-
-                ByteCode::LessThan => {
-                    self.print(vec!["lt".to_string()]);
-                }
-
-                ByteCode::LessThanEquals => {
-                    self.print(vec!["lte".to_string()]);
                 }
 
                 ByteCode::Negation => {

@@ -115,93 +115,100 @@ impl VirtualMachine {
                     self.push_string(string);
                 }
 
-                // TODO(anissen): Should this be split into add_int + add_float for optimization?
-                ByteCode::Addition => {
-                    let right = self.pop_any();
-                    let left = self.pop_any();
-                    match (left, right) {
-                        (Value::Float(left), Value::Float(right)) => self.push_float(left + right),
+                ByteCode::IntegerAddition => {
+                    let right = self.pop_integer();
+                    let left = self.pop_integer();
+                    self.push_integer(left + right);
+                }
 
-                        (Value::Integer(left), Value::Integer(right)) => {
-                            self.stack.push(Value::Integer(left + right))
-                        }
+                ByteCode::IntegerSubtraction => {
+                    let right = self.pop_integer();
+                    let left = self.pop_integer();
+                    self.push_integer(left - right);
+                }
 
-                        _ => panic!("incompatible types for addition"),
-                    }
+                ByteCode::IntegerMultiplication => {
+                    let right = self.pop_integer();
+                    let left = self.pop_integer();
+                    self.push_integer(left * right);
+                }
+
+                ByteCode::IntegerDivision => {
+                    let right = self.pop_integer();
+                    let left = self.pop_integer();
+                    self.push_integer(left / right);
+                }
+
+                ByteCode::IntegerModulo => {
+                    let modulus = self.pop_integer();
+                    let value = self.pop_integer();
+                    self.push_integer(value % modulus);
+                }
+
+                ByteCode::IntegerEquals => {
+                    let right = self.pop_integer();
+                    let left = self.pop_integer();
+                    self.push_boolean(left == right)
+                }
+
+                ByteCode::IntegerLessThan => {
+                    let right = self.pop_integer();
+                    let left = self.pop_integer();
+                    self.push_boolean(left < right);
+                }
+
+                ByteCode::IntegerLessThanEquals => {
+                    let right = self.pop_integer();
+                    let left = self.pop_integer();
+                    self.push_boolean(left <= right);
                 }
 
                 ByteCode::FloatAddition => {
                     let right = self.pop_float();
                     let left = self.pop_float();
-                    self.stack.push(Value::Float(left + right))
+                    self.push_float(left + right);
                 }
 
-                ByteCode::Subtraction => {
-                    let right = self.pop_any();
-                    let left = self.pop_any();
-                    match (left, right) {
-                        (Value::Float(left), Value::Float(right)) => self.push_float(left - right),
-
-                        (Value::Integer(left), Value::Integer(right)) => {
-                            self.stack.push(Value::Integer(left - right))
-                        }
-
-                        _ => panic!("incompatible types for subtraction"),
-                    }
+                ByteCode::FloatSubtraction => {
+                    let right = self.pop_float();
+                    let left = self.pop_float();
+                    self.push_float(left - right);
                 }
 
-                ByteCode::Multiplication => {
-                    let right = self.pop_any();
-                    let left = self.pop_any();
-                    match (left, right) {
-                        (Value::Float(left), Value::Float(right)) => self.push_float(left * right),
-
-                        (Value::Integer(left), Value::Integer(right)) => {
-                            self.push_integer(left * right)
-                        }
-
-                        _ => panic!("incompatible types for multiplication"),
-                    }
+                ByteCode::FloatMultiplication => {
+                    let right = self.pop_float();
+                    let left = self.pop_float();
+                    self.push_float(left * right);
                 }
 
-                ByteCode::Division => {
-                    let right = self.pop_any();
-                    let left = self.pop_any();
-                    match (left, right) {
-                        (Value::Float(left), Value::Float(right)) => {
-                            if right == 0.0 {
-                                self.push_float(0.0);
-                            } else {
-                                self.push_float(left / right)
-                            }
-                        }
-
-                        (Value::Integer(left), Value::Integer(right)) => {
-                            if right == 0 {
-                                self.push_integer(0);
-                            } else {
-                                self.push_integer(left / right)
-                            }
-                        }
-
-                        _ => panic!("incompatible types for division"),
-                    }
+                ByteCode::FloatDivision => {
+                    let right = self.pop_float();
+                    let left = self.pop_float();
+                    self.push_float(left / right);
                 }
 
-                ByteCode::Modulo => {
-                    let modulus = self.pop_any();
-                    let value = self.pop_any();
-                    match (value, modulus) {
-                        (Value::Float(value), Value::Float(modulus)) => {
-                            self.push_float(value % modulus)
-                        }
+                ByteCode::FloatModulo => {
+                    let modulus = self.pop_float();
+                    let value = self.pop_float();
+                    self.push_float(value % modulus);
+                }
 
-                        (Value::Integer(value), Value::Integer(modulus)) => {
-                            self.push_integer(value % modulus)
-                        }
+                ByteCode::FloatEquals => {
+                    let right = self.pop_float();
+                    let left = self.pop_float();
+                    self.push_boolean(left == right)
+                }
 
-                        _ => panic!("incompatible types for multiplication"),
-                    }
+                ByteCode::FloatLessThan => {
+                    let right = self.pop_float();
+                    let left = self.pop_float();
+                    self.push_boolean(left < right);
+                }
+
+                ByteCode::FloatLessThanEquals => {
+                    let right = self.pop_float();
+                    let left = self.pop_float();
+                    self.push_boolean(left <= right);
                 }
 
                 ByteCode::StringConcat => {
@@ -242,44 +249,6 @@ impl VirtualMachine {
                     let right = self.pop_boolean();
                     let left = self.pop_boolean();
                     self.push_boolean(left || right)
-                }
-
-                ByteCode::Equals => {
-                    let right = self.pop_any();
-                    let left = self.pop_any();
-                    self.push_boolean(left == right)
-                }
-
-                ByteCode::LessThan => {
-                    let right = self.pop_any();
-                    let left = self.pop_any();
-                    match (left, right) {
-                        (Value::Float(left), Value::Float(right)) => {
-                            self.push_boolean(left < right);
-                        }
-
-                        (Value::Integer(left), Value::Integer(right)) => {
-                            self.push_boolean(left < right);
-                        }
-
-                        _ => panic!("incompatible types for less than comparison"),
-                    }
-                }
-
-                ByteCode::LessThanEquals => {
-                    let right = self.pop_any();
-                    let left = self.pop_any();
-                    match (left, right) {
-                        (Value::Float(left), Value::Float(right)) => {
-                            self.push_boolean(left <= right);
-                        }
-
-                        (Value::Integer(left), Value::Integer(right)) => {
-                            self.push_boolean(left <= right);
-                        }
-
-                        _ => panic!("incompatible types for less than equals comparison"),
-                    }
                 }
 
                 ByteCode::Negation => {
@@ -527,7 +496,14 @@ impl VirtualMachine {
         self.stack.push(v);
     }
 
-    pub fn pop_float(&mut self) -> f32 {
+    fn pop_integer(&mut self) -> i32 {
+        match self.stack.pop().unwrap() {
+            Value::Integer(i) => i,
+            _ => panic!("expected integer, encountered some other type"),
+        }
+    }
+
+    fn pop_float(&mut self) -> f32 {
         match self.stack.pop().unwrap() {
             Value::Float(f) => f,
             _ => panic!("expected float, encountered some other type"),
