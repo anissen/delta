@@ -11,6 +11,7 @@ use crate::tokens::{Span, Token};
 #[derive(PartialEq, Clone, Debug)]
 pub enum Type {
     None,
+    Any, // TODO(anissen): Remove this
     Boolean,
     Integer,
     Float,
@@ -25,6 +26,7 @@ impl fmt::Display for Type {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let type_name = match self {
             Type::None => "???",
+            Type::Any => "any",
             Type::Boolean => "boolean",
             Type::Integer => "integer",
             Type::Float => "float",
@@ -299,7 +301,8 @@ impl<'a> Typer<'a> {
             BinaryOperator::StringOperation(string_operations) => {
                 match string_operations {
                     StringOperations::StringConcat => {
-                        // TODO(anissen): Check types
+                        self.expect_type(left, Type::String, &_token.position, env, diagnostics);
+                        self.expect_type(right, Type::Any, &_token.position, env, diagnostics); // TODO(anissen): Check types
                         Type::String
                     }
                 }
@@ -320,7 +323,8 @@ impl<'a> Typer<'a> {
         diagnostics: &mut Diagnostics,
     ) {
         let actual_type = self.type_expr(expression, env, diagnostics);
-        if actual_type != Type::None && actual_type != expected_type {
+        if actual_type != Type::None && expected_type != Type::Any /* temp wildcard type */ && actual_type != expected_type
+        {
             self.error(
                 format!("Expected {} but found {}", expected_type, actual_type),
                 position.clone(),
