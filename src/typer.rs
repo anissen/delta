@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fmt;
 
 use crate::diagnostics::{Diagnostics, Message};
-use crate::expressions::{BinaryOperator, Expr, StringOperations, ValueType};
+use crate::expressions::{BinaryOperator, Expr, StringOperations, UnaryOperator, ValueType};
 use crate::program::Context;
 use crate::tokens::{Span, Token};
 
@@ -47,6 +47,7 @@ impl fmt::Display for Type {
     }
 }
 
+#[derive(Debug)]
 struct TypeEnvironment {
     identifiers: HashMap<String, Type>,
 }
@@ -161,27 +162,21 @@ impl<'a> Typer<'a> {
                 args,
                 positions,
             } => {
-                let function_type = env.identifiers.get(name); // TODO(anissen): Should type_expr return a (type, scope) instead?
-
-                let mut new_env = TypeEnvironment::new();
-                new_env.identifiers = env.identifiers.clone(); // TODO(anissen): HAAAAAAAAAACK!
-
-                match function_type {
-                    Some(Type::Function {
+                let function_type = env.identifiers.get_mut(name).unwrap();
+                match function_type.clone() {
+                    Type::Function {
                         parameters,
                         return_type,
-                    }) => {
+                    } => {
                         for (index, arg) in args.iter().enumerate() {
                             let parameter = parameters[index].clone();
                             let position = positions[index].clone();
-                            // TODO(anissen): Provide a position with call and args
-                            // self.type_expr(arg, &mut new_env, diagnostics);
-                            self.expect_type(arg, *parameter, &position, &mut new_env, diagnostics);
+                            self.expect_type(arg, *parameter, &position, env, diagnostics);
                         }
 
                         *return_type.clone()
                     }
-                    Some(Type::None) => Type::None,
+                    Type::None => Type::None,
                     _ => {
                         dbg!(&function_type);
                         panic!("cannot type check function call")
