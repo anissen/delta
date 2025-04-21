@@ -121,7 +121,7 @@ fn pattern_matching_capture_guard() {
         r#"
 2 is
     1
-        "no
+        "no"
     other if other >= 2
         "value captured is {other}"
 "#,

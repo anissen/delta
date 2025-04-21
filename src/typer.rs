@@ -119,8 +119,7 @@ impl<'a> Typer<'a> {
                     params,
                     expr,
                 } => {
-                    let mut new_env = TypeEnvironment::new();
-                    new_env.identifiers = env.identifiers.clone(); // TODO(anissen): HAAACK!
+                    let mut new_env = env.clone();
                     for p in params {
                         new_env.identifiers.insert(p.lexeme.clone(), Type::None);
                     }
@@ -176,7 +175,9 @@ impl<'a> Typer<'a> {
 
                         *return_type.clone()
                     }
+
                     Type::None => Type::None,
+
                     _ => {
                         dbg!(&function_type);
                         panic!("cannot type check function call")
@@ -206,7 +207,7 @@ impl<'a> Typer<'a> {
             Expr::Grouping(expr) => self.type_expr(expr, env, diagnostics),
 
             Expr::Is { expr, arms } => {
-                let is_type = self.type_expr(expr, env, diagnostics);
+                let mut is_type = self.type_expr(expr, env, diagnostics);
                 let mut return_type = None;
 
                 // TODO(anissen): Add positions here
@@ -217,6 +218,11 @@ impl<'a> Typer<'a> {
                     // Check that arm pattern types match expr type
                     match &arm.pattern {
                         IsArmPattern::Expression(expr) => {
+                            let pattern_type = self.type_expr(expr, env, diagnostics);
+                            if is_type == Type::None {
+                                is_type = pattern_type;
+                            }
+
                             self.expect_type(
                                 &expr,
                                 is_type.clone(),
@@ -247,6 +253,8 @@ impl<'a> Typer<'a> {
                         IsArmPattern::Default => (),
                     }
 
+                    // TODO(anissen): Check for exhaustiveness
+
                     // Check that return types of each arm matches
                     if let Some(return_type) = return_type.clone() {
                         self.expect_type(
@@ -259,6 +267,10 @@ impl<'a> Typer<'a> {
                     } else {
                         return_type = Some(self.type_expr(&arm.block, &mut new_env, diagnostics));
                     }
+                }
+
+                if let Expr::Identifier { name } = &**expr {
+                    env.identifiers.insert(name.lexeme.clone(), is_type.clone());
                 }
 
                 return_type.unwrap()
@@ -342,8 +354,7 @@ impl<'a> Typer<'a> {
         diagnostics: &mut Diagnostics,
     ) {
         let actual_type = self.type_expr(expression, env, diagnostics);
-        if actual_type != Type::None && expected_type != Type::Any /* temp wildcard type */ && actual_type != expected_type
-        {
+        if actual_type != Type::None && expected_type != Type::Any && actual_type != expected_type {
             self.error(
                 format!("Expected {} but found {}", expected_type, actual_type),
                 position.clone(),
