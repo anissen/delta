@@ -3,8 +3,8 @@ use std::collections::{HashMap, HashSet};
 use crate::bytecodes::ByteCode;
 use crate::diagnostics::{Diagnostics, Message};
 use crate::expressions::{
-    ArithmeticOperations, BinaryOperator, BooleanOperations, Comparisons, Expr, IsArmPattern,
-    StringOperations, UnaryOperator, ValueType,
+    ArithmeticOperations, BinaryOperator, BooleanOperations, Comparisons, EqualityOperations, Expr,
+    IsArmPattern, StringOperations, UnaryOperator, ValueType,
 };
 use crate::program::Context;
 use crate::tokens::{Span, Token, TokenKind};
@@ -285,11 +285,6 @@ impl<'a> Codegen<'a> {
                     },
                     BinaryOperator::IntegerComparison(integer_comparison) => {
                         match integer_comparison {
-                            Comparisons::Equal => scope.bytecode.add_op(ByteCode::IntegerEquals),
-                            Comparisons::NotEqual => scope
-                                .bytecode
-                                .add_op(ByteCode::IntegerEquals)
-                                .add_op(ByteCode::Not),
                             Comparisons::LessThan => {
                                 scope.bytecode.add_op(ByteCode::IntegerLessThan)
                             }
@@ -307,11 +302,6 @@ impl<'a> Codegen<'a> {
                         }
                     }
                     BinaryOperator::FloatComparison(float_comparison) => match float_comparison {
-                        Comparisons::Equal => scope.bytecode.add_op(ByteCode::FloatEquals),
-                        Comparisons::NotEqual => scope
-                            .bytecode
-                            .add_op(ByteCode::FloatEquals)
-                            .add_op(ByteCode::Not),
                         Comparisons::LessThan => scope.bytecode.add_op(ByteCode::FloatLessThan),
                         Comparisons::LessThanEqual => {
                             scope.bytecode.add_op(ByteCode::FloatLessThanEquals)
@@ -323,6 +313,13 @@ impl<'a> Codegen<'a> {
                         Comparisons::GreaterThanEqual => scope
                             .bytecode
                             .add_op(ByteCode::FloatLessThan)
+                            .add_op(ByteCode::Not),
+                    },
+                    BinaryOperator::Equality(equality) => match equality {
+                        EqualityOperations::Equal => scope.bytecode.add_op(ByteCode::Equals),
+                        EqualityOperations::NotEqual => scope
+                            .bytecode
+                            .add_op(ByteCode::Equals)
                             .add_op(ByteCode::Not),
                     },
                 };
@@ -352,7 +349,7 @@ impl<'a> Codegen<'a> {
                             // Emit expression and pattern and compare
                             scope.bytecode.add_get_local_value(index);
                             self.emit_expr(pattern, scope);
-                            scope.bytecode.add_op(ByteCode::IntegerEquals);
+                            scope.bytecode.add_op(ByteCode::Equals);
 
                             // Jump to next arm if not equal
                             let next_arm_offset = scope.bytecode.add_jump_if_false();

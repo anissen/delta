@@ -4,6 +4,7 @@ use crate::expressions::ArithmeticOperations;
 use crate::expressions::BinaryOperator;
 use crate::expressions::BooleanOperations;
 use crate::expressions::Comparisons;
+use crate::expressions::EqualityOperations;
 use crate::expressions::Expr;
 use crate::expressions::IsArm;
 use crate::expressions::IsArmPattern;
@@ -274,10 +275,9 @@ impl Parser {
             let token = self.previous();
             let right = self.comparison()?;
             let operator = match token.kind {
-                EqualEqual => BinaryOperator::IntegerComparison(Comparisons::Equal),
-                EqualEqualDot => BinaryOperator::FloatComparison(Comparisons::Equal),
-                BangEqual => BinaryOperator::IntegerComparison(Comparisons::NotEqual),
-                BangEqualDot => BinaryOperator::FloatComparison(Comparisons::NotEqual),
+                EqualEqual => BinaryOperator::Equality(EqualityOperations::Equal),
+                BangEqual => BinaryOperator::Equality(EqualityOperations::NotEqual),
+
                 _ => panic!("unreachable"),
             };
             Ok(Some(Expr::Binary {

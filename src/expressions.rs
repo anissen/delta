@@ -100,9 +100,13 @@ pub enum StringOperations {
 }
 
 #[derive(Debug)]
-pub enum Comparisons {
+pub enum EqualityOperations {
     Equal,
     NotEqual,
+}
+
+#[derive(Debug)]
+pub enum Comparisons {
     LessThan,
     LessThanEqual,
     GreaterThan,
@@ -117,4 +121,5 @@ pub enum BinaryOperator {
     StringOperation(StringOperations),
     IntegerComparison(Comparisons),
     FloatComparison(Comparisons),
+    Equality(EqualityOperations),
 }

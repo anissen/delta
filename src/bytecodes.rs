@@ -5,7 +5,6 @@ pub enum ByteCode {
     IntegerDivision,
     IntegerMultiplication,
     IntegerModulo,
-    IntegerEquals,
     IntegerLessThan,
     IntegerLessThanEquals,
 
@@ -14,7 +13,6 @@ pub enum ByteCode {
     FloatDivision,
     FloatMultiplication,
     FloatModulo,
-    FloatEquals,
     FloatLessThan,
     FloatLessThanEquals,
 
@@ -22,6 +20,8 @@ pub enum ByteCode {
 
     BooleanAnd,
     BooleanOr,
+
+    Equals,
 
     Negation,
     Not,
@@ -67,7 +67,6 @@ impl TryFrom<u8> for ByteCode {
                 Ok(Self::IntegerMultiplication)
             }
             value if value == ByteCode::IntegerModulo as u8 => Ok(Self::IntegerModulo),
-            value if value == ByteCode::IntegerEquals as u8 => Ok(Self::IntegerEquals),
             value if value == ByteCode::IntegerLessThan as u8 => Ok(Self::IntegerLessThan),
             value if value == ByteCode::IntegerLessThanEquals as u8 => {
                 Ok(Self::IntegerLessThanEquals)
@@ -78,7 +77,6 @@ impl TryFrom<u8> for ByteCode {
             value if value == ByteCode::FloatDivision as u8 => Ok(Self::FloatDivision),
             value if value == ByteCode::FloatMultiplication as u8 => Ok(Self::FloatMultiplication),
             value if value == ByteCode::FloatModulo as u8 => Ok(Self::FloatModulo),
-            value if value == ByteCode::FloatEquals as u8 => Ok(Self::FloatEquals),
             value if value == ByteCode::FloatLessThan as u8 => Ok(Self::FloatLessThan),
             value if value == ByteCode::FloatLessThanEquals as u8 => Ok(Self::FloatLessThanEquals),
 
@@ -87,6 +85,7 @@ impl TryFrom<u8> for ByteCode {
             value if value == ByteCode::BooleanAnd as u8 => Ok(Self::BooleanAnd),
             value if value == ByteCode::BooleanOr as u8 => Ok(Self::BooleanOr),
 
+            value if value == ByteCode::Equals as u8 => Ok(Self::Equals),
             value if value == ByteCode::Negation as u8 => Ok(Self::Negation),
             value if value == ByteCode::Not as u8 => Ok(Self::Not),
 

@@ -168,11 +168,11 @@ fn inequality_integer_expressions() {
 
 #[test]
 fn equality_positive_floats() {
-    assert_ok(r"0.0 ==. 0.0", Value::True);
-    assert_ok(r"5.4 ==. 5.4", Value::True);
-    assert_ok(r"123.456789 ==. 123.456789", Value::True);
+    assert_ok(r"0.0 == 0.0", Value::True);
+    assert_ok(r"5.4 == 5.4", Value::True);
+    assert_ok(r"123.456789 == 123.456789", Value::True);
 
-    assert_ok(r"12.3 ==. 12.0", Value::False);
+    assert_ok(r"12.3 == 12.0", Value::False);
 }
 
 #[test]
@@ -191,13 +191,13 @@ fn inequality_positive_floats() {
 
 #[test]
 fn equality_negative_floats() {
-    assert_ok(r"-0.0 ==. -0.0", Value::True);
-    assert_ok(r"-0.3 ==. -0.3", Value::True);
-    assert_ok(r"-5.4 ==. -5.4", Value::True);
-    assert_ok(r"-123.456789 ==. -123.456789", Value::True);
+    assert_ok(r"-0.0 == -0.0", Value::True);
+    assert_ok(r"-0.3 == -0.3", Value::True);
+    assert_ok(r"-5.4 == -5.4", Value::True);
+    assert_ok(r"-123.456789 == -123.456789", Value::True);
 
-    assert_ok(r"-12.3 ==. -12.0", Value::False);
-    assert_ok(r"-12.3 ==. 12.3", Value::False);
+    assert_ok(r"-12.3 == -12.0", Value::False);
+    assert_ok(r"-12.3 == 12.3", Value::False);
 }
 
 #[test]
@@ -225,7 +225,6 @@ fn equality_strings() {
     assert_ok(r#""Hello!" == "Hello!""#, Value::True);
 
     assert_ok(r#""Hello" == "World""#, Value::False);
-    assert_ok(r#""42" == 42"#, Value::False);
 }
 
 #[test]

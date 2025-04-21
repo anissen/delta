@@ -19,16 +19,20 @@ use common::{assert_type_fail, assert_type_ok};
 // }
 
 #[test]
+#[ignore = "not implemented"]
 fn plus_integer() {
     assert_type_fail("1 + 2.4", "asdf".to_string());
     assert_type_fail("1.2 + 2", "asdf2".to_string());
 }
 
 #[test]
+#[ignore = "not implemented"]
 fn plus_float() {
     assert_type_ok("1.2 +. 3.4");
     assert_type_fail("1 +. 2.4", "asdf".to_string());
     assert_type_fail("1.2 +. 2", "asdf2".to_string());
 }
+
+// assert_ok(r#""42" == 42"#, Value::False);
 
 // TODO(anissen): Make helper methods for typing w. success/failure

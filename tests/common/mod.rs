@@ -1,5 +1,5 @@
 pub fn assert_ok(source: &str, expected: delta::vm::Value) {
-    match delta::run(source, None, true) {
+    match delta::run(source, None, false) {
         Ok(Some(result)) => {
             assert!(
                 result == expected,
@@ -13,7 +13,7 @@ pub fn assert_ok(source: &str, expected: delta::vm::Value) {
 }
 
 pub fn assert_err(source: &str, expected: String) {
-    match delta::run(source, None, true) {
+    match delta::run(source, None, false) {
         Ok(Some(result)) => assert!(false, "Expected result to be Err but was Ok: {:?}", result),
         Err(diagnostics) => {
             assert!(diagnostics.count() == 1);
