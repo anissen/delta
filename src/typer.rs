@@ -33,14 +33,12 @@ impl fmt::Display for Type {
                 parameters,
                 return_type,
             } => {
-                // let param_str = parameters.iter().map(|p| p.fmt(f)?)
-                // &format!(
-                //     "function({:?}) -> {:?}",
-                //     // parameters.iter().map(|p| p.fmt(f)),
-                //     "[params]",
-                //     return_type.fmt(f)?
-                // )
-                "function([???]) -> ?"
+                let p = parameters
+                    .iter()
+                    .map(|p| p.to_string())
+                    .collect::<Vec<String>>()
+                    .join(",");
+                &format!("function({}) -> {}", p, return_type)
             }
         };
         write!(f, "{}", type_name)
