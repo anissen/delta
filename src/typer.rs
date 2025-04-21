@@ -2,13 +2,14 @@ use std::collections::HashMap;
 use std::fmt;
 
 use crate::diagnostics::{Diagnostics, Message};
-use crate::expressions::{BinaryOperator, Expr, StringOperations, UnaryOperator, ValueType};
+use crate::expressions::{
+    BinaryOperator, Expr, IsArmPattern, StringOperations, UnaryOperator, ValueType,
+};
 use crate::program::Context;
 use crate::tokens::{Span, Token};
 
 #[derive(PartialEq, Clone, Debug)]
 pub enum Type {
-    TEMP_error,
     None,
     Boolean,
     Integer,
@@ -23,7 +24,6 @@ pub enum Type {
 impl fmt::Display for Type {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let type_name = match self {
-            Type::TEMP_error => "TEMP",
             Type::None => "???",
             Type::Boolean => "boolean",
             Type::Integer => "integer",
@@ -47,7 +47,7 @@ impl fmt::Display for Type {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct TypeEnvironment {
     identifiers: HashMap<String, Type>,
 }
@@ -203,7 +203,59 @@ impl<'a> Typer<'a> {
                 }
             },
 
-            _ => Type::TEMP_error,
+            Expr::Grouping(expr) => self.type_expr(expr, env, diagnostics),
+
+            Expr::Is { expr, arms } => {
+                let is_type = self.type_expr(expr, env, diagnostics);
+                let mut return_type = None;
+
+                // TODO(anissen): Add positions here
+                let no_position = Span { column: 0, line: 0 };
+                for arm in arms {
+                    // Check that arm pattern types match expr type
+                    match &arm.pattern {
+                        IsArmPattern::Expression(expr) => {
+                            self.expect_type(
+                                &expr,
+                                is_type.clone(),
+                                &no_position,
+                                env,
+                                diagnostics,
+                            );
+                        }
+
+                        IsArmPattern::Capture {
+                            identifier,
+                            condition,
+                        } => {
+                            let mut new_env = env.clone();
+                            new_env
+                                .identifiers
+                                .insert(identifier.lexeme.clone(), is_type.clone());
+                            if let Some(condition) = condition {
+                                self.expect_type(
+                                    &condition,
+                                    Type::Boolean,
+                                    &no_position,
+                                    &mut new_env,
+                                    diagnostics,
+                                );
+                            }
+                        }
+
+                        IsArmPattern::Default => (),
+                    }
+
+                    // Check that return types of each arm matches
+                    if let Some(return_type) = return_type.clone() {
+                        self.expect_type(&arm.block, return_type, &no_position, env, diagnostics);
+                    } else {
+                        return_type = Some(self.type_expr(&arm.block, env, diagnostics));
+                    }
+                }
+
+                return_type.unwrap()
+            }
         }
     }
 
