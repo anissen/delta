@@ -138,10 +138,6 @@ impl Disassembler {
                     self.print(vec!["int_mod".to_string()]);
                 }
 
-                ByteCode::IntegerEquals => {
-                    self.print(vec!["int_eq".to_string()]);
-                }
-
                 ByteCode::IntegerLessThan => {
                     self.print(vec!["int_lt".to_string()]);
                 }
@@ -170,10 +166,6 @@ impl Disassembler {
                     self.print(vec!["float_mod".to_string()]);
                 }
 
-                ByteCode::FloatEquals => {
-                    self.print(vec!["float_eq".to_string()]);
-                }
-
                 ByteCode::FloatLessThan => {
                     self.print(vec!["float_lt".to_string()]);
                 }
@@ -192,6 +184,10 @@ impl Disassembler {
 
                 ByteCode::BooleanOr => {
                     self.print(vec!["or".to_string()]);
+                }
+
+                ByteCode::Equals => {
+                    self.print(vec!["eq".to_string()]);
                 }
 
                 ByteCode::Negation => {

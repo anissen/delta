@@ -90,21 +90,9 @@ impl Lexer {
             '%' if self.matches('.') => TokenKind::PercentDot,
             '%' => TokenKind::Percent,
             '\\' => TokenKind::BackSlash,
-            '!' if self.matches('=') => {
-                if self.matches('.') {
-                    TokenKind::BangEqualDot
-                } else {
-                    TokenKind::BangEqual
-                }
-            }
+            '!' if self.matches('=') => TokenKind::BangEqual,
             '!' => TokenKind::Bang,
-            '=' if self.matches('=') => {
-                if self.matches('.') {
-                    TokenKind::EqualEqualDot
-                } else {
-                    TokenKind::EqualEqual
-                }
-            }
+            '=' if self.matches('=') => TokenKind::EqualEqual,
             '=' => TokenKind::Equal,
             '#' => self.comment(),
             '|' => TokenKind::Pipe,

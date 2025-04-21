@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fmt;
 
 use crate::diagnostics::{Diagnostics, Message};
-use crate::expressions::{BinaryOperator, Expr, ValueType};
+use crate::expressions::{BinaryOperator, Expr, StringOperations, ValueType};
 use crate::program::Context;
 use crate::tokens::{Span, Token};
 
@@ -176,7 +176,7 @@ impl<'a> Typer<'a> {
                             let position = positions[index].clone();
                             // TODO(anissen): Provide a position with call and args
                             // self.type_expr(arg, &mut new_env, diagnostics);
-                            self.expect_type(arg, &parameter, &position, &mut new_env, diagnostics);
+                            self.expect_type(arg, *parameter, &position, &mut new_env, diagnostics);
                         }
 
                         *return_type.clone()
@@ -196,6 +196,18 @@ impl<'a> Typer<'a> {
                 right,
             } => self.type_binary(left, operator, _token, right, env, diagnostics),
 
+            Expr::Unary {
+                operator,
+                _token,
+                expr,
+            } => match operator {
+                UnaryOperator::Negation => self.type_expr(expr, env, diagnostics),
+                UnaryOperator::Not => {
+                    self.expect_type(expr, Type::Boolean, &_token.position, env, diagnostics);
+                    Type::Boolean
+                }
+            },
+
             _ => Type::TEMP_error,
         }
     }
@@ -210,45 +222,43 @@ impl<'a> Typer<'a> {
         diagnostics: &mut Diagnostics,
     ) -> Type {
         match operator {
-            BinaryOperator::IntegerOperation(_) => {
-                // if left or right is an identifier w. no type, assign integer to it
-                self.expect_type(left, &Type::Integer, &_token.position, env, diagnostics);
-                if let Expr::Identifier { name } = left {
-                    let typ = env.identifiers.get(&name.lexeme).unwrap();
-                    if typ == &Type::None {
-                        env.identifiers.insert(name.lexeme.clone(), Type::Integer);
-                    }
-                }
-                self.expect_type(right, &Type::Integer, &_token.position, env, diagnostics);
-                if let Expr::Identifier { name } = right {
-                    let typ = env.identifiers.get(&name.lexeme).unwrap();
-                    if typ == &Type::None {
-                        env.identifiers.insert(name.lexeme.clone(), Type::Integer);
-                    }
-                }
+            BinaryOperator::IntegerOperation(_) | BinaryOperator::IntegerComparison(_) => {
+                self.expect_type(left, Type::Integer, &_token.position, env, diagnostics);
+                self.expect_type(right, Type::Integer, &_token.position, env, diagnostics);
                 Type::Integer
             }
 
-            BinaryOperator::FloatOperation(_) => {
-                // if left or right is an identifier w. no type, assign integer to it
-                self.expect_type(left, &Type::Float, &_token.position, env, diagnostics);
-                if let Expr::Identifier { name } = left {
-                    let typ = env.identifiers.get(&name.lexeme).unwrap();
-                    if typ == &Type::None {
-                        env.identifiers.insert(name.lexeme.clone(), Type::Float);
-                    }
-                }
-                self.expect_type(right, &Type::Float, &_token.position, env, diagnostics);
-                if let Expr::Identifier { name } = right {
-                    let typ = env.identifiers.get(&name.lexeme).unwrap();
-                    if typ == &Type::None {
-                        env.identifiers.insert(name.lexeme.clone(), Type::Float);
-                    }
-                }
+            BinaryOperator::FloatOperation(_) | BinaryOperator::FloatComparison(_) => {
+                self.expect_type(left, Type::Float, &_token.position, env, diagnostics);
+                self.expect_type(right, Type::Float, &_token.position, env, diagnostics);
                 Type::Float
             }
 
-            _ => Type::TEMP_error,
+            BinaryOperator::Equality(_) => {
+                let left_type = self.type_expr(left, env, diagnostics);
+                if left_type != Type::None {
+                    self.expect_type(right, left_type, &_token.position, env, diagnostics);
+                } else {
+                    let right_type = self.type_expr(right, env, diagnostics);
+                    self.expect_type(left, right_type, &_token.position, env, diagnostics);
+                }
+                Type::Boolean
+            }
+
+            BinaryOperator::BooleanOperation(_) => {
+                self.expect_type(left, Type::Boolean, &_token.position, env, diagnostics);
+                self.expect_type(right, Type::Boolean, &_token.position, env, diagnostics);
+                Type::Boolean
+            }
+
+            BinaryOperator::StringOperation(string_operations) => {
+                match string_operations {
+                    StringOperations::StringConcat => {
+                        // TODO(anissen): Check types
+                        Type::String
+                    }
+                }
+            }
         }
     }
 
@@ -259,18 +269,25 @@ impl<'a> Typer<'a> {
     fn expect_type(
         &mut self,
         expression: &'a Expr,
-        expected_type: &Type,
+        expected_type: Type,
         position: &Span,
         env: &mut TypeEnvironment,
         diagnostics: &mut Diagnostics,
     ) {
         let actual_type = self.type_expr(expression, env, diagnostics);
-        if actual_type != Type::None && actual_type != *expected_type {
+        if actual_type != Type::None && actual_type != expected_type {
             self.error(
                 format!("Expected {} but found {}", expected_type, actual_type),
                 position.clone(),
                 diagnostics,
             );
+        }
+
+        if let Expr::Identifier { name } = expression {
+            let typ = env.identifiers.get(&name.lexeme).unwrap();
+            if typ == &Type::None {
+                env.identifiers.insert(name.lexeme.clone(), expected_type);
+            }
         }
     }
 }

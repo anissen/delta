@@ -136,19 +136,17 @@ impl VirtualMachine {
                 ByteCode::IntegerDivision => {
                     let right = self.pop_integer();
                     let left = self.pop_integer();
-                    self.push_integer(left / right);
+                    if right != 0 {
+                        self.push_integer(left / right);
+                    } else {
+                        self.push_integer(0);
+                    }
                 }
 
                 ByteCode::IntegerModulo => {
                     let modulus = self.pop_integer();
                     let value = self.pop_integer();
                     self.push_integer(value % modulus);
-                }
-
-                ByteCode::IntegerEquals => {
-                    let right = self.pop_integer();
-                    let left = self.pop_integer();
-                    self.push_boolean(left == right)
                 }
 
                 ByteCode::IntegerLessThan => {
@@ -184,19 +182,17 @@ impl VirtualMachine {
                 ByteCode::FloatDivision => {
                     let right = self.pop_float();
                     let left = self.pop_float();
-                    self.push_float(left / right);
+                    if right != 0.0 {
+                        self.push_float(left / right);
+                    } else {
+                        self.push_float(0.0);
+                    }
                 }
 
                 ByteCode::FloatModulo => {
                     let modulus = self.pop_float();
                     let value = self.pop_float();
                     self.push_float(value % modulus);
-                }
-
-                ByteCode::FloatEquals => {
-                    let right = self.pop_float();
-                    let left = self.pop_float();
-                    self.push_boolean(left == right)
                 }
 
                 ByteCode::FloatLessThan => {
@@ -249,6 +245,12 @@ impl VirtualMachine {
                     let right = self.pop_boolean();
                     let left = self.pop_boolean();
                     self.push_boolean(left || right)
+                }
+
+                ByteCode::Equals => {
+                    let right = self.pop_any();
+                    let left = self.pop_any();
+                    self.push_boolean(left == right)
                 }
 
                 ByteCode::Negation => {
