@@ -269,16 +269,28 @@ impl<'a> Typer<'a> {
         diagnostics: &mut Diagnostics,
     ) -> Type {
         match operator {
-            BinaryOperator::IntegerOperation(_) | BinaryOperator::IntegerComparison(_) => {
+            BinaryOperator::IntegerOperation(_) => {
                 self.expect_type(left, Type::Integer, &_token.position, env, diagnostics);
                 self.expect_type(right, Type::Integer, &_token.position, env, diagnostics);
                 Type::Integer
             }
 
-            BinaryOperator::FloatOperation(_) | BinaryOperator::FloatComparison(_) => {
+            BinaryOperator::IntegerComparison(_) => {
+                self.expect_type(left, Type::Integer, &_token.position, env, diagnostics);
+                self.expect_type(right, Type::Integer, &_token.position, env, diagnostics);
+                Type::Boolean
+            }
+
+            BinaryOperator::FloatOperation(_) => {
                 self.expect_type(left, Type::Float, &_token.position, env, diagnostics);
                 self.expect_type(right, Type::Float, &_token.position, env, diagnostics);
                 Type::Float
+            }
+
+            BinaryOperator::FloatComparison(_) => {
+                self.expect_type(left, Type::Float, &_token.position, env, diagnostics);
+                self.expect_type(right, Type::Float, &_token.position, env, diagnostics);
+                Type::Boolean
             }
 
             BinaryOperator::Equality(_) => {
