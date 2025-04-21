@@ -212,6 +212,8 @@ impl<'a> Typer<'a> {
                 // TODO(anissen): Add positions here
                 let no_position = Span { column: 0, line: 0 };
                 for arm in arms {
+                    let mut new_env = env.clone();
+
                     // Check that arm pattern types match expr type
                     match &arm.pattern {
                         IsArmPattern::Expression(expr) => {
@@ -228,7 +230,6 @@ impl<'a> Typer<'a> {
                             identifier,
                             condition,
                         } => {
-                            let mut new_env = env.clone();
                             new_env
                                 .identifiers
                                 .insert(identifier.lexeme.clone(), is_type.clone());
@@ -248,9 +249,15 @@ impl<'a> Typer<'a> {
 
                     // Check that return types of each arm matches
                     if let Some(return_type) = return_type.clone() {
-                        self.expect_type(&arm.block, return_type, &no_position, env, diagnostics);
+                        self.expect_type(
+                            &arm.block,
+                            return_type,
+                            &no_position,
+                            &mut new_env,
+                            diagnostics,
+                        );
                     } else {
-                        return_type = Some(self.type_expr(&arm.block, env, diagnostics));
+                        return_type = Some(self.type_expr(&arm.block, &mut new_env, diagnostics));
                     }
                 }
 
