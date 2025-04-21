@@ -10,7 +10,7 @@ use crate::tokens::{Span, Token};
 
 #[derive(PartialEq, Clone, Debug)]
 pub enum Type {
-    None,
+    Unknown,
     Any, // TODO(anissen): Remove this
     Boolean,
     Integer,
@@ -25,7 +25,7 @@ pub enum Type {
 impl fmt::Display for Type {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let type_name = match self {
-            Type::None => "???",
+            Type::Unknown => "???",
             Type::Any => "any",
             Type::Boolean => "boolean",
             Type::Integer => "integer",
@@ -78,15 +78,11 @@ pub fn type_check<'a>(
 
 pub struct Typer<'a> {
     context: &'a Context<'a>,
-    // identifiers: HashMap<&'a String, Type>,
 }
 
 impl<'a> Typer<'a> {
     fn new(context: &'a Context<'a>) -> Self {
-        Self {
-            context,
-            // identifiers: HashMap::new(),
-        }
+        Self { context }
     }
 
     fn type_exprs(
@@ -95,7 +91,7 @@ impl<'a> Typer<'a> {
         env: &mut TypeEnvironment,
         diagnostics: &mut Diagnostics,
     ) -> Type {
-        let mut typ = Type::None;
+        let mut typ = Type::Unknown;
         for expr in expressions {
             typ = self.type_expr(expr, env, diagnostics);
         }
@@ -121,7 +117,7 @@ impl<'a> Typer<'a> {
                 } => {
                     let mut new_env = env.clone();
                     for p in params {
-                        new_env.identifiers.insert(p.lexeme.clone(), Type::None);
+                        new_env.identifiers.insert(p.lexeme.clone(), Type::Unknown);
                     }
                     let result = self.type_expr(expr, &mut new_env, diagnostics);
                     let mut param_types = vec![];
@@ -139,7 +135,7 @@ impl<'a> Typer<'a> {
             Expr::Identifier { name } => {
                 env.identifiers
                     .get(&name.lexeme)
-                    .unwrap_or(&Type::None)
+                    .unwrap_or(&Type::Unknown)
                     .clone() // TODO(anissen): This clone would be nice to avoid
             }
 
@@ -176,7 +172,7 @@ impl<'a> Typer<'a> {
                         *return_type.clone()
                     }
 
-                    Type::None => Type::None,
+                    Type::Unknown => Type::Unknown,
 
                     _ => {
                         dbg!(&function_type);
@@ -219,7 +215,7 @@ impl<'a> Typer<'a> {
                     match &arm.pattern {
                         IsArmPattern::Expression(expr) => {
                             let pattern_type = self.type_expr(expr, env, diagnostics);
-                            if is_type == Type::None {
+                            if is_type == Type::Unknown {
                                 is_type = pattern_type;
                             }
 
@@ -314,7 +310,7 @@ impl<'a> Typer<'a> {
 
             BinaryOperator::Equality(_) => {
                 let left_type = self.type_expr(left, env, diagnostics);
-                if left_type != Type::None {
+                if left_type != Type::Unknown {
                     self.expect_type(right, left_type, &_token.position, env, diagnostics);
                 } else {
                     let right_type = self.type_expr(right, env, diagnostics);
@@ -354,7 +350,10 @@ impl<'a> Typer<'a> {
         diagnostics: &mut Diagnostics,
     ) {
         let actual_type = self.type_expr(expression, env, diagnostics);
-        if actual_type != Type::None && expected_type != Type::Any && actual_type != expected_type {
+        if actual_type != Type::Unknown
+            && expected_type != Type::Any
+            && actual_type != expected_type
+        {
             self.error(
                 format!("Expected {} but found {}", expected_type, actual_type),
                 position.clone(),
@@ -364,7 +363,7 @@ impl<'a> Typer<'a> {
 
         if let Expr::Identifier { name } = expression {
             let typ = env.identifiers.get(&name.lexeme).unwrap();
-            if typ == &Type::None {
+            if typ == &Type::Unknown {
                 env.identifiers.insert(name.lexeme.clone(), expected_type);
             }
         }
