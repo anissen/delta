@@ -59,6 +59,22 @@ pub fn run_file(source_path: &String, debug: bool) -> Result<Option<vm::Value>, 
     program.dump("∆");
 */
 
+pub fn build(
+    source: &str,
+    file_name: Option<&String>,
+    debug: bool,
+) -> Result<Vec<u8>, Diagnostics> {
+    let default_file_name = "n/a".to_string();
+    println!(
+        "\n# source (file: {}) =>",
+        file_name.unwrap_or(&default_file_name)
+    );
+
+    let context = program::Context::new();
+    let program = Program::new(context);
+    program.compile(source, debug)
+}
+
 // TODO(anissen): Make a concept of diagnostics (containing just syntax error for now)
 pub fn run(
     source: &str,
