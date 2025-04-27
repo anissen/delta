@@ -27,8 +27,8 @@ impl fmt::Display for Type {
         let type_name = match self {
             Type::Unknown => "???",
             Type::Any => "any",
-            Type::Boolean => "boolean",
-            Type::Integer => "integer",
+            Type::Boolean => "bool",
+            Type::Integer => "int",
             Type::Float => "float",
             Type::String => "string",
             Type::Function {
@@ -39,7 +39,7 @@ impl fmt::Display for Type {
                     .iter()
                     .map(|p| p.to_string())
                     .collect::<Vec<String>>()
-                    .join(",");
+                    .join(", ");
                 &format!("function({}) -> {}", p, return_type)
             }
         };
@@ -172,7 +172,14 @@ impl<'a> Typer<'a> {
                         *return_type.clone()
                     }
 
-                    Type::Unknown => Type::Unknown,
+                    Type::Unknown => {
+                        let t = Type::Function {
+                            parameters: args.iter().map(|_| Box::new(Type::Unknown)).collect(),
+                            return_type: Box::new(Type::Unknown),
+                        };
+                        env.identifiers.insert(name.clone(), t);
+                        Type::Unknown
+                    }
 
                     _ => {
                         dbg!(&function_type);
@@ -339,6 +346,78 @@ impl<'a> Typer<'a> {
 
     fn error(&self, message: String, position: Span, diagnostics: &mut Diagnostics) {
         diagnostics.add_error(Message::new(message, position.clone()))
+    }
+
+    // TODO: Move to Type impl?
+    fn unify(&self, expected: Type, actual: Type) -> Type {
+        match (&expected, &actual) {
+            (Type::Any, _) => actual,
+            (Type::Unknown, _) => actual,
+            (
+                Type::Function {
+                    parameters: expected_parameters,
+                    return_type: expected_return_type,
+                },
+                Type::Function {
+                    parameters: actual_parameters,
+                    return_type: actual_return_type,
+                },
+            ) => {
+                let mut concrete_parameters = Vec::new();
+                for (expected, actual) in expected_parameters.iter().zip(actual_parameters.iter()) {
+                    let concrete_parameter = self.unify(*expected.clone(), *actual.clone());
+                    concrete_parameters.push(Box::new(concrete_parameter));
+                }
+                let concrete_return_type =
+                    self.unify(*expected_return_type.clone(), *actual_return_type.clone());
+                Type::Function {
+                    parameters: concrete_parameters,
+                    return_type: Box::new(concrete_return_type),
+                }
+            }
+            _ => expected,
+        }
+    }
+
+    // unify_types(t1, t2) -> T, type_match(t1, t2) -> bool
+
+    // the singleton equation set { f(1,y) = f(x,2) } is a syntactic first-order unification problem
+    // that has the substitution { x ↦ 1, y ↦ 2 } as its only solution.
+
+    fn is_same_or_more_concrete(&self, expected: Type, actual: Type) -> bool {
+        let expected_concrete = self.get_concrete_type(expected.clone(), actual.clone());
+        match (&expected_concrete, &actual) {
+            (Type::Any, _) | (Type::Unknown, _) => true,
+            (
+                Type::Function {
+                    parameters: expected_parameters,
+                    return_type: expected_return_type,
+                },
+                Type::Function {
+                    parameters: actual_parameters,
+                    return_type: actual_return_type,
+                },
+            ) => {
+                if expected_parameters.len() != actual_parameters.len() {
+                    false
+                } else if !self.is_same_or_more_concrete(
+                    *expected_return_type.clone(),
+                    *actual_return_type.clone(),
+                ) {
+                    false
+                } else {
+                    for (expected, actual) in
+                        expected_parameters.iter().zip(actual_parameters.iter())
+                    {
+                        if !self.is_same_or_more_concrete(*expected.clone(), *actual.clone()) {
+                            return false;
+                        }
+                    }
+                    true
+                }
+            }
+            _ => expected_concrete == actual,
+        }
     }
 
     fn expect_type(
