@@ -39,3 +39,14 @@ fn plus_float() {
 // 	x *. y
 
 // mult_float | call 4.1 5.2
+
+// --------------------
+
+// do = \f x
+// 	x | f
+
+// identity = \x
+// 	x
+
+// # identity | do 4
+// # identity | do 4.5
