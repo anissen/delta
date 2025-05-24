@@ -7,7 +7,6 @@ pub enum ValueType {
     Float(f32),
     String(String),
     Function {
-        slash: Token,
         params: Vec<Token>, // TODO(anissen): Do we also need type information here?
         expr: Box<Expr>,
     },

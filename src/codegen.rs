@@ -7,7 +7,7 @@ use crate::expressions::{
     IsArmPattern, StringOperations, UnaryOperator, ValueType,
 };
 use crate::program::Context;
-use crate::tokens::{Span, Token, TokenKind};
+use crate::tokens::{Span, Token};
 
 #[derive(Debug, Clone)]
 struct FunctionChunk<'a> {
@@ -151,14 +151,9 @@ impl<'a> Codegen<'a> {
             }
 
             Expr::Value {
-                value:
-                    ValueType::Function {
-                        slash,
-                        params,
-                        expr,
-                    },
-                token: _,
-            } => self.emit_function(slash, None, params, expr, scope),
+                value: ValueType::Function { params, expr },
+                token,
+            } => self.emit_function(token, None, params, expr, scope),
 
             Expr::Call {
                 name,
@@ -421,20 +416,15 @@ impl<'a> Codegen<'a> {
     fn emit_assignment(&mut self, name: &Token, expr: &'a Expr, scope: &mut Scope) {
         match expr {
             Expr::Value {
-                value:
-                    ValueType::Function {
-                        slash,
-                        params,
-                        expr,
-                    },
-                token: _,
+                value: ValueType::Function { params, expr },
+                token,
             } => {
                 // save function name to environment before entering function definition
                 let index = scope.locals.len() as u8;
                 scope.environment.insert(name.lexeme.clone(), index);
                 scope.locals.insert(name.lexeme.clone());
 
-                self.emit_function(slash, Some(name), params, expr, scope);
+                self.emit_function(token, Some(name), params, expr, scope);
                 scope.bytecode.add_set_local_value(index);
             }
 
