@@ -235,11 +235,7 @@ impl<'env> InferenceContext<'env> {
                 ValueType::Integer(_) => make_constructor(Type::Integer, token.position.clone()),
                 ValueType::Float(_) => make_constructor(Type::Float, token.position.clone()),
                 ValueType::String(_) => make_constructor(Type::String, token.position.clone()),
-                ValueType::Function {
-                    slash,
-                    params,
-                    expr,
-                } => {
+                ValueType::Function { params, expr } => {
                     let param_types = params
                         .iter()
                         .map(|param| {
@@ -256,7 +252,7 @@ impl<'env> InferenceContext<'env> {
                     UnificationType::Constructor {
                         typ: Type::Function,
                         generics: [param_types, vec![value_type]].concat(),
-                        position: slash.position.clone(),
+                        position: token.position.clone(),
                     }
                 }
             },

@@ -458,10 +458,8 @@ impl Parser {
         }
         let expr = self.block()?;
         // TODO(anissen): Add function to some meta data?
-        println!("Parsed function: {:?}", slash);
         Ok(Some(Expr::Value {
             value: ValueType::Function {
-                slash: slash.clone(),
                 params,
                 expr: Box::new(expr.unwrap()),
             },
