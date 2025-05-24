@@ -1,19 +1,19 @@
-use crate::tokens::Span;
+use crate::tokens::Position;
 
 #[derive(Debug, Clone)]
 pub struct Message {
     pub content: String,
-    pub span: Span,
+    pub span: Position,
 }
 
 impl Message {
-    pub fn new(content: String, span: Span) -> Self {
+    pub fn new(content: String, span: Position) -> Self {
         Message { content, span }
     }
     pub fn from_error(content: String) -> Self {
         Message {
             content,
-            span: Span { line: 0, column: 0 },
+            span: Position { line: 0, column: 0 },
         }
     }
 }

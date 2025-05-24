@@ -7,13 +7,13 @@ use crate::expressions::{
     IsArmPattern, StringOperations, UnaryOperator, ValueType,
 };
 use crate::program::Context;
-use crate::tokens::{Span, Token};
+use crate::tokens::{Position, Token};
 
 #[derive(Debug, Clone)]
 struct FunctionChunk<'a> {
     local_count: u8,
     bytes: Vec<u8>,
-    position: &'a Span,
+    position: &'a Position,
     function_name: String,
 }
 
@@ -461,7 +461,7 @@ impl<'a> Codegen<'a> {
     fn create_function_chunk(
         &mut self,
         name: Option<&Token>,
-        position: &'a Span,
+        position: &'a Position,
         params: &[Token],
         body: &'a Expr,
         scope: &mut Scope,
