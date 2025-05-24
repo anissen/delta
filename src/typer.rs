@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fmt;
 use std::iter::zip;
 
-use crate::diagnostics::{Diagnostics, Message};
+use crate::diagnostics::{self, Diagnostics, Message};
 use crate::expressions::{
     BinaryOperator, Expr, IsArmPattern, StringOperations, UnaryOperator, ValueType,
 };
@@ -44,25 +44,15 @@ impl<'a> Typer<'a> {
         Self { context }
     }
 
-    fn type_exprs(
-        &mut self,
-        expressions: &'a Vec<Expr>,
-        diagnostics: &mut Diagnostics,
-    ) -> UnificationType {
+    fn type_exprs(&mut self, expressions: &'a Vec<Expr>, diagnostics: &mut Diagnostics) {
         let mut environment = Environment::new();
         let mut context = InferenceContext::new(&mut environment);
-        let mut last_type = None;
 
         for expression in expressions {
-            last_type = Some(context.infer_type(expression));
+            context.infer_type(expression);
         }
 
         context.solve(diagnostics);
-
-        // let substitutions = context.solve();
-        // println!("Substitutions: {:?}", substitutions);
-
-        last_type.unwrap()
     }
 }
 
@@ -222,12 +212,10 @@ impl<'env> InferenceContext<'env> {
 
     fn infer_type(&mut self, expression: &Expr) -> UnificationType {
         match expression {
-            Expr::Identifier { name } => self
-                .environment
-                .variables
-                .get(&name.lexeme)
-                .unwrap_or_else(|| panic!("unbound variable: {}", name.lexeme))
-                .clone(),
+            Expr::Identifier { name } => match self.environment.variables.get(&name.lexeme) {
+                Some(value) => value.clone(),
+                None => self.type_placeholder(), // TODO(anissen): This is an error, we ought to register a diagnostics
+            },
 
             Expr::Value { value, token } => match value {
                 ValueType::Boolean(_) => make_constructor(Type::Boolean, token.position.clone()),
@@ -351,14 +339,8 @@ impl<'env> InferenceContext<'env> {
                 }
 
                 BinaryOperator::Equality(_) => {
-                    // TODO(anissen): Implement:
-                    // let left_type = self.type_expr(left, env, diagnostics);
-                    // if left_type != Type::Unknown {
-                    //     self.expect_type(right, left_type, &_token.position, env, diagnostics);
-                    // } else {
-                    //     let right_type = self.type_expr(right, env, diagnostics);
-                    //     self.expect_type(left, right_type, &_token.position, env, diagnostics);
-                    // }
+                    let left_type = self.infer_type(left);
+                    self.expects_type(right, left_type);
                     make_constructor(Type::Boolean, _token.position.clone())
                 }
 
@@ -501,37 +483,29 @@ fn unify(
                     position2,
                 ));
             }
-            // assert_eq!(
-            //     name1,
-            //     name2,
-            //     "expected {} but got {}",
-            //     right.substitute(substitutions),
-            //     left.substitute(substitutions)
-            // );
-            // assert_eq!(generics1.len(), generics2.len());
 
             for (left, right) in zip(generics1, generics2) {
                 unify(left, right, substitutions, diagnostics);
             }
         }
         (UnificationType::Variable(i), UnificationType::Variable(j)) if i == j => {}
-        (_, UnificationType::Variable(v)) => {
-            if let Some(substitution) = substitutions.get(&v) {
+        (_, UnificationType::Variable(v)) => match substitutions.get(&v) {
+            Some(substitution) => {
                 unify(left, substitution.clone(), substitutions, diagnostics);
-                return;
             }
-
-            assert!(!right.occurs_in(left.clone(), substitutions));
-            substitutions.insert(v, left);
-        }
-        (UnificationType::Variable(v), _) => {
-            if let Some(substitution) = substitutions.get(&v) {
+            None => {
+                assert!(!right.occurs_in(left.clone(), substitutions));
+                substitutions.insert(v, left);
+            }
+        },
+        (UnificationType::Variable(v), _) => match substitutions.get(&v) {
+            Some(substitution) => {
                 unify(right, substitution.clone(), substitutions, diagnostics);
-                return;
             }
-
-            assert!(!left.occurs_in(right.clone(), substitutions));
-            substitutions.insert(v, right);
-        }
+            None => {
+                assert!(!left.occurs_in(right.clone(), substitutions));
+                substitutions.insert(v, right);
+            }
+        },
     }
 }
