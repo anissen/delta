@@ -47,7 +47,7 @@ pub enum TokenKind {
     Underscore,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Span {
     pub line: usize,
     pub column: usize,

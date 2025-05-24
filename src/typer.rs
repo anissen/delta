@@ -7,6 +7,7 @@ use crate::expressions::{
     BinaryOperator, Expr, IsArmPattern, StringOperations, UnaryOperator, ValueType,
 };
 use crate::program::Context;
+use crate::tokens::Span;
 
 #[derive(PartialEq, Clone, Debug)]
 pub enum Type {
@@ -72,6 +73,7 @@ enum UnificationType {
     Constructor {
         typ: Type,
         generics: Vec<UnificationType>,
+        position: Span,
     },
     Variable(TypeVariable),
 }
@@ -79,7 +81,11 @@ enum UnificationType {
 impl fmt::Display for UnificationType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let type_name = match self {
-            Self::Constructor { typ, generics } => match typ {
+            Self::Constructor {
+                typ,
+                generics,
+                position,
+            } => match typ {
                 Type::Boolean => "bool",
                 Type::Integer => "int",
                 Type::Float => "float",
@@ -100,10 +106,11 @@ impl fmt::Display for UnificationType {
     }
 }
 
-fn make_constructor(typ: Type) -> UnificationType {
+fn make_constructor(typ: Type, position: Span) -> UnificationType {
     UnificationType::Constructor {
         typ,
         generics: Vec::new(),
+        position,
     }
 }
 
@@ -116,12 +123,14 @@ impl UnificationType {
             UnificationType::Constructor {
                 typ: name,
                 generics,
+                position,
             } => UnificationType::Constructor {
                 typ: name.clone(),
                 generics: generics
                     .iter()
                     .map(|t| t.substitute(substitutions))
                     .collect(),
+                position: position.clone(),
             },
             UnificationType::Variable(i) => {
                 if let Some(t) = substitutions.get(i) {
@@ -220,11 +229,11 @@ impl<'env> InferenceContext<'env> {
                 .unwrap_or_else(|| panic!("unbound variable: {}", name.lexeme))
                 .clone(),
 
-            Expr::Value { value } => match value {
-                ValueType::Boolean(_) => make_constructor(Type::Boolean),
-                ValueType::Integer(_) => make_constructor(Type::Integer),
-                ValueType::Float(_) => make_constructor(Type::Float),
-                ValueType::String(_) => make_constructor(Type::String),
+            Expr::Value { value, token } => match value {
+                ValueType::Boolean(_) => make_constructor(Type::Boolean, token.position.clone()),
+                ValueType::Integer(_) => make_constructor(Type::Integer, token.position.clone()),
+                ValueType::Float(_) => make_constructor(Type::Float, token.position.clone()),
+                ValueType::String(_) => make_constructor(Type::String, token.position.clone()),
                 ValueType::Function {
                     slash,
                     params,
@@ -246,6 +255,7 @@ impl<'env> InferenceContext<'env> {
                     UnificationType::Constructor {
                         typ: Type::Function,
                         generics: [param_types, vec![value_type]].concat(),
+                        position: slash.position.clone(),
                     }
                 }
             },
@@ -267,6 +277,7 @@ impl<'env> InferenceContext<'env> {
                     right: UnificationType::Constructor {
                         typ: Type::Function,
                         generics: [argument_types, vec![return_type.clone()]].concat(),
+                        position: positions.first().unwrap().clone(), // TODO(anissen): Is this right?
                     },
                 });
 
@@ -298,27 +309,45 @@ impl<'env> InferenceContext<'env> {
                 right,
             } => match operator {
                 BinaryOperator::IntegerOperation(_) => {
-                    self.expects_type(left, make_constructor(Type::Integer));
-                    self.expects_type(right, make_constructor(Type::Integer));
-                    make_constructor(Type::Integer)
+                    self.expects_type(
+                        left,
+                        make_constructor(Type::Integer, _token.position.clone()),
+                    );
+                    self.expects_type(
+                        right,
+                        make_constructor(Type::Integer, _token.position.clone()),
+                    );
+                    make_constructor(Type::Integer, _token.position.clone())
                 }
 
                 BinaryOperator::IntegerComparison(_) => {
-                    self.expects_type(left, make_constructor(Type::Integer));
-                    self.expects_type(right, make_constructor(Type::Integer));
-                    make_constructor(Type::Boolean)
+                    self.expects_type(
+                        left,
+                        make_constructor(Type::Integer, _token.position.clone()),
+                    );
+                    self.expects_type(
+                        right,
+                        make_constructor(Type::Integer, _token.position.clone()),
+                    );
+                    make_constructor(Type::Boolean, _token.position.clone())
                 }
 
                 BinaryOperator::FloatOperation(_) => {
-                    self.expects_type(left, make_constructor(Type::Float));
-                    self.expects_type(right, make_constructor(Type::Float));
-                    make_constructor(Type::Float)
+                    self.expects_type(left, make_constructor(Type::Float, _token.position.clone()));
+                    self.expects_type(
+                        right,
+                        make_constructor(Type::Float, _token.position.clone()),
+                    );
+                    make_constructor(Type::Float, _token.position.clone())
                 }
 
                 BinaryOperator::FloatComparison(_) => {
-                    self.expects_type(left, make_constructor(Type::Float));
-                    self.expects_type(right, make_constructor(Type::Float));
-                    make_constructor(Type::Boolean)
+                    self.expects_type(left, make_constructor(Type::Float, _token.position.clone()));
+                    self.expects_type(
+                        right,
+                        make_constructor(Type::Float, _token.position.clone()),
+                    );
+                    make_constructor(Type::Boolean, _token.position.clone())
                 }
 
                 BinaryOperator::Equality(_) => {
@@ -330,22 +359,31 @@ impl<'env> InferenceContext<'env> {
                     //     let right_type = self.type_expr(right, env, diagnostics);
                     //     self.expect_type(left, right_type, &_token.position, env, diagnostics);
                     // }
-                    make_constructor(Type::Boolean)
+                    make_constructor(Type::Boolean, _token.position.clone())
                 }
 
                 BinaryOperator::BooleanOperation(_) => {
-                    self.expects_type(left, make_constructor(Type::Boolean));
-                    self.expects_type(right, make_constructor(Type::Boolean));
-                    make_constructor(Type::Boolean)
+                    self.expects_type(
+                        left,
+                        make_constructor(Type::Boolean, _token.position.clone()),
+                    );
+                    self.expects_type(
+                        right,
+                        make_constructor(Type::Boolean, _token.position.clone()),
+                    );
+                    make_constructor(Type::Boolean, _token.position.clone())
                 }
 
                 BinaryOperator::StringOperation(string_operations) => {
                     match string_operations {
                         StringOperations::StringConcat => {
-                            self.expects_type(left, make_constructor(Type::String));
+                            self.expects_type(
+                                left,
+                                make_constructor(Type::String, _token.position.clone()),
+                            );
                             // TODO(anissen): Implement:
                             // self.expect_type(right, Type::Any, &_token.position, env, diagnostics); // TODO(anissen): Check types
-                            make_constructor(Type::String)
+                            make_constructor(Type::String, _token.position.clone())
                         }
                     }
                 }
@@ -358,8 +396,11 @@ impl<'env> InferenceContext<'env> {
             } => match operator {
                 UnaryOperator::Negation => self.infer_type(expr),
                 UnaryOperator::Not => {
-                    self.expects_type(expr, make_constructor(Type::Boolean));
-                    make_constructor(Type::Boolean)
+                    self.expects_type(
+                        expr,
+                        make_constructor(Type::Boolean, _token.position.clone()),
+                    );
+                    make_constructor(Type::Boolean, _token.position.clone())
                 }
             },
 
@@ -385,7 +426,10 @@ impl<'env> InferenceContext<'env> {
                                 .variables
                                 .insert(identifier.lexeme.clone(), is_type.clone());
                             if let Some(condition) = condition {
-                                self.expects_type(condition, make_constructor(Type::Boolean));
+                                self.expects_type(
+                                    condition,
+                                    make_constructor(Type::Boolean, identifier.position.clone()),
+                                );
                             }
                         }
 
@@ -439,18 +483,23 @@ fn unify(
             UnificationType::Constructor {
                 typ: name1,
                 generics: generics1,
+                position: position1,
             },
             UnificationType::Constructor {
                 typ: name2,
                 generics: generics2,
+                position: position2,
             },
         ) => {
             if name1 != name2 || generics1.len() != generics2.len() {
-                diagnostics.add_error(Message::from_error(format!(
-                    "expected {} but got {}",
-                    right.substitute(substitutions),
-                    left.substitute(substitutions)
-                )));
+                diagnostics.add_error(Message::new(
+                    format!(
+                        "expected {} but got {}",
+                        right.substitute(substitutions),
+                        left.substitute(substitutions)
+                    ),
+                    position2,
+                ));
             }
             // assert_eq!(
             //     name1,

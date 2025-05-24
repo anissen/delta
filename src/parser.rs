@@ -461,10 +461,11 @@ impl Parser {
         println!("Parsed function: {:?}", slash);
         Ok(Some(Expr::Value {
             value: ValueType::Function {
-                slash,
+                slash: slash.clone(),
                 params,
                 expr: Box::new(expr.unwrap()),
             },
+            token: slash,
         }))
     }
 
@@ -521,6 +522,7 @@ impl Parser {
             match value {
                 Ok(value) => Ok(Some(Expr::Value {
                     value: ValueType::Integer(value),
+                    token: self.previous().clone(),
                 })),
                 Err(err) => Err(err.to_string()),
             }
@@ -530,21 +532,25 @@ impl Parser {
             match value {
                 Ok(value) => Ok(Some(Expr::Value {
                     value: ValueType::Float(value),
+                    token: self.previous().clone(),
                 })),
                 Err(err) => Err(err.to_string()),
             }
         } else if self.matches(&False) {
             Ok(Some(Expr::Value {
                 value: ValueType::Boolean(false),
+                token: self.previous().clone(),
             }))
         } else if self.matches(&True) {
             Ok(Some(Expr::Value {
                 value: ValueType::Boolean(true),
+                token: self.previous().clone(),
             }))
         } else if self.matches(&TokenKind::Text) {
             let lexeme = self.previous().lexeme;
             Ok(Some(Expr::Value {
                 value: ValueType::String(lexeme),
+                token: self.previous().clone(),
             }))
         } else if self.matches(&LeftParen) {
             let expr = self.expression()?;

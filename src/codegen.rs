@@ -76,24 +76,28 @@ impl<'a> Codegen<'a> {
         match expr {
             Expr::Value {
                 value: ValueType::Boolean(true),
+                token: _,
             } => {
                 scope.bytecode.add_op(ByteCode::PushTrue);
             }
 
             Expr::Value {
                 value: ValueType::Boolean(false),
+                token: _,
             } => {
                 scope.bytecode.add_op(ByteCode::PushFalse);
             }
 
             Expr::Value {
                 value: ValueType::Integer(i),
+                token: _,
             } => {
                 scope.bytecode.add_op(ByteCode::PushInteger).add_i32(i);
             }
 
             Expr::Value {
                 value: ValueType::Float(f),
+                token: _,
             } => {
                 scope.bytecode.add_op(ByteCode::PushFloat).add_f32(f);
             }
@@ -126,6 +130,7 @@ impl<'a> Codegen<'a> {
 
             Expr::Value {
                 value: ValueType::String(str),
+                token: _,
             } => {
                 if str.len() > 255 {
                     // TODO(anissen): Should add error to a error reporter instead
@@ -152,6 +157,7 @@ impl<'a> Codegen<'a> {
                         params,
                         expr,
                     },
+                token: _,
             } => self.emit_function(slash, None, params, expr, scope),
 
             Expr::Call {
@@ -421,6 +427,7 @@ impl<'a> Codegen<'a> {
                         params,
                         expr,
                     },
+                token: _,
             } => {
                 // save function name to environment before entering function definition
                 let index = scope.locals.len() as u8;

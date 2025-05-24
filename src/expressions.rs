@@ -21,6 +21,7 @@ pub enum Expr {
     Grouping(Box<Expr>),
     Value {
         value: ValueType,
+        token: Token,
     },
     Call {
         name: String,
