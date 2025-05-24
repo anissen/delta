@@ -23,11 +23,12 @@ pub enum Type {
 pub fn type_check<'a>(
     expressions: &'a Vec<Expr>,
     context: &'a Context<'a>,
+    diagnostics: &mut Diagnostics,
 ) -> Result<(), Diagnostics> {
-    let mut typer = Typer::new(context);
+    let mut typer = Typer::new(context, diagnostics);
 
-    let mut diagnostics = Diagnostics::new();
-    typer.type_exprs(expressions, &mut diagnostics);
+    // let mut diagnostics = Diagnostics::new();
+    typer.type_exprs(expressions);
     if !diagnostics.has_errors() {
         Ok(())
     } else {
@@ -37,22 +38,26 @@ pub fn type_check<'a>(
 
 pub struct Typer<'a> {
     context: &'a Context<'a>,
+    diagnostics: &'a mut Diagnostics,
 }
 
 impl<'a> Typer<'a> {
-    fn new(context: &'a Context<'a>) -> Self {
-        Self { context }
+    fn new(context: &'a Context<'a>, diagnostics: &'a mut Diagnostics) -> Self {
+        Self {
+            context,
+            diagnostics,
+        }
     }
 
-    fn type_exprs(&mut self, expressions: &'a Vec<Expr>, diagnostics: &mut Diagnostics) {
+    fn type_exprs(&mut self, expressions: &'a Vec<Expr>) {
         let mut environment = Environment::new();
-        let mut context = InferenceContext::new(&mut environment);
+        let mut context = InferenceContext::new(&mut environment, &mut self.diagnostics);
 
         for expression in expressions {
             context.infer_type(expression);
         }
 
-        context.solve(diagnostics);
+        context.solve();
     }
 }
 
@@ -182,14 +187,16 @@ struct InferenceContext<'env> {
     constraints: Vec<Constraint>,
     environment: &'env mut Environment,
     last_type_variable_index: usize,
+    diagnostics: &'env mut Diagnostics,
 }
 
 impl<'env> InferenceContext<'env> {
-    fn new(environment: &'env mut Environment) -> Self {
+    fn new(environment: &'env mut Environment, diagnostics: &'env mut Diagnostics) -> Self {
         Self {
             constraints: Vec::new(),
             environment,
             last_type_variable_index: 0,
+            diagnostics,
         }
     }
 
@@ -214,7 +221,13 @@ impl<'env> InferenceContext<'env> {
         match expression {
             Expr::Identifier { name } => match self.environment.variables.get(&name.lexeme) {
                 Some(value) => value.clone(),
-                None => self.type_placeholder(), // TODO(anissen): This is an error, we ought to register a diagnostics
+                None => {
+                    self.diagnostics.add_error(Message::new(
+                        format!("Name not found in scope: {}", name.lexeme),
+                        name.position.clone(),
+                    ));
+                    self.type_placeholder()
+                }
             },
 
             Expr::Value { value, token } => match value {
@@ -439,13 +452,13 @@ impl<'env> InferenceContext<'env> {
         }
     }
 
-    fn solve(self, diagnostics: &mut Diagnostics) -> HashMap<TypeVariable, UnificationType> {
+    fn solve(&mut self) -> HashMap<TypeVariable, UnificationType> {
         let mut substitutions = HashMap::new();
 
-        for constraint in self.constraints {
+        for constraint in &self.constraints {
             match constraint {
                 Constraint::Eq { left, right } => {
-                    unify(left, right, &mut substitutions, diagnostics);
+                    unify(left, right, &mut substitutions, &mut self.diagnostics);
                 }
             }
         }
@@ -455,8 +468,8 @@ impl<'env> InferenceContext<'env> {
 }
 
 fn unify(
-    left: UnificationType,
-    right: UnificationType,
+    left: &UnificationType,
+    right: &UnificationType,
     substitutions: &mut HashMap<TypeVariable, UnificationType>,
     diagnostics: &mut Diagnostics,
 ) {
@@ -485,26 +498,26 @@ fn unify(
             }
 
             for (left, right) in zip(generics1, generics2) {
-                unify(left, right, substitutions, diagnostics);
+                unify(&left, &right, substitutions, diagnostics);
             }
         }
         (UnificationType::Variable(i), UnificationType::Variable(j)) if i == j => {}
         (_, UnificationType::Variable(v)) => match substitutions.get(&v) {
             Some(substitution) => {
-                unify(left, substitution.clone(), substitutions, diagnostics);
+                unify(left, &substitution.clone(), substitutions, diagnostics);
             }
             None => {
                 assert!(!right.occurs_in(left.clone(), substitutions));
-                substitutions.insert(v, left);
+                substitutions.insert(v, left.clone());
             }
         },
         (UnificationType::Variable(v), _) => match substitutions.get(&v) {
             Some(substitution) => {
-                unify(right, substitution.clone(), substitutions, diagnostics);
+                unify(right, &substitution.clone(), substitutions, diagnostics);
             }
             None => {
                 assert!(!left.occurs_in(right.clone(), substitutions));
-                substitutions.insert(v, right);
+                substitutions.insert(v, right.clone());
             }
         },
     }
