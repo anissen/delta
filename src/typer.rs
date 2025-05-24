@@ -7,7 +7,7 @@ use crate::expressions::{
     BinaryOperator, Expr, IsArmPattern, StringOperations, UnaryOperator, ValueType,
 };
 use crate::program::Context;
-use crate::tokens::Span;
+use crate::tokens::Position;
 
 #[derive(PartialEq, Clone, Debug)]
 pub enum Type {
@@ -68,7 +68,7 @@ enum UnificationType {
     Constructor {
         typ: Type,
         generics: Vec<UnificationType>,
-        position: Span,
+        position: Position,
     },
     Variable(TypeVariable),
 }
@@ -101,7 +101,7 @@ impl fmt::Display for UnificationType {
     }
 }
 
-fn make_constructor(typ: Type, position: Span) -> UnificationType {
+fn make_constructor(typ: Type, position: Position) -> UnificationType {
     UnificationType::Constructor {
         typ,
         generics: Vec::new(),

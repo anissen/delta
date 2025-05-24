@@ -1,4 +1,4 @@
-use crate::tokens::{Span, Token, TokenKind};
+use crate::tokens::{Position, Token, TokenKind};
 
 struct Lexer {
     source: Vec<char>, // TODO(anissen): Should this be a `str`?
@@ -51,7 +51,7 @@ impl Lexer {
     }
 
     fn get_token_from_lexeme(&mut self, kind: TokenKind, lexeme: String) -> Token {
-        let position = Span {
+        let position = Position {
             line: self.line,
             column: self.column,
         };

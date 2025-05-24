@@ -48,7 +48,7 @@ pub enum TokenKind {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Span {
+pub struct Position {
     pub line: usize,
     pub column: usize,
     // pub start: u32,
@@ -62,6 +62,6 @@ pub struct Span {
 #[derive(Debug, Clone)]
 pub struct Token {
     pub kind: TokenKind,
-    pub position: Span,
+    pub position: Position,
     pub lexeme: String, // TODO(anissen): Should probably be &'a str,
 }
