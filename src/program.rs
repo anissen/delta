@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::codegen;
+use crate::diagnostics;
 use crate::diagnostics::Diagnostics;
 use crate::lexer;
 use crate::parser;
@@ -157,7 +158,8 @@ impl<'a> Program<'a> {
         println!("\n# typing =>");
         let start = std::time::Instant::now();
         // TODO(anissen): Diagnostics should be collected in each phase
-        let typed_ast = typer::type_check(&ast, &self.context)?;
+        let mut diagnostics = Diagnostics::new();
+        let typed_ast = typer::type_check(&ast, &self.context, &mut diagnostics)?;
         let duration = start.elapsed();
         println!("Elapsed: {:?}", duration);
         if debug {
