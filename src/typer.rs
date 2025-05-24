@@ -2,17 +2,14 @@ use std::collections::HashMap;
 use std::fmt;
 use std::iter::zip;
 
-use crate::diagnostics::{Diagnostics, Message};
+use crate::diagnostics::Diagnostics;
 use crate::expressions::{
     BinaryOperator, Expr, IsArmPattern, StringOperations, UnaryOperator, ValueType,
 };
 use crate::program::Context;
-use crate::tokens::{Span, Token};
 
 #[derive(PartialEq, Clone, Debug)]
 pub enum Type {
-    // Unknown,
-    // Any, // TODO(anissen): Remove this
     Boolean,
     Integer,
     Float,
@@ -22,32 +19,14 @@ pub enum Type {
 
 // https://github.com/abs0luty/type_inference_in_rust/blob/main/src/main.rs
 
-// impl Type {
-//     pub fn unify(&self, ) {}
-// }
-
-#[derive(Debug, Clone)]
-struct TypeEnvironment {
-    identifiers: HashMap<String, Type>,
-}
-
-impl TypeEnvironment {
-    pub fn new() -> Self {
-        TypeEnvironment {
-            identifiers: HashMap::new(),
-        }
-    }
-}
-
 pub fn type_check<'a>(
     expressions: &'a Vec<Expr>,
     context: &'a Context<'a>,
 ) -> Result<(), Diagnostics> {
     let mut typer = Typer::new(context);
 
-    let mut env = TypeEnvironment::new();
     let mut diagnostics = Diagnostics::new();
-    let result = typer.type_exprs(expressions, &mut env, &mut diagnostics);
+    typer.type_exprs(expressions, &mut diagnostics);
     if !diagnostics.has_errors() {
         Ok(())
     } else {
@@ -67,7 +46,6 @@ impl<'a> Typer<'a> {
     fn type_exprs(
         &mut self,
         expressions: &'a Vec<Expr>,
-        env: &mut TypeEnvironment,
         diagnostics: &mut Diagnostics,
     ) -> UnificationType {
         let mut environment = Environment::new();
@@ -75,413 +53,16 @@ impl<'a> Typer<'a> {
         let mut last_type = None;
 
         for expression in expressions {
-            last_type = Some(context.infer_type(&expression));
-            // context.solve();
+            last_type = Some(context.infer_type(expression));
         }
-        let substitutions = context.solve();
-        println!("Substitutions: {:?}", substitutions);
-        // println!("Substituted Type: {:?}", ty.substitute(&substitutions));
-        // println!("{:?}", ty.substitute(&substitutions));
 
-        // let mut typ = Type::Unknown;
-        // for expr in expressions {
-        //     typ = self.type_expr(expr, env, diagnostics);
-        //     println!("-------------------");
-        //     println!("{expr:?}");
-        //     println!("===> has type {typ:?}");
-        // }
-        // typ
+        context.solve();
+
+        // let substitutions = context.solve();
+        // println!("Substitutions: {:?}", substitutions);
 
         last_type.unwrap()
     }
-
-    // fn type_expr(
-    //     &mut self,
-    //     expression: &'a Expr,
-    //     env: &mut TypeEnvironment,
-    //     diagnostics: &mut Diagnostics,
-    // ) -> Type {
-    //     match expression {
-    //         Expr::Value { value } => match value {
-    //             ValueType::Boolean(_) => Type::Boolean,
-    //             ValueType::Integer(_) => Type::Integer,
-    //             ValueType::Float(_) => Type::Float,
-    //             ValueType::String(_) => Type::String,
-    //             ValueType::Function {
-    //                 slash,
-    //                 params,
-    //                 expr,
-    //             } => {
-    //                 let mut new_env = env.clone();
-    //                 for p in params {
-    //                     new_env.identifiers.insert(p.lexeme.clone(), Type::Unknown);
-    //                 }
-    //                 let result = self.type_expr(expr, &mut new_env, diagnostics);
-    //                 let mut param_types = vec![];
-    //                 for p in params {
-    //                     let typ = new_env.identifiers.get(&p.lexeme).unwrap().clone();
-    //                     param_types.push(Box::new(typ));
-    //                 }
-    //                 Type::Function {
-    //                     parameters: param_types,
-    //                     return_type: Box::new(result),
-    //                 }
-    //             }
-    //         },
-
-    //         Expr::Identifier { name } => {
-    //             env.identifiers
-    //                 .get(&name.lexeme)
-    //                 .unwrap_or(&Type::Unknown)
-    //                 .clone() // TODO(anissen): This clone would be nice to avoid
-    //         }
-
-    //         Expr::Assignment {
-    //             name,
-    //             _operator,
-    //             expr,
-    //         } => {
-    //             let expr_type = self.type_expr(expr, env, diagnostics);
-    //             env.identifiers
-    //                 .insert(name.lexeme.clone(), expr_type.clone()); // TODO(anissen): Fewer clones, please?
-    //             expr_type
-    //         }
-
-    //         Expr::Block { exprs } => self.type_exprs(exprs, env, diagnostics),
-
-    //         Expr::Call {
-    //             name,
-    //             args,
-    //             positions,
-    //         } => {
-    //             let function_type = env.identifiers.get(name).unwrap();
-    //             match function_type.clone() {
-    //                 Type::Function {
-    //                     parameters,
-    //                     return_type,
-    //                 } => {
-    //                     let mut arg_env = env.clone();
-    //                     let arg_types = args
-    //                         .iter()
-    //                         .map(|arg| Box::new(self.type_expr(&arg, &mut arg_env, diagnostics)))
-    //                         .collect();
-
-    //                     let actual = Type::Function {
-    //                         parameters: arg_types,
-    //                         return_type: Box::new(Type::Unknown),
-    //                     };
-
-    //                     let unified = self.unify(function_type.clone(), actual.clone());
-    //                     match unified {
-    //                         Ok(t) => {
-    //                             env.identifiers.insert(name.clone(), t);
-    //                         }
-    //                         Err(err) => {
-    //                             self.error(
-    //                                 format!("Expected {} but found {}", function_type, actual),
-    //                                 positions.first().unwrap().clone(),
-    //                                 diagnostics,
-    //                             );
-    //                         }
-    //                     }
-
-    //                     *return_type.clone()
-    //                 }
-
-    //                 Type::Unknown => {
-    //                     let t = Type::Function {
-    //                         parameters: args.iter().map(|_| Box::new(Type::Unknown)).collect(),
-    //                         return_type: Box::new(Type::Unknown),
-    //                     };
-    //                     env.identifiers.insert(name.clone(), t);
-    //                     Type::Unknown
-    //                 }
-
-    //                 _ => {
-    //                     dbg!(&function_type);
-    //                     panic!("cannot type check function call")
-    //                 }
-    //             }
-    //         }
-
-    //         Expr::Binary {
-    //             left,
-    //             operator,
-    //             _token,
-    //             right,
-    //         } => self.type_binary(left, operator, _token, right, env, diagnostics),
-
-    //         Expr::Unary {
-    //             operator,
-    //             _token,
-    //             expr,
-    //         } => match operator {
-    //             UnaryOperator::Negation => self.type_expr(expr, env, diagnostics),
-    //             UnaryOperator::Not => {
-    //                 self.expect_type(expr, Type::Boolean, &_token.position, env, diagnostics);
-    //                 Type::Boolean
-    //             }
-    //         },
-
-    //         Expr::Grouping(expr) => self.type_expr(expr, env, diagnostics),
-
-    //         Expr::Is { expr, arms } => {
-    //             let mut is_type = self.type_expr(expr, env, diagnostics);
-    //             let mut return_type = None;
-
-    //             // TODO(anissen): Add positions here
-    //             let no_position = Span { column: 0, line: 0 };
-    //             for arm in arms {
-    //                 let mut new_env = env.clone();
-
-    //                 // Check that arm pattern types match expr type
-    //                 match &arm.pattern {
-    //                     IsArmPattern::Expression(expr) => {
-    //                         let pattern_type = self.type_expr(expr, env, diagnostics);
-    //                         if is_type == Type::Unknown {
-    //                             is_type = pattern_type;
-    //                         }
-
-    //                         self.expect_type(
-    //                             &expr,
-    //                             is_type.clone(),
-    //                             &no_position,
-    //                             env,
-    //                             diagnostics,
-    //                         );
-    //                     }
-
-    //                     IsArmPattern::Capture {
-    //                         identifier,
-    //                         condition,
-    //                     } => {
-    //                         new_env
-    //                             .identifiers
-    //                             .insert(identifier.lexeme.clone(), is_type.clone());
-    //                         if let Some(condition) = condition {
-    //                             self.expect_type(
-    //                                 &condition,
-    //                                 Type::Boolean,
-    //                                 &no_position,
-    //                                 &mut new_env,
-    //                                 diagnostics,
-    //                             );
-    //                         }
-    //                     }
-
-    //                     IsArmPattern::Default => (),
-    //                 }
-
-    //                 // TODO(anissen): Check for exhaustiveness
-
-    //                 // Check that return types of each arm matches
-    //                 if let Some(return_type) = return_type.clone() {
-    //                     self.expect_type(
-    //                         &arm.block,
-    //                         return_type,
-    //                         &no_position,
-    //                         &mut new_env,
-    //                         diagnostics,
-    //                     );
-    //                 } else {
-    //                     return_type = Some(self.type_expr(&arm.block, &mut new_env, diagnostics));
-    //                 }
-    //             }
-
-    //             if let Expr::Identifier { name } = &**expr {
-    //                 env.identifiers.insert(name.lexeme.clone(), is_type.clone());
-    //             }
-
-    //             return_type.unwrap()
-    //         }
-    //     }
-    // }
-
-    // fn type_binary(
-    //     &mut self,
-    //     left: &'a Expr,
-    //     operator: &BinaryOperator,
-    //     _token: &Token,
-    //     right: &'a Expr,
-    //     env: &mut TypeEnvironment,
-    //     diagnostics: &mut Diagnostics,
-    // ) -> Type {
-    //     match operator {
-    //         BinaryOperator::IntegerOperation(_) => {
-    //             self.expect_type(left, Type::Integer, &_token.position, env, diagnostics);
-    //             self.expect_type(right, Type::Integer, &_token.position, env, diagnostics);
-    //             Type::Integer
-    //         }
-
-    //         BinaryOperator::IntegerComparison(_) => {
-    //             self.expect_type(left, Type::Integer, &_token.position, env, diagnostics);
-    //             self.expect_type(right, Type::Integer, &_token.position, env, diagnostics);
-    //             Type::Boolean
-    //         }
-
-    //         BinaryOperator::FloatOperation(_) => {
-    //             self.expect_type(left, Type::Float, &_token.position, env, diagnostics);
-    //             self.expect_type(right, Type::Float, &_token.position, env, diagnostics);
-    //             Type::Float
-    //         }
-
-    //         BinaryOperator::FloatComparison(_) => {
-    //             self.expect_type(left, Type::Float, &_token.position, env, diagnostics);
-    //             self.expect_type(right, Type::Float, &_token.position, env, diagnostics);
-    //             Type::Boolean
-    //         }
-
-    //         BinaryOperator::Equality(_) => {
-    //             let left_type = self.type_expr(left, env, diagnostics);
-    //             if left_type != Type::Unknown {
-    //                 self.expect_type(right, left_type, &_token.position, env, diagnostics);
-    //             } else {
-    //                 let right_type = self.type_expr(right, env, diagnostics);
-    //                 self.expect_type(left, right_type, &_token.position, env, diagnostics);
-    //             }
-    //             Type::Boolean
-    //         }
-
-    //         BinaryOperator::BooleanOperation(_) => {
-    //             self.expect_type(left, Type::Boolean, &_token.position, env, diagnostics);
-    //             self.expect_type(right, Type::Boolean, &_token.position, env, diagnostics);
-    //             Type::Boolean
-    //         }
-
-    //         BinaryOperator::StringOperation(string_operations) => {
-    //             match string_operations {
-    //                 StringOperations::StringConcat => {
-    //                     self.expect_type(left, Type::String, &_token.position, env, diagnostics);
-    //                     self.expect_type(right, Type::Any, &_token.position, env, diagnostics); // TODO(anissen): Check types
-    //                     Type::String
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
-
-    fn error(&self, message: String, position: Span, diagnostics: &mut Diagnostics) {
-        diagnostics.add_error(Message::new(message, position.clone()))
-    }
-
-    // // TODO: Move to Type impl?
-    // fn unify(&self, t1: Type, t2: Type) -> Result<Type, String> {
-    //     match (&t1, &t2) {
-    //         // (Type::Any, _) => Ok(t2),
-    //         // (Type::Unknown, _) => Ok(t2),
-    //         (
-    //             Type::Function {
-    //                 parameters: expected_parameters,
-    //                 return_type: expected_return_type,
-    //             },
-    //             Type::Function {
-    //                 parameters: actual_parameters,
-    //                 return_type: actual_return_type,
-    //             },
-    //         ) => {
-    //             let mut concrete_parameters = Vec::new();
-    //             for (expected, actual) in expected_parameters.iter().zip(actual_parameters.iter()) {
-    //                 let concrete_parameter = self.unify(*expected.clone(), *actual.clone())?;
-    //                 concrete_parameters.push(Box::new(concrete_parameter));
-    //             }
-    //             let concrete_return_type =
-    //                 self.unify(*expected_return_type.clone(), *actual_return_type.clone())?;
-    //             Ok(Type::Function {
-    //                 parameters: concrete_parameters,
-    //                 return_type: Box::new(concrete_return_type),
-    //             })
-    //         }
-    //         _ => {
-    //             if t1 == t2 {
-    //                 Ok(t1)
-    //             } else {
-    //                 println!("*** FAILED TO UNIFY!");
-    //                 println!("*** t1 = {t1:?}");
-    //                 println!("*** t2 = {t2:?}");
-    //                 Err("failed to unify".to_string())
-    //             }
-    //         }
-    //     }
-    // }
-
-    // unify_types(t1, t2) -> T, type_match(t1, t2) -> bool
-
-    // the singleton equation set { f(1,y) = f(x,2) } is a syntactic first-order unification problem
-    // that has the substitution { x ↦ 1, y ↦ 2 } as its only solution.
-
-    // fn is_same_or_more_concrete(&self, expected: Type, actual: Type) -> bool {
-    //     // let expected_concrete = self.unify(expected.clone(), actual.clone());
-    //     match (&expected, &actual) {
-    //         (Type::Any, _) | (Type::Unknown, _) => true,
-    //         (
-    //             Type::Function {
-    //                 parameters: expected_parameters,
-    //                 return_type: expected_return_type,
-    //             },
-    //             Type::Function {
-    //                 parameters: actual_parameters,
-    //                 return_type: actual_return_type,
-    //             },
-    //         ) => {
-    //             // println!("comparing functions");
-    //             // dbg!(&expected, &actual);
-    //             // dbg!(&expected_parameters, &actual_parameters);
-    //             // dbg!(&expected_return_type, &actual_return_type);
-    //             if expected_parameters.len() != actual_parameters.len() {
-    //                 false
-    //             } else if !self.is_same_or_more_concrete(
-    //                 *expected_return_type.clone(),
-    //                 *actual_return_type.clone(),
-    //             ) {
-    //                 false
-    //             } else {
-    //                 // dbg!(&expected, &actual);
-    //                 // dbg!(&expected_parameters, &actual_parameters);
-    //                 for (expected, actual) in
-    //                     expected_parameters.iter().zip(actual_parameters.iter())
-    //                 {
-    //                     // println!("comparing function parameters");
-    //                     // dbg!(&expected, &actual);
-    //                     if !self.is_same_or_more_concrete(*expected.clone(), *actual.clone()) {
-    //                         return false;
-    //                     }
-    //                 }
-    //                 true
-    //             }
-    //         }
-    //         _ => expected == actual,
-    //     }
-    // }
-
-    // fn expect_type(
-    //     &mut self,
-    //     expression: &'a Expr,
-    //     expected_type: Type,
-    //     position: &Span,
-    //     env: &mut TypeEnvironment,
-    //     diagnostics: &mut Diagnostics,
-    // ) {
-    //     let actual_type = self.type_expr(expression, env, diagnostics);
-    //     // let unified_type = self.unify(expected_type.clone(), actual_type.clone());
-
-    //     if !self.is_same_or_more_concrete(expected_type.clone(), actual_type.clone()) {
-    //         dbg!(&actual_type);
-    //         // dbg!(&env);
-    //         // dbg!(self.unify(expected_type.clone(), actual_type.clone()));
-    //         self.error(
-    //             format!("Expected {} but found {}", expected_type, actual_type),
-    //             position.clone(),
-    //             diagnostics,
-    //         );
-    //     }
-
-    //     if let Expr::Identifier { name } = expression {
-    //         let typ = env.identifiers.get(&name.lexeme).unwrap();
-    //         if typ == &Type::Unknown {
-    //             env.identifiers.insert(name.lexeme.clone(), expected_type);
-    //         }
-    //     }
-    // }
 }
 
 type TypeVariable = usize;
@@ -516,6 +97,13 @@ impl fmt::Display for UnificationType {
             Self::Variable(i) => &format!("???#{i}"),
         };
         write!(f, "{}", type_name)
+    }
+}
+
+fn make_constructor(typ: Type) -> UnificationType {
+    UnificationType::Constructor {
+        typ,
+        generics: Vec::new(),
     }
 }
 
@@ -617,12 +205,10 @@ impl<'env> InferenceContext<'env> {
 
     fn expects_type(&mut self, expression: &Expr, expected_type: UnificationType) {
         let actual_type = self.infer_type(expression);
-        println!("Expects {actual_type} to be {expected_type}");
         self.constraints.push(Constraint::Eq {
             left: actual_type,
             right: expected_type,
         });
-        // unify(actual_type, expected_type, );
     }
 
     fn infer_type(&mut self, expression: &Expr) -> UnificationType {
@@ -717,61 +303,112 @@ impl<'env> InferenceContext<'env> {
                     make_constructor(Type::Integer)
                 }
 
-                _ => panic!("sadf"), // BinaryOperator::IntegerComparison(_) => {
-                                     //     self.expect_type(left, Type::Integer, &_token.position, env, diagnostics);
-                                     //     self.expect_type(right, Type::Integer, &_token.position, env, diagnostics);
-                                     //     Type::Boolean
-                                     // }
+                BinaryOperator::IntegerComparison(_) => {
+                    self.expects_type(left, make_constructor(Type::Integer));
+                    self.expects_type(right, make_constructor(Type::Integer));
+                    make_constructor(Type::Boolean)
+                }
 
-                                     // BinaryOperator::FloatOperation(_) => {
-                                     //     self.expect_type(left, Type::Float, &_token.position, env, diagnostics);
-                                     //     self.expect_type(right, Type::Float, &_token.position, env, diagnostics);
-                                     //     Type::Float
-                                     // }
+                BinaryOperator::FloatOperation(_) => {
+                    self.expects_type(left, make_constructor(Type::Float));
+                    self.expects_type(right, make_constructor(Type::Float));
+                    make_constructor(Type::Float)
+                }
 
-                                     // BinaryOperator::FloatComparison(_) => {
-                                     //     self.expect_type(left, Type::Float, &_token.position, env, diagnostics);
-                                     //     self.expect_type(right, Type::Float, &_token.position, env, diagnostics);
-                                     //     Type::Boolean
-                                     // }
+                BinaryOperator::FloatComparison(_) => {
+                    self.expects_type(left, make_constructor(Type::Float));
+                    self.expects_type(right, make_constructor(Type::Float));
+                    make_constructor(Type::Boolean)
+                }
 
-                                     // BinaryOperator::Equality(_) => {
-                                     //     let left_type = self.type_expr(left, env, diagnostics);
-                                     //     if left_type != Type::Unknown {
-                                     //         self.expect_type(right, left_type, &_token.position, env, diagnostics);
-                                     //     } else {
-                                     //         let right_type = self.type_expr(right, env, diagnostics);
-                                     //         self.expect_type(left, right_type, &_token.position, env, diagnostics);
-                                     //     }
-                                     //     Type::Boolean
-                                     // }
+                BinaryOperator::Equality(_) => {
+                    // TODO(anissen): Implement:
+                    // let left_type = self.type_expr(left, env, diagnostics);
+                    // if left_type != Type::Unknown {
+                    //     self.expect_type(right, left_type, &_token.position, env, diagnostics);
+                    // } else {
+                    //     let right_type = self.type_expr(right, env, diagnostics);
+                    //     self.expect_type(left, right_type, &_token.position, env, diagnostics);
+                    // }
+                    make_constructor(Type::Boolean)
+                }
 
-                                     // BinaryOperator::BooleanOperation(_) => {
-                                     //     self.expect_type(left, Type::Boolean, &_token.position, env, diagnostics);
-                                     //     self.expect_type(right, Type::Boolean, &_token.position, env, diagnostics);
-                                     //     Type::Boolean
-                                     // }
+                BinaryOperator::BooleanOperation(_) => {
+                    self.expects_type(left, make_constructor(Type::Boolean));
+                    self.expects_type(right, make_constructor(Type::Boolean));
+                    make_constructor(Type::Boolean)
+                }
 
-                                     // BinaryOperator::StringOperation(string_operations) => {
-                                     //     match string_operations {
-                                     //         StringOperations::StringConcat => {
-                                     //             self.expect_type(
-                                     //                 left,
-                                     //                 Type::String,
-                                     //                 &_token.position,
-                                     //                 env,
-                                     //                 diagnostics,
-                                     //             );
-                                     //             self.expect_type(right, Type::Any, &_token.position, env, diagnostics); // TODO(anissen): Check types
-                                     //             Type::String
-                                     //         }
-                                     //     }
-                                     // }
+                BinaryOperator::StringOperation(string_operations) => {
+                    match string_operations {
+                        StringOperations::StringConcat => {
+                            self.expects_type(left, make_constructor(Type::String));
+                            // TODO(anissen): Implement:
+                            // self.expect_type(right, Type::Any, &_token.position, env, diagnostics); // TODO(anissen): Check types
+                            make_constructor(Type::String)
+                        }
+                    }
+                }
             },
 
-            t => {
-                println!("Type not handled: {:?}", t);
-                panic!("not handled")
+            Expr::Unary {
+                operator,
+                _token,
+                expr,
+            } => match operator {
+                UnaryOperator::Negation => self.infer_type(expr),
+                UnaryOperator::Not => {
+                    self.expects_type(expr, make_constructor(Type::Boolean));
+                    make_constructor(Type::Boolean)
+                }
+            },
+
+            Expr::Grouping(expr) => self.infer_type(expr),
+
+            Expr::Is { expr, arms } => {
+                let is_type = self.infer_type(expr);
+                let mut return_type = None;
+
+                // TODO(anissen): Add positions here
+                for arm in arms {
+                    // Check that arm pattern types match expr type
+                    match &arm.pattern {
+                        IsArmPattern::Expression(expr) => {
+                            self.expects_type(expr, is_type.clone());
+                        }
+
+                        IsArmPattern::Capture {
+                            identifier,
+                            condition,
+                        } => {
+                            self.environment
+                                .variables
+                                .insert(identifier.lexeme.clone(), is_type.clone());
+                            if let Some(condition) = condition {
+                                self.expects_type(condition, make_constructor(Type::Boolean));
+                            }
+                        }
+
+                        IsArmPattern::Default => (),
+                    }
+
+                    // TODO(anissen): Check for exhaustiveness
+
+                    // Check that return types of each arm matches
+                    if let Some(return_type) = return_type.clone() {
+                        self.expects_type(&arm.block, return_type);
+                    } else {
+                        return_type = Some(self.infer_type(&arm.block));
+                    }
+                }
+
+                if let Expr::Identifier { name } = &**expr {
+                    self.environment
+                        .variables
+                        .insert(name.lexeme.clone(), is_type.clone());
+                }
+
+                return_type.unwrap()
             }
         }
     }
@@ -791,13 +428,6 @@ impl<'env> InferenceContext<'env> {
     }
 }
 
-fn make_constructor(typ: Type) -> UnificationType {
-    UnificationType::Constructor {
-        typ,
-        generics: Vec::new(),
-    }
-}
-
 fn unify(
     left: UnificationType,
     right: UnificationType,
@@ -814,8 +444,13 @@ fn unify(
                 generics: generics2,
             },
         ) => {
-            // assert_eq!(name1, name2, "expected {name2} but got {name1}");
-            assert_eq!(name1, name2, "expected {right} but got {left}");
+            assert_eq!(
+                name1,
+                name2,
+                "expected {} but got {}",
+                right.substitute(substitutions),
+                left.substitute(substitutions)
+            );
             assert_eq!(generics1.len(), generics2.len());
 
             for (left, right) in zip(generics1, generics2) {
@@ -843,63 +478,3 @@ fn unify(
         }
     }
 }
-
-// fn make_tconst(typ: &str, generics: Vec<UnificationType>) -> UnificationType {
-//     UnificationType::Constructor {
-//         name: typ.to_string(),
-//         generics,
-//     }
-// }
-
-// fn make_tvar(i: usize) -> Type {
-//     Type::Variable(TypeVariable(i))
-// }
-
-// fn main() {
-//     let mut environment = Environment::new();
-
-//     /*
-
-//     add = \v
-//         \x
-//             v + x
-
-//     a | (a | add)
-//     */
-//     environment.variables.insert(
-//         "add".to_owned(),
-//         make_tconst(
-//             "Function",
-//             vec![
-//                 make_tconst("int", vec![]),
-//                 make_tconst(
-//                     "Function",
-//                     vec![make_tconst("int", vec![]), make_tconst("int", vec![])],
-//                 ),
-//             ],
-//         ),
-//     );
-
-//     let mut context = InferenceContext::new(&mut environment);
-
-//     let expression = Expression::Lambda {
-//         parameter: "a".to_string(),
-//         value: Box::new(Expression::Apply {
-//             callee: Box::new(Expression::Apply {
-//                 callee: Box::new(Expression::Variable {
-//                     name: "add".to_string(),
-//                 }),
-//                 argument: Box::new(Expression::Variable {
-//                     name: "a".to_string(),
-//                 }),
-//             }),
-//             argument: Box::new(Expression::Variable {
-//                 name: "a".to_string(),
-//             }),
-//         }),
-//     };
-//     let ty = context.infer_type(&expression);
-//     let substitutions = context.solve();
-
-//     println!("{:?}", ty.substitute(&substitutions));
-// }
