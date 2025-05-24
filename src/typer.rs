@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fmt;
 use std::iter::zip;
 
-use crate::diagnostics::Diagnostics;
+use crate::diagnostics::{Diagnostics, Message};
 use crate::expressions::{
     BinaryOperator, Expr, IsArmPattern, StringOperations, UnaryOperator, ValueType,
 };
@@ -56,7 +56,7 @@ impl<'a> Typer<'a> {
             last_type = Some(context.infer_type(expression));
         }
 
-        context.solve();
+        context.solve(diagnostics);
 
         // let substitutions = context.solve();
         // println!("Substitutions: {:?}", substitutions);
@@ -413,13 +413,13 @@ impl<'env> InferenceContext<'env> {
         }
     }
 
-    fn solve(self) -> HashMap<TypeVariable, UnificationType> {
+    fn solve(self, diagnostics: &mut Diagnostics) -> HashMap<TypeVariable, UnificationType> {
         let mut substitutions = HashMap::new();
 
         for constraint in self.constraints {
             match constraint {
                 Constraint::Eq { left, right } => {
-                    unify(left, right, &mut substitutions);
+                    unify(left, right, &mut substitutions, diagnostics);
                 }
             }
         }
@@ -432,6 +432,7 @@ fn unify(
     left: UnificationType,
     right: UnificationType,
     substitutions: &mut HashMap<TypeVariable, UnificationType>,
+    diagnostics: &mut Diagnostics,
 ) {
     match (left.clone(), right.clone()) {
         (
@@ -444,23 +445,30 @@ fn unify(
                 generics: generics2,
             },
         ) => {
-            assert_eq!(
-                name1,
-                name2,
-                "expected {} but got {}",
-                right.substitute(substitutions),
-                left.substitute(substitutions)
-            );
-            assert_eq!(generics1.len(), generics2.len());
+            if name1 != name2 || generics1.len() != generics2.len() {
+                diagnostics.add_error(Message::from_error(format!(
+                    "expected {} but got {}",
+                    right.substitute(substitutions),
+                    left.substitute(substitutions)
+                )));
+            }
+            // assert_eq!(
+            //     name1,
+            //     name2,
+            //     "expected {} but got {}",
+            //     right.substitute(substitutions),
+            //     left.substitute(substitutions)
+            // );
+            // assert_eq!(generics1.len(), generics2.len());
 
             for (left, right) in zip(generics1, generics2) {
-                unify(left, right, substitutions);
+                unify(left, right, substitutions, diagnostics);
             }
         }
         (UnificationType::Variable(i), UnificationType::Variable(j)) if i == j => {}
         (_, UnificationType::Variable(v)) => {
             if let Some(substitution) = substitutions.get(&v) {
-                unify(left, substitution.clone(), substitutions);
+                unify(left, substitution.clone(), substitutions, diagnostics);
                 return;
             }
 
@@ -469,7 +477,7 @@ fn unify(
         }
         (UnificationType::Variable(v), _) => {
             if let Some(substitution) = substitutions.get(&v) {
-                unify(right, substitution.clone(), substitutions);
+                unify(right, substitution.clone(), substitutions, diagnostics);
                 return;
             }
 
