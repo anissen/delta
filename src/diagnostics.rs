@@ -5,6 +5,12 @@ pub struct Diagnostics {
     errors: Vec<Error>,
 }
 
+impl Default for Diagnostics {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Diagnostics {
     pub fn new() -> Self {
         Diagnostics { errors: Vec::new() }

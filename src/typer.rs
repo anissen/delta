@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fmt;
 use std::iter::zip;
 
-use crate::diagnostics::{self, Diagnostics};
+use crate::diagnostics::{Diagnostics};
 use crate::errors::Error;
 use crate::expressions::{
     BinaryOperator, Expr, IsArmPattern, StringOperations, UnaryOperator, ValueType,
@@ -45,7 +45,7 @@ impl<'a> Typer<'a> {
 
     fn type_exprs(&mut self, expressions: &'a Vec<Expr>) {
         let mut environment = Environment::new();
-        let mut context = InferenceContext::new(&mut environment, &mut self.diagnostics);
+        let mut context = InferenceContext::new(&mut environment, self.diagnostics);
 
         for expression in expressions {
             context.infer_type(expression);
@@ -453,7 +453,7 @@ impl<'env> InferenceContext<'env> {
         for constraint in &self.constraints {
             match constraint {
                 Constraint::Eq { left, right } => {
-                    unify(left, right, &mut substitutions, &mut self.diagnostics);
+                    unify(left, right, &mut substitutions, self.diagnostics);
                 }
             }
         }
