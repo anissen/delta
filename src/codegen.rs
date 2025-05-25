@@ -1,7 +1,8 @@
 use std::collections::{HashMap, HashSet};
 
 use crate::bytecodes::ByteCode;
-use crate::diagnostics::{Diagnostics, Message};
+use crate::diagnostics::Diagnostics;
+use crate::errors::Error;
 use crate::expressions::{
     ArithmeticOperations, BinaryOperator, BooleanOperations, Comparisons, EqualityOperations, Expr,
     IsArmPattern, StringOperations, UnaryOperator, ValueType,
@@ -107,11 +108,9 @@ impl<'a> Codegen<'a> {
                 if self.context.has_value(lexeme) {
                     // TODO(anissen): Should (also) output index
                     if lexeme.len() > 255 {
-                        let message = Message::new(
-                            format!("Function name too long: {}", lexeme),
-                            name.position.clone(),
-                        );
-                        self.diagnostics.add_error(message);
+                        self.diagnostics.add_error(Error::FunctionNameTooLong {
+                            token: name.clone(),
+                        });
                     }
                     scope
                         .bytecode
@@ -120,11 +119,7 @@ impl<'a> Codegen<'a> {
                 } else if let Some(index) = scope.environment.get(lexeme) {
                     scope.bytecode.add_get_local_value(*index);
                 } else {
-                    let msg = Message::new(
-                        format!("Name not found in scope: {}", lexeme),
-                        name.position.clone(),
-                    );
-                    self.diagnostics.add_error(msg);
+                    panic!("Name not found in scope");
                 }
             }
 
@@ -185,15 +180,7 @@ impl<'a> Codegen<'a> {
                             scope.bytecode.add_byte(*index);
                         }
                         None => {
-                            // let message = Message::new(
-                            //     format!("Unknown function: {}", name),
-                            //     &name.position,
-                            // );
-                            //
-                            // TODO(anissen): name should be token
-                            let message =
-                                Message::from_error(format!("Unknown function: {}", name));
-                            self.diagnostics.add_error(message);
+                            panic!("Unknown function");
                         }
                     }
                 };
