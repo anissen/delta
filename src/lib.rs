@@ -2,6 +2,7 @@ mod bytecodes;
 mod codegen;
 pub mod diagnostics;
 mod disassembler;
+mod errors;
 mod expressions;
 mod lexer;
 mod parser;
@@ -12,7 +13,7 @@ pub mod vm;
 
 use std::{fs::File, io::Read};
 
-use diagnostics::{Diagnostics, Message};
+use diagnostics::Diagnostics;
 use program::Program;
 
 pub fn read_file(path: &String) -> std::io::Result<String> {
@@ -28,7 +29,7 @@ pub fn run_file(source_path: &String, debug: bool) -> Result<Option<vm::Value>, 
         Ok(source) => run(&source, Some(source_path), debug),
         Err(err) => {
             let mut diagnostics = Diagnostics::new();
-            diagnostics.add_error(Message::from_error(err.to_string()));
+            diagnostics.add_error(errors::Error::FileError(err.to_string()));
             Err(diagnostics)
         }
     }

@@ -1,28 +1,8 @@
-use crate::tokens::Position;
-
-#[derive(Debug, Clone)]
-pub struct Message {
-    pub content: String,
-    pub span: Position,
-}
-
-impl Message {
-    pub fn new(content: String, span: Position) -> Self {
-        Message { content, span }
-    }
-    pub fn from_error(content: String) -> Self {
-        Message {
-            content,
-            span: Position { line: 0, column: 0 },
-        }
-    }
-}
-
-// TODO(anissen): Consider making Message an enum type and handling actual error description and reporting elsewhere (e.g. errors.rs)
+use crate::errors::Error;
 
 #[derive(Debug, Clone)]
 pub struct Diagnostics {
-    errors: Vec<Message>,
+    errors: Vec<Error>,
 }
 
 impl Diagnostics {
@@ -30,8 +10,8 @@ impl Diagnostics {
         Diagnostics { errors: Vec::new() }
     }
 
-    pub fn add_error(&mut self, message: Message) {
-        self.errors.push(message);
+    pub fn add_error(&mut self, error: Error) {
+        self.errors.push(error);
     }
 
     pub fn has_errors(&self) -> bool {
@@ -42,14 +22,15 @@ impl Diagnostics {
         self.errors.len()
     }
 
-    pub fn get_errors(&self) -> Vec<Message> {
+    pub fn get_errors(&self) -> Vec<Error> {
         self.errors.clone()
     }
 
     pub fn to_string(&self) -> String {
         self.errors
             .iter()
-            .map(|f| format!("line {}.{}: {}\n", f.span.line, f.span.column, f.content))
+            // .map(|f| format!("line {}.{}: {}\n", f.span.line, f.span.column, f.content))
+            .map(|err| format!("{err:?}"))
             .collect()
     }
 }

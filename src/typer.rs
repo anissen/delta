@@ -2,7 +2,8 @@ use std::collections::HashMap;
 use std::fmt;
 use std::iter::zip;
 
-use crate::diagnostics::{self, Diagnostics, Message};
+use crate::diagnostics::{self, Diagnostics};
+use crate::errors::Error;
 use crate::expressions::{
     BinaryOperator, Expr, IsArmPattern, StringOperations, UnaryOperator, ValueType,
 };
@@ -24,16 +25,9 @@ pub fn type_check<'a>(
     expressions: &'a Vec<Expr>,
     context: &'a Context<'a>,
     diagnostics: &mut Diagnostics,
-) -> Result<(), Diagnostics> {
+) {
     let mut typer = Typer::new(context, diagnostics);
-
-    // let mut diagnostics = Diagnostics::new();
     typer.type_exprs(expressions);
-    if !diagnostics.has_errors() {
-        Ok(())
-    } else {
-        Err(diagnostics.clone())
-    }
 }
 
 pub struct Typer<'a> {
@@ -64,7 +58,7 @@ impl<'a> Typer<'a> {
 type TypeVariable = usize;
 
 #[derive(Debug, Clone, PartialEq)]
-enum UnificationType {
+pub enum UnificationType {
     Constructor {
         typ: Type,
         generics: Vec<UnificationType>,
@@ -222,10 +216,9 @@ impl<'env> InferenceContext<'env> {
             Expr::Identifier { name } => match self.environment.variables.get(&name.lexeme) {
                 Some(value) => value.clone(),
                 None => {
-                    self.diagnostics.add_error(Message::new(
-                        format!("Name not found in scope: {}", name.lexeme),
-                        name.position.clone(),
-                    ));
+                    self.diagnostics.add_error(Error::NameNotFound {
+                        token: name.clone(),
+                    });
                     self.type_placeholder()
                 }
             },
@@ -268,15 +261,21 @@ impl<'env> InferenceContext<'env> {
                     .collect::<Vec<UnificationType>>();
                 let return_type = self.type_placeholder();
 
-                let function_type = self.environment.variables.get(name).unwrap(); // TODO(anissen): Maybe have a callee expression instead of name?
-                self.constraints.push(Constraint::Eq {
-                    left: function_type.clone(),
-                    right: UnificationType::Constructor {
-                        typ: Type::Function,
-                        generics: [argument_types, vec![return_type.clone()]].concat(),
-                        position: positions.first().unwrap().clone(), // TODO(anissen): Is this right?
-                    },
-                });
+                match self.environment.variables.get(name) {
+                    Some(function_type) => {
+                        self.constraints.push(Constraint::Eq {
+                            left: function_type.clone(),
+                            right: UnificationType::Constructor {
+                                typ: Type::Function,
+                                generics: [argument_types, vec![return_type.clone()]].concat(),
+                                position: positions.first().unwrap().clone(), // TODO(anissen): Is this right?
+                            },
+                        })
+                    }
+                    None => self
+                        .diagnostics
+                        .add_error(Error::FunctionNotFound { name: name.clone() }),
+                }
 
                 return_type
             }
@@ -483,14 +482,12 @@ fn unify(
             },
         ) => {
             if name1 != name2 || generics1.len() != generics2.len() {
-                diagnostics.add_error(Message::new(
-                    format!(
-                        "expected {} but got {}",
-                        right.substitute(substitutions),
-                        left.substitute(substitutions)
-                    ),
-                    position2,
-                ));
+                diagnostics.add_error(Error::TypeMismatch {
+                    expected: right.substitute(substitutions),
+                    got: left.substitute(substitutions),
+                    declared_at: position1,
+                    provided_at: position2,
+                });
             }
 
             for (left, right) in zip(generics1, generics2) {

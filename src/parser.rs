@@ -1,5 +1,5 @@
 use crate::diagnostics::Diagnostics;
-use crate::diagnostics::Message;
+use crate::errors;
 use crate::expressions::ArithmeticOperations;
 use crate::expressions::BinaryOperator;
 use crate::expressions::BooleanOperations;
@@ -85,7 +85,10 @@ impl Parser {
                 Ok(Some(expression)) => expressions.push(expression),
                 Ok(None) => (), // Should we do something here?
                 Err(err) => {
-                    diagnostics.add_error(Message::new(err, self.previous().position));
+                    diagnostics.add_error(errors::Error::ParseError {
+                        message: err,
+                        position: self.previous().position,
+                    });
                 }
             }
             // if let Ok(expression) = res {

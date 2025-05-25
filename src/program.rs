@@ -159,11 +159,12 @@ impl<'a> Program<'a> {
         let start = std::time::Instant::now();
         // TODO(anissen): Diagnostics should be collected in each phase
         let mut diagnostics = Diagnostics::new();
-        let typed_ast = typer::type_check(&ast, &self.context, &mut diagnostics)?;
+        typer::type_check(&ast, &self.context, &mut diagnostics);
         let duration = start.elapsed();
         println!("Elapsed: {:?}", duration);
-        if debug {
-            println!("typed ast: {:?}", typed_ast);
+
+        if diagnostics.has_errors() {
+            eprintln!("Errors: {}", diagnostics.to_string());
         }
 
         let foreign_functions = self
@@ -190,7 +191,7 @@ impl<'a> Program<'a> {
             }
             Err(diagnostics) => {
                 eprintln!("Errors: {}", diagnostics.to_string());
-                Err(diagnostics.clone())
+                Err(diagnostics)
             }
         }
     }
