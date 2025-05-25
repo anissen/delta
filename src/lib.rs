@@ -9,6 +9,7 @@ mod parser;
 pub mod program;
 mod tokens;
 mod typer;
+mod unification;
 pub mod vm;
 
 use std::{fs::File, io::Read};

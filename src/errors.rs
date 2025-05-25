@@ -1,5 +1,5 @@
 use crate::tokens::{Position, Token};
-use crate::typer::UnificationType;
+use crate::unification::UnificationType;
 
 #[derive(Debug, Clone)]
 pub enum Error {
