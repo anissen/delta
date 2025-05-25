@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use crate::codegen;
-use crate::diagnostics;
 use crate::diagnostics::Diagnostics;
 use crate::lexer;
 use crate::parser;
