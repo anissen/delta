@@ -12,8 +12,8 @@ fn main() {
     let debug = args.contains(&"--debug".to_string());
     let result = delta::run_file(source_path, debug);
     match result {
-        Ok(Some(value)) => println!("Result: {:?}", value),
-        Ok(None) => println!("Result: N/A"),
-        Err(err) => println!("Error(s) occured:\n{}", err.to_string()),
+        Ok(Some(value)) => println!("\nResult: {:?}", value),
+        Ok(None) => println!("\nResult: N/A"),
+        Err(err) => println!("\nError(s) occured:\n{}", err.to_string()),
     }
 }

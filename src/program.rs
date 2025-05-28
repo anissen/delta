@@ -163,7 +163,7 @@ impl<'a> Program<'a> {
         println!("Elapsed: {:?}", duration);
 
         if diagnostics.has_errors() {
-            eprintln!("Errors: {}", diagnostics.to_string());
+            return Err(diagnostics);
         }
 
         let foreign_functions = self
@@ -188,10 +188,7 @@ impl<'a> Program<'a> {
                 }
                 Ok(bytecodes)
             }
-            Err(diagnostics) => {
-                eprintln!("Errors: {}", diagnostics.to_string());
-                Err(diagnostics)
-            }
+            Err(diagnostics) => Err(diagnostics),
         }
     }
 

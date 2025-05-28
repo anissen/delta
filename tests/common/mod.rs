@@ -20,10 +20,10 @@ pub fn assert_err(source: &str, expected: String) {
             let errs = diagnostics.get_errors();
             let err = errs.first().unwrap();
             assert!(
-                format!("{err:?}") == expected,
-                "Expected error to be '{:?}' but it was '{:?}'",
+                err.to_string() == expected,
+                "Expected error to be '{}' but it was '{:?}'",
                 expected,
-                diagnostics
+                err.to_string()
             )
         }
         _ => panic!(),
@@ -45,10 +45,10 @@ pub fn assert_type_fail(source: &str, expected: String) {
             let errs = diagnostics.get_errors();
             let err = errs.first().unwrap();
             assert!(
-                format!("{err:?}") == expected,
+                err.to_string() == expected,
                 "Expected error to be '{:?}' but it was '{:?}'",
                 expected,
-                diagnostics
+                err.to_string()
             )
         }
         _ => panic!(),

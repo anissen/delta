@@ -166,7 +166,7 @@ fn pattern_matching_capture_non_boolean_guard() {
     other if 2 + 2 # not a boolean expression
         "value captured is {other}"
 "#,
-        "Expected expression to be boolean".to_string(),
+        "Line 4.5: Parse error: Expected expression to be boolean".to_string(),
     );
 }
 
@@ -180,7 +180,7 @@ fn multiple_default_patterns() {
     _
         "not okay"
 "#,
-        "An `is` block cannot have multiple default arms.".to_string(),
+        "Line 6.18: Parse error: An `is` block cannot have multiple default arms.".to_string(),
     );
 }
 
@@ -194,7 +194,7 @@ fn arm_after_default_pattern() {
     3
         "not okay"
 "#,
-        "Unreachable due to default arm above.".to_string(),
+        "Line 6.18: Parse error: Unreachable due to default arm above.".to_string(),
     );
 }
 

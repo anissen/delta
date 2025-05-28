@@ -13,6 +13,12 @@ pub enum ValueType {
 }
 
 #[derive(Debug)]
+pub struct ExprWithPosition {
+    pub expr: Expr,
+    pub position: Position,
+}
+
+#[derive(Debug)]
 pub enum Expr {
     Identifier {
         name: Token,
@@ -24,8 +30,7 @@ pub enum Expr {
     },
     Call {
         name: String,
-        args: Vec<Expr>, // TODO(anissen): Should arguments be named? E.g. `square value:5`.
-        positions: Vec<Position>,
+        args: Vec<ExprWithPosition>, // TODO(anissen): Should arguments be named? E.g. `square value:5`.
     },
     // ForeignCall {
     //     name: String,
