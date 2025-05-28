@@ -36,7 +36,7 @@ impl Diagnostics {
         self.errors
             .iter()
             // .map(|f| format!("line {}.{}: {}\n", f.span.line, f.span.column, f.content))
-            .map(|err| format!("{err:?}"))
+            .map(|err| format!("{err}"))
             .collect()
     }
 }

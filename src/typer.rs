@@ -144,14 +144,10 @@ impl<'env> InferenceContext<'env> {
                 }
             },
 
-            Expr::Call {
-                name,
-                args,
-                positions,
-            } => {
+            Expr::Call { name, args } => {
                 let argument_types = args
                     .iter()
-                    .map(|arg| self.infer_type(arg))
+                    .map(|arg| self.infer_type(&arg.expr))
                     .collect::<Vec<UnificationType>>();
                 let return_type = self.type_placeholder();
 
@@ -162,7 +158,7 @@ impl<'env> InferenceContext<'env> {
                             right: UnificationType::Constructor {
                                 typ: Type::Function,
                                 generics: [argument_types, vec![return_type.clone()]].concat(),
-                                position: positions.first().unwrap().clone(), // TODO(anissen): Is this right?
+                                position: args.first().unwrap().position.clone(), // TODO(anissen): This is not right, should be name.position
                             },
                         })
                     }

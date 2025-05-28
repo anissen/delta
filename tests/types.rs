@@ -6,16 +6,28 @@ use common::{assert_type_fail, assert_type_ok};
 fn plus_integer() {
     assert_type_ok("1 + 2");
 
-    assert_type_fail("1 + 2.4", "Expected int but found float".to_string());
-    assert_type_fail("1.2 + 2", "Expected int but found float".to_string());
+    assert_type_fail(
+        "1 + 2.4",
+        "Line 1.5: Expected int but got float.".to_string(),
+    );
+    assert_type_fail(
+        "1.2 + 2",
+        "Line 1.1: Expected int but got float.".to_string(),
+    );
 }
 
 #[test]
 fn plus_float() {
     assert_type_ok("1.2 +. 3.4");
 
-    assert_type_fail("1 +. 2.4", "Expected float but found int".to_string());
-    assert_type_fail("1.2 +. 2", "Expected float but found int".to_string());
+    assert_type_fail(
+        "1 +. 2.4",
+        "Line 1.1: Expected float but got int.".to_string(),
+    );
+    assert_type_fail(
+        "1.2 +. 2",
+        "Line 1.8: Expected float but got int.".to_string(),
+    );
 }
 
 // call = \f x y

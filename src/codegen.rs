@@ -150,13 +150,12 @@ impl<'a> Codegen<'a> {
                 token,
             } => self.emit_function(token, None, params, expr, scope),
 
-            Expr::Call {
-                name,
-                args,
-                positions,
-            } => {
+            Expr::Call { name, args } => {
                 let arg_count = args.len();
-                self.emit_exprs(args, scope);
+                // let arg_exprs = args.iter().map(|arg| arg.expr).collect::<Vec<Expr>>();
+                for arg in args {
+                    self.emit_expr(&arg.expr, scope);
+                }
 
                 if self.context.has_function(name) {
                     // TODO(anissen): Maybe this should be its own Expr instead?

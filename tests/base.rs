@@ -267,5 +267,5 @@ fn mixed_division() {
 
 #[test]
 fn undefined_variable() {
-    assert_err("x", "Name not found in scope: x".to_string());
+    assert_err("x", "Line 1.1: Name not found in scope: x".to_string());
 }
