@@ -45,6 +45,40 @@ impl fmt::Display for UnificationType {
     }
 }
 
+// implement From<typer::Type> for UnificationType
+
+// impl From<Type> for UnificationType {
+//     fn from(typ: Type) -> Self {
+//         match typ {
+//             Type::Boolean => UnificationType::Constructor {
+//                 typ: Type::Boolean,
+//                 generics: Vec::new(),
+//                 position: Position::default(),
+//             },
+//             Type::Integer => UnificationType::Constructor {
+//                 typ: Type::Integer,
+//                 generics: Vec::new(),
+//                 position: Position::default(),
+//             },
+//             Type::Float => UnificationType::Constructor {
+//                 typ: Type::Float,
+//                 generics: Vec::new(),
+//                 position: Position::default(),
+//             },
+//             Type::String => UnificationType::Constructor {
+//                 typ: Type::String,
+//                 generics: Vec::new(),
+//                 position: Position::default(),
+//             },
+//             Type::Function => UnificationType::Constructor {
+//                 typ: Type::Function,
+//                 generics: Vec::new(),
+//                 position: Position::default(),
+//             },
+//         }
+//     }
+// }
+
 pub fn make_constructor(typ: Type, position: Position) -> UnificationType {
     UnificationType::Constructor {
         typ,
@@ -54,6 +88,36 @@ pub fn make_constructor(typ: Type, position: Position) -> UnificationType {
 }
 
 impl UnificationType {
+    fn from_type(typ: Type, position: Position) -> Self {
+        match typ {
+            Type::Boolean => UnificationType::Constructor {
+                typ: Type::Boolean,
+                generics: Vec::new(),
+                position,
+            },
+            Type::Integer => UnificationType::Constructor {
+                typ: Type::Integer,
+                generics: Vec::new(),
+                position,
+            },
+            Type::Float => UnificationType::Constructor {
+                typ: Type::Float,
+                generics: Vec::new(),
+                position,
+            },
+            Type::String => UnificationType::Constructor {
+                typ: Type::String,
+                generics: Vec::new(),
+                position,
+            },
+            Type::Function => UnificationType::Constructor {
+                typ: Type::Function,
+                generics: Vec::new(),
+                position,
+            },
+        }
+    }
+
     fn substitute(
         &self,
         substitutions: &HashMap<TypeVariable, UnificationType>,

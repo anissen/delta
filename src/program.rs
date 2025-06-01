@@ -60,6 +60,10 @@ impl<'a> Context<'a> {
         self.values.contains_key(name)
     }
 
+    pub fn get_value_names(&self) -> Vec<String> {
+        self.values.keys().map(|v| v.clone()).collect()
+    }
+
     pub fn get_value(&self, name: &String) -> vm::Value {
         if let Some(value_func) = self.values.get(name) {
             value_func()

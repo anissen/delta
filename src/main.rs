@@ -1,5 +1,7 @@
 use std::process::exit;
 
+use delta::diagnostics;
+
 fn main() {
     let args: Vec<String> = std::env::args().collect();
 
@@ -14,6 +16,17 @@ fn main() {
     match result {
         Ok(Some(value)) => println!("\nResult: {:?}", value),
         Ok(None) => println!("\nResult: N/A"),
-        Err(err) => println!("\nError(s) occured:\n{}", err.to_string()),
+        Err(diagnostics) => {
+            let errors = diagnostics.get_errors();
+            match &errors[..] {
+                [err] => println!("\nError occured:\n{}", err),
+                _ => {
+                    println!("\nErrors occured:");
+                    for ele in errors {
+                        println!("{}", ele);
+                    }
+                }
+            }
+        }
     }
 }

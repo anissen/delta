@@ -6,6 +6,7 @@ use crate::expressions::{
     BinaryOperator, Expr, IsArmPattern, StringOperations, UnaryOperator, ValueType,
 };
 use crate::program::Context;
+use crate::tokens::Position;
 use crate::unification::{make_constructor, unify, TypeVariable, UnificationType};
 
 #[derive(PartialEq, Clone, Debug)]
@@ -43,6 +44,72 @@ impl<'a> Typer<'a> {
 
     fn type_exprs(&mut self, expressions: &'a Vec<Expr>) {
         let mut environment = Environment::new();
+
+        let noPosition = Position { line: 0, column: 0 };
+        for value in self.context.get_value_names() {
+            environment.variables.insert(
+                value,
+                UnificationType::Constructor {
+                    typ: Type::Float,
+                    generics: Vec::new(),
+                    position: noPosition.clone(),
+                },
+            );
+        }
+
+        environment.variables.insert(
+            "draw_circle".to_string(),
+            UnificationType::Constructor {
+                typ: Type::Function,
+                generics: vec![
+                    make_constructor(Type::Float, noPosition.clone()),
+                    make_constructor(Type::Float, noPosition.clone()),
+                    make_constructor(Type::Float, noPosition.clone()),
+                ],
+                position: noPosition.clone(),
+            },
+        );
+
+        environment.variables.insert(
+            "draw_text".to_string(),
+            UnificationType::Constructor {
+                typ: Type::Function,
+                generics: vec![
+                    make_constructor(Type::String, noPosition.clone()),
+                    make_constructor(Type::Float, noPosition.clone()),
+                    make_constructor(Type::Float, noPosition.clone()),
+                    make_constructor(Type::Float, noPosition.clone()),
+                ],
+                position: noPosition.clone(),
+            },
+        );
+
+        environment.variables.insert(
+            "draw_rect".to_string(),
+            UnificationType::Constructor {
+                typ: Type::Function,
+                generics: vec![
+                    make_constructor(Type::Float, noPosition.clone()),
+                    make_constructor(Type::Float, noPosition.clone()),
+                    make_constructor(Type::Float, noPosition.clone()),
+                    make_constructor(Type::Float, noPosition.clone()),
+                    make_constructor(Type::Float, noPosition.clone()),
+                ],
+                position: noPosition.clone(),
+            },
+        );
+
+        // for function in self.context.get_function_names() {
+        //     environment.variables.insert(
+        //         function,
+        //         UnificationType::Constructor {
+        //             typ: Type::Float,
+        //             generics: Vec::new(),
+        //             position: noPosition.clone(),
+        //         },
+        //     );
+        // }
+
         let mut context = InferenceContext::new(&mut environment, self.diagnostics);
 
         for expression in expressions {
