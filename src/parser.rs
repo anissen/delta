@@ -123,7 +123,6 @@ impl Parser {
                 Expr::Identifier { name } => {
                     let operator = self.previous();
                     let value = self.assignment()?;
-                    println!("Assigning value {}", name.lexeme);
                     // match &value {
                     //     Some(Expr::Function {
                     //         slash,

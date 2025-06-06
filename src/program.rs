@@ -61,7 +61,7 @@ impl<'a> Context<'a> {
     }
 
     pub fn get_value_names(&self) -> Vec<String> {
-        self.values.keys().map(|v| v.clone()).collect()
+        self.values.keys().cloned().collect()
     }
 
     pub fn get_value(&self, name: &String) -> vm::Value {
@@ -125,11 +125,9 @@ impl<'a> Program<'a> {
         let duration = start.elapsed();
         println!("Elapsed: {:?}", duration);
 
-        let (tokens, syntax_errors): (Vec<tokens::Token>, Vec<tokens::Token>) =
-            tokens.into_iter().partition(|token| match token.kind {
-                tokens::TokenKind::SyntaxError(_) => false,
-                _ => true,
-            });
+        let (tokens, syntax_errors): (Vec<tokens::Token>, Vec<tokens::Token>) = tokens
+            .into_iter()
+            .partition(|token| !matches!(token.kind, tokens::TokenKind::SyntaxError(_)));
         syntax_errors.iter().for_each(|token| match token.kind {
             tokens::TokenKind::SyntaxError(description) => {
                 println!(

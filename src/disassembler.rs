@@ -35,14 +35,6 @@ impl Disassembler {
         i32::from_be_bytes(value_bytes)
     }
 
-    fn read_u32(&mut self) -> u32 {
-        let value_bytes: [u8; 4] = self.program[self.program_counter..self.program_counter + 4]
-            .try_into()
-            .unwrap();
-        self.program_counter += 4;
-        u32::from_be_bytes(value_bytes)
-    }
-
     fn read_f32(&mut self) -> f32 {
         let value_bytes: [u8; 4] = self.program[self.program_counter..self.program_counter + 4]
             .try_into()

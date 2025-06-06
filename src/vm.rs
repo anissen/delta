@@ -443,11 +443,6 @@ impl VirtualMachine {
         i32::from_be_bytes(raw)
     }
 
-    fn read_u32(&mut self) -> u32 {
-        let raw = self.read_4bytes();
-        u32::from_be_bytes(raw)
-    }
-
     fn read_f32(&mut self) -> f32 {
         let raw = u32::from_be_bytes(self.read_4bytes());
         f32::from_bits(raw)

@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use crate::errors::Error;
 
 #[derive(Debug, Clone)]
@@ -8,6 +10,15 @@ pub struct Diagnostics {
 impl Default for Diagnostics {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl Display for Diagnostics {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for err in &self.errors {
+            writeln!(f, "{err}")?;
+        }
+        Ok(())
     }
 }
 
@@ -30,13 +41,5 @@ impl Diagnostics {
 
     pub fn get_errors(&self) -> Vec<Error> {
         self.errors.clone()
-    }
-
-    pub fn to_string(&self) -> String {
-        self.errors
-            .iter()
-            // .map(|f| format!("line {}.{}: {}\n", f.span.line, f.span.column, f.content))
-            .map(|err| format!("{err}"))
-            .collect()
     }
 }

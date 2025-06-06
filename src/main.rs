@@ -1,7 +1,5 @@
 use std::process::exit;
 
-use delta::diagnostics;
-
 fn main() {
     let args: Vec<String> = std::env::args().collect();
 

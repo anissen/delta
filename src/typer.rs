@@ -7,16 +7,7 @@ use crate::expressions::{
 };
 use crate::program::Context;
 use crate::tokens::Position;
-use crate::unification::{make_constructor, unify, TypeVariable, UnificationType};
-
-#[derive(PartialEq, Clone, Debug)]
-pub enum Type {
-    Boolean,
-    Integer,
-    Float,
-    String,
-    Function,
-}
+use crate::unification::{make_constructor, unify, Type, TypeVariable, UnificationType};
 
 // https://github.com/abs0luty/type_inference_in_rust/blob/main/src/main.rs
 
