@@ -1,0 +1,7 @@
+script = """
+"Hello {(40 + 2) / 2}"
+"""
+
+[output]
+result = "Hello 21"
+type = "string"

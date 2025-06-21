@@ -1,0 +1,9 @@
+[package]
+name = "toml-processor"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+toml = "0.8.23"
+walkdir = "2.5.0"
+delta = { path = ".." }

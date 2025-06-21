@@ -1,0 +1,15 @@
+script = '''
+square = \v
+    v * v
+
+match = \v
+    v is
+        2
+            5 | square
+
+"result is {2 | match}"
+'''
+
+[output]
+result = "result is 25"
+type = "string"

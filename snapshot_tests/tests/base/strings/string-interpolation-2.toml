@@ -1,0 +1,7 @@
+script = """
+"{2} * {2 + 1} == {2 * (2 + 1)}"
+"""
+
+[output]
+result = "2 * 3 == 6"
+type = "string"

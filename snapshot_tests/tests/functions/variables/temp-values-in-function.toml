@@ -1,0 +1,12 @@
+script = '''
+add_one = \v
+    x = 1
+    y = x
+    v + y
+
+5 | add_one
+'''
+
+[output]
+result = "6"
+type = "integer"

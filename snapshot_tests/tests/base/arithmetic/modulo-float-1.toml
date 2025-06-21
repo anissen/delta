@@ -1,0 +1,7 @@
+script = """
+5.4 %. 2.1
+"""
+
+[output]
+result = "1.2000003"
+type = "float"

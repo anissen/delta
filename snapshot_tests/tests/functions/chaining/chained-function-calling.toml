@@ -1,0 +1,13 @@
+script = '''
+add = \v1 v2
+    v1 + v2
+
+is_even = \v
+    v % 2 == 0
+
+3 | add 1 | is_even
+'''
+
+[output]
+result = "true"
+type = "boolean"

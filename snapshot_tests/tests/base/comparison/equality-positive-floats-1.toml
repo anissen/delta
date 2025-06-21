@@ -1,0 +1,7 @@
+script = """
+5.4 == 5.4
+"""
+
+[output]
+result = "true"
+type = "boolean"

@@ -1,0 +1,7 @@
+script = """
+"result is {2 * 2 == 4}!"
+"""
+
+[output]
+result = "result is true!"
+type = "string"

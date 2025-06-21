@@ -1,0 +1,7 @@
+script = """
+5 % 2
+"""
+
+[output]
+result = "1"
+type = "integer"

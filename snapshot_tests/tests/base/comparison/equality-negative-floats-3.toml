@@ -1,0 +1,7 @@
+script = """
+-123.456789 == -123.456789
+"""
+
+[output]
+result = "true"
+type = "boolean"

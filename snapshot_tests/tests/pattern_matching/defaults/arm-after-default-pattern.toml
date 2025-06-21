@@ -1,0 +1,13 @@
+script = """
+3 is
+    _
+        "ok"
+    3
+        "not okay"
+"""
+
+[output]
+error = """
+Line 5.18: Parse error: Unreachable due to default arm above.
+"""
+result = "?"

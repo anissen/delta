@@ -1,0 +1,14 @@
+script = '''
+match = \v
+    x = 3
+    v + x is
+        4
+            y = 5
+            x + y + v
+
+"result is {1 | match}"
+'''
+
+[output]
+result = "result is 9"
+type = "string"

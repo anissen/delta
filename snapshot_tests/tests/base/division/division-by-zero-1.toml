@@ -1,0 +1,7 @@
+script = """
+54.32 /. 0.0
+"""
+
+[output]
+result = "0"
+type = "float"

@@ -1,0 +1,10 @@
+script = '''
+is_5 = \v
+    v == 5
+
+5 | is_5
+'''
+
+[output]
+result = "true"
+type = "boolean"

@@ -1,0 +1,9 @@
+script = """
+x = 42
+y = 0
+x / y
+"""
+
+[output]
+result = "0"
+type = "integer"

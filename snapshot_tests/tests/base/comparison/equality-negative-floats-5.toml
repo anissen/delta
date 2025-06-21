@@ -1,0 +1,7 @@
+script = """
+-12.3 == 12.3
+"""
+
+[output]
+result = "false"
+type = "boolean"

@@ -1,0 +1,8 @@
+ignored = "not implemented yet"
+
+script = """
+# nothing here
+"""
+
+[output]
+result = "?"

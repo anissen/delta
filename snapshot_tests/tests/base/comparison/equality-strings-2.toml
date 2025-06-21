@@ -1,0 +1,7 @@
+script = """
+"Hello" == "World"
+"""
+
+[output]
+result = "false"
+type = "boolean"

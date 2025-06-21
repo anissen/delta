@@ -1,0 +1,24 @@
+script = '''
+square = \v
+    v * v
+
+match = \v
+    x = 2
+    v + x is
+       	3
+            y = 4
+            v + y
+        4
+           	z = v + x + 5
+           	z | square
+        5
+           	w = 6
+           	w2 = 7
+           	x + w + w2
+
+"result is {1 | match}, {2 | match} and {3 | match}"
+'''
+
+[output]
+result = "result is 5, 81 and 15"
+type = "string"

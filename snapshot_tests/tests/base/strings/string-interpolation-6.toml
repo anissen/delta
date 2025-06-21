@@ -1,0 +1,9 @@
+script = """
+42.3 /. 2
+"""
+
+[output]
+error = """
+Line 1.9: Expected float but got int.
+"""
+result = "?"

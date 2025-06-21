@@ -1,0 +1,10 @@
+script = '''
+add_one = \v
+    v + 1
+
+5 | add_one | add_one
+'''
+
+[output]
+result = "7"
+type = "integer"

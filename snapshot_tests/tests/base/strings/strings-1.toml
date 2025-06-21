@@ -1,0 +1,7 @@
+script = """
+"hello world"
+"""
+
+[output]
+result = "hello world"
+type = "string"

@@ -1,0 +1,9 @@
+script = """
+2 is
+    value
+        "value captured is {value}"
+"""
+
+[output]
+result = "value captured is 2"
+type = "string"

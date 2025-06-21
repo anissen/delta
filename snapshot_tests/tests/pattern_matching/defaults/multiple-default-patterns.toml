@@ -1,0 +1,13 @@
+script = """
+3 is
+    _
+        "ok"
+    _
+        "not okay"
+"""
+
+[output]
+error = """
+Line 5.18: Parse error: An `is` block cannot have multiple default arms.
+"""
+result = "?"

@@ -1,0 +1,7 @@
+script = """
+"result is {3 < 4} and {3.4 <. 4.5}!"
+"""
+
+[output]
+result = "result is true and true!"
+type = "string"

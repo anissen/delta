@@ -1,0 +1,11 @@
+script = """
+2 is
+    1
+        "no"
+    other if other >= 2
+        "value captured is {other}"
+"""
+
+[output]
+result = "value captured is 2"
+type = "string"

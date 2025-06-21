@@ -1,0 +1,7 @@
+script = """
+3 == 5
+"""
+
+[output]
+result = "false"
+type = "boolean"

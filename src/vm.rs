@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use crate::bytecodes::ByteCode;
 use crate::program::Context;
 
@@ -10,6 +12,20 @@ pub enum Value {
     Float(f32),
     String(String),
     Function(u8),
+}
+
+impl Display for Value {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Value::True => write!(f, "true")?,
+            Value::False => write!(f, "false")?,
+            Value::Integer(i) => write!(f, "{i}")?,
+            Value::Float(d) => write!(f, "{d}")?,
+            Value::String(s) => write!(f, "{s}")?,
+            Value::Function(i) => write!(f, "<fn {i}>")?,
+        };
+        Ok(())
+    }
 }
 
 #[derive(Debug, Clone)]

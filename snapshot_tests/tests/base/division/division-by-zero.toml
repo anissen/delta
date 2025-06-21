@@ -1,0 +1,7 @@
+script = """
+10 / 0
+"""
+
+[output]
+result = "0"
+type = "integer"

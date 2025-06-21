@@ -1,0 +1,17 @@
+ignored = "not implemented yet"
+
+script = '''
+call_square = \v
+    v | square
+
+square = \v
+    v * v
+
+5 | call_square
+'''
+
+[output]
+error = """
+Function not found: square
+"""
+result = "?"

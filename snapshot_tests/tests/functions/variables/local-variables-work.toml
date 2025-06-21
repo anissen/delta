@@ -1,0 +1,16 @@
+script = '''
+v = 2
+
+is_even = \v
+    v % 2 == 0
+
+is_odd = \v
+    res = v | is_even
+    !res
+
+5 | is_odd
+'''
+
+[output]
+result = "true"
+type = "boolean"

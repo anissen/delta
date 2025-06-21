@@ -1,0 +1,11 @@
+script = """
+3 is
+    2
+        "nope"
+    _
+        "yes"
+"""
+
+[output]
+result = "yes"
+type = "string"

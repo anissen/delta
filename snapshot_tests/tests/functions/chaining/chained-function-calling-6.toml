@@ -1,0 +1,18 @@
+
+ignored = "not implemented yet"
+
+script = '''
+repeat = \str times
+	repeat_part = \acc tt
+		tt is
+			t if t <= 1
+				acc
+			_
+				"{acc}{str}" | repeat_part (tt - 1)
+	str | repeat_part times
+
+"yo" | repeat 3
+'''
+
+[output]
+result = "?"

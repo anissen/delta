@@ -1,0 +1,10 @@
+script = '''
+greeting = \name
+    "Hello {name}!"
+
+"John" | greeting
+'''
+
+[output]
+result = "Hello John!"
+type = "string"

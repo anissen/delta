@@ -1,0 +1,9 @@
+script = """
+2.5 is
+    other if other >=. 2.0 and other <. 3.0
+        "captured {other}"
+"""
+
+[output]
+result = "captured 2.5"
+type = "string"

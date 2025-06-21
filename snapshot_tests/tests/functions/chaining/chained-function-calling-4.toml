@@ -1,0 +1,16 @@
+script = '''
+rec = \v
+	v is
+		n if n <= 0
+			n
+		_
+			v - 1 | rec
+
+2 | rec
+'''
+
+[output]
+error = """
+Function not found: rec
+"""
+result = "?"

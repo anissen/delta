@@ -1,0 +1,7 @@
+script = """
+true and (false and true)
+"""
+
+[output]
+result = "false"
+type = "boolean"

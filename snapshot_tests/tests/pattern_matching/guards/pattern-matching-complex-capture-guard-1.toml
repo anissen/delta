@@ -1,0 +1,13 @@
+
+ignored = "parsing hangs"
+
+script = """
+2 is
+    1
+        "no
+    other if 2 + 2 # not a boolean expression
+        "value captured is {other}"
+"""
+
+[output]
+result = "?"

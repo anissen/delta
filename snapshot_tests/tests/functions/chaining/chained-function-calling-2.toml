@@ -1,0 +1,13 @@
+ignored = "not implemented yet"
+
+script = '''
+match = \v
+	inner_add = \v2 v3
+		v2 + v3
+	v | inner_add 1
+
+"result is {3 | match}"
+'''
+
+[output]
+result = "?"

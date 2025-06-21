@@ -1,0 +1,19 @@
+script = '''
+repeat = \str times
+	str | repeat_part "" times
+
+repeat_part = \str acc tt
+	tt is
+		t if t <= 1
+			acc
+		_
+			"{acc}{str}" | repeat_part str (tt - 1)
+
+"hey" | repeat 3
+'''
+
+[output]
+error = """
+Function not found: repeat_part
+"""
+result = "?"
