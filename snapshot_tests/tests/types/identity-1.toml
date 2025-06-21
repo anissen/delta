@@ -1,0 +1,17 @@
+script = '''
+do = \f x
+    x | f
+
+identity = \x
+    x
+
+identity | do 4
+identity | do 4.5
+'''
+
+[output]
+error = """
+identity | do 4.5
+              ^^^
+Line 8.15: Expected int but got float.
+"""

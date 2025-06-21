@@ -1,0 +1,10 @@
+script = '''
+mult_float = \x y
+    x *. y
+
+4.1 | mult_float 5.2
+'''
+
+[output]
+result = "21.319998"
+type = "float"

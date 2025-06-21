@@ -1,0 +1,15 @@
+ignored = "not implemented"
+
+script = '''
+call = \f x y
+	x | f y
+
+add = \x y
+	x + y
+
+mult = \x y
+	x * y
+
+add | call 4 5
+mult | call 4 5
+'''

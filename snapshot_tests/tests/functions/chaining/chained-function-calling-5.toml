@@ -16,4 +16,3 @@ repeat_part = \str acc tt
 error = """
 Function not found: repeat_part
 """
-result = "?"

@@ -75,9 +75,9 @@ fn process_toml_file(path: &Path) -> Result<ProcessStatus, Box<dyn std::error::E
 
     let result = run_script(file_name, script);
 
-    let output_section = doc
-        .entry("output".to_string())
-        .or_insert_with(|| Value::Table(Table::new()));
+    // Always create/replace the output section with a new empty table
+    doc.insert("output".to_string(), Value::Table(Table::new()));
+    let output_section = doc.get_mut("output").unwrap();
 
     if let Value::Table(table) = output_section {
         match result {

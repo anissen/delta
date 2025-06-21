@@ -13,4 +13,3 @@ rec = \v
 error = """
 Function not found: rec
 """
-result = "?"

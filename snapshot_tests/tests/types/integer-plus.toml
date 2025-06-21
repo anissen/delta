@@ -1,0 +1,8 @@
+script = """
+1 + 2.4
+"""
+
+[output]
+error = """
+Line 1.5: Expected int but got float.
+"""

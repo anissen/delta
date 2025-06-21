@@ -1,0 +1,12 @@
+script = '''
+identity = \x
+    x
+
+4.5 | identity
+4 | identity
+'''
+
+[output]
+error = """
+Line 5.1: Expected float but got int.
+"""

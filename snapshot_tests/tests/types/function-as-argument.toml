@@ -1,0 +1,11 @@
+ignored = "not implemented"
+
+script = '''
+call = \f x y
+	x | f y
+
+concat = \x y
+	"{x}{y}"
+
+concat | call "hello" "world"
+'''

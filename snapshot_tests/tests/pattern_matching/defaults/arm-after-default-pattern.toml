@@ -10,4 +10,3 @@ script = """
 error = """
 Line 5.18: Parse error: Unreachable due to default arm above.
 """
-result = "?"
