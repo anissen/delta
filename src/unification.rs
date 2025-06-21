@@ -32,7 +32,7 @@ impl fmt::Display for UnificationType {
             Self::Constructor {
                 typ,
                 generics,
-                position,
+                position: _,
             } => match typ {
                 Type::Boolean => "bool",
                 Type::Integer => "int",

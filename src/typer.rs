@@ -36,14 +36,14 @@ impl<'a> Typer<'a> {
     fn type_exprs(&mut self, expressions: &'a Vec<Expr>) {
         let mut environment = Environment::new();
 
-        let noPosition = Position { line: 0, column: 0 };
+        let no_position = Position { line: 0, column: 0 }; // TODO(anissen): Get proper position
         for value in self.context.get_value_names() {
             environment.variables.insert(
                 value,
                 UnificationType::Constructor {
                     typ: Type::Float,
                     generics: Vec::new(),
-                    position: noPosition.clone(),
+                    position: no_position.clone(),
                 },
             );
         }
@@ -53,11 +53,11 @@ impl<'a> Typer<'a> {
             UnificationType::Constructor {
                 typ: Type::Function,
                 generics: vec![
-                    make_constructor(Type::Float, noPosition.clone()),
-                    make_constructor(Type::Float, noPosition.clone()),
-                    make_constructor(Type::Float, noPosition.clone()),
+                    make_constructor(Type::Float, no_position.clone()),
+                    make_constructor(Type::Float, no_position.clone()),
+                    make_constructor(Type::Float, no_position.clone()),
                 ],
-                position: noPosition.clone(),
+                position: no_position.clone(),
             },
         );
 
@@ -66,12 +66,12 @@ impl<'a> Typer<'a> {
             UnificationType::Constructor {
                 typ: Type::Function,
                 generics: vec![
-                    make_constructor(Type::String, noPosition.clone()),
-                    make_constructor(Type::Float, noPosition.clone()),
-                    make_constructor(Type::Float, noPosition.clone()),
-                    make_constructor(Type::Float, noPosition.clone()),
+                    make_constructor(Type::String, no_position.clone()),
+                    make_constructor(Type::Float, no_position.clone()),
+                    make_constructor(Type::Float, no_position.clone()),
+                    make_constructor(Type::Float, no_position.clone()),
                 ],
-                position: noPosition.clone(),
+                position: no_position.clone(),
             },
         );
 
@@ -80,13 +80,13 @@ impl<'a> Typer<'a> {
             UnificationType::Constructor {
                 typ: Type::Function,
                 generics: vec![
-                    make_constructor(Type::Float, noPosition.clone()),
-                    make_constructor(Type::Float, noPosition.clone()),
-                    make_constructor(Type::Float, noPosition.clone()),
-                    make_constructor(Type::Float, noPosition.clone()),
-                    make_constructor(Type::Float, noPosition.clone()),
+                    make_constructor(Type::Float, no_position.clone()),
+                    make_constructor(Type::Float, no_position.clone()),
+                    make_constructor(Type::Float, no_position.clone()),
+                    make_constructor(Type::Float, no_position.clone()),
+                    make_constructor(Type::Float, no_position.clone()),
                 ],
-                position: noPosition.clone(),
+                position: no_position.clone(),
             },
         );
 

@@ -72,8 +72,8 @@ impl VirtualMachine {
 
     fn read_functions(&mut self) {
         while let Ok(ByteCode::FunctionSignature) = ByteCode::try_from(self.read_byte()) {
-            let name = self.read_string();
-            let local_count = self.read_byte();
+            let _name = self.read_string();
+            let _local_count = self.read_byte();
             let function_position = self.read_i16();
 
             self.functions.push(FunctionObj {

@@ -5,7 +5,7 @@ use crate::unification::UnificationType;
 
 #[derive(Debug, Clone)]
 pub enum Error {
-    ParseError {
+    ParseErr {
         message: String,
         position: Position,
     },
@@ -24,13 +24,13 @@ pub enum Error {
     FunctionNameTooLong {
         token: Token,
     },
-    FileError(String),
+    FileErr(String),
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Error::ParseError { message, position } => {
+            Error::ParseErr { message, position } => {
                 write!(
                     f,
                     "Line {}.{}: Parse error: {}",
@@ -41,7 +41,7 @@ impl fmt::Display for Error {
                 expected,
                 got,
                 declared_at,
-                provided_at,
+                provided_at: _,
             } => write!(
                 f,
                 "Line {}.{}: Expected {} but got {}.",
@@ -60,7 +60,7 @@ impl fmt::Display for Error {
             Error::FunctionNameTooLong { token } => {
                 write!(f, "Function name too long; at {:?}", token.position)
             }
-            Error::FileError(error_msg) => write!(f, "File error: {}", error_msg),
+            Error::FileErr(error_msg) => write!(f, "File error: {}", error_msg),
         }
     }
 }

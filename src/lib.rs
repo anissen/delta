@@ -30,7 +30,7 @@ pub fn run_file(source_path: &String, debug: bool) -> Result<Option<vm::Value>, 
         Ok(source) => run(&source, Some(source_path), debug),
         Err(err) => {
             let mut diagnostics = Diagnostics::new();
-            diagnostics.add_error(errors::Error::FileError(err.to_string()));
+            diagnostics.add_error(errors::Error::FileErr(err.to_string()));
             Err(diagnostics)
         }
     }

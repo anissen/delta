@@ -14,7 +14,7 @@ use crate::tokens::{Position, Token};
 struct FunctionChunk<'a> {
     local_count: u8,
     bytes: Vec<u8>,
-    position: &'a Position,
+    _position: &'a Position,
     function_name: String,
 }
 
@@ -468,7 +468,7 @@ impl<'a> Codegen<'a> {
         let function_chunk_index = self.function_chunks.len();
         let function_chunk = FunctionChunk {
             function_name: lexeme.clone(),
-            position,
+            _position: position,
             local_count: params.len() as u8,
             bytes: vec![],
         };
