@@ -1,0 +1,15 @@
+script = '''
+add = \v1 v2
+	v1 + v2
+
+3.3 | add 2.2
+
+4 + add
+'''
+
+[output]
+error = """
+Line 4.1: Expected int but got float.
+Line 4.11: Expected int but got float.
+Line 1.7: Expected int but got function(int, int) -> int.
+"""
