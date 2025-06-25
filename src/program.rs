@@ -135,7 +135,7 @@ impl<'a> Program<'a> {
                     description, token.lexeme, token.position
                 )
             }
-            _ => panic!(),
+            _ => unreachable!(),
         });
 
         if debug {

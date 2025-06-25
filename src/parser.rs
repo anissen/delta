@@ -281,7 +281,7 @@ impl Parser {
                 EqualEqual => BinaryOperator::Equality(EqualityOperations::Equal),
                 BangEqual => BinaryOperator::Equality(EqualityOperations::NotEqual),
 
-                _ => panic!("unreachable"),
+                _ => unreachable!(),
             };
             Ok(Some(Expr::Binary {
                 left: Box::new(expr.unwrap()),
@@ -324,7 +324,7 @@ impl Parser {
                 RightChevronEqualDot => {
                     BinaryOperator::FloatComparison(Comparisons::GreaterThanEqual)
                 }
-                _ => panic!("unreachable"),
+                _ => unreachable!(),
             };
             Ok(Some(Expr::Binary {
                 left: Box::new(expr.unwrap()),
@@ -347,7 +347,7 @@ impl Parser {
                 PlusDot => BinaryOperator::FloatOperation(ArithmeticOperations::Addition),
                 Minus => BinaryOperator::IntegerOperation(ArithmeticOperations::Subtraction),
                 MinusDot => BinaryOperator::FloatOperation(ArithmeticOperations::Subtraction),
-                _ => panic!("unreachable"),
+                _ => unreachable!(),
             };
             let right = self.factor()?;
             expr = Some(Expr::Binary {
@@ -374,7 +374,7 @@ impl Parser {
                 StarDot => BinaryOperator::FloatOperation(ArithmeticOperations::Multiplication),
                 Percent => BinaryOperator::IntegerOperation(ArithmeticOperations::Modulus),
                 PercentDot => BinaryOperator::FloatOperation(ArithmeticOperations::Modulus),
-                _ => panic!("unreachable"),
+                _ => unreachable!(),
             };
             let right = self.unary()?;
             expr = Some(Expr::Binary {
@@ -394,7 +394,7 @@ impl Parser {
             let operator = match token.kind {
                 Bang => UnaryOperator::Not,
                 Minus => UnaryOperator::Negation,
-                _ => panic!("cannot happen"),
+                _ => unreachable!(),
             };
             let right = self.unary()?;
             Ok(Some(Expr::Unary {

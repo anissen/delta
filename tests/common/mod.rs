@@ -26,7 +26,7 @@ pub fn assert_err(source: &str, expected: String) {
                 err.to_string()
             )
         }
-        _ => panic!(),
+        _ => unreachable!(),
     };
 }
 
@@ -51,6 +51,6 @@ pub fn assert_type_fail(source: &str, expected: String) {
                 err.to_string()
             )
         }
-        _ => panic!(),
+        _ => unreachable!(),
     };
 }
