@@ -6,7 +6,8 @@ use crate::expressions::{
     BinaryOperator, Expr, IsArmPattern, StringOperations, UnaryOperator, ValueType,
 };
 use crate::program::Context;
-use crate::tokens::Position;
+use crate::tokens::Token;
+use crate::tokens::{Position, TokenKind};
 use crate::unification::{make_constructor, unify, Type, TypeVariable, UnificationType};
 
 // https://github.com/abs0luty/type_inference_in_rust/blob/main/src/main.rs
@@ -37,13 +38,18 @@ impl<'a> Typer<'a> {
         let mut environment = Environment::new();
 
         let no_position = Position { line: 0, column: 0 }; // TODO(anissen): Get proper position
+        let no_token = Token {
+            kind: TokenKind::Underscore,
+            position: no_position.clone(),
+            lexeme: "".to_string(),
+        };
         for value in self.context.get_value_names() {
             environment.variables.insert(
                 value,
                 UnificationType::Constructor {
                     typ: Type::Float,
                     generics: Vec::new(),
-                    position: no_position.clone(),
+                    token: no_token.clone(),
                 },
             );
         }
@@ -53,11 +59,11 @@ impl<'a> Typer<'a> {
             UnificationType::Constructor {
                 typ: Type::Function,
                 generics: vec![
-                    make_constructor(Type::Float, no_position.clone()),
-                    make_constructor(Type::Float, no_position.clone()),
-                    make_constructor(Type::Float, no_position.clone()),
+                    make_constructor(Type::Float, no_token.clone()),
+                    make_constructor(Type::Float, no_token.clone()),
+                    make_constructor(Type::Float, no_token.clone()),
                 ],
-                position: no_position.clone(),
+                token: no_token.clone(),
             },
         );
 
@@ -66,12 +72,12 @@ impl<'a> Typer<'a> {
             UnificationType::Constructor {
                 typ: Type::Function,
                 generics: vec![
-                    make_constructor(Type::String, no_position.clone()),
-                    make_constructor(Type::Float, no_position.clone()),
-                    make_constructor(Type::Float, no_position.clone()),
-                    make_constructor(Type::Float, no_position.clone()),
+                    make_constructor(Type::String, no_token.clone()),
+                    make_constructor(Type::Float, no_token.clone()),
+                    make_constructor(Type::Float, no_token.clone()),
+                    make_constructor(Type::Float, no_token.clone()),
                 ],
-                position: no_position.clone(),
+                token: no_token.clone(),
             },
         );
 
@@ -80,13 +86,13 @@ impl<'a> Typer<'a> {
             UnificationType::Constructor {
                 typ: Type::Function,
                 generics: vec![
-                    make_constructor(Type::Float, no_position.clone()),
-                    make_constructor(Type::Float, no_position.clone()),
-                    make_constructor(Type::Float, no_position.clone()),
-                    make_constructor(Type::Float, no_position.clone()),
-                    make_constructor(Type::Float, no_position.clone()),
+                    make_constructor(Type::Float, no_token.clone()),
+                    make_constructor(Type::Float, no_token.clone()),
+                    make_constructor(Type::Float, no_token.clone()),
+                    make_constructor(Type::Float, no_token.clone()),
+                    make_constructor(Type::Float, no_token.clone()),
                 ],
-                position: no_position.clone(),
+                token: no_token.clone(),
             },
         );
 
@@ -176,10 +182,10 @@ impl<'env> InferenceContext<'env> {
             },
 
             Expr::Value { value, token } => match value {
-                ValueType::Boolean(_) => make_constructor(Type::Boolean, token.position.clone()),
-                ValueType::Integer(_) => make_constructor(Type::Integer, token.position.clone()),
-                ValueType::Float(_) => make_constructor(Type::Float, token.position.clone()),
-                ValueType::String(_) => make_constructor(Type::String, token.position.clone()),
+                ValueType::Boolean(_) => make_constructor(Type::Boolean, token.clone()),
+                ValueType::Integer(_) => make_constructor(Type::Integer, token.clone()),
+                ValueType::Float(_) => make_constructor(Type::Float, token.clone()),
+                ValueType::String(_) => make_constructor(Type::String, token.clone()),
                 ValueType::Function { params, expr } => {
                     let param_types = params
                         .iter()
@@ -197,7 +203,7 @@ impl<'env> InferenceContext<'env> {
                     UnificationType::Constructor {
                         typ: Type::Function,
                         generics: [param_types, vec![value_type]].concat(),
-                        position: token.position.clone(),
+                        token: token.clone(),
                     }
                 }
             },
@@ -209,20 +215,18 @@ impl<'env> InferenceContext<'env> {
                     .collect::<Vec<UnificationType>>();
                 let return_type = self.type_placeholder();
 
-                match self.environment.variables.get(name) {
-                    Some(function_type) => {
-                        self.constraints.push(Constraint::Eq {
-                            left: function_type.clone(),
-                            right: UnificationType::Constructor {
-                                typ: Type::Function,
-                                generics: [argument_types, vec![return_type.clone()]].concat(),
-                                position: args.first().unwrap().position.clone(), // TODO(anissen): This is not right, should be name.position
-                            },
-                        })
-                    }
-                    None => self
-                        .diagnostics
-                        .add_error(Error::FunctionNotFound { name: name.clone() }),
+                match self.environment.variables.get(&name.lexeme) {
+                    Some(function_type) => self.constraints.push(Constraint::Eq {
+                        left: function_type.clone(),
+                        right: UnificationType::Constructor {
+                            typ: Type::Function,
+                            generics: [argument_types, vec![return_type.clone()]].concat(),
+                            token: name.clone(),
+                        },
+                    }),
+                    None => self.diagnostics.add_error(Error::FunctionNotFound {
+                        name: name.lexeme.clone(),
+                    }),
                 }
 
                 return_type
@@ -249,79 +253,52 @@ impl<'env> InferenceContext<'env> {
             Expr::Binary {
                 left,
                 operator,
-                _token,
+                token,
                 right,
             } => match operator {
                 BinaryOperator::IntegerOperation(_) => {
-                    self.expects_type(
-                        left,
-                        make_constructor(Type::Integer, _token.position.clone()),
-                    );
-                    self.expects_type(
-                        right,
-                        make_constructor(Type::Integer, _token.position.clone()),
-                    );
-                    make_constructor(Type::Integer, _token.position.clone())
+                    self.expects_type(left, make_constructor(Type::Integer, token.clone()));
+                    self.expects_type(right, make_constructor(Type::Integer, token.clone()));
+                    make_constructor(Type::Integer, token.clone())
                 }
 
                 BinaryOperator::IntegerComparison(_) => {
-                    self.expects_type(
-                        left,
-                        make_constructor(Type::Integer, _token.position.clone()),
-                    );
-                    self.expects_type(
-                        right,
-                        make_constructor(Type::Integer, _token.position.clone()),
-                    );
-                    make_constructor(Type::Boolean, _token.position.clone())
+                    self.expects_type(left, make_constructor(Type::Integer, token.clone()));
+                    self.expects_type(right, make_constructor(Type::Integer, token.clone()));
+                    make_constructor(Type::Boolean, token.clone())
                 }
 
                 BinaryOperator::FloatOperation(_) => {
-                    self.expects_type(left, make_constructor(Type::Float, _token.position.clone()));
-                    self.expects_type(
-                        right,
-                        make_constructor(Type::Float, _token.position.clone()),
-                    );
-                    make_constructor(Type::Float, _token.position.clone())
+                    self.expects_type(left, make_constructor(Type::Float, token.clone()));
+                    self.expects_type(right, make_constructor(Type::Float, token.clone()));
+                    make_constructor(Type::Float, token.clone())
                 }
 
                 BinaryOperator::FloatComparison(_) => {
-                    self.expects_type(left, make_constructor(Type::Float, _token.position.clone()));
-                    self.expects_type(
-                        right,
-                        make_constructor(Type::Float, _token.position.clone()),
-                    );
-                    make_constructor(Type::Boolean, _token.position.clone())
+                    self.expects_type(left, make_constructor(Type::Float, token.clone()));
+                    self.expects_type(right, make_constructor(Type::Float, token.clone()));
+                    make_constructor(Type::Boolean, token.clone())
                 }
 
                 BinaryOperator::Equality(_) => {
                     let left_type = self.infer_type(left);
                     self.expects_type(right, left_type);
-                    make_constructor(Type::Boolean, _token.position.clone())
+                    make_constructor(Type::Boolean, token.clone())
                 }
 
                 BinaryOperator::BooleanOperation(_) => {
-                    self.expects_type(
-                        left,
-                        make_constructor(Type::Boolean, _token.position.clone()),
-                    );
-                    self.expects_type(
-                        right,
-                        make_constructor(Type::Boolean, _token.position.clone()),
-                    );
-                    make_constructor(Type::Boolean, _token.position.clone())
+                    self.expects_type(left, make_constructor(Type::Boolean, token.clone()));
+                    self.expects_type(right, make_constructor(Type::Boolean, token.clone()));
+                    make_constructor(Type::Boolean, token.clone())
                 }
 
                 BinaryOperator::StringOperation(string_operations) => {
                     match string_operations {
                         StringOperations::StringConcat => {
-                            self.expects_type(
-                                left,
-                                make_constructor(Type::String, _token.position.clone()),
-                            );
+                            self.expects_type(left, make_constructor(Type::String, token.clone()));
                             // TODO(anissen): Implement:
                             // self.expect_type(right, Type::Any, &_token.position, env, diagnostics); // TODO(anissen): Check types
-                            make_constructor(Type::String, _token.position.clone())
+                            make_constructor(Type::String, token.clone())
                         }
                     }
                 }
@@ -329,16 +306,13 @@ impl<'env> InferenceContext<'env> {
 
             Expr::Unary {
                 operator,
-                _token,
+                token,
                 expr,
             } => match operator {
                 UnaryOperator::Negation => self.infer_type(expr),
                 UnaryOperator::Not => {
-                    self.expects_type(
-                        expr,
-                        make_constructor(Type::Boolean, _token.position.clone()),
-                    );
-                    make_constructor(Type::Boolean, _token.position.clone())
+                    self.expects_type(expr, make_constructor(Type::Boolean, token.clone()));
+                    make_constructor(Type::Boolean, token.clone())
                 }
             },
 
@@ -366,7 +340,7 @@ impl<'env> InferenceContext<'env> {
                             if let Some(condition) = condition {
                                 self.expects_type(
                                     condition,
-                                    make_constructor(Type::Boolean, identifier.position.clone()),
+                                    make_constructor(Type::Boolean, identifier.clone()),
                                 );
                             }
                         }

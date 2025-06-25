@@ -88,7 +88,7 @@ impl Parser {
                 Err(err) => {
                     diagnostics.add_error(errors::Error::ParseErr {
                         message: err,
-                        position: self.previous().position,
+                        token: self.previous(),
                     });
                 }
             }
@@ -230,7 +230,7 @@ impl Parser {
             expr = Some(Expr::Binary {
                 left: Box::new(expr.unwrap()),
                 operator: BinaryOperator::StringOperation(StringOperations::StringConcat),
-                _token: token,
+                token,
                 right: Box::new(right.unwrap()),
             });
         }
@@ -246,7 +246,7 @@ impl Parser {
             Ok(Some(Expr::Binary {
                 left: Box::new(expr.unwrap()),
                 operator: BinaryOperator::BooleanOperation(BooleanOperations::Or),
-                _token: token,
+                token,
                 right: Box::new(right.unwrap()),
             }))
         } else {
@@ -263,7 +263,7 @@ impl Parser {
             Ok(Some(Expr::Binary {
                 left: Box::new(expr.unwrap()),
                 operator: BinaryOperator::BooleanOperation(BooleanOperations::And),
-                _token: token,
+                token,
                 right: Box::new(right.unwrap()),
             }))
         } else {
@@ -286,7 +286,7 @@ impl Parser {
             Ok(Some(Expr::Binary {
                 left: Box::new(expr.unwrap()),
                 operator,
-                _token: token,
+                token,
                 right: Box::new(right.unwrap()),
             }))
         } else {
@@ -328,7 +328,7 @@ impl Parser {
             };
             Ok(Some(Expr::Binary {
                 left: Box::new(expr.unwrap()),
-                _token: token,
+                token,
                 operator,
                 right: Box::new(right.unwrap()),
             }))
@@ -353,7 +353,7 @@ impl Parser {
             expr = Some(Expr::Binary {
                 left: Box::new(expr.unwrap()),
                 operator,
-                _token: token,
+                token,
                 right: Box::new(right.unwrap()),
             });
         }
@@ -380,7 +380,7 @@ impl Parser {
             expr = Some(Expr::Binary {
                 left: Box::new(expr.unwrap()),
                 operator,
-                _token: token,
+                token,
                 right: Box::new(right.unwrap()),
             });
         }
@@ -399,7 +399,7 @@ impl Parser {
             let right = self.unary()?;
             Ok(Some(Expr::Unary {
                 operator,
-                _token: token,
+                token,
                 expr: Box::new(right.unwrap()),
             }))
         } else {
@@ -421,7 +421,7 @@ impl Parser {
     // call_with_first_arg → IDENTIFIER primary*
     fn call_with_first_arg(&mut self, expr: Expr, token: Token) -> Result<Option<Expr>, String> {
         self.consume(&Identifier)?;
-        let lexeme = self.previous().lexeme;
+        let previous = self.previous();
         // TODO(anissen): Check that function name exists and is a function
         let first_arg = expr;
         let mut args = vec![ExprWithPosition {
@@ -443,7 +443,10 @@ impl Parser {
                 });
             }
         }
-        let call_expr = Expr::Call { name: lexeme, args };
+        let call_expr = Expr::Call {
+            name: previous,
+            args,
+        };
         if self.matches(&Pipe) {
             self.call_with_first_arg(call_expr, self.previous())
         } else {

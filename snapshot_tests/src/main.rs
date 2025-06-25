@@ -65,7 +65,11 @@ fn process_toml_file(path: &Path) -> Result<ProcessStatus, Box<dyn std::error::E
     let mut doc: Table = content.parse()?;
 
     // Get "script" value from doc
-    let script = doc.get("script").and_then(|v| v.as_str()).unwrap();
+    let script = doc
+        .get("script")
+        .and_then(|v| v.as_str())
+        .unwrap()
+        .to_string();
 
     if let Some(ignored) = doc.get("ignored") {
         return Ok(ProcessStatus::Ignored(ignored.to_string()));
@@ -73,7 +77,7 @@ fn process_toml_file(path: &Path) -> Result<ProcessStatus, Box<dyn std::error::E
 
     let file_name = path.file_name().unwrap().display().to_string();
 
-    let result = run_script(file_name, script);
+    let result = run_script(file_name, &script);
 
     // Always create/replace the output section with a new empty table
     doc.insert("output".to_string(), Value::Table(Table::new()));
@@ -99,8 +103,9 @@ fn process_toml_file(path: &Path) -> Result<ProcessStatus, Box<dyn std::error::E
                 table.insert("result".to_string(), Value::String(result));
                 table.insert("type".to_string(), Value::String(result_type));
             }
-            Err(err) => {
-                table.insert("error".to_string(), Value::String(err.to_string()));
+            Err(diagnostics) => {
+                let errors = diagnostics.print(&script).join("\n\n");
+                table.insert("error".to_string(), Value::String(errors));
             }
         }
     }

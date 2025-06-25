@@ -59,7 +59,7 @@ pub struct Position {
     // length: usize,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Token {
     pub kind: TokenKind,
     pub position: Position,

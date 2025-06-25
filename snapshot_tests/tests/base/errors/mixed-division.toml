@@ -4,5 +4,6 @@ script = """
 
 [output]
 error = """
-Line 1.9: Expected float but got int.
-"""
+42.3 /. 2
+        ^
+Line 1.9: Expected float but got int."""

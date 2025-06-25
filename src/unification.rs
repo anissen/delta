@@ -1,6 +1,6 @@
 use crate::diagnostics::Diagnostics;
 use crate::errors::Error;
-use crate::tokens::Position;
+use crate::tokens::Token;
 use std::collections::HashMap;
 use std::fmt;
 use std::iter::zip;
@@ -21,7 +21,7 @@ pub enum UnificationType {
     Constructor {
         typ: Type,
         generics: Vec<UnificationType>,
-        position: Position,
+        token: Token,
     },
     Variable(TypeVariable),
 }
@@ -32,7 +32,7 @@ impl fmt::Display for UnificationType {
             Self::Constructor {
                 typ,
                 generics,
-                position: _,
+                token: _,
             } => match typ {
                 Type::Boolean => "bool",
                 Type::Integer => "int",
@@ -54,11 +54,11 @@ impl fmt::Display for UnificationType {
     }
 }
 
-pub fn make_constructor(typ: Type, position: Position) -> UnificationType {
+pub fn make_constructor(typ: Type, token: Token) -> UnificationType {
     UnificationType::Constructor {
         typ,
         generics: Vec::new(),
-        position,
+        token,
     }
 }
 
@@ -71,14 +71,14 @@ impl UnificationType {
             UnificationType::Constructor {
                 typ: name,
                 generics,
-                position,
+                token,
             } => UnificationType::Constructor {
                 typ: name.clone(),
                 generics: generics
                     .iter()
                     .map(|t| t.substitute(substitutions))
                     .collect(),
-                position: position.clone(),
+                token: token.clone(),
             },
             UnificationType::Variable(i) => {
                 if let Some(t) = substitutions.get(i) {
@@ -129,20 +129,20 @@ pub fn unify(
             UnificationType::Constructor {
                 typ: name1,
                 generics: generics1,
-                position: position1,
+                token: token1,
             },
             UnificationType::Constructor {
                 typ: name2,
                 generics: generics2,
-                position: position2,
+                token: token2,
             },
         ) => {
             if name1 != name2 || generics1.len() != generics2.len() {
                 diagnostics.add_error(Error::TypeMismatch {
                     expected: right.substitute(substitutions),
                     got: left.substitute(substitutions),
-                    declared_at: position1,
-                    provided_at: position2,
+                    declared_at: token1,
+                    provided_at: token2,
                 });
             }
 

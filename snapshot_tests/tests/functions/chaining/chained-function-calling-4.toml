@@ -11,5 +11,5 @@ rec = \v
 
 [output]
 error = """
-Function not found: rec
-"""
+???
+Function not found: rec"""

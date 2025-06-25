@@ -29,7 +29,7 @@ pub enum Expr {
         token: Token,
     },
     Call {
-        name: String,
+        name: Token,
         args: Vec<ExprWithPosition>, // TODO(anissen): Should arguments be named? E.g. `square value:5`.
     },
     // ForeignCall {
@@ -43,13 +43,13 @@ pub enum Expr {
     },
     Unary {
         operator: UnaryOperator,
-        _token: Token,
+        token: Token,
         expr: Box<Expr>,
     },
     Binary {
         left: Box<Expr>,
         operator: BinaryOperator,
-        _token: Token,
+        token: Token,
         right: Box<Expr>,
     },
     Block {

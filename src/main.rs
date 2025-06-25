@@ -15,15 +15,21 @@ fn main() {
         Ok(Some(value)) => println!("\nResult: {:?}", value),
         Ok(None) => println!("\nResult: N/A"),
         Err(diagnostics) => {
-            let errors = diagnostics.get_errors();
-            match &errors[..] {
-                [err] => println!("\nError occured:\n{}", err),
-                _ => {
-                    println!("\nErrors occured:");
-                    for ele in errors {
-                        println!("{}", ele);
-                    }
-                }
+            println!();
+            let source = delta::read_file(source_path);
+            for ele in diagnostics.print(&source.unwrap()) {
+                println!("\x1b[31merror:\x1b[0m");
+                println!("{ele}");
+                println!();
+                //                 println!(
+                //                     "\x1b[31merror:\x1b[0m
+                //    ┌─ {filePath + fileName}:{line}:{column}
+                //    │
+                // {line}  │   {error_line}
+                //    │   {arrows}
+                //    │
+                // {hint}"
+                // );
             }
         }
     }

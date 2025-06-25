@@ -1,6 +1,7 @@
 use std::fmt::Display;
 
 use crate::errors::Error;
+use crate::errors::ErrorDescription;
 
 #[derive(Debug, Clone)]
 pub struct Diagnostics {
@@ -41,5 +42,9 @@ impl Diagnostics {
 
     pub fn get_errors(&self) -> Vec<Error> {
         self.errors.clone()
+    }
+
+    pub fn print(&self, source: &str) -> Vec<String> {
+        self.errors.iter().map(|err| err.print(source)).collect()
     }
 }

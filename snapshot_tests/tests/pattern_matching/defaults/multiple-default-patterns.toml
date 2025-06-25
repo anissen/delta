@@ -8,5 +8,6 @@ script = """
 
 [output]
 error = """
-Line 5.18: Parse error: An `is` block cannot have multiple default arms.
-"""
+        "not okay"
+                 ^
+Line 5.18: Parse error: An `is` block cannot have multiple default arms."""

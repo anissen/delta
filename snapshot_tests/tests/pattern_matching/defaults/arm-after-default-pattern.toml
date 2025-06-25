@@ -8,5 +8,6 @@ script = """
 
 [output]
 error = """
-Line 5.18: Parse error: Unreachable due to default arm above.
-"""
+        "not okay"
+                 ^
+Line 5.18: Parse error: Unreachable due to default arm above."""

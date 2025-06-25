@@ -4,5 +4,6 @@ x
 
 [output]
 error = """
-Line 1.1: Name not found in scope: x
-"""
+x
+^
+Line 1.1: Name not found in scope: x"""

@@ -151,27 +151,28 @@ impl<'a> Codegen<'a> {
             } => self.emit_function(token, None, params, expr, scope),
 
             Expr::Call { name, args } => {
+                let lexeme = &name.lexeme;
                 let arg_count = args.len();
                 // let arg_exprs = args.iter().map(|arg| arg.expr).collect::<Vec<Expr>>();
                 for arg in args {
                     self.emit_expr(&arg.expr, scope);
                 }
 
-                if self.context.has_function(name) {
+                if self.context.has_function(lexeme) {
                     // TODO(anissen): Maybe this should be its own Expr instead?
                     scope
                         .bytecode
                         .add_op(ByteCode::CallForeign)
-                        .add_byte(self.context.get_index(name))
+                        .add_byte(self.context.get_index(lexeme))
                         .add_byte(arg_count as u8);
                 } else {
-                    match scope.environment.get(name) {
+                    match scope.environment.get(lexeme) {
                         Some(index) => {
                             scope
                                 .bytecode
                                 .add_op(ByteCode::Call)
                                 .add_byte(arg_count as u8);
-                            if scope.locals.contains(name) {
+                            if scope.locals.contains(lexeme) {
                                 scope.bytecode.add_byte(0);
                             } else {
                                 scope.bytecode.add_byte(1);
@@ -184,11 +185,11 @@ impl<'a> Codegen<'a> {
                     }
                 };
 
-                if name.len() > 255 {
+                if lexeme.len() > 255 {
                     panic!("function name too long!");
                     // let msg = Message::new(format!("Function name too long: {}", name), ;
                 }
-                scope.bytecode.add_string(name);
+                scope.bytecode.add_string(lexeme);
             }
 
             Expr::Assignment {
@@ -201,7 +202,7 @@ impl<'a> Codegen<'a> {
 
             Expr::Unary {
                 operator,
-                _token: _,
+                token: _,
                 expr,
             } => match operator {
                 UnaryOperator::Negation => {
@@ -217,7 +218,7 @@ impl<'a> Codegen<'a> {
             Expr::Binary {
                 left,
                 operator,
-                _token: _,
+                token: _,
                 right,
             } => {
                 self.emit_expr(left, scope);

@@ -8,5 +8,6 @@ identity = \x
 
 [output]
 error = """
-Line 5.1: Expected float but got int.
-"""
+4 | identity
+^
+Line 5.1: Expected float but got int."""

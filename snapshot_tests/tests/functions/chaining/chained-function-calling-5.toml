@@ -14,5 +14,5 @@ repeat_part = \str acc tt
 
 [output]
 error = """
-Function not found: repeat_part
-"""
+???
+Function not found: repeat_part"""

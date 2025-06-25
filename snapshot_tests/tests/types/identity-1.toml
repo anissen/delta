@@ -11,5 +11,6 @@ identity | do 4.5
 
 [output]
 error = """
-Line 8.15: Expected int but got float.
-"""
+identity | do 4.5
+              ^^^
+Line 8.15: Expected int but got float."""
