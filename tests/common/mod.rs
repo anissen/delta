@@ -3,18 +3,16 @@ pub fn assert_ok(source: &str, expected: delta::vm::Value) {
         Ok(Some(result)) => {
             assert!(
                 result == expected,
-                "Expected to succeed with {:?} but was {:?}",
-                expected,
-                result
+                "Expected to succeed with {expected:?} but was {result:?}"
             );
         }
-        err => assert!(false, "Expected result to be Ok but was Err: {:?}", err),
+        err => assert!(false, "Expected result to be Ok but was Err: {err:?}"),
     };
 }
 
 pub fn assert_err(source: &str, expected: String) {
     match delta::run(source, None, false) {
-        Ok(Some(result)) => assert!(false, "Expected result to be Err but was Ok: {:?}", result),
+        Ok(Some(result)) => assert!(false, "Expected result to be Err but was Ok: {result:?}"),
         Err(diagnostics) => {
             assert!(diagnostics.count() == 1);
             let errs = diagnostics.get_errors();
@@ -33,7 +31,7 @@ pub fn assert_err(source: &str, expected: String) {
 pub fn assert_type_ok(source: &str) {
     match delta::build(source, None, true) {
         Ok(_) => assert!(true),
-        err => assert!(false, "Expected result to be Ok but was Err: {:?}", err),
+        err => assert!(false, "Expected result to be Ok but was Err: {err:?}"),
     };
 }
 

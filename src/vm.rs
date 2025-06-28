@@ -318,7 +318,7 @@ impl VirtualMachine {
                 ByteCode::FunctionChunk => {
                     let name = self.read_string();
                     if self.verbose {
-                        println!("FunctionChunk: {}", name);
+                        println!("FunctionChunk: {name}");
                     }
                 }
 
@@ -339,10 +339,10 @@ impl VirtualMachine {
                     let index = self.read_byte(); // TODO(anissen): This seems off
                     let name = self.read_string();
                     if self.verbose {
-                        println!("function name: {}", name);
-                        println!("is_global: {}", is_global);
-                        println!("arity: {}", arity);
-                        println!("index: {}", index);
+                        println!("function name: {name}");
+                        println!("is_global: {is_global}");
+                        println!("arity: {arity}");
+                        println!("index: {index}");
                     }
 
                     let value = self.stack.get(index as usize).unwrap();

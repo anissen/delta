@@ -12,7 +12,7 @@ fn main() {
     let debug = args.contains(&"--debug".to_string());
     let result = delta::run_file(source_path, debug);
     match result {
-        Ok(Some(value)) => println!("\nResult: {:?}", value),
+        Ok(Some(value)) => println!("\nResult: {value:?}"),
         Ok(None) => println!("\nResult: N/A"),
         Err(diagnostics) => {
             println!();

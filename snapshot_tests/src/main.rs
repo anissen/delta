@@ -21,7 +21,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let path = entry.path();
 
         // Skip if not a .toml file
-        if !path.extension().map_or(false, |ext| ext == "toml") {
+        if path.extension().is_none_or(|ext| ext != "toml") {
             continue;
         }
 

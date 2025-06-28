@@ -123,7 +123,7 @@ impl<'a> Program<'a> {
         let start = std::time::Instant::now();
         let tokens = lexer::lex(source);
         let duration = start.elapsed();
-        println!("Elapsed: {:?}", duration);
+        println!("Elapsed: {duration:?}");
 
         let (tokens, syntax_errors): (Vec<tokens::Token>, Vec<tokens::Token>) = tokens
             .into_iter()
@@ -151,9 +151,9 @@ impl<'a> Program<'a> {
         let start = std::time::Instant::now();
         let ast = parser::parse(tokens)?;
         let duration = start.elapsed();
-        println!("Elapsed: {:?}", duration);
+        println!("Elapsed: {duration:?}");
         if debug {
-            println!("ast: {:?}", ast);
+            println!("ast: {ast:?}");
         }
 
         println!("\n# typing =>");
@@ -162,7 +162,7 @@ impl<'a> Program<'a> {
         let mut diagnostics = Diagnostics::new();
         typer::type_check(&ast, &self.context, &mut diagnostics);
         let duration = start.elapsed();
-        println!("Elapsed: {:?}", duration);
+        println!("Elapsed: {duration:?}");
 
         if diagnostics.has_errors() {
             return Err(diagnostics);
@@ -174,19 +174,19 @@ impl<'a> Program<'a> {
             .keys()
             .cloned()
             .collect::<Vec<String>>();
-        println!("foreign functions: {:?}", foreign_functions);
+        println!("foreign functions: {foreign_functions:?}");
 
         println!("\n# code gen =>");
         let start = std::time::Instant::now();
         let bytecodes = codegen::codegen(&ast, &self.context);
         let duration = start.elapsed();
-        println!("Elapsed: {:?}", duration);
+        println!("Elapsed: {duration:?}");
 
         match bytecodes {
             Ok(bytecodes) => {
                 if debug {
                     println!("byte code length: {}", bytecodes.len());
-                    println!("byte codes: {:?}", bytecodes);
+                    println!("byte codes: {bytecodes:?}");
                 }
                 Ok(bytecodes)
             }

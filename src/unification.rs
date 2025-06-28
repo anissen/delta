@@ -45,12 +45,12 @@ impl fmt::Display for UnificationType {
                         .collect::<Vec<String>>()
                         .join(", ");
                     let return_type = generics.last().unwrap();
-                    &format!("function({}) -> {}", parameters, return_type)
+                    &format!("function({parameters}) -> {return_type}")
                 }
             },
             Self::Variable(i) => &format!("???#{i}"),
         };
-        write!(f, "{}", type_name)
+        write!(f, "{type_name}")
     }
 }
 

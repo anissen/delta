@@ -64,7 +64,7 @@ impl Disassembler {
     fn print(&mut self, values: Vec<String>) {
         print!("{} \t", self.last_program_counter);
         for value in values {
-            print!("{} ", value);
+            print!("{value} ");
         }
         println!();
     }

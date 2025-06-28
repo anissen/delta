@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::tokens::{Position, Token};
+use crate::tokens::Token;
 use crate::unification::UnificationType;
 
 #[derive(Debug, Clone)]
@@ -55,12 +55,12 @@ impl fmt::Display for Error {
                 )
             }
             Error::FunctionNotFound { name } => {
-                write!(f, "Function not found: {}", name)
+                write!(f, "Function not found: {name}")
             }
             Error::FunctionNameTooLong { token } => {
                 write!(f, "Function name too long; at {:?}", token.position)
             }
-            Error::FileErr(error_msg) => write!(f, "File error: {}", error_msg),
+            Error::FileErr(error_msg) => write!(f, "File error: {error_msg}"),
         }
     }
 }
