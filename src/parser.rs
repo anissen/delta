@@ -90,6 +90,10 @@ impl Parser {
                         message: err,
                         token: self.previous(),
                     });
+                    // // Advance past the problematic token to avoid infinite loop
+                    if !self.is_at_end() {
+                        self.advance();
+                    }
                 }
             }
             // if let Ok(expression) = res {
@@ -146,36 +150,30 @@ impl Parser {
     }
 
     fn tag(&mut self) -> Result<Option<Expr>, String> {
-        if self.matches(&Tag) {
-            let name = self.previous();
-            let expr = if self.check(&NewLine) || self.check(&KeywordIs) || self.is_at_end() {
-                None
-            } else {
-                self.string_concat()?
-            };
-            Ok(Some(Expr::Value {
-                value: ValueType::Tag {
-                    name: name.clone(),
-                    payload: Box::new(expr),
-                },
-                token: name,
-            }))
+        let name = self.previous();
+        let expr = if self.check(&NewLine) || self.check(&KeywordIs) || self.is_at_end() {
+            None
         } else {
-            self.string_concat()
-        }
+            self.string_concat()?
+        };
+        Ok(Some(Expr::Value {
+            value: ValueType::Tag {
+                name: name.clone(),
+                payload: Box::new(expr),
+            },
+            token: name,
+        }))
     }
 
     // is → string_concat "is" NEWLINE is_arm* | string_concat
     fn is(&mut self) -> Result<Option<Expr>, String> {
-        dbg!("is");
-        let expr = self.tag()?;
+        let expr = self.string_concat()?;
         if self.matches(&KeywordIs) {
             self.consume(&NewLine)?;
             self.increase_indentation();
             let mut arms = vec![];
             let mut has_default = false;
             while self.matches_indentation() {
-                dbg!("is -- matches indentation");
                 let arm = self.is_arm()?;
                 if has_default {
                     return match arm.pattern {
@@ -206,13 +204,20 @@ impl Parser {
 
     // is_arm → INDENT ( ( "_" | expression ) block )
     fn is_arm(&mut self) -> Result<IsArm, String> {
-        dbg!("is_arm");
         for _ in 0..self.indentation {
             self.consume(&Tab)?;
         }
 
         let pattern = if self.matches(&Underscore) {
-            Ok(IsArmPattern::Default)
+            if self.matches(&KeywordIf) {
+                if let Some(pattern) = self.expression()? {
+                    Ok(IsArmPattern::Expression(pattern))
+                } else {
+                    Err("Error parsing default pattern with guard of `is` arm".to_string())
+                }
+            } else {
+                Ok(IsArmPattern::Default)
+            }
         } else if let Some(pattern) = self.expression()? {
             match pattern {
                 Expr::Identifier { name } => {
@@ -231,7 +236,6 @@ impl Parser {
         } else {
             Err("Error parsing pattern of `is` arm".to_string())
         };
-        dbg!(&pattern);
 
         match pattern {
             Ok(pattern) => {
@@ -586,8 +590,8 @@ impl Parser {
             Ok(Some(Expr::Grouping(Box::new(expr.unwrap()))))
         } else if self.matches(&BackSlash) {
             self.function()
-        // } else if self.matches(&Tag) {
-        //     self.tag()
+        } else if self.matches(&Tag) {
+            self.tag()
         } else {
             self.whitespace()
         }

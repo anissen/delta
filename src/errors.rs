@@ -110,9 +110,9 @@ fn get_error_line(source: &str, token: &Token) -> String {
         return String::new();
     }
 
-    let line = lines[position.line - 1];
+    let line = lines[position.line - 1].replace('\t', " ");
     let mut result = String::new();
-    result.push_str(line);
+    result.push_str(&line);
     result.push('\n');
 
     // Add spaces up to the error column
