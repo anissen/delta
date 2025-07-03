@@ -5,6 +5,8 @@
 # 4 | blah
 # -------
 
+# =======
+
 # x = :hello 2
 
 # x is
@@ -15,13 +17,72 @@
 # 	:hi
 # 		"john"
 
-stoplight_color = \v
-	v is
-		_ if v > 0.0
-			:red
-		_ if v == 0.0
-			:yellow
-		_
-			:green
+# =======
 
-0.5 | stoplight_color
+# stoplight_color = \v
+# 	v is
+# 		x if x >. 0.0
+# 			:red
+# 		x if x == 0.0
+# 			:yellow 4
+# 		_
+# 			:green
+
+# -0.0 | stoplight_color
+
+# =======
+
+# x = 3.3
+# x is
+# 	_ if x >. 0.0
+# 		3
+
+# =======
+
+# stoplight_color = \v
+# 	v is
+# 		_ if v >. 0.0
+# 			:red
+# 		_ if v == 0.0
+# 			:yellow 4
+# 		_
+# 			:green
+
+# -0.0 | stoplight_color
+
+# =======
+
+# match = \tag
+# 	tag is
+# 		:yellow
+# 			"yes"
+# 		_
+# 			"no"
+
+# :yellow | match
+
+# =======
+
+# match = \tag
+# 	tag is
+# 		:yellow 4
+# 			"yes"
+# 		_
+# 			"no"
+
+# :yellow 4 | match
+
+# =======
+
+# match = \tag
+# 	tag is
+# 		:yellow x
+# 			"yes with value {x}"
+# 		_
+# 			"no"
+
+# :yellow 4 | match
+
+# =======
+
+:color "red"
