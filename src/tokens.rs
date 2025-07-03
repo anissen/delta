@@ -42,6 +42,7 @@ pub enum TokenKind {
     StringConcat,
     SyntaxError(&'static str),
     Tab,
+    Tag,
     Text,
     True,
     Underscore,

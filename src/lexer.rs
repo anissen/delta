@@ -126,6 +126,7 @@ impl Lexer {
             '_' => TokenKind::Underscore,
             '\t' => TokenKind::Tab,
             '\n' => TokenKind::NewLine,
+            ':' => self.tag(),
             '\"' => self.string(),
             c if self.is_digit(c) => self.number(),
             _ if self.match_keyword("is") => TokenKind::KeywordIs,
@@ -219,6 +220,26 @@ impl Lexer {
             self.advance();
         }
         TokenKind::Comment
+    }
+
+    fn tag(&mut self) -> TokenKind {
+        loop {
+            if self.is_at_end() {
+                return TokenKind::SyntaxError("Unterminated tag");
+            }
+            if self.peek().is_whitespace() {
+                break;
+            }
+            self.advance();
+        }
+
+        self.start += 1;
+        let length = self.current - self.start;
+        if length == 0 {
+            TokenKind::SyntaxError("Empty tag")
+        } else {
+            TokenKind::Tag
+        }
     }
 
     fn string(&mut self) -> TokenKind {

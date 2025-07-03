@@ -35,6 +35,9 @@ pub enum ByteCode {
     PushInteger,
     PushString,
 
+    PushSimpleTag,
+    PushTag,
+
     FunctionSignature,
     FunctionChunk,
     Function,
@@ -97,6 +100,9 @@ impl TryFrom<u8> for ByteCode {
             value if value == ByteCode::PushFloat as u8 => Ok(Self::PushFloat),
             value if value == ByteCode::PushInteger as u8 => Ok(Self::PushInteger),
             value if value == ByteCode::PushString as u8 => Ok(Self::PushString),
+
+            value if value == ByteCode::PushSimpleTag as u8 => Ok(Self::PushSimpleTag),
+            value if value == ByteCode::PushTag as u8 => Ok(Self::PushTag),
 
             value if value == ByteCode::FunctionSignature as u8 => Ok(Self::FunctionSignature),
             value if value == ByteCode::FunctionChunk as u8 => Ok(Self::FunctionChunk),

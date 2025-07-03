@@ -150,6 +150,29 @@ impl<'a> Codegen<'a> {
                 token,
             } => self.emit_function(token, None, params, expr, scope),
 
+            Expr::Value {
+                value: ValueType::Tag { name, payload },
+                token,
+            } => {
+                if name.lexeme.len() > 255 {
+                    panic!("string too long!");
+                }
+                if let Some(payload) = &**payload {
+                    let argument_count = 1;
+                    scope
+                        .bytecode
+                        .add_op(ByteCode::PushTag)
+                        .add_string(&name.lexeme)
+                        .add_byte(argument_count);
+                    self.emit_expr(&payload, scope);
+                } else {
+                    scope
+                        .bytecode
+                        .add_op(ByteCode::PushSimpleTag)
+                        .add_string(&name.lexeme);
+                };
+            }
+
             Expr::Call { name, args } => {
                 let lexeme = &name.lexeme;
                 let arg_count = args.len();

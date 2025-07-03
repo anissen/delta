@@ -186,6 +186,14 @@ impl<'env> InferenceContext<'env> {
                 ValueType::Integer(_) => make_constructor(Type::Integer, token.clone()),
                 ValueType::Float(_) => make_constructor(Type::Float, token.clone()),
                 ValueType::String(_) => make_constructor(Type::String, token.clone()),
+                ValueType::Tag { name, payload } => UnificationType::Constructor {
+                    typ: Type::Tag {
+                        name: name.lexeme.clone(),
+                        argument_count: payload.iter().count() as u8,
+                    },
+                    generics: payload.iter().map(|p| self.infer_type(p)).collect(),
+                    token: token.clone(),
+                },
                 ValueType::Function { params, expr } => {
                     let param_types = params
                         .iter()

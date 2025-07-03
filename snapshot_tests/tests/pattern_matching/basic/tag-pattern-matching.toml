@@ -1,0 +1,13 @@
+script = """
+:hello is
+    :yo
+        "dawg"
+    :hello
+        "world"
+    :hi
+        "john"
+"""
+
+[output]
+result = "world"
+type = "string"

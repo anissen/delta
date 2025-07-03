@@ -1,2 +1,27 @@
 
-false + true
+# blah = \v
+# 	:hello v
+
+# 4 | blah
+# -------
+
+# x = :hello 2
+
+# x is
+# 	:yo
+# 		"dawg"
+# 	:hello 2
+# 		"world"
+# 	:hi
+# 		"john"
+
+stoplight_color = \v
+	v is
+		_ if v > 0.0
+			:red
+		_ if v == 0.0
+			:yellow
+		_
+			:green
+
+0.5 | stoplight_color

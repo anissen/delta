@@ -2,7 +2,7 @@ use crate::diagnostics::Diagnostics;
 use crate::errors::Error;
 use crate::tokens::Token;
 use std::collections::HashMap;
-use std::fmt;
+use std::fmt::{self, format};
 use std::iter::zip;
 
 #[derive(PartialEq, Clone, Debug)]
@@ -11,6 +11,7 @@ pub enum Type {
     Integer,
     Float,
     String,
+    Tag { name: String, argument_count: u8 },
     Function,
 }
 
@@ -38,6 +39,16 @@ impl fmt::Display for UnificationType {
                 Type::Integer => "int",
                 Type::Float => "float",
                 Type::String => "string",
+                Type::Tag {
+                    name,
+                    argument_count,
+                } => {
+                    if *argument_count == 0 {
+                        &format!("tag :{name}")
+                    } else {
+                        &format!("tag :{name}({argument_count})")
+                    }
+                }
                 Type::Function => {
                     let parameters = generics[0..generics.len() - 1]
                         .iter()

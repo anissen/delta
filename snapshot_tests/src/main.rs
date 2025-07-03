@@ -94,6 +94,8 @@ fn process_toml_file(path: &Path) -> Result<ProcessStatus, Box<dyn std::error::E
                             delta::vm::Value::Integer(_) => "integer".to_string(),
                             delta::vm::Value::Float(_) => "float".to_string(),
                             delta::vm::Value::String(_) => "string".to_string(),
+                            delta::vm::Value::SimpleTag { .. } => "tag".to_string(),
+                            delta::vm::Value::Tag { .. } => "tag".to_string(),
                             delta::vm::Value::Function(_) => "function".to_string(),
                         };
                         (value.to_string(), result_type)

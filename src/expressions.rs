@@ -10,6 +10,10 @@ pub enum ValueType {
         params: Vec<Token>, // TODO(anissen): Do we also need type information here?
         expr: Box<Expr>,
     },
+    Tag {
+        name: Token,
+        payload: Box<Option<Expr>>,
+    },
 }
 
 #[derive(Debug)]

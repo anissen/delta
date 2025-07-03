@@ -110,6 +110,26 @@ impl Disassembler {
                     ]);
                 }
 
+                ByteCode::PushSimpleTag => {
+                    let tag_name = self.read_string();
+
+                    self.print(vec![
+                        "push_simple_tag".to_string(),
+                        format!("(value: ':{tag_name}')"),
+                    ]);
+                }
+
+                ByteCode::PushTag => {
+                    let tag_name = self.read_string();
+                    let argument_count = self.read_byte();
+
+                    self.print(vec![
+                        "push_tag".to_string(),
+                        format!("(value: ':{}')", tag_name),
+                        format!("(arguments: {argument_count})"),
+                    ]);
+                }
+
                 ByteCode::IntegerAddition => {
                     self.print(vec!["int_add".to_string()]);
                 }
