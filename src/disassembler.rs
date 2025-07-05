@@ -121,12 +121,10 @@ impl Disassembler {
 
                 ByteCode::PushTag => {
                     let tag_name = self.read_string();
-                    let argument_count = self.read_byte();
 
                     self.print(vec![
                         "push_tag".to_string(),
                         format!("(value: ':{}')", tag_name),
-                        format!("(arguments: {argument_count})"),
                     ]);
                 }
 

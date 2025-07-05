@@ -54,6 +54,8 @@
 
 # match = \tag
 # 	tag is
+# 		:red
+# 			"no"
 # 		:yellow
 # 			"yes"
 # 		_
@@ -65,12 +67,16 @@
 
 # match = \tag
 # 	tag is
-# 		:yellow 4
+# 		:yellow
+# 			"no"
+# 		:yellow 3
+# 			"almost"
+# 		:yellow 5
 # 			"yes"
 # 		_
-# 			"no"
+# 			"also no"
 
-# :yellow 4 | match
+# (:yellow 5) | match
 
 # =======
 
@@ -85,4 +91,16 @@
 
 # =======
 
-:color "red"
+# match = \tag
+# 	tag is
+# 		:yellow v
+# 			"yellow with value {v}"
+# 		_
+# 			"no match"
+
+# (:yellow 5) | match
+
+# =======
+
+# value = 45
+# :color value

@@ -73,6 +73,7 @@ impl<'a> Codegen<'a> {
         }
     }
 
+    // TODO(anissen): Should this be a method on scope instead?
     fn emit_expr(&mut self, expr: &'a Expr, scope: &mut Scope) {
         match expr {
             Expr::Value {
@@ -158,13 +159,11 @@ impl<'a> Codegen<'a> {
                     panic!("string too long!");
                 }
                 if let Some(payload) = &**payload {
-                    let argument_count = 1;
+                    self.emit_expr(payload, scope);
                     scope
                         .bytecode
                         .add_op(ByteCode::PushTag)
-                        .add_string(&name.lexeme)
-                        .add_byte(argument_count);
-                    self.emit_expr(&payload, scope);
+                        .add_string(&name.lexeme);
                 } else {
                     scope
                         .bytecode

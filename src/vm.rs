@@ -12,7 +12,7 @@ pub enum Value {
     Float(f32),
     String(String),
     SimpleTag(String),
-    Tag(String, u8),
+    Tag(String, Box<Value>),
     Function(u8),
 }
 
@@ -25,7 +25,7 @@ impl Display for Value {
             Value::Float(d) => write!(f, "{d}")?,
             Value::String(s) => write!(f, "{s}")?,
             Value::SimpleTag(t) => write!(f, ":{t}")?,
-            Value::Tag(t, a) => write!(f, ":{t}+{a}")?,
+            Value::Tag(t, a) => write!(f, ":{t}({a})")?,
             Value::Function(i) => write!(f, "<fn {i}>")?,
         };
         Ok(())
@@ -142,8 +142,8 @@ impl VirtualMachine {
 
                 ByteCode::PushTag => {
                     let name = self.read_string();
-                    let argument_count = self.read_byte();
-                    self.push_tag(name, argument_count);
+                    let value = self.pop_any();
+                    self.push_tag(name, value);
                 }
 
                 ByteCode::IntegerAddition => {
@@ -554,7 +554,7 @@ impl VirtualMachine {
         self.stack.push(Value::SimpleTag(name));
     }
 
-    fn push_tag(&mut self, name: String, argument_count: u8) {
-        self.stack.push(Value::Tag(name, argument_count));
+    fn push_tag(&mut self, name: String, payload: Value) {
+        self.stack.push(Value::Tag(name, Box::new(payload)));
     }
 }
