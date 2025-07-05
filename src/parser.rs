@@ -151,7 +151,11 @@ impl Parser {
 
     fn tag(&mut self) -> Result<Option<Expr>, String> {
         let name = self.previous();
-        let expr = if self.check(&NewLine) || self.check(&KeywordIs) || self.is_at_end() {
+        let expr = if self.check(&NewLine)
+            || self.check(&KeywordIs)
+            || self.check(&Pipe)
+            || self.is_at_end()
+        {
             None
         } else {
             self.string_concat()?
