@@ -1,6 +1,10 @@
-script = '''
+script = """
 x = 3.3
 x is
-	_ if x >. 0.0
-		3
-'''
+    _ if x >. 0.0
+        3
+"""
+
+[output]
+result = "3"
+type = "integer"

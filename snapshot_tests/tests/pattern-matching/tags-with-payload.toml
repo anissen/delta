@@ -11,3 +11,7 @@ match = \tag
 			"also no"
 (:yellow 5) | match
 '''
+
+[output]
+result = "yes"
+type = "string"

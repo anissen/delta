@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 use crate::diagnostics::Diagnostics;
 use crate::errors::Error;
 use crate::expressions::{
-    BinaryOperator, Expr, IsArmPattern, StringOperations, UnaryOperator, ValueType,
+    BinaryOperator, Expr, IsArmPattern, IsGuard, StringOperations, UnaryOperator, ValueType,
 };
 use crate::program::Context;
 use crate::tokens::Token;
@@ -336,22 +336,23 @@ impl<'env> InferenceContext<'env> {
                             self.expects_type(expr, is_type.clone());
                         }
 
-                        IsArmPattern::Capture {
-                            identifier,
-                            condition,
-                        } => {
+                        IsArmPattern::Capture { identifier } => {
                             self.environment
                                 .variables
                                 .insert(identifier.lexeme.clone(), is_type.clone());
-                            if let Some(condition) = condition {
-                                self.expects_type(
-                                    condition,
-                                    make_constructor(Type::Boolean, identifier.clone()),
-                                );
-                            }
                         }
 
                         IsArmPattern::Default => (),
+                    }
+
+                    match &arm.guard {
+                        Some(IsGuard { token, condition }) => {
+                            self.expects_type(
+                                condition,
+                                make_constructor(Type::Boolean, token.clone()),
+                            );
+                        }
+                        None => {}
                     }
 
                     // TODO(anissen): Check for exhaustiveness

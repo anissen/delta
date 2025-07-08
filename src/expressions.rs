@@ -67,18 +67,22 @@ pub enum Expr {
 }
 
 #[derive(Debug)]
+pub struct IsGuard {
+    pub token: Token,
+    pub condition: Expr,
+}
+
+#[derive(Debug)]
 pub struct IsArm {
     pub pattern: IsArmPattern,
+    pub guard: Option<IsGuard>,
     pub block: Expr,
 }
 
 #[derive(Debug)]
 pub enum IsArmPattern {
     Expression(Expr),
-    Capture {
-        identifier: Token,
-        condition: Option<Expr>,
-    },
+    Capture { identifier: Token },
     Default,
 }
 

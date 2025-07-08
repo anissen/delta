@@ -9,6 +9,7 @@ use crate::expressions::Expr;
 use crate::expressions::ExprWithPosition;
 use crate::expressions::IsArm;
 use crate::expressions::IsArmPattern;
+use crate::expressions::IsGuard;
 use crate::expressions::StringOperations;
 use crate::expressions::UnaryOperator;
 use crate::expressions::ValueType;
@@ -58,7 +59,6 @@ pub fn parse(tokens: Vec<Token>) -> Result<Vec<Expr>, Diagnostics> {
 }
 
 // TODO(anissen): Clean up `.unwrap` in this file
-
 impl Parser {
     fn new(tokens: Vec<Token>) -> Self {
         let non_whitespace_tokens: Vec<Token> = tokens
@@ -187,7 +187,7 @@ impl Parser {
                         _ => Err("Unreachable due to default arm above.".to_string()),
                     };
                 }
-                has_default = matches!(arm.pattern, IsArmPattern::Default);
+                has_default = matches!(arm.pattern, IsArmPattern::Default) && arm.guard.is_none();
 
                 // TODO(anissen): Check for multiple capture arms or arms after a capture arm
 
@@ -213,43 +213,37 @@ impl Parser {
         }
 
         let pattern = if self.matches(&Underscore) {
-            if self.matches(&KeywordIf) {
-                if let Some(pattern) = self.expression()? {
-                    Ok(IsArmPattern::Expression(pattern))
-                } else {
-                    Err("Error parsing default pattern with guard of `is` arm".to_string())
-                }
-            } else {
-                Ok(IsArmPattern::Default)
-            }
+            IsArmPattern::Default
         } else if let Some(pattern) = self.expression()? {
             match pattern {
-                Expr::Identifier { name } => {
-                    let condition = if self.matches(&KeywordIf) {
-                        self.expression()?
-                    } else {
-                        None
-                    };
-                    Ok(IsArmPattern::Capture {
-                        identifier: name,
-                        condition,
-                    })
-                }
-                _ => Ok(IsArmPattern::Expression(pattern)),
+                Expr::Identifier { name } => IsArmPattern::Capture { identifier: name },
+                _ => IsArmPattern::Expression(pattern),
             }
         } else {
-            Err("Error parsing pattern of `is` arm".to_string())
+            return Err("Error parsing pattern of `is` arm".to_string());
         };
 
-        match pattern {
-            Ok(pattern) => {
-                if let Some(block) = self.block()? {
-                    Ok(IsArm { pattern, block })
-                } else {
-                    Err("Error parsing block of `is` arm".to_string())
-                }
+        let guard = if self.matches(&KeywordIf) {
+            if let Some(condition) = self.expression()? {
+                Some(IsGuard {
+                    token: self.previous(),
+                    condition,
+                })
+            } else {
+                return Err("Error parsing if-guard of `is` arm".to_string());
             }
-            Err(err) => Err(err),
+        } else {
+            None
+        };
+
+        if let Some(block) = self.block()? {
+            Ok(IsArm {
+                pattern,
+                guard,
+                block,
+            })
+        } else {
+            Err("Error parsing block of `is` arm".to_string())
         }
     }
 

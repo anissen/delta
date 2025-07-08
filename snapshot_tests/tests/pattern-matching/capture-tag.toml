@@ -1,0 +1,11 @@
+script = '''
+match = \tag
+	tag is
+		x
+			"captured value {x}"
+(:yellow 4) | match
+'''
+
+[output]
+result = "captured value :yellow(4)"
+type = "string"

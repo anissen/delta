@@ -15,5 +15,5 @@ third = -3.2 | stoplight_color
 '''
 
 [output]
-result = "Lights: :red => :yellow+ => :green"
+result = "Lights: :red => :yellow(4) => :green"
 type = "string"

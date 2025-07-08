@@ -1,9 +1,13 @@
-script = '''
+script = """
 5 is
-	5 if false
-		"no"
-	5 if true
-		"yes"
-	5
-		"also no"
-'''
+    5 if false
+        "no"
+    5 if true
+        "yes"
+    5
+        "also no"
+"""
+
+[output]
+result = "yes"
+type = "string"

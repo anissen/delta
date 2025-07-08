@@ -7,5 +7,9 @@ stoplight_color = \v
 			:yellow 4
 		_
 			:green
--0.0 | stoplight_color
+0.0 | stoplight_color
 '''
+
+[output]
+result = ":yellow(4)"
+type = "tag"

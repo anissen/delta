@@ -241,37 +241,7 @@ impl VirtualMachine {
                 ByteCode::StringConcat => {
                     let right = self.pop_any();
                     let left = self.pop_string();
-                    match right {
-                        Value::String(right) => {
-                            self.push_string(left + &right);
-                        }
-
-                        Value::Integer(right) => {
-                            self.push_string(left + &right.to_string());
-                        }
-
-                        Value::Float(right) => {
-                            self.push_string(left + &right.to_string());
-                        }
-
-                        Value::True => {
-                            self.push_string(left + "true");
-                        }
-
-                        Value::False => {
-                            self.push_string(left + "false");
-                        }
-
-                        Value::SimpleTag(name) => {
-                            self.push_string(left + ":" + &name);
-                        }
-
-                        Value::Tag(name, _value) => {
-                            self.push_string(left + ":" + &name + "+");
-                        }
-
-                        _ => panic!("incompatible types for string concatenation"),
-                    }
+                    self.push_string(self.string_concat_values(left, right));
                 }
 
                 ByteCode::BooleanAnd => {
@@ -571,5 +541,20 @@ impl VirtualMachine {
 
     fn push_tag(&mut self, name: String, payload: Value) {
         self.stack.push(Value::Tag(name, Box::new(payload)));
+    }
+
+    fn string_concat_values(&self, left: String, right: Value) -> String {
+        match right {
+            Value::String(right) => left + &right,
+            Value::Integer(right) => left + &right.to_string(),
+            Value::Float(right) => left + &right.to_string(),
+            Value::True => left + "true",
+            Value::False => left + "false",
+            Value::SimpleTag(name) => left + ":" + &name,
+            Value::Tag(name, value) => {
+                self.string_concat_values(left + ":" + &name + "(", *value) + ")"
+            }
+            _ => panic!("incompatible types for string concatenation"),
+        }
     }
 }

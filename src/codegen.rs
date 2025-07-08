@@ -5,7 +5,7 @@ use crate::diagnostics::Diagnostics;
 use crate::errors::Error;
 use crate::expressions::{
     ArithmeticOperations, BinaryOperator, BooleanOperations, Comparisons, EqualityOperations, Expr,
-    IsArmPattern, StringOperations, UnaryOperator, ValueType,
+    IsArmPattern, IsGuard, StringOperations, UnaryOperator, ValueType,
 };
 use crate::program::Context;
 use crate::tokens::{Position, Token};
@@ -353,7 +353,13 @@ impl<'a> Codegen<'a> {
                 };
 
                 let mut jump_to_end_offsets = vec![];
-                for arm in arms {
+
+                for (arm_index, arm) in arms.iter().enumerate() {
+                    let is_last_arm = arm_index == arms.len() - 1;
+
+                    // Handle pattern matching logic
+                    let mut pattern_jump_offsets = vec![];
+
                     match &arm.pattern {
                         IsArmPattern::Expression(pattern) => {
                             // Emit expression and pattern and compare
@@ -363,55 +369,37 @@ impl<'a> Codegen<'a> {
 
                             // Jump to next arm if not equal
                             let next_arm_offset = scope.bytecode.add_jump_if_false();
-
-                            // Otherwise execute arm block
-                            self.emit_expr(&arm.block, scope);
-
-                            // Jump to end of `is` block
-                            let end_offset = scope.bytecode.add_unconditional_jump();
-                            jump_to_end_offsets.push(end_offset);
-
-                            // Patch jump to next arm now that we know its position
-                            scope.bytecode.patch_jump_to_current_byte(next_arm_offset);
+                            pattern_jump_offsets.push(next_arm_offset);
                         }
-
-                        IsArmPattern::Capture {
-                            identifier,
-                            condition,
-                        } => {
+                        IsArmPattern::Capture { identifier } => {
                             self.emit_assignment(identifier, expr, scope);
-
-                            if let Some(condition) = condition {
-                                // Emit expression and condition and compare
-                                scope.bytecode.add_get_local_value(index);
-                                self.emit_expr(condition, scope);
-
-                                // Jump to next arm if not equal
-                                let next_arm_offset = scope.bytecode.add_jump_if_false();
-
-                                // Otherwise execute arm block
-                                self.emit_expr(&arm.block, scope);
-
-                                // Jump to end of `is` block
-                                let end_offset = scope.bytecode.add_unconditional_jump();
-                                jump_to_end_offsets.push(end_offset);
-
-                                // Patch jump to next arm now that we know its position
-                                scope.bytecode.patch_jump_to_current_byte(next_arm_offset);
-                            } else {
-                                // Otherwise execute arm block
-                                self.emit_expr(&arm.block, scope);
-
-                                // Jump to end of `is` block
-                                let end_offset = scope.bytecode.add_unconditional_jump();
-                                jump_to_end_offsets.push(end_offset);
-                            }
                         }
-
                         IsArmPattern::Default => {
-                            self.emit_expr(&arm.block, scope);
+                            // No pattern matching needed for default case
                         }
-                    };
+                    }
+
+                    // Handle guard condition if present
+                    if let Some(guard) = &arm.guard {
+                        // Check if-guard
+                        self.emit_expr(&guard.condition, scope);
+                        let guard_jump_offset = scope.bytecode.add_jump_if_false();
+                        pattern_jump_offsets.push(guard_jump_offset);
+                    }
+
+                    // Execute arm block
+                    self.emit_expr(&arm.block, scope);
+
+                    if !is_last_arm {
+                        // Jump to end of `is` block
+                        let end_offset = scope.bytecode.add_unconditional_jump();
+                        jump_to_end_offsets.push(end_offset);
+                    }
+
+                    // Patch all jumps to next arm now that we know the position
+                    for offset in pattern_jump_offsets {
+                        scope.bytecode.patch_jump_to_current_byte(offset);
+                    }
                 }
 
                 // Patch all jumps to end of `is` block now that we know where it ends
