@@ -1,13 +1,13 @@
-
-ignored = "parsing hangs"
-
 script = """
 2 is
     1
-        "no
-    other if 2 + 2 # not a boolean expression
+        "no"
+    other if 2 + 2
         "value captured is {other}"
 """
 
 [output]
-result = "?"
+error = """
+    other if 2 + 2
+               ^
+Line 4.16: Expected bool but got int."""

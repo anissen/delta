@@ -1,11 +1,13 @@
-ignored = "crashing in codegen"
-
 script = '''
 match = \tag
 	tag is
-		:yellow x
-			"yellow with value {x}"
+		:container x
+			"container with value {x}"
 		_
 			"no match"
-(:yellow 4) | match
+(:container 4) | match
 '''
+
+[output]
+result = "container with value :container(4)"
+type = "string"

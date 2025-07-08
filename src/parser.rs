@@ -217,6 +217,19 @@ impl Parser {
         } else if let Some(pattern) = self.expression()? {
             match pattern {
                 Expr::Identifier { name } => IsArmPattern::Capture { identifier: name },
+                Expr::Value {
+                    value:
+                        ValueType::Tag {
+                            name: _,
+                            ref payload,
+                        },
+                    token: _,
+                } => match &**payload {
+                    Some(Expr::Identifier { name }) => IsArmPattern::Capture {
+                        identifier: name.clone(),
+                    },
+                    _ => IsArmPattern::Expression(pattern),
+                },
                 _ => IsArmPattern::Expression(pattern),
             }
         } else {
