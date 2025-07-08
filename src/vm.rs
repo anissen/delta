@@ -240,26 +240,34 @@ impl VirtualMachine {
 
                 ByteCode::StringConcat => {
                     let right = self.pop_any();
-                    let left = self.pop_any();
-                    match (left, right) {
-                        (Value::String(left), Value::String(right)) => {
+                    let left = self.pop_string();
+                    match right {
+                        Value::String(right) => {
                             self.push_string(left + &right);
                         }
 
-                        (Value::String(left), Value::Integer(right)) => {
+                        Value::Integer(right) => {
                             self.push_string(left + &right.to_string());
                         }
 
-                        (Value::String(left), Value::Float(right)) => {
+                        Value::Float(right) => {
                             self.push_string(left + &right.to_string());
                         }
 
-                        (Value::String(left), Value::True) => {
+                        Value::True => {
                             self.push_string(left + "true");
                         }
 
-                        (Value::String(left), Value::False) => {
+                        Value::False => {
                             self.push_string(left + "false");
+                        }
+
+                        Value::SimpleTag(name) => {
+                            self.push_string(left + ":" + &name);
+                        }
+
+                        Value::Tag(name, _value) => {
+                            self.push_string(left + ":" + &name + "+");
                         }
 
                         _ => panic!("incompatible types for string concatenation"),
@@ -517,6 +525,13 @@ impl VirtualMachine {
 
     fn pop_any(&mut self) -> Value {
         self.stack.pop().unwrap()
+    }
+
+    fn pop_string(&mut self) -> String {
+        match self.stack.pop().unwrap() {
+            Value::String(s) => s,
+            _ => panic!("expected string, encountered some other type"),
+        }
     }
 
     fn push_boolean(&mut self, value: bool) {

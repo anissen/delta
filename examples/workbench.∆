@@ -1,37 +1,4 @@
 
-# blah = \v
-# 	:hello v
-
-# 4 | blah
-# -------
-
-# =======
-
-# x = :hello 2
-
-# x is
-# 	:yo
-# 		"dawg"
-# 	:hello 2
-# 		"world"
-# 	:hi
-# 		"john"
-
-# =======
-
-# stoplight_color = \v
-# 	v is
-# 		x if x >. 0.0
-# 			:red
-# 		x if x == 0.0
-# 			:yellow 4
-# 		_
-# 			:green
-
-# -0.0 | stoplight_color
-
-# =======
-
 # x = 3.3
 # x is
 # 	_ if x >. 0.0
@@ -104,3 +71,13 @@
 
 # value = 45
 # :color value
+
+# =======
+
+# 5 is
+# 	5 if false
+# 		"no"
+# 	5 if true
+# 		"yes"
+# 	5
+# 		"also no"

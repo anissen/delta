@@ -1,0 +1,19 @@
+script = '''
+stoplight_color = \v
+	v is
+		x if x >. 0.0
+			:red
+		x if x == 0.0
+			:yellow 4
+		_
+			:green
+first = 5.0 | stoplight_color
+second = 0.0 | stoplight_color
+third = -3.2 | stoplight_color
+
+"Lights: {first} => {second} => {third}"
+'''
+
+[output]
+result = "Lights: :red => :yellow+ => :green"
+type = "string"

@@ -1,0 +1,8 @@
+script = """
+value = 45
+:color value
+"""
+
+[output]
+result = ":color(45)"
+type = "tag"

@@ -1,0 +1,9 @@
+script = '''
+blah = \v
+	:hello v
+4 | blah
+'''
+
+[output]
+result = ":hello(4)"
+type = "tag"

@@ -1,0 +1,9 @@
+script = '''
+match = \tag
+	tag is
+		:yellow x
+			"yellow with value {x}"
+		_
+			"no match"
+(:yellow 4) | match
+'''

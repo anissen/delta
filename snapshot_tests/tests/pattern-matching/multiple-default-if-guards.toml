@@ -1,0 +1,11 @@
+script = '''
+stoplight_color = \v
+	v is
+		_ if v >. 0.0
+			:red
+		_ if v == 0.0
+			:yellow 4
+		_
+			:green
+-0.0 | stoplight_color
+'''

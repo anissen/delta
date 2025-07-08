@@ -1,0 +1,15 @@
+script = '''
+match = \tag
+	tag is
+		:red
+			"no"
+		:yellow
+			"yes"
+		_
+			"no"
+:yellow | match
+'''
+
+[output]
+result = "yes"
+type = "string"

@@ -1,0 +1,13 @@
+script = '''
+match = \tag
+	tag is
+		:yellow
+			"no"
+		:yellow 3
+			"almost"
+		:yellow 5
+			"yes"
+		_
+			"also no"
+(:yellow 5) | match
+'''
