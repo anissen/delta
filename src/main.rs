@@ -12,8 +12,35 @@ fn main() {
     let debug = args.contains(&"--debug".to_string());
     let result = delta::run_file(source_path, debug);
     match result {
-        Ok(Some(value)) => println!("\nResult: {value:?}"),
-        Ok(None) => println!("\nResult: N/A"),
+        Ok(program_result) => {
+            match program_result.value {
+                Some(value) => {
+                    println!("\nResult: {value:?}");
+                }
+                None => {
+                    println!("\nResult: N/A");
+                }
+            }
+            println!("\nExecution Metadata:");
+            println!(
+                "  Bytecode length: {}",
+                program_result.metadata.bytecode_length
+            );
+            println!(
+                "  Instructions executed: {}",
+                program_result.metadata.instructions_executed
+            );
+            println!(
+                "  Jumps performed: {}",
+                program_result.metadata.jumps_performed
+            );
+            if debug {
+                println!(
+                    "  Disassembled instructions:\n{}",
+                    program_result.metadata.disassembled_instructions
+                );
+            }
+        }
         Err(diagnostics) => {
             println!();
             let source = delta::read_file(source_path);

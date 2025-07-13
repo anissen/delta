@@ -77,7 +77,7 @@ fn process_toml_file(path: &Path) -> Result<ProcessStatus, Box<dyn std::error::E
 
     let file_name = path.file_name().unwrap().display().to_string();
 
-    let result = run_script(file_name, &script);
+    let result = run_script(file_name.clone(), &script);
 
     // Always create/replace the output section with a new empty table
     doc.insert("output".to_string(), Value::Table(Table::new()));
@@ -85,8 +85,8 @@ fn process_toml_file(path: &Path) -> Result<ProcessStatus, Box<dyn std::error::E
 
     if let Value::Table(table) = output_section {
         match result {
-            Ok(output) => {
-                let (result, result_type) = match output {
+            Ok(program_result) => {
+                let (result, result_type) = match program_result.value {
                     Some(value) => {
                         let result_type = match value {
                             delta::vm::Value::True => "boolean".to_string(),
@@ -104,6 +104,34 @@ fn process_toml_file(path: &Path) -> Result<ProcessStatus, Box<dyn std::error::E
                 };
                 table.insert("result".to_string(), Value::String(result));
                 table.insert("type".to_string(), Value::String(result_type));
+
+                // Add compiler metadata
+                let mut compiler_table = Table::new();
+                compiler_table.insert(
+                    "bytecode_length".to_string(),
+                    Value::Integer(program_result.metadata.bytecode_length as i64),
+                );
+                compiler_table.insert(
+                    "bytecode".to_string(),
+                    Value::String(format!("{:?}", program_result.metadata.bytecode)),
+                );
+                compiler_table.insert(
+                    "disassembled".to_string(),
+                    Value::String(program_result.metadata.disassembled_instructions),
+                );
+                table.insert("compiler".to_string(), Value::Table(compiler_table));
+
+                // Add VM metadata
+                let mut vm_table = Table::new();
+                vm_table.insert(
+                    "instructions_executed".to_string(),
+                    Value::Integer(program_result.metadata.instructions_executed as i64),
+                );
+                vm_table.insert(
+                    "jumps_performed".to_string(),
+                    Value::Integer(program_result.metadata.jumps_performed as i64),
+                );
+                table.insert("vm".to_string(), Value::Table(vm_table));
             }
             Err(diagnostics) => {
                 let errors = diagnostics.print(&script).join("\n\n");
@@ -124,8 +152,8 @@ fn process_toml_file(path: &Path) -> Result<ProcessStatus, Box<dyn std::error::E
 fn run_script(
     file_name: String,
     source: &str,
-) -> Result<Option<delta::vm::Value>, delta::diagnostics::Diagnostics> {
+) -> Result<delta::ProgramResult, delta::diagnostics::Diagnostics> {
     // Set a timeout?
-    delta::run(source, Some(&file_name), false)
+    delta::run(source, Some(&file_name), true)
     // TODO(anissen): Also output bytecode length, bytecode instructions, instructions executed, bytes read, (allocations?)
 }

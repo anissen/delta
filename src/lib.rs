@@ -17,6 +17,33 @@ use std::{fs::File, io::Read};
 use diagnostics::Diagnostics;
 use program::Program;
 
+#[derive(Debug, Clone)]
+pub struct ExecutionMetadata {
+    pub bytecode: Vec<u8>,
+    pub bytecode_length: usize,
+    pub disassembled_instructions: String,
+    pub instructions_executed: usize,
+    pub jumps_performed: usize,
+}
+
+impl Default for ExecutionMetadata {
+    fn default() -> Self {
+        Self {
+            bytecode: Vec::new(),
+            bytecode_length: 0,
+            disassembled_instructions: String::new(),
+            instructions_executed: 0,
+            jumps_performed: 0,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ProgramResult {
+    pub value: Option<vm::Value>,
+    pub metadata: ExecutionMetadata,
+}
+
 pub fn read_file(path: &String) -> std::io::Result<String> {
     let mut file = File::open(path)?;
     let mut source = String::new();
@@ -24,7 +51,7 @@ pub fn read_file(path: &String) -> std::io::Result<String> {
     Ok(source)
 }
 
-pub fn run_file(source_path: &String, debug: bool) -> Result<Option<vm::Value>, Diagnostics> {
+pub fn run_file(source_path: &String, debug: bool) -> Result<ProgramResult, Diagnostics> {
     let source = read_file(source_path);
     match source {
         Ok(source) => run(&source, Some(source_path), debug),
@@ -77,12 +104,11 @@ pub fn build(
     program.compile(source, debug)
 }
 
-// TODO(anissen): Make a concept of diagnostics (containing just syntax error for now)
 pub fn run(
     source: &str,
     file_name: Option<&String>,
     debug: bool,
-) -> Result<Option<vm::Value>, Diagnostics> {
+) -> Result<ProgramResult, Diagnostics> {
     let default_file_name = "n/a".to_string();
     println!(
         "\n# source (file: {}) =>",
@@ -93,14 +119,23 @@ pub fn run(
     let program = Program::new(context);
     match program.compile(source, debug) {
         Ok(bytecodes) => {
+            let mut metadata = ExecutionMetadata::default();
+            metadata.bytecode = bytecodes.clone();
+            metadata.bytecode_length = bytecodes.len();
+
             if debug {
                 println!("\n# disassembly =>");
-                disassembler::disassemble(bytecodes.clone());
+                // Generate disassembled instructions and optionally print
+                disassembler::disassemble(bytecodes.clone(), &mut metadata);
             }
 
             println!("\n# vm =>");
-            let result = program.run(bytecodes, debug);
-            Ok(result)
+            let result = program.run(bytecodes, debug, &mut metadata);
+
+            Ok(ProgramResult {
+                value: result,
+                metadata,
+            })
         }
 
         Err(diagnostics) => Err(diagnostics),

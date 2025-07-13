@@ -2,6 +2,7 @@ use std::fmt::Display;
 
 use crate::bytecodes::ByteCode;
 use crate::program::Context;
+use crate::ExecutionMetadata;
 
 // TODO(anissen): See https://github.com/brightly-salty/rox/blob/master/src/value.rs
 #[derive(Debug, Clone, PartialEq)]
@@ -52,8 +53,13 @@ pub struct VirtualMachine {
     verbose: bool,
 }
 
-pub fn run<'a>(bytes: Vec<u8>, context: &'a Context<'a>, verbose: bool) -> Option<Value> {
-    VirtualMachine::new(bytes, verbose).execute(context)
+pub fn run<'a>(
+    bytes: Vec<u8>,
+    context: &'a Context<'a>,
+    verbose: bool,
+    metadata: &mut crate::ExecutionMetadata,
+) -> Option<Value> {
+    VirtualMachine::new(bytes, verbose).execute(context, metadata)
 }
 
 impl VirtualMachine {
@@ -86,7 +92,11 @@ impl VirtualMachine {
         }
     }
 
-    pub fn execute<'a>(&mut self, context: &'a Context<'a>) -> Option<Value> {
+    pub fn execute<'a>(
+        &mut self,
+        context: &'a Context<'a>,
+        metadata: &mut ExecutionMetadata,
+    ) -> Option<Value> {
         self.read_header();
 
         if self.program_counter >= self.program.len() {
@@ -107,6 +117,7 @@ impl VirtualMachine {
         while self.program_counter < self.program.len() {
             let next = self.read_byte();
             let instruction = ByteCode::try_from(next).unwrap();
+            metadata.instructions_executed += 1;
             if self.verbose {
                 println!(
                     "\n=== Instruction: {:?} === (pc: {})",
@@ -379,6 +390,7 @@ impl VirtualMachine {
                 ByteCode::Jump => {
                     let offset = self.read_i16();
                     self.program_counter += offset as usize;
+                    metadata.jumps_performed += 1;
                 }
 
                 ByteCode::JumpIfTrue => {
@@ -387,6 +399,7 @@ impl VirtualMachine {
                     let condition = self.pop_boolean();
                     if condition {
                         self.program_counter += offset as usize;
+                        metadata.jumps_performed += 1;
                     }
                 }
 
@@ -396,6 +409,7 @@ impl VirtualMachine {
                     let condition = self.pop_boolean();
                     if !condition {
                         self.program_counter += offset as usize;
+                        metadata.jumps_performed += 1;
                     }
                 }
             }

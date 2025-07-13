@@ -194,7 +194,12 @@ impl<'a> Program<'a> {
         }
     }
 
-    pub fn run(&self, bytecodes: Vec<u8>, debug: bool) -> Option<vm::Value> {
-        vm::run(bytecodes, &self.context, debug)
+    pub fn run(
+        &self,
+        bytecodes: Vec<u8>,
+        debug: bool,
+        metadata: &mut crate::ExecutionMetadata,
+    ) -> Option<vm::Value> {
+        vm::run(bytecodes, &self.context, debug, metadata)
     }
 }
