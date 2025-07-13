@@ -128,6 +128,14 @@ impl Disassembler {
                     ]);
                 }
 
+                ByteCode::GetTagName => {
+                    self.print(vec!["get_tag_name".to_string()]);
+                }
+
+                ByteCode::GetTagPayload => {
+                    self.print(vec!["get_tag_payload".to_string()]);
+                }
+
                 ByteCode::IntegerAddition => {
                     self.print(vec!["int_add".to_string()]);
                 }

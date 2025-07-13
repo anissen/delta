@@ -37,6 +37,8 @@ pub enum ByteCode {
 
     PushSimpleTag,
     PushTag,
+    GetTagName,
+    GetTagPayload,
 
     FunctionSignature,
     FunctionChunk,
@@ -103,6 +105,8 @@ impl TryFrom<u8> for ByteCode {
 
             value if value == ByteCode::PushSimpleTag as u8 => Ok(Self::PushSimpleTag),
             value if value == ByteCode::PushTag as u8 => Ok(Self::PushTag),
+            value if value == ByteCode::GetTagName as u8 => Ok(Self::GetTagName),
+            value if value == ByteCode::GetTagPayload as u8 => Ok(Self::GetTagPayload),
 
             value if value == ByteCode::FunctionSignature as u8 => Ok(Self::FunctionSignature),
             value if value == ByteCode::FunctionChunk as u8 => Ok(Self::FunctionChunk),

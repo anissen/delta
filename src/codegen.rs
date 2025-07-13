@@ -374,6 +374,34 @@ impl<'a> Codegen<'a> {
                         IsArmPattern::Capture { identifier } => {
                             self.emit_assignment(identifier, expr, scope);
                         }
+                        IsArmPattern::CaptureTagPayload { expr, identifier } => {
+                            let tag_name = match expr {
+                                Expr::Value {
+                                    value: ValueType::Tag { name, payload },
+                                    token,
+                                } => name.lexeme.clone(),
+                                _ => unreachable!(),
+                            };
+
+                            scope
+                                .bytecode
+                                .add_op(ByteCode::GetTagName)
+                                .add_op(ByteCode::PushString)
+                                .add_string(&tag_name)
+                                .add_op(ByteCode::Equals);
+
+                            // Jump to next arm if not equal
+                            let next_arm_offset = scope.bytecode.add_jump_if_false();
+                            pattern_jump_offsets.push(next_arm_offset);
+
+                            scope.bytecode.add_op(ByteCode::GetTagPayload);
+
+                            // TODO: Is this right?!?
+                            let index = scope.locals.len() as u8;
+                            scope.environment.insert(identifier.lexeme.clone(), index);
+                            scope.locals.insert(identifier.lexeme.clone());
+                            scope.bytecode.add_set_local_value(index);
+                        }
                         IsArmPattern::Default => {
                             // No pattern matching needed for default case
                         }

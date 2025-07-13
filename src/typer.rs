@@ -342,6 +342,31 @@ impl<'env> InferenceContext<'env> {
                                 .insert(identifier.lexeme.clone(), is_type.clone());
                         }
 
+                        IsArmPattern::CaptureTagPayload { expr, identifier } => {
+                            self.expects_type(expr, is_type.clone());
+                            self.expects_type(
+                                expr,
+                                make_constructor(Type::Tag, identifier.clone()),
+                            );
+                            self.environment
+                                .variables
+                                .insert(identifier.lexeme.clone(), is_type.clone());
+                            match expr {
+                                Expr::Value {
+                                    value: ValueType::Tag { name, payload },
+                                    token,
+                                } => {
+                                    if let Some(payload_expr) = payload.as_ref() {
+                                        let payload_type = self.infer_type(payload_expr);
+                                        self.environment
+                                            .variables
+                                            .insert(name.lexeme.clone(), payload_type.clone());
+                                    }
+                                }
+                                _ => (),
+                            }
+                        }
+
                         IsArmPattern::Default => (),
                     }
 

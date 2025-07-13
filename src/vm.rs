@@ -146,6 +146,23 @@ impl VirtualMachine {
                     self.push_tag(name, value);
                 }
 
+                ByteCode::GetTagName => {
+                    let tag = self.peek_top();
+                    match tag {
+                        Value::Tag(name, _) => self.push_string(name.clone()),
+                        Value::SimpleTag(name) => self.push_string(name.clone()),
+                        _ => unreachable!(),
+                    }
+                }
+
+                ByteCode::GetTagPayload => {
+                    let tag = self.peek_top();
+                    match tag {
+                        Value::Tag(_, payload) => self.stack.push(*payload.clone()),
+                        _ => unreachable!(),
+                    }
+                }
+
                 ByteCode::IntegerAddition => {
                     let right = self.pop_integer();
                     let left = self.pop_integer();
@@ -293,7 +310,7 @@ impl VirtualMachine {
                 ByteCode::SetLocalValue => {
                     let index = self.read_byte();
                     let stack_index = self.current_call_frame().stack_index;
-                    let value = self.peek(0).clone();
+                    let value = self.peek_top().clone();
                     let actual_index = (stack_index + index) as usize;
                     if actual_index < self.stack.len() {
                         self.stack[actual_index] = value;
@@ -475,6 +492,10 @@ impl VirtualMachine {
             Value::False => false,
             _ => panic!("expected boolean, encountered some other type"),
         }
+    }
+
+    fn peek_top(&self) -> &Value {
+        self.peek(0)
     }
 
     fn peek(&self, distance: u8) -> &Value {

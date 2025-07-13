@@ -220,17 +220,43 @@ impl Parser {
                 Expr::Value {
                     value:
                         ValueType::Tag {
-                            name: _,
-                            ref payload,
+                            name: tag_name,
+                            payload,
                         },
-                    token: _,
-                } => match &**payload {
-                    Some(Expr::Identifier { name }) => IsArmPattern::Capture {
-                        identifier: name.clone(),
-                    },
-                    _ => IsArmPattern::Expression(pattern),
-                },
-                _ => IsArmPattern::Expression(pattern),
+                    token,
+                } => {
+                    if let Some(payload) = *payload {
+                        match payload {
+                            Expr::Identifier { name } => IsArmPattern::CaptureTagPayload {
+                                expr: Expr::Value {
+                                    value: ValueType::Tag {
+                                        name: tag_name,
+                                        payload: Box::new(None),
+                                    },
+                                    token,
+                                },
+                                identifier: name,
+                            },
+                            expr => IsArmPattern::Expression(Expr::Value {
+                                value: ValueType::Tag {
+                                    name: tag_name,
+                                    payload: Box::new(Some(expr)),
+                                },
+                                token,
+                            }),
+                        }
+                    } else {
+                        // Simple tag
+                        IsArmPattern::Expression(Expr::Value {
+                            value: ValueType::Tag {
+                                name: tag_name,
+                                payload: Box::new(None),
+                            },
+                            token,
+                        })
+                    }
+                }
+                _ => return Err("Error parsing pattern of `is` arm".to_string()),
             }
         } else {
             return Err("Error parsing pattern of `is` arm".to_string());

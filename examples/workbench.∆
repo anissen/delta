@@ -1,4 +1,50 @@
-x = 3.3
-x is
-    _ if x >. 0.0
-    	"yes"
+
+# read_file = \file
+# 	file is
+# 		"blah"
+# 			:ok "file contents"
+# 		_
+# 			:error "something went wrong"
+
+# result = "blah" | read_file
+# result = (:error "this is some error")
+# result is
+# 	:ok contents
+# 		"result is ok: {contents}"
+
+# match = \tag
+# 	tag is
+# 		:container x
+# 			"container with value {x}"
+# 		other
+# 			"other value: {other}"
+# (:container 4) | match
+
+# ==================
+
+# result = (:xyz "this is some other error")
+# result is
+# 	:ok "this is some error"
+# 		"result is ok with some specific content"
+# 	:ok contents
+# 		"result is ok: {contents}"
+# 	:blah
+# 		"result is blah"
+# 	:error desc
+# 		"result is error: {desc}"
+# 	x
+# 	 	"nothing matches: {x}"
+
+# ==================
+
+result = :xyz
+result is
+	:ok contents
+		"result is ok: {contents}"
+	:error desc
+		"result is error: {desc}"
+	x
+	 	"nothing matches: {x}"
+
+
+# ==================
