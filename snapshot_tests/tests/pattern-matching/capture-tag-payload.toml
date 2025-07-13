@@ -9,5 +9,5 @@ match = \tag
 '''
 
 [output]
-result = "container with value :container(4)"
+result = "container with value 4"
 type = "string"

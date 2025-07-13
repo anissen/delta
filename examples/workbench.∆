@@ -22,29 +22,29 @@
 
 # ==================
 
-# result = (:xyz "this is some other error")
-# result is
-# 	:ok "this is some error"
-# 		"result is ok with some specific content"
-# 	:ok contents
-# 		"result is ok: {contents}"
-# 	:blah
-# 		"result is blah"
-# 	:error desc
-# 		"result is error: {desc}"
-# 	x
-# 	 	"nothing matches: {x}"
-
-# ==================
-
-result = :xyz
+result = (:ok "this is some value?")
 result is
+	:ok "this is some value"
+		"result is ok with some specific content"
 	:ok contents
 		"result is ok: {contents}"
+	:blah
+		"result is blah"
 	:error desc
 		"result is error: {desc}"
 	x
 	 	"nothing matches: {x}"
 
-
 # ==================
+
+# result = :xyz
+# result is
+# 	:ok contents
+# 		"result is ok: {contents}"
+# 	:error desc
+# 		"result is error: {desc}"
+# 	x
+# 	 	"nothing matches: {x}"
+
+
+# # ==================

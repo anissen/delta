@@ -256,7 +256,7 @@ impl Parser {
                         })
                     }
                 }
-                _ => return Err("Error parsing pattern of `is` arm".to_string()),
+                _ => IsArmPattern::Expression(pattern),
             }
         } else {
             return Err("Error parsing pattern of `is` arm".to_string());

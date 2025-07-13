@@ -352,6 +352,8 @@ impl<'a> Codegen<'a> {
                     }
                 };
 
+                let locals_count = scope.locals.len() as u8;
+
                 let mut jump_to_end_offsets = vec![];
 
                 for (arm_index, arm) in arms.iter().enumerate() {
@@ -397,10 +399,10 @@ impl<'a> Codegen<'a> {
                             scope.bytecode.add_op(ByteCode::GetTagPayload);
 
                             // TODO: Is this right?!?
-                            let index = scope.locals.len() as u8;
-                            scope.environment.insert(identifier.lexeme.clone(), index);
-                            scope.locals.insert(identifier.lexeme.clone());
-                            scope.bytecode.add_set_local_value(index);
+                            scope
+                                .environment
+                                .insert(identifier.lexeme.clone(), locals_count);
+                            scope.bytecode.add_set_local_value(locals_count);
                         }
                         IsArmPattern::Default => {
                             // No pattern matching needed for default case
