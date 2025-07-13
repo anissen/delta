@@ -2,7 +2,7 @@ use crate::diagnostics::Diagnostics;
 use crate::errors::Error;
 use crate::tokens::Token;
 use std::collections::HashMap;
-use std::fmt::{self, format};
+use std::fmt::{self};
 use std::iter::zip;
 
 #[derive(PartialEq, Clone, Debug)]
@@ -39,16 +39,13 @@ impl fmt::Display for UnificationType {
                 Type::Integer => "int",
                 Type::Float => "float",
                 Type::String => "string",
-                Type::Tag {
-                    // name,
-                    // argument_count,
-                } => {
+                Type::Tag => {
                     // if *argument_count == 0 {
                     //     &format!("tag :{name}")
                     // } else {
                     //     &format!("tag :{name}({argument_count})")
                     // }
-                        &format!("tag")
+                        &"tag".to_string()
                 }
                 Type::Function => {
                     let parameters = generics[0..generics.len() - 1]

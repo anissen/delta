@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use crate::diagnostics::Diagnostics;
 use crate::errors::Error;
@@ -351,33 +351,27 @@ impl<'env> InferenceContext<'env> {
                             self.environment
                                 .variables
                                 .insert(identifier.lexeme.clone(), is_type.clone());
-                            match expr {
-                                Expr::Value {
+                            if let Expr::Value {
                                     value: ValueType::Tag { name, payload },
                                     token,
-                                } => {
-                                    if let Some(payload_expr) = payload.as_ref() {
-                                        let payload_type = self.infer_type(payload_expr);
-                                        self.environment
-                                            .variables
-                                            .insert(name.lexeme.clone(), payload_type.clone());
-                                    }
+                                } = expr {
+                                if let Some(payload_expr) = payload.as_ref() {
+                                    let payload_type = self.infer_type(payload_expr);
+                                    self.environment
+                                        .variables
+                                        .insert(name.lexeme.clone(), payload_type.clone());
                                 }
-                                _ => (),
                             }
                         }
 
                         IsArmPattern::Default => (),
                     }
 
-                    match &arm.guard {
-                        Some(IsGuard { token, condition }) => {
-                            self.expects_type(
-                                condition,
-                                make_constructor(Type::Boolean, token.clone()),
-                            );
-                        }
-                        None => {}
+                    if let Some(IsGuard { token, condition }) = &arm.guard {
+                        self.expects_type(
+                            condition,
+                            make_constructor(Type::Boolean, token.clone()),
+                        );
                     }
 
                     // TODO(anissen): Check for exhaustiveness
