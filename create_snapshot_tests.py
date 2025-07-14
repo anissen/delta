@@ -54,17 +54,17 @@ def remove_section_from_workbench(workbench_path, section_index=0):
     # Read current content
     with open(workbench_path, 'r', encoding='utf-8') as f:
         content = f.read()
-    
+
     # Split into sections again
     sections = split_into_sections_with_delimiters(content)
-    
+
     if not sections or section_index >= len(sections):
         print("No section to remove")
         return
-    
+
     # Rebuild content without the first section
     remaining_sections = sections[1:]
-    
+
     if not remaining_sections:
         # If no sections remain, write empty content
         updated_content = ""
@@ -77,15 +77,15 @@ def remove_section_from_workbench(workbench_path, section_index=0):
             updated_content += section['content']
             if not section['content'].endswith('\n'):
                 updated_content += "\n"
-    
+
     # Clean up excessive newlines
     while '\n\n\n' in updated_content:
         updated_content = updated_content.replace('\n\n\n', '\n\n')
-    
+
     # Write back to file
     with open(workbench_path, 'w', encoding='utf-8') as f:
         f.write(updated_content)
-    
+
     print(f"Removed processed section from {workbench_path}")
 
 def clean_section(section):
@@ -114,7 +114,7 @@ def create_toml_file(filepath, script_content):
     # Create directory if it doesn't exist
 
     # Create the full file path
-    actual_file_path = Path("snapshot_tests/tests/" + filepath + ".toml")
+    actual_file_path = Path("snapshots/tests/" + filepath + ".toml")
     directory_path = os.path.dirname(actual_file_path)
     Path(directory_path).mkdir(parents=True, exist_ok=True)
 
@@ -139,25 +139,25 @@ def main():
         return
 
     print(f"Reading {workbench_path}...")
-    
+
     # Process sections iteratively, removing each after processing
     section_count = 1
     while True:
         # Re-read the workbench file each time to get updated content
         content = read_workbench_file(workbench_path)
-        
+
         # Split into sections
         sections = split_into_sections_with_delimiters(content)
-        
+
         # If no sections left, we're done
         if not sections:
             print("\nNo more sections to process.")
             break
-        
+
         # Process the first section
         section = sections[0]
         cleaned_content = clean_section(section['content'])
-        
+
         # Skip empty sections
         if not cleaned_content.strip():
             print(f"\nSkipping empty section {section_count}")
@@ -165,11 +165,11 @@ def main():
             remove_section_from_workbench(workbench_path, 0)
             section_count += 1
             continue
-        
+
         print(f"\n--- Section {section_count} ---")
         print(cleaned_content)
         print("-" * 50)
-        
+
         # Ask user for directory and filename
         while True:
             user_input = input(f"Enter directory path and file name for section {section_count} (or 'q' to quit): ").strip()
@@ -180,17 +180,17 @@ def main():
                 filepath = user_input
                 break
             print("File path cannot be empty!")
-        
+
         # Create the file
         try:
             create_toml_file(filepath, cleaned_content)
-            
+
             # Remove the processed section from workbench
             remove_section_from_workbench(workbench_path, 0)
-            
+
             print(f"Successfully processed section {section_count}")
             section_count += 1
-            
+
         except Exception as e:
             print(f"Error creating file: {e}")
             continue

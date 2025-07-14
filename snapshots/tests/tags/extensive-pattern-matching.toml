@@ -1,0 +1,148 @@
+script = '''
+func = \result
+    result is
+        :ok "this is some value"
+            "result is ok with some specific content"
+        :ok contents
+            "result is ok: {contents}"
+        :blah
+            "result is blah"
+        :error desc
+            "result is error: {desc}"
+        x
+            "nothing matches: {x}"
+
+case1 = (:ok "this is some value") | func
+case2 = (:ok "this is some other value") | func
+case3 = :blah | func
+case4 = (:error "this is an error") | func
+case5a = :error | func
+case5b = (:blah "nothing here") | func
+case5c = :xyz | func
+
+"Results are: case1: {case1}, case2: {case2}, case3: {case3}, case4: {case4}, case5a: {case5a}, case5b: {case5b}, case5c: {case5c}"
+'''
+
+[output]
+result = "Results are: case1: result is ok with some specific content, case2: result is ok: this is some other value, case3: result is blah, case4: result is error: this is an error, case5a: nothing matches: :error, case5b: nothing matches: :blah(nothing here), case5c: nothing matches: :xyz"
+type = "string"
+
+[output.compiler]
+bytecode = "[31, 4, 102, 117, 110, 99, 1, 1, 80, 32, 4, 109, 97, 105, 110, 33, 0, 1, 21, 0, 26, 18, 116, 104, 105, 115, 32, 105, 115, 32, 115, 111, 109, 101, 32, 118, 97, 108, 117, 101, 28, 2, 111, 107, 35, 1, 0, 0, 4, 102, 117, 110, 99, 21, 1, 26, 24, 116, 104, 105, 115, 32, 105, 115, 32, 115, 111, 109, 101, 32, 111, 116, 104, 101, 114, 32, 118, 97, 108, 117, 101, 28, 2, 111, 107, 35, 1, 0, 0, 4, 102, 117, 110, 99, 21, 2, 27, 4, 98, 108, 97, 104, 35, 1, 0, 0, 4, 102, 117, 110, 99, 21, 3, 26, 16, 116, 104, 105, 115, 32, 105, 115, 32, 97, 110, 32, 101, 114, 114, 111, 114, 28, 5, 101, 114, 114, 111, 114, 35, 1, 0, 0, 4, 102, 117, 110, 99, 21, 4, 27, 5, 101, 114, 114, 111, 114, 35, 1, 0, 0, 4, 102, 117, 110, 99, 21, 5, 26, 12, 110, 111, 116, 104, 105, 110, 103, 32, 104, 101, 114, 101, 28, 4, 98, 108, 97, 104, 35, 1, 0, 0, 4, 102, 117, 110, 99, 21, 6, 27, 3, 120, 121, 122, 35, 1, 0, 0, 4, 102, 117, 110, 99, 21, 7, 26, 20, 82, 101, 115, 117, 108, 116, 115, 32, 97, 114, 101, 58, 32, 99, 97, 115, 101, 49, 58, 32, 20, 1, 14, 26, 9, 44, 32, 99, 97, 115, 101, 50, 58, 32, 14, 20, 2, 14, 26, 9, 44, 32, 99, 97, 115, 101, 51, 58, 32, 14, 20, 3, 14, 26, 9, 44, 32, 99, 97, 115, 101, 52, 58, 32, 14, 20, 4, 14, 26, 10, 44, 32, 99, 97, 115, 101, 53, 97, 58, 32, 14, 20, 5, 14, 26, 10, 44, 32, 99, 97, 115, 101, 53, 98, 58, 32, 14, 20, 6, 14, 26, 10, 44, 32, 99, 97, 115, 101, 53, 99, 58, 32, 14, 20, 7, 14, 26, 0, 14, 34, 32, 4, 102, 117, 110, 99, 20, 0, 26, 18, 116, 104, 105, 115, 32, 105, 115, 32, 115, 111, 109, 101, 32, 118, 97, 108, 117, 101, 28, 2, 111, 107, 17, 40, 0, 44, 26, 39, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 111, 107, 32, 119, 105, 116, 104, 32, 115, 111, 109, 101, 32, 115, 112, 101, 99, 105, 102, 105, 99, 32, 99, 111, 110, 116, 101, 110, 116, 38, 0, 140, 29, 26, 2, 111, 107, 17, 40, 0, 28, 30, 21, 1, 26, 14, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 111, 107, 58, 32, 20, 1, 14, 26, 0, 14, 38, 0, 103, 20, 0, 27, 4, 98, 108, 97, 104, 17, 40, 0, 19, 26, 14, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 98, 108, 97, 104, 38, 0, 72, 29, 26, 5, 101, 114, 114, 111, 114, 17, 40, 0, 31, 30, 21, 1, 26, 17, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 101, 114, 114, 111, 114, 58, 32, 20, 1, 14, 26, 0, 14, 38, 0, 29, 20, 0, 21, 1, 26, 17, 110, 111, 116, 104, 105, 110, 103, 32, 109, 97, 116, 99, 104, 101, 115, 58, 32, 20, 1, 14, 26, 0, 14, 34]"
+bytecode_length = 557
+disassembled = """
+0 \tfunction signature (name: func) (local count: 1) (function position: 336)
+
+9 \t=== function chunk: main ===
+15 \tfunction (function index: 0) (params: 1)
+18 \tset_value (index: 0)
+20 \tpush_string (value: 'this is some value')
+40 \tpush_tag (value: ':ok')
+44 \tcall func (is_global: 0) (arg count: 1, function index: 0)
+53 \tset_value (index: 1)
+55 \tpush_string (value: 'this is some other value')
+81 \tpush_tag (value: ':ok')
+85 \tcall func (is_global: 0) (arg count: 1, function index: 0)
+94 \tset_value (index: 2)
+96 \tpush_simple_tag (value: ':blah')
+102 \tcall func (is_global: 0) (arg count: 1, function index: 0)
+111 \tset_value (index: 3)
+113 \tpush_string (value: 'this is an error')
+131 \tpush_tag (value: ':error')
+138 \tcall func (is_global: 0) (arg count: 1, function index: 0)
+147 \tset_value (index: 4)
+149 \tpush_simple_tag (value: ':error')
+156 \tcall func (is_global: 0) (arg count: 1, function index: 0)
+165 \tset_value (index: 5)
+167 \tpush_string (value: 'nothing here')
+181 \tpush_tag (value: ':blah')
+187 \tcall func (is_global: 0) (arg count: 1, function index: 0)
+196 \tset_value (index: 6)
+198 \tpush_simple_tag (value: ':xyz')
+203 \tcall func (is_global: 0) (arg count: 1, function index: 0)
+212 \tset_value (index: 7)
+214 \tpush_string (value: 'Results are: case1: ')
+236 \tget_value (index: 1)
+238 \tstr_concat
+239 \tpush_string (value: ', case2: ')
+250 \tstr_concat
+251 \tget_value (index: 2)
+253 \tstr_concat
+254 \tpush_string (value: ', case3: ')
+265 \tstr_concat
+266 \tget_value (index: 3)
+268 \tstr_concat
+269 \tpush_string (value: ', case4: ')
+280 \tstr_concat
+281 \tget_value (index: 4)
+283 \tstr_concat
+284 \tpush_string (value: ', case5a: ')
+296 \tstr_concat
+297 \tget_value (index: 5)
+299 \tstr_concat
+300 \tpush_string (value: ', case5b: ')
+312 \tstr_concat
+313 \tget_value (index: 6)
+315 \tstr_concat
+316 \tpush_string (value: ', case5c: ')
+328 \tstr_concat
+329 \tget_value (index: 7)
+331 \tstr_concat
+332 \tpush_string (value: '')
+334 \tstr_concat
+335 \tret
+
+336 \t=== function chunk: func ===
+342 \tget_value (index: 0)
+344 \tpush_string (value: 'this is some value')
+364 \tpush_tag (value: ':ok')
+368 \teq
+369 \tjump if false (offset: 44, to byte 416)
+372 \tpush_string (value: 'result is ok with some specific content')
+413 \tjump (offset: 140, to byte 556)
+416 \tget_tag_name
+417 \tpush_string (value: 'ok')
+421 \teq
+422 \tjump if false (offset: 28, to byte 453)
+425 \tget_tag_payload
+426 \tset_value (index: 1)
+428 \tpush_string (value: 'result is ok: ')
+444 \tget_value (index: 1)
+446 \tstr_concat
+447 \tpush_string (value: '')
+449 \tstr_concat
+450 \tjump (offset: 103, to byte 556)
+453 \tget_value (index: 0)
+455 \tpush_simple_tag (value: ':blah')
+461 \teq
+462 \tjump if false (offset: 19, to byte 484)
+465 \tpush_string (value: 'result is blah')
+481 \tjump (offset: 72, to byte 556)
+484 \tget_tag_name
+485 \tpush_string (value: 'error')
+492 \teq
+493 \tjump if false (offset: 31, to byte 527)
+496 \tget_tag_payload
+497 \tset_value (index: 1)
+499 \tpush_string (value: 'result is error: ')
+518 \tget_value (index: 1)
+520 \tstr_concat
+521 \tpush_string (value: '')
+523 \tstr_concat
+524 \tjump (offset: 29, to byte 556)
+527 \tget_value (index: 0)
+529 \tset_value (index: 1)
+531 \tpush_string (value: 'nothing matches: ')
+550 \tget_value (index: 1)
+552 \tstr_concat
+553 \tpush_string (value: '')
+555 \tstr_concat
+556 \tret
+"""
+
+[output.vm]
+bytes_read = 967
+instructions_executed = 208
+jumps_performed = 22
+max_stack_height = 11
+stack_allocations = 154

@@ -159,7 +159,7 @@ impl<'a> VirtualMachine<'a> {
                     let tag = self.peek_top();
                     match tag {
                         Value::Tag(name, _) => self.push_string(name.clone()),
-                        Value::SimpleTag(name) => self.push_string(name.clone()),
+                        Value::SimpleTag(name) => self.push_string(name.clone() + "!"), // Hack to distinguish between simple and complex tags
                         _ => unreachable!(),
                     }
                 }

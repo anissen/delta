@@ -1,0 +1,62 @@
+script = """
+:xyz is
+    :ok contents
+        "result is ok: {contents}"
+    :error desc
+        "result is error: {desc}"
+    x
+        "nothing matches: {x}"
+"""
+
+[output]
+result = "nothing matches: :xyz"
+type = "string"
+
+[output.compiler]
+bytecode = "[32, 4, 109, 97, 105, 110, 27, 3, 120, 121, 122, 21, 0, 29, 26, 2, 111, 107, 17, 40, 0, 28, 30, 21, 0, 26, 14, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 111, 107, 58, 32, 20, 0, 14, 26, 0, 14, 38, 0, 75, 29, 26, 5, 101, 114, 114, 111, 114, 17, 40, 0, 31, 30, 21, 0, 26, 17, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 101, 114, 114, 111, 114, 58, 32, 20, 0, 14, 26, 0, 14, 38, 0, 32, 27, 3, 120, 121, 122, 21, 0, 26, 17, 110, 111, 116, 104, 105, 110, 103, 32, 109, 97, 116, 99, 104, 101, 115, 58, 32, 20, 0, 14, 26, 0, 14, 34]"
+bytecode_length = 126
+disassembled = """
+
+0 \t=== function chunk: main ===
+6 \tpush_simple_tag (value: ':xyz')
+11 \tset_value (index: 0)
+13 \tget_tag_name
+14 \tpush_string (value: 'ok')
+18 \teq
+19 \tjump if false (offset: 28, to byte 50)
+22 \tget_tag_payload
+23 \tset_value (index: 0)
+25 \tpush_string (value: 'result is ok: ')
+41 \tget_value (index: 0)
+43 \tstr_concat
+44 \tpush_string (value: '')
+46 \tstr_concat
+47 \tjump (offset: 75, to byte 125)
+50 \tget_tag_name
+51 \tpush_string (value: 'error')
+58 \teq
+59 \tjump if false (offset: 31, to byte 93)
+62 \tget_tag_payload
+63 \tset_value (index: 0)
+65 \tpush_string (value: 'result is error: ')
+84 \tget_value (index: 0)
+86 \tstr_concat
+87 \tpush_string (value: '')
+89 \tstr_concat
+90 \tjump (offset: 32, to byte 125)
+93 \tpush_simple_tag (value: ':xyz')
+98 \tset_value (index: 0)
+100 \tpush_string (value: 'nothing matches: ')
+119 \tget_value (index: 0)
+121 \tstr_concat
+122 \tpush_string (value: '')
+124 \tstr_concat
+125 \tret
+"""
+
+[output.vm]
+bytes_read = 68
+instructions_executed = 19
+jumps_performed = 2
+max_stack_height = 4
+stack_allocations = 14

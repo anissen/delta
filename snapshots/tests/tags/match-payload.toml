@@ -1,0 +1,57 @@
+script = '''
+match = \tag
+	tag is
+		:container x
+			"container with value {x}"
+		other
+			"other value: {other}"
+(:container 4) | match
+'''
+
+[output]
+result = "container with value 4"
+type = "string"
+
+[output.compiler]
+bytecode = "[31, 5, 109, 97, 116, 99, 104, 1, 0, 48, 32, 4, 109, 97, 105, 110, 33, 0, 1, 21, 0, 25, 0, 0, 0, 4, 28, 9, 99, 111, 110, 116, 97, 105, 110, 101, 114, 35, 1, 0, 0, 5, 109, 97, 116, 99, 104, 34, 32, 5, 109, 97, 116, 99, 104, 29, 26, 9, 99, 111, 110, 116, 97, 105, 110, 101, 114, 17, 40, 0, 35, 30, 21, 1, 26, 21, 99, 111, 110, 116, 97, 105, 110, 101, 114, 32, 119, 105, 116, 104, 32, 118, 97, 108, 117, 101, 32, 20, 1, 14, 26, 0, 14, 38, 0, 25, 20, 0, 21, 1, 26, 13, 111, 116, 104, 101, 114, 32, 118, 97, 108, 117, 101, 58, 32, 20, 1, 14, 26, 0, 14, 34]"
+bytecode_length = 132
+disassembled = """
+0 \tfunction signature (name: match) (local count: 1) (function position: 48)
+
+10 \t=== function chunk: main ===
+16 \tfunction (function index: 0) (params: 1)
+19 \tset_value (index: 0)
+21 \tpush_integer (value: 4)
+26 \tpush_tag (value: ':container')
+37 \tcall match (is_global: 0) (arg count: 1, function index: 0)
+47 \tret
+
+48 \t=== function chunk: match ===
+55 \tget_tag_name
+56 \tpush_string (value: 'container')
+67 \teq
+68 \tjump if false (offset: 35, to byte 106)
+71 \tget_tag_payload
+72 \tset_value (index: 1)
+74 \tpush_string (value: 'container with value ')
+97 \tget_value (index: 1)
+99 \tstr_concat
+100 \tpush_string (value: '')
+102 \tstr_concat
+103 \tjump (offset: 25, to byte 131)
+106 \tget_value (index: 0)
+108 \tset_value (index: 1)
+110 \tpush_string (value: 'other value: ')
+125 \tget_value (index: 1)
+127 \tstr_concat
+128 \tpush_string (value: '')
+130 \tstr_concat
+131 \tret
+"""
+
+[output.vm]
+bytes_read = 108
+instructions_executed = 21
+jumps_performed = 1
+max_stack_height = 5
+stack_allocations = 14
