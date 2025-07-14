@@ -7,3 +7,23 @@ x /. y
 [output]
 result = "0"
 type = "float"
+
+[output.compiler]
+bytecode = "[32, 4, 109, 97, 105, 110, 24, 66, 41, 51, 51, 21, 0, 24, 0, 0, 0, 0, 21, 1, 20, 0, 20, 1, 9, 34]"
+bytecode_length = 26
+disassembled = """
+
+0 \t=== function chunk: main ===
+6 \tpush_float (value: 42.3)
+11 \tset_value (index: 0)
+13 \tpush_float (value: 0)
+18 \tset_value (index: 1)
+20 \tget_value (index: 0)
+22 \tget_value (index: 1)
+24 \tfloat_div
+25 \tret
+"""
+
+[output.vm]
+instructions_executed = 9
+jumps_performed = 0

@@ -7,3 +7,23 @@ x / y
 [output]
 result = "0"
 type = "integer"
+
+[output.compiler]
+bytecode = "[32, 4, 109, 97, 105, 110, 25, 0, 0, 0, 42, 21, 0, 25, 0, 0, 0, 0, 21, 1, 20, 0, 20, 1, 2, 34]"
+bytecode_length = 26
+disassembled = """
+
+0 \t=== function chunk: main ===
+6 \tpush_integer (value: 42)
+11 \tset_value (index: 0)
+13 \tpush_integer (value: 0)
+18 \tset_value (index: 1)
+20 \tget_value (index: 0)
+22 \tget_value (index: 1)
+24 \tint_div
+25 \tret
+"""
+
+[output.vm]
+instructions_executed = 9
+jumps_performed = 0

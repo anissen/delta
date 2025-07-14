@@ -5,3 +5,19 @@ script = """
 [output]
 result = "0"
 type = "integer"
+
+[output.compiler]
+bytecode = "[32, 4, 109, 97, 105, 110, 25, 0, 0, 0, 4, 25, 0, 0, 0, 2, 4, 34]"
+bytecode_length = 18
+disassembled = """
+
+0 \t=== function chunk: main ===
+6 \tpush_integer (value: 4)
+11 \tpush_integer (value: 2)
+16 \tint_mod
+17 \tret
+"""
+
+[output.vm]
+instructions_executed = 5
+jumps_performed = 0

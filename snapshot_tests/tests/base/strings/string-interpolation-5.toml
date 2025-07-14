@@ -5,3 +5,29 @@ script = """
 [output]
 result = "result is true and true!"
 type = "string"
+
+[output.compiler]
+bytecode = "[32, 4, 109, 97, 105, 110, 26, 10, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 25, 0, 0, 0, 3, 25, 0, 0, 0, 4, 5, 14, 26, 5, 32, 97, 110, 100, 32, 14, 24, 64, 89, 153, 154, 24, 64, 144, 0, 0, 12, 14, 26, 1, 33, 14, 34]"
+bytecode_length = 55
+disassembled = """
+
+0 \t=== function chunk: main ===
+6 \tpush_string (value: 'result is ')
+18 \tpush_integer (value: 3)
+23 \tpush_integer (value: 4)
+28 \tint_lt
+29 \tstr_concat
+30 \tpush_string (value: ' and ')
+37 \tstr_concat
+38 \tpush_float (value: 3.4)
+43 \tpush_float (value: 4.5)
+48 \tfloat_lt
+49 \tstr_concat
+50 \tpush_string (value: '!')
+53 \tstr_concat
+54 \tret
+"""
+
+[output.vm]
+instructions_executed = 15
+jumps_performed = 0

@@ -19,3 +19,59 @@ res = 2 is
 [output]
 result = "result is 'oh yes'"
 type = "string"
+
+[output.compiler]
+bytecode = "[32, 4, 109, 97, 105, 110, 25, 0, 0, 0, 2, 21, 0, 20, 0, 25, 0, 0, 0, 4, 17, 40, 0, 9, 26, 4, 110, 111, 112, 101, 38, 0, 87, 20, 0, 25, 0, 0, 0, 3, 17, 40, 0, 7, 26, 2, 110, 111, 38, 0, 69, 20, 0, 25, 0, 0, 0, 2, 17, 40, 0, 38, 22, 21, 0, 20, 0, 22, 17, 40, 0, 11, 26, 6, 111, 104, 32, 121, 101, 115, 38, 0, 14, 20, 0, 23, 17, 40, 0, 7, 26, 5, 111, 104, 32, 110, 111, 38, 0, 20, 20, 0, 25, 0, 0, 0, 1, 17, 40, 0, 9, 26, 7, 97, 108, 115, 111, 32, 110, 111, 21, 0, 26, 11, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 39, 20, 0, 14, 26, 1, 39, 14, 34]"
+bytecode_length = 143
+disassembled = """
+
+0 \t=== function chunk: main ===
+6 \tpush_integer (value: 2)
+11 \tset_value (index: 0)
+13 \tget_value (index: 0)
+15 \tpush_integer (value: 4)
+20 \teq
+21 \tjump if false (offset: 9, to byte 33)
+24 \tpush_string (value: 'nope')
+30 \tjump (offset: 87, to byte 120)
+33 \tget_value (index: 0)
+35 \tpush_integer (value: 3)
+40 \teq
+41 \tjump if false (offset: 7, to byte 51)
+44 \tpush_string (value: 'no')
+48 \tjump (offset: 69, to byte 120)
+51 \tget_value (index: 0)
+53 \tpush_integer (value: 2)
+58 \teq
+59 \tjump if false (offset: 38, to byte 100)
+62 \tpush_true
+63 \tset_value (index: 0)
+65 \tget_value (index: 0)
+67 \tpush_true
+68 \teq
+69 \tjump if false (offset: 11, to byte 83)
+72 \tpush_string (value: 'oh yes')
+80 \tjump (offset: 14, to byte 97)
+83 \tget_value (index: 0)
+85 \tpush_false
+86 \teq
+87 \tjump if false (offset: 7, to byte 97)
+90 \tpush_string (value: 'oh no')
+97 \tjump (offset: 20, to byte 120)
+100 \tget_value (index: 0)
+102 \tpush_integer (value: 1)
+107 \teq
+108 \tjump if false (offset: 9, to byte 120)
+111 \tpush_string (value: 'also no')
+120 \tset_value (index: 0)
+122 \tpush_string (value: 'result is '')
+135 \tget_value (index: 0)
+137 \tstr_concat
+138 \tpush_string (value: ''')
+141 \tstr_concat
+142 \tret
+"""
+
+[output.vm]
+instructions_executed = 31
+jumps_performed = 4

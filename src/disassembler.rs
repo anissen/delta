@@ -215,7 +215,6 @@ impl Disassembler {
 
                 ByteCode::FunctionChunk => {
                     let name = self.read_string();
-                    println!();
                     let formatted = self.print(vec![format!("=== function chunk: {} ===", name)]);
                     format!("\n{}", formatted)
                 }

@@ -11,3 +11,39 @@ script = """
 [output]
 result = "yes"
 type = "string"
+
+[output.compiler]
+bytecode = "[32, 4, 109, 97, 105, 110, 25, 0, 0, 0, 5, 21, 0, 20, 0, 25, 0, 0, 0, 5, 17, 40, 0, 11, 23, 40, 0, 7, 26, 2, 110, 111, 38, 0, 43, 20, 0, 25, 0, 0, 0, 5, 17, 40, 0, 12, 22, 40, 0, 8, 26, 3, 121, 101, 115, 38, 0, 20, 20, 0, 25, 0, 0, 0, 5, 17, 40, 0, 9, 26, 7, 97, 108, 115, 111, 32, 110, 111, 34]"
+bytecode_length = 79
+disassembled = """
+
+0 \t=== function chunk: main ===
+6 \tpush_integer (value: 5)
+11 \tset_value (index: 0)
+13 \tget_value (index: 0)
+15 \tpush_integer (value: 5)
+20 \teq
+21 \tjump if false (offset: 11, to byte 35)
+24 \tpush_false
+25 \tjump if false (offset: 7, to byte 35)
+28 \tpush_string (value: 'no')
+32 \tjump (offset: 43, to byte 78)
+35 \tget_value (index: 0)
+37 \tpush_integer (value: 5)
+42 \teq
+43 \tjump if false (offset: 12, to byte 58)
+46 \tpush_true
+47 \tjump if false (offset: 8, to byte 58)
+50 \tpush_string (value: 'yes')
+55 \tjump (offset: 20, to byte 78)
+58 \tget_value (index: 0)
+60 \tpush_integer (value: 5)
+65 \teq
+66 \tjump if false (offset: 9, to byte 78)
+69 \tpush_string (value: 'also no')
+78 \tret
+"""
+
+[output.vm]
+instructions_executed = 18
+jumps_performed = 2

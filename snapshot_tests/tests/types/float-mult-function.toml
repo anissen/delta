@@ -8,3 +8,28 @@ mult_float = \x y
 [output]
 result = "21.319998"
 type = "float"
+
+[output.compiler]
+bytecode = "[31, 10, 109, 117, 108, 116, 95, 102, 108, 111, 97, 116, 2, 0, 52, 32, 4, 109, 97, 105, 110, 33, 0, 2, 21, 0, 24, 64, 131, 51, 51, 24, 64, 166, 102, 102, 35, 2, 0, 0, 10, 109, 117, 108, 116, 95, 102, 108, 111, 97, 116, 34, 32, 10, 109, 117, 108, 116, 95, 102, 108, 111, 97, 116, 20, 0, 20, 1, 10, 34]"
+bytecode_length = 70
+disassembled = """
+0 \tfunction signature (name: mult_float) (local count: 2) (function position: 52)
+
+15 \t=== function chunk: main ===
+21 \tfunction (function index: 0) (params: 2)
+24 \tset_value (index: 0)
+26 \tpush_float (value: 4.1)
+31 \tpush_float (value: 5.2)
+36 \tcall mult_float (is_global: 0) (arg count: 2, function index: 0)
+51 \tret
+
+52 \t=== function chunk: mult_float ===
+64 \tget_value (index: 0)
+66 \tget_value (index: 1)
+68 \tfloat_mult
+69 \tret
+"""
+
+[output.vm]
+instructions_executed = 12
+jumps_performed = 0

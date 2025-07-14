@@ -31,3 +31,105 @@ w = 4
 [output]
 result = "result is 13, 89 and 28"
 type = "string"
+
+[output.compiler]
+bytecode = "[31, 6, 115, 113, 117, 97, 114, 101, 1, 0, 142, 31, 5, 109, 97, 116, 99, 104, 1, 0, 156, 32, 4, 109, 97, 105, 110, 25, 0, 0, 0, 1, 21, 0, 25, 0, 0, 0, 2, 21, 1, 33, 0, 1, 21, 2, 25, 0, 0, 0, 3, 21, 3, 33, 1, 1, 21, 4, 25, 0, 0, 0, 4, 21, 5, 26, 10, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 25, 0, 0, 0, 1, 35, 1, 0, 4, 5, 109, 97, 116, 99, 104, 14, 26, 2, 44, 32, 14, 25, 0, 0, 0, 2, 35, 1, 0, 4, 5, 109, 97, 116, 99, 104, 14, 26, 5, 32, 97, 110, 100, 32, 14, 25, 0, 0, 0, 3, 35, 1, 0, 4, 5, 109, 97, 116, 99, 104, 14, 26, 0, 14, 34, 32, 6, 115, 113, 117, 97, 114, 101, 20, 0, 20, 0, 3, 34, 32, 5, 109, 97, 116, 99, 104, 25, 0, 0, 0, 2, 21, 1, 20, 0, 20, 1, 0, 21, 2, 20, 2, 25, 0, 0, 0, 3, 17, 40, 0, 15, 25, 0, 0, 0, 4, 21, 2, 20, 0, 20, 2, 0, 38, 0, 72, 20, 2, 25, 0, 0, 0, 4, 17, 40, 0, 29, 20, 0, 20, 1, 0, 25, 0, 0, 0, 5, 0, 21, 2, 20, 2, 35, 1, 1, 2, 6, 115, 113, 117, 97, 114, 101, 38, 0, 32, 20, 0, 20, 1, 0, 21, 2, 25, 0, 0, 0, 6, 21, 3, 25, 0, 0, 0, 7, 21, 4, 20, 2, 20, 1, 0, 20, 3, 0, 20, 4, 0, 21, 3, 25, 0, 0, 0, 8, 21, 4, 20, 3, 20, 4, 0, 34]"
+bytecode_length = 290
+disassembled = """
+0 \tfunction signature (name: square) (local count: 1) (function position: 142)
+11 \tfunction signature (name: match) (local count: 1) (function position: 156)
+
+21 \t=== function chunk: main ===
+27 \tpush_integer (value: 1)
+32 \tset_value (index: 0)
+34 \tpush_integer (value: 2)
+39 \tset_value (index: 1)
+41 \tfunction (function index: 0) (params: 1)
+44 \tset_value (index: 2)
+46 \tpush_integer (value: 3)
+51 \tset_value (index: 3)
+53 \tfunction (function index: 1) (params: 1)
+56 \tset_value (index: 4)
+58 \tpush_integer (value: 4)
+63 \tset_value (index: 5)
+65 \tpush_string (value: 'result is ')
+77 \tpush_integer (value: 1)
+82 \tcall match (is_global: 0) (arg count: 1, function index: 4)
+92 \tstr_concat
+93 \tpush_string (value: ', ')
+97 \tstr_concat
+98 \tpush_integer (value: 2)
+103 \tcall match (is_global: 0) (arg count: 1, function index: 4)
+113 \tstr_concat
+114 \tpush_string (value: ' and ')
+121 \tstr_concat
+122 \tpush_integer (value: 3)
+127 \tcall match (is_global: 0) (arg count: 1, function index: 4)
+137 \tstr_concat
+138 \tpush_string (value: '')
+140 \tstr_concat
+141 \tret
+
+142 \t=== function chunk: square ===
+150 \tget_value (index: 0)
+152 \tget_value (index: 0)
+154 \tint_mult
+155 \tret
+
+156 \t=== function chunk: match ===
+163 \tpush_integer (value: 2)
+168 \tset_value (index: 1)
+170 \tget_value (index: 0)
+172 \tget_value (index: 1)
+174 \tint_add
+175 \tset_value (index: 2)
+177 \tget_value (index: 2)
+179 \tpush_integer (value: 3)
+184 \teq
+185 \tjump if false (offset: 15, to byte 203)
+188 \tpush_integer (value: 4)
+193 \tset_value (index: 2)
+195 \tget_value (index: 0)
+197 \tget_value (index: 2)
+199 \tint_add
+200 \tjump (offset: 72, to byte 275)
+203 \tget_value (index: 2)
+205 \tpush_integer (value: 4)
+210 \teq
+211 \tjump if false (offset: 29, to byte 243)
+214 \tget_value (index: 0)
+216 \tget_value (index: 1)
+218 \tint_add
+219 \tpush_integer (value: 5)
+224 \tint_add
+225 \tset_value (index: 2)
+227 \tget_value (index: 2)
+229 \tcall square (is_global: 1) (arg count: 1, function index: 2)
+240 \tjump (offset: 32, to byte 275)
+243 \tget_value (index: 0)
+245 \tget_value (index: 1)
+247 \tint_add
+248 \tset_value (index: 2)
+250 \tpush_integer (value: 6)
+255 \tset_value (index: 3)
+257 \tpush_integer (value: 7)
+262 \tset_value (index: 4)
+264 \tget_value (index: 2)
+266 \tget_value (index: 1)
+268 \tint_add
+269 \tget_value (index: 3)
+271 \tint_add
+272 \tget_value (index: 4)
+274 \tint_add
+275 \tset_value (index: 3)
+277 \tpush_integer (value: 8)
+282 \tset_value (index: 4)
+284 \tget_value (index: 3)
+286 \tget_value (index: 4)
+288 \tint_add
+289 \tret
+"""
+
+[output.vm]
+instructions_executed = 127
+jumps_performed = 5

@@ -9,3 +9,27 @@ script = """
 [output]
 result = "yes"
 type = "string"
+
+[output.compiler]
+bytecode = "[32, 4, 109, 97, 105, 110, 25, 0, 0, 0, 2, 25, 0, 0, 0, 2, 0, 21, 0, 20, 0, 25, 0, 0, 0, 4, 17, 40, 0, 8, 26, 3, 121, 101, 115, 38, 0, 4, 26, 2, 110, 111, 34]"
+bytecode_length = 43
+disassembled = """
+
+0 \t=== function chunk: main ===
+6 \tpush_integer (value: 2)
+11 \tpush_integer (value: 2)
+16 \tint_add
+17 \tset_value (index: 0)
+19 \tget_value (index: 0)
+21 \tpush_integer (value: 4)
+26 \teq
+27 \tjump if false (offset: 8, to byte 38)
+30 \tpush_string (value: 'yes')
+35 \tjump (offset: 4, to byte 42)
+38 \tpush_string (value: 'no')
+42 \tret
+"""
+
+[output.vm]
+instructions_executed = 12
+jumps_performed = 1

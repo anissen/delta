@@ -8,3 +8,27 @@ is_5 = \v
 [output]
 result = "true"
 type = "boolean"
+
+[output.compiler]
+bytecode = "[31, 4, 105, 115, 95, 53, 1, 0, 35, 32, 4, 109, 97, 105, 110, 33, 0, 1, 21, 0, 25, 0, 0, 0, 5, 35, 1, 0, 0, 4, 105, 115, 95, 53, 34, 32, 4, 105, 115, 95, 53, 20, 0, 25, 0, 0, 0, 5, 17, 34]"
+bytecode_length = 50
+disassembled = """
+0 \tfunction signature (name: is_5) (local count: 1) (function position: 35)
+
+9 \t=== function chunk: main ===
+15 \tfunction (function index: 0) (params: 1)
+18 \tset_value (index: 0)
+20 \tpush_integer (value: 5)
+25 \tcall is_5 (is_global: 0) (arg count: 1, function index: 0)
+34 \tret
+
+35 \t=== function chunk: is_5 ===
+41 \tget_value (index: 0)
+43 \tpush_integer (value: 5)
+48 \teq
+49 \tret
+"""
+
+[output.vm]
+instructions_executed = 11
+jumps_performed = 0

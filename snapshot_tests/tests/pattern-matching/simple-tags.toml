@@ -13,3 +13,37 @@ match = \tag
 [output]
 result = "yes"
 type = "string"
+
+[output.compiler]
+bytecode = "[31, 5, 109, 97, 116, 99, 104, 1, 0, 40, 32, 4, 109, 97, 105, 110, 33, 0, 1, 21, 0, 27, 6, 121, 101, 108, 108, 111, 119, 35, 1, 0, 0, 5, 109, 97, 116, 99, 104, 34, 32, 5, 109, 97, 116, 99, 104, 20, 0, 27, 3, 114, 101, 100, 17, 40, 0, 7, 26, 2, 110, 111, 38, 0, 26, 20, 0, 27, 6, 121, 101, 108, 108, 111, 119, 17, 40, 0, 8, 26, 3, 121, 101, 115, 38, 0, 4, 26, 2, 110, 111, 34]"
+bytecode_length = 92
+disassembled = """
+0 \tfunction signature (name: match) (local count: 1) (function position: 40)
+
+10 \t=== function chunk: main ===
+16 \tfunction (function index: 0) (params: 1)
+19 \tset_value (index: 0)
+21 \tpush_simple_tag (value: ':yellow')
+29 \tcall match (is_global: 0) (arg count: 1, function index: 0)
+39 \tret
+
+40 \t=== function chunk: match ===
+47 \tget_value (index: 0)
+49 \tpush_simple_tag (value: ':red')
+54 \teq
+55 \tjump if false (offset: 7, to byte 65)
+58 \tpush_string (value: 'no')
+62 \tjump (offset: 26, to byte 91)
+65 \tget_value (index: 0)
+67 \tpush_simple_tag (value: ':yellow')
+75 \teq
+76 \tjump if false (offset: 8, to byte 87)
+79 \tpush_string (value: 'yes')
+84 \tjump (offset: 4, to byte 91)
+87 \tpush_string (value: 'no')
+91 \tret
+"""
+
+[output.vm]
+instructions_executed = 18
+jumps_performed = 2

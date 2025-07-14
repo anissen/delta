@@ -11,3 +11,35 @@ script = """
 [output]
 result = "yes"
 type = "string"
+
+[output.compiler]
+bytecode = "[32, 4, 109, 97, 105, 110, 25, 0, 0, 0, 2, 21, 0, 20, 0, 25, 0, 0, 0, 1, 17, 40, 0, 7, 26, 2, 110, 111, 38, 0, 39, 20, 0, 25, 0, 0, 0, 2, 17, 40, 0, 8, 26, 3, 121, 101, 115, 38, 0, 20, 20, 0, 25, 0, 0, 0, 3, 17, 40, 0, 9, 26, 7, 97, 108, 115, 111, 32, 110, 111, 34]"
+bytecode_length = 71
+disassembled = """
+
+0 \t=== function chunk: main ===
+6 \tpush_integer (value: 2)
+11 \tset_value (index: 0)
+13 \tget_value (index: 0)
+15 \tpush_integer (value: 1)
+20 \teq
+21 \tjump if false (offset: 7, to byte 31)
+24 \tpush_string (value: 'no')
+28 \tjump (offset: 39, to byte 70)
+31 \tget_value (index: 0)
+33 \tpush_integer (value: 2)
+38 \teq
+39 \tjump if false (offset: 8, to byte 50)
+42 \tpush_string (value: 'yes')
+47 \tjump (offset: 20, to byte 70)
+50 \tget_value (index: 0)
+52 \tpush_integer (value: 3)
+57 \teq
+58 \tjump if false (offset: 9, to byte 70)
+61 \tpush_string (value: 'also no')
+70 \tret
+"""
+
+[output.vm]
+instructions_executed = 14
+jumps_performed = 2

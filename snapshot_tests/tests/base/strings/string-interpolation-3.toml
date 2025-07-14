@@ -5,3 +5,23 @@ script = """
 [output]
 result = "float value is 0.3"
 type = "string"
+
+[output.compiler]
+bytecode = "[32, 4, 109, 97, 105, 110, 26, 15, 102, 108, 111, 97, 116, 32, 118, 97, 108, 117, 101, 32, 105, 115, 32, 24, 61, 204, 204, 205, 24, 62, 76, 204, 205, 7, 14, 26, 0, 14, 34]"
+bytecode_length = 39
+disassembled = """
+
+0 \t=== function chunk: main ===
+6 \tpush_string (value: 'float value is ')
+23 \tpush_float (value: 0.1)
+28 \tpush_float (value: 0.2)
+33 \tfloat_add
+34 \tstr_concat
+35 \tpush_string (value: '')
+37 \tstr_concat
+38 \tret
+"""
+
+[output.vm]
+instructions_executed = 9
+jumps_performed = 0

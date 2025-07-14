@@ -5,3 +5,35 @@ script = """
 [output]
 result = "2 * 3 == 6"
 type = "string"
+
+[output.compiler]
+bytecode = "[32, 4, 109, 97, 105, 110, 26, 0, 25, 0, 0, 0, 2, 14, 26, 3, 32, 42, 32, 14, 25, 0, 0, 0, 2, 25, 0, 0, 0, 1, 0, 14, 26, 4, 32, 61, 61, 32, 14, 25, 0, 0, 0, 2, 25, 0, 0, 0, 2, 25, 0, 0, 0, 1, 0, 3, 14, 26, 0, 14, 34]"
+bytecode_length = 61
+disassembled = """
+
+0 \t=== function chunk: main ===
+6 \tpush_string (value: '')
+8 \tpush_integer (value: 2)
+13 \tstr_concat
+14 \tpush_string (value: ' * ')
+19 \tstr_concat
+20 \tpush_integer (value: 2)
+25 \tpush_integer (value: 1)
+30 \tint_add
+31 \tstr_concat
+32 \tpush_string (value: ' == ')
+38 \tstr_concat
+39 \tpush_integer (value: 2)
+44 \tpush_integer (value: 2)
+49 \tpush_integer (value: 1)
+54 \tint_add
+55 \tint_mult
+56 \tstr_concat
+57 \tpush_string (value: '')
+59 \tstr_concat
+60 \tret
+"""
+
+[output.vm]
+instructions_executed = 21
+jumps_performed = 0

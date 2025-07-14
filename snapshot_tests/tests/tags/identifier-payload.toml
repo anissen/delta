@@ -6,3 +6,20 @@ value = 45
 [output]
 result = ":color(45)"
 type = "tag"
+
+[output.compiler]
+bytecode = "[32, 4, 109, 97, 105, 110, 25, 0, 0, 0, 45, 21, 0, 20, 0, 28, 5, 99, 111, 108, 111, 114, 34]"
+bytecode_length = 23
+disassembled = """
+
+0 \t=== function chunk: main ===
+6 \tpush_integer (value: 45)
+11 \tset_value (index: 0)
+13 \tget_value (index: 0)
+15 \tpush_tag (value: ':color')
+22 \tret
+"""
+
+[output.vm]
+instructions_executed = 6
+jumps_performed = 0

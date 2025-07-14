@@ -8,3 +8,24 @@ x is
 [output]
 result = "3"
 type = "integer"
+
+[output.compiler]
+bytecode = "[32, 4, 109, 97, 105, 110, 24, 64, 83, 51, 51, 21, 0, 20, 0, 24, 0, 0, 0, 0, 13, 19, 40, 0, 5, 25, 0, 0, 0, 3, 34]"
+bytecode_length = 31
+disassembled = """
+
+0 \t=== function chunk: main ===
+6 \tpush_float (value: 3.3)
+11 \tset_value (index: 0)
+13 \tget_value (index: 0)
+15 \tpush_float (value: 0)
+20 \tfloat_lte
+21 \tnot
+22 \tjump if false (offset: 5, to byte 30)
+25 \tpush_integer (value: 3)
+30 \tret
+"""
+
+[output.vm]
+instructions_executed = 10
+jumps_performed = 0

@@ -13,3 +13,39 @@ stoplight_color = \v
 [output]
 result = ":yellow(4)"
 type = "tag"
+
+[output.compiler]
+bytecode = "[31, 15, 115, 116, 111, 112, 108, 105, 103, 104, 116, 95, 99, 111, 108, 111, 114, 1, 0, 57, 32, 4, 109, 97, 105, 110, 33, 0, 1, 21, 0, 24, 0, 0, 0, 0, 35, 1, 0, 0, 15, 115, 116, 111, 112, 108, 105, 103, 104, 116, 95, 99, 111, 108, 111, 114, 34, 32, 15, 115, 116, 111, 112, 108, 105, 103, 104, 116, 95, 99, 111, 108, 111, 114, 20, 0, 24, 0, 0, 0, 0, 13, 19, 40, 0, 8, 27, 3, 114, 101, 100, 38, 0, 34, 20, 0, 24, 0, 0, 0, 0, 17, 40, 0, 16, 25, 0, 0, 0, 4, 28, 6, 121, 101, 108, 108, 111, 119, 38, 0, 7, 27, 5, 103, 114, 101, 101, 110, 34]"
+bytecode_length = 129
+disassembled = """
+0 \tfunction signature (name: stoplight_color) (local count: 1) (function position: 57)
+
+20 \t=== function chunk: main ===
+26 \tfunction (function index: 0) (params: 1)
+29 \tset_value (index: 0)
+31 \tpush_float (value: 0)
+36 \tcall stoplight_color (is_global: 0) (arg count: 1, function index: 0)
+56 \tret
+
+57 \t=== function chunk: stoplight_color ===
+74 \tget_value (index: 0)
+76 \tpush_float (value: 0)
+81 \tfloat_lte
+82 \tnot
+83 \tjump if false (offset: 8, to byte 94)
+86 \tpush_simple_tag (value: ':red')
+91 \tjump (offset: 34, to byte 128)
+94 \tget_value (index: 0)
+96 \tpush_float (value: 0)
+101 \teq
+102 \tjump if false (offset: 16, to byte 121)
+105 \tpush_integer (value: 4)
+110 \tpush_tag (value: ':yellow')
+118 \tjump (offset: 7, to byte 128)
+121 \tpush_simple_tag (value: ':green')
+128 \tret
+"""
+
+[output.vm]
+instructions_executed = 20
+jumps_performed = 2

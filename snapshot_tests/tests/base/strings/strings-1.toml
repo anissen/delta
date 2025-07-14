@@ -5,3 +5,17 @@ script = """
 [output]
 result = "hello world"
 type = "string"
+
+[output.compiler]
+bytecode = "[32, 4, 109, 97, 105, 110, 26, 11, 104, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100, 34]"
+bytecode_length = 20
+disassembled = """
+
+0 \t=== function chunk: main ===
+6 \tpush_string (value: 'hello world')
+19 \tret
+"""
+
+[output.vm]
+instructions_executed = 3
+jumps_performed = 0

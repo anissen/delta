@@ -5,3 +5,21 @@ script = """
 [output]
 result = "true"
 type = "boolean"
+
+[output.compiler]
+bytecode = "[32, 4, 109, 97, 105, 110, 25, 0, 0, 0, 1, 25, 0, 0, 0, 2, 0, 25, 0, 0, 0, 3, 17, 34]"
+bytecode_length = 24
+disassembled = """
+
+0 \t=== function chunk: main ===
+6 \tpush_integer (value: 1)
+11 \tpush_integer (value: 2)
+16 \tint_add
+17 \tpush_integer (value: 3)
+22 \teq
+23 \tret
+"""
+
+[output.vm]
+instructions_executed = 7
+jumps_performed = 0

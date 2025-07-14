@@ -12,3 +12,36 @@ add = \v1 v2
 [output]
 result = "yes"
 type = "string"
+
+[output.compiler]
+bytecode = "[31, 3, 97, 100, 100, 2, 0, 63, 32, 4, 109, 97, 105, 110, 33, 0, 2, 21, 0, 25, 0, 0, 0, 2, 25, 0, 0, 0, 3, 35, 2, 0, 0, 3, 97, 100, 100, 21, 1, 20, 1, 25, 0, 0, 0, 5, 17, 40, 0, 8, 26, 3, 121, 101, 115, 38, 0, 4, 26, 2, 110, 111, 34, 32, 3, 97, 100, 100, 20, 0, 20, 1, 0, 34]"
+bytecode_length = 74
+disassembled = """
+0 \tfunction signature (name: add) (local count: 2) (function position: 63)
+
+8 \t=== function chunk: main ===
+14 \tfunction (function index: 0) (params: 2)
+17 \tset_value (index: 0)
+19 \tpush_integer (value: 2)
+24 \tpush_integer (value: 3)
+29 \tcall add (is_global: 0) (arg count: 2, function index: 0)
+37 \tset_value (index: 1)
+39 \tget_value (index: 1)
+41 \tpush_integer (value: 5)
+46 \teq
+47 \tjump if false (offset: 8, to byte 58)
+50 \tpush_string (value: 'yes')
+55 \tjump (offset: 4, to byte 62)
+58 \tpush_string (value: 'no')
+62 \tret
+
+63 \t=== function chunk: add ===
+68 \tget_value (index: 0)
+70 \tget_value (index: 1)
+72 \tint_add
+73 \tret
+"""
+
+[output.vm]
+instructions_executed = 19
+jumps_performed = 1

@@ -14,3 +14,42 @@ is_odd = \v
 [output]
 result = "true"
 type = "boolean"
+
+[output.compiler]
+bytecode = "[31, 7, 105, 115, 95, 101, 118, 101, 110, 1, 0, 63, 31, 6, 105, 115, 95, 111, 100, 100, 1, 0, 87, 32, 4, 109, 97, 105, 110, 25, 0, 0, 0, 2, 21, 0, 33, 0, 1, 21, 1, 33, 1, 1, 21, 2, 25, 0, 0, 0, 5, 35, 1, 0, 2, 6, 105, 115, 95, 111, 100, 100, 34, 32, 7, 105, 115, 95, 101, 118, 101, 110, 20, 0, 25, 0, 0, 0, 2, 4, 25, 0, 0, 0, 0, 17, 34, 32, 6, 105, 115, 95, 111, 100, 100, 20, 0, 35, 1, 1, 1, 7, 105, 115, 95, 101, 118, 101, 110, 21, 1, 20, 1, 19, 34]"
+bytecode_length = 115
+disassembled = """
+0 \tfunction signature (name: is_even) (local count: 1) (function position: 63)
+12 \tfunction signature (name: is_odd) (local count: 1) (function position: 87)
+
+23 \t=== function chunk: main ===
+29 \tpush_integer (value: 2)
+34 \tset_value (index: 0)
+36 \tfunction (function index: 0) (params: 1)
+39 \tset_value (index: 1)
+41 \tfunction (function index: 1) (params: 1)
+44 \tset_value (index: 2)
+46 \tpush_integer (value: 5)
+51 \tcall is_odd (is_global: 0) (arg count: 1, function index: 2)
+62 \tret
+
+63 \t=== function chunk: is_even ===
+72 \tget_value (index: 0)
+74 \tpush_integer (value: 2)
+79 \tint_mod
+80 \tpush_integer (value: 0)
+85 \teq
+86 \tret
+
+87 \t=== function chunk: is_odd ===
+95 \tget_value (index: 0)
+97 \tcall is_even (is_global: 1) (arg count: 1, function index: 1)
+109 \tset_value (index: 1)
+111 \tget_value (index: 1)
+113 \tnot
+114 \tret
+"""
+
+[output.vm]
+instructions_executed = 24
+jumps_performed = 0

@@ -5,3 +5,23 @@ script = """
 [output]
 result = "Hello 42"
 type = "string"
+
+[output.compiler]
+bytecode = "[32, 4, 109, 97, 105, 110, 26, 6, 72, 101, 108, 108, 111, 32, 25, 0, 0, 0, 40, 25, 0, 0, 0, 2, 0, 14, 26, 0, 14, 34]"
+bytecode_length = 30
+disassembled = """
+
+0 \t=== function chunk: main ===
+6 \tpush_string (value: 'Hello ')
+14 \tpush_integer (value: 40)
+19 \tpush_integer (value: 2)
+24 \tint_add
+25 \tstr_concat
+26 \tpush_string (value: '')
+28 \tstr_concat
+29 \tret
+"""
+
+[output.vm]
+instructions_executed = 9
+jumps_performed = 0

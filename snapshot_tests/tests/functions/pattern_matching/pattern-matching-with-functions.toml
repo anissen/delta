@@ -13,3 +13,43 @@ match = \v
 [output]
 result = "result is 25"
 type = "string"
+
+[output.compiler]
+bytecode = "[31, 6, 115, 113, 117, 97, 114, 101, 1, 0, 69, 31, 5, 109, 97, 116, 99, 104, 1, 0, 83, 32, 4, 109, 97, 105, 110, 33, 0, 1, 21, 0, 33, 1, 1, 21, 1, 26, 10, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 25, 0, 0, 0, 2, 35, 1, 0, 1, 5, 109, 97, 116, 99, 104, 14, 26, 0, 14, 34, 32, 6, 115, 113, 117, 97, 114, 101, 20, 0, 20, 0, 3, 34, 32, 5, 109, 97, 116, 99, 104, 20, 0, 25, 0, 0, 0, 2, 17, 40, 0, 16, 25, 0, 0, 0, 5, 35, 1, 1, 0, 6, 115, 113, 117, 97, 114, 101, 34]"
+bytecode_length = 118
+disassembled = """
+0 \tfunction signature (name: square) (local count: 1) (function position: 69)
+11 \tfunction signature (name: match) (local count: 1) (function position: 83)
+
+21 \t=== function chunk: main ===
+27 \tfunction (function index: 0) (params: 1)
+30 \tset_value (index: 0)
+32 \tfunction (function index: 1) (params: 1)
+35 \tset_value (index: 1)
+37 \tpush_string (value: 'result is ')
+49 \tpush_integer (value: 2)
+54 \tcall match (is_global: 0) (arg count: 1, function index: 1)
+64 \tstr_concat
+65 \tpush_string (value: '')
+67 \tstr_concat
+68 \tret
+
+69 \t=== function chunk: square ===
+77 \tget_value (index: 0)
+79 \tget_value (index: 0)
+81 \tint_mult
+82 \tret
+
+83 \t=== function chunk: match ===
+90 \tget_value (index: 0)
+92 \tpush_integer (value: 2)
+97 \teq
+98 \tjump if false (offset: 16, to byte 117)
+101 \tpush_integer (value: 5)
+106 \tcall square (is_global: 1) (arg count: 1, function index: 0)
+117 \tret
+"""
+
+[output.vm]
+instructions_executed = 25
+jumps_performed = 0

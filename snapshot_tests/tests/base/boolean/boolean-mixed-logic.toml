@@ -5,3 +5,21 @@ false or (true and true)
 [output]
 result = "true"
 type = "boolean"
+
+[output.compiler]
+bytecode = "[32, 4, 109, 97, 105, 110, 23, 22, 22, 15, 16, 34]"
+bytecode_length = 12
+disassembled = """
+
+0 \t=== function chunk: main ===
+6 \tpush_false
+7 \tpush_true
+8 \tpush_true
+9 \tand
+10 \tor
+11 \tret
+"""
+
+[output.vm]
+instructions_executed = 7
+jumps_performed = 0

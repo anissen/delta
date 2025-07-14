@@ -8,3 +8,28 @@ add_one = \v
 [output]
 result = "7"
 type = "integer"
+
+[output.compiler]
+bytecode = "[31, 7, 97, 100, 100, 95, 111, 110, 101, 1, 0, 53, 32, 4, 109, 97, 105, 110, 33, 0, 1, 21, 0, 25, 0, 0, 0, 5, 35, 1, 0, 0, 7, 97, 100, 100, 95, 111, 110, 101, 35, 1, 0, 0, 7, 97, 100, 100, 95, 111, 110, 101, 34, 32, 7, 97, 100, 100, 95, 111, 110, 101, 20, 0, 25, 0, 0, 0, 1, 0, 34]"
+bytecode_length = 71
+disassembled = """
+0 \tfunction signature (name: add_one) (local count: 1) (function position: 53)
+
+12 \t=== function chunk: main ===
+18 \tfunction (function index: 0) (params: 1)
+21 \tset_value (index: 0)
+23 \tpush_integer (value: 5)
+28 \tcall add_one (is_global: 0) (arg count: 1, function index: 0)
+40 \tcall add_one (is_global: 0) (arg count: 1, function index: 0)
+52 \tret
+
+53 \t=== function chunk: add_one ===
+62 \tget_value (index: 0)
+64 \tpush_integer (value: 1)
+69 \tint_add
+70 \tret
+"""
+
+[output.vm]
+instructions_executed = 17
+jumps_performed = 0

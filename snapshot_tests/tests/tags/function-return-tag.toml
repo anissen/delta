@@ -7,3 +7,26 @@ blah = \v
 [output]
 result = ":hello(4)"
 type = "tag"
+
+[output.compiler]
+bytecode = "[31, 4, 98, 108, 97, 104, 1, 0, 35, 32, 4, 109, 97, 105, 110, 33, 0, 1, 21, 0, 25, 0, 0, 0, 4, 35, 1, 0, 0, 4, 98, 108, 97, 104, 34, 32, 4, 98, 108, 97, 104, 20, 0, 28, 5, 104, 101, 108, 108, 111, 34]"
+bytecode_length = 51
+disassembled = """
+0 \tfunction signature (name: blah) (local count: 1) (function position: 35)
+
+9 \t=== function chunk: main ===
+15 \tfunction (function index: 0) (params: 1)
+18 \tset_value (index: 0)
+20 \tpush_integer (value: 4)
+25 \tcall blah (is_global: 0) (arg count: 1, function index: 0)
+34 \tret
+
+35 \t=== function chunk: blah ===
+41 \tget_value (index: 0)
+43 \tpush_tag (value: ':hello')
+50 \tret
+"""
+
+[output.vm]
+instructions_executed = 10
+jumps_performed = 0

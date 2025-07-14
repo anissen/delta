@@ -5,3 +5,17 @@ true
 [output]
 result = "true"
 type = "boolean"
+
+[output.compiler]
+bytecode = "[32, 4, 109, 97, 105, 110, 22, 34]"
+bytecode_length = 8
+disassembled = """
+
+0 \t=== function chunk: main ===
+6 \tpush_true
+7 \tret
+"""
+
+[output.vm]
+instructions_executed = 3
+jumps_performed = 0

@@ -12,3 +12,45 @@ match = \v
 [output]
 result = "result is 9"
 type = "string"
+
+[output.compiler]
+bytecode = "[31, 5, 109, 97, 116, 99, 104, 1, 0, 53, 32, 4, 109, 97, 105, 110, 33, 0, 1, 21, 0, 26, 10, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 25, 0, 0, 0, 1, 35, 1, 0, 0, 5, 109, 97, 116, 99, 104, 14, 26, 0, 14, 34, 32, 5, 109, 97, 116, 99, 104, 25, 0, 0, 0, 3, 21, 1, 20, 0, 20, 1, 0, 21, 2, 20, 2, 25, 0, 0, 0, 4, 17, 40, 0, 15, 25, 0, 0, 0, 5, 21, 2, 20, 1, 20, 2, 0, 20, 0, 0, 34]"
+bytecode_length = 101
+disassembled = """
+0 \tfunction signature (name: match) (local count: 1) (function position: 53)
+
+10 \t=== function chunk: main ===
+16 \tfunction (function index: 0) (params: 1)
+19 \tset_value (index: 0)
+21 \tpush_string (value: 'result is ')
+33 \tpush_integer (value: 1)
+38 \tcall match (is_global: 0) (arg count: 1, function index: 0)
+48 \tstr_concat
+49 \tpush_string (value: '')
+51 \tstr_concat
+52 \tret
+
+53 \t=== function chunk: match ===
+60 \tpush_integer (value: 3)
+65 \tset_value (index: 1)
+67 \tget_value (index: 0)
+69 \tget_value (index: 1)
+71 \tint_add
+72 \tset_value (index: 2)
+74 \tget_value (index: 2)
+76 \tpush_integer (value: 4)
+81 \teq
+82 \tjump if false (offset: 15, to byte 100)
+85 \tpush_integer (value: 5)
+90 \tset_value (index: 2)
+92 \tget_value (index: 1)
+94 \tget_value (index: 2)
+96 \tint_add
+97 \tget_value (index: 0)
+99 \tint_add
+100 \tret
+"""
+
+[output.vm]
+instructions_executed = 29
+jumps_performed = 0

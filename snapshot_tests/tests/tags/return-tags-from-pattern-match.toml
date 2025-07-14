@@ -17,3 +17,63 @@ third = -3.2 | stoplight_color
 [output]
 result = "Lights: :red => :yellow(4) => :green"
 type = "string"
+
+[output.compiler]
+bytecode = "[31, 15, 115, 116, 111, 112, 108, 105, 103, 104, 116, 95, 99, 111, 108, 111, 114, 1, 0, 149, 32, 4, 109, 97, 105, 110, 33, 0, 1, 21, 0, 24, 64, 160, 0, 0, 35, 1, 0, 0, 15, 115, 116, 111, 112, 108, 105, 103, 104, 116, 95, 99, 111, 108, 111, 114, 21, 1, 24, 0, 0, 0, 0, 35, 1, 0, 0, 15, 115, 116, 111, 112, 108, 105, 103, 104, 116, 95, 99, 111, 108, 111, 114, 21, 2, 24, 192, 76, 204, 205, 35, 1, 0, 0, 15, 115, 116, 111, 112, 108, 105, 103, 104, 116, 95, 99, 111, 108, 111, 114, 21, 3, 26, 8, 76, 105, 103, 104, 116, 115, 58, 32, 20, 1, 14, 26, 4, 32, 61, 62, 32, 14, 20, 2, 14, 26, 4, 32, 61, 62, 32, 14, 20, 3, 14, 26, 0, 14, 34, 32, 15, 115, 116, 111, 112, 108, 105, 103, 104, 116, 95, 99, 111, 108, 111, 114, 20, 0, 21, 1, 20, 1, 24, 0, 0, 0, 0, 13, 19, 40, 0, 8, 27, 3, 114, 101, 100, 38, 0, 38, 20, 0, 21, 2, 20, 2, 24, 0, 0, 0, 0, 17, 40, 0, 16, 25, 0, 0, 0, 4, 28, 6, 121, 101, 108, 108, 111, 119, 38, 0, 7, 27, 5, 103, 114, 101, 101, 110, 34]"
+bytecode_length = 229
+disassembled = """
+0 \tfunction signature (name: stoplight_color) (local count: 1) (function position: 149)
+
+20 \t=== function chunk: main ===
+26 \tfunction (function index: 0) (params: 1)
+29 \tset_value (index: 0)
+31 \tpush_float (value: 5)
+36 \tcall stoplight_color (is_global: 0) (arg count: 1, function index: 0)
+56 \tset_value (index: 1)
+58 \tpush_float (value: 0)
+63 \tcall stoplight_color (is_global: 0) (arg count: 1, function index: 0)
+83 \tset_value (index: 2)
+85 \tpush_float (value: -3.2)
+90 \tcall stoplight_color (is_global: 0) (arg count: 1, function index: 0)
+110 \tset_value (index: 3)
+112 \tpush_string (value: 'Lights: ')
+122 \tget_value (index: 1)
+124 \tstr_concat
+125 \tpush_string (value: ' => ')
+131 \tstr_concat
+132 \tget_value (index: 2)
+134 \tstr_concat
+135 \tpush_string (value: ' => ')
+141 \tstr_concat
+142 \tget_value (index: 3)
+144 \tstr_concat
+145 \tpush_string (value: '')
+147 \tstr_concat
+148 \tret
+
+149 \t=== function chunk: stoplight_color ===
+166 \tget_value (index: 0)
+168 \tset_value (index: 1)
+170 \tget_value (index: 1)
+172 \tpush_float (value: 0)
+177 \tfloat_lte
+178 \tnot
+179 \tjump if false (offset: 8, to byte 190)
+182 \tpush_simple_tag (value: ':red')
+187 \tjump (offset: 38, to byte 228)
+190 \tget_value (index: 0)
+192 \tset_value (index: 2)
+194 \tget_value (index: 2)
+196 \tpush_float (value: 0)
+201 \teq
+202 \tjump if false (offset: 16, to byte 221)
+205 \tpush_integer (value: 4)
+210 \tpush_tag (value: ':yellow')
+218 \tjump (offset: 7, to byte 228)
+221 \tpush_simple_tag (value: ':green')
+228 \tret
+"""
+
+[output.vm]
+instructions_executed = 71
+jumps_performed = 5
