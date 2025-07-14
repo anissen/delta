@@ -131,6 +131,18 @@ fn process_toml_file(path: &Path) -> Result<ProcessStatus, Box<dyn std::error::E
                     "jumps_performed".to_string(),
                     Value::Integer(program_result.metadata.jumps_performed as i64),
                 );
+                vm_table.insert(
+                    "bytes_read".to_string(),
+                    Value::Integer(program_result.metadata.bytes_read as i64),
+                );
+                vm_table.insert(
+                    "stack_allocations".to_string(),
+                    Value::Integer(program_result.metadata.stack_allocations as i64),
+                );
+                vm_table.insert(
+                    "max_stack_height".to_string(),
+                    Value::Integer(program_result.metadata.max_stack_height as i64),
+                );
                 table.insert("vm".to_string(), Value::Table(vm_table));
             }
             Err(diagnostics) => {

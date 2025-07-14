@@ -44,26 +44,27 @@ struct CallFrame {
     stack_index: u8,
 }
 
-pub struct VirtualMachine {
+pub struct VirtualMachine<'a> {
     program: Vec<u8>,
     program_counter: usize,
     functions: Vec<FunctionObj>,
     stack: Vec<Value>,
     call_stack: Vec<CallFrame>,
     verbose: bool,
+    metadata: &'a mut ExecutionMetadata,
 }
 
 pub fn run<'a>(
     bytes: Vec<u8>,
     context: &'a Context<'a>,
     verbose: bool,
-    metadata: &mut crate::ExecutionMetadata,
+    metadata: &'a mut crate::ExecutionMetadata,
 ) -> Option<Value> {
-    VirtualMachine::new(bytes, verbose).execute(context, metadata)
+    VirtualMachine::new(bytes, verbose, metadata).execute(context)
 }
 
-impl VirtualMachine {
-    fn new(bytes: Vec<u8>, verbose: bool) -> Self {
+impl<'a> VirtualMachine<'a> {
+    fn new(bytes: Vec<u8>, verbose: bool, metadata: &'a mut ExecutionMetadata) -> Self {
         Self {
             program: bytes,
             program_counter: 0,
@@ -71,6 +72,7 @@ impl VirtualMachine {
             stack: Vec::new(),
             call_stack: Vec::new(),
             verbose,
+            metadata,
         }
     }
 
@@ -92,11 +94,7 @@ impl VirtualMachine {
         }
     }
 
-    pub fn execute<'a>(
-        &mut self,
-        context: &'a Context<'a>,
-        metadata: &mut ExecutionMetadata,
-    ) -> Option<Value> {
+    pub fn execute(&mut self, context: &Context) -> Option<Value> {
         self.read_header();
 
         if self.program_counter >= self.program.len() {
@@ -117,7 +115,7 @@ impl VirtualMachine {
         while self.program_counter < self.program.len() {
             let next = self.read_byte();
             let instruction = ByteCode::try_from(next).unwrap();
-            metadata.instructions_executed += 1;
+            self.metadata.instructions_executed += 1;
             if self.verbose {
                 println!(
                     "\n=== Instruction: {:?} === (pc: {})",
@@ -127,13 +125,13 @@ impl VirtualMachine {
                 println!("Stack: {:?}", self.stack);
             }
             match instruction {
-                ByteCode::PushTrue => self.stack.push(Value::True),
+                ByteCode::PushTrue => self.push_value(Value::True),
 
-                ByteCode::PushFalse => self.stack.push(Value::False),
+                ByteCode::PushFalse => self.push_value(Value::False),
 
                 ByteCode::PushInteger => {
                     let value = self.read_i32();
-                    self.stack.push(Value::Integer(value));
+                    self.push_value(Value::Integer(value));
                 }
 
                 ByteCode::PushFloat => {
@@ -169,7 +167,7 @@ impl VirtualMachine {
                 ByteCode::GetTagPayload => {
                     let tag = self.peek_top();
                     match tag {
-                        Value::Tag(_, payload) => self.stack.push(*payload.clone()),
+                        Value::Tag(_, payload) => self.push_value(*payload.clone()),
                         _ => unreachable!(),
                     }
                 }
@@ -308,14 +306,14 @@ impl VirtualMachine {
                         .get((stack_index + index) as usize)
                         .unwrap()
                         .clone();
-                    self.stack.push(value);
+                    self.push_value(value);
                 }
 
                 ByteCode::GetForeignValue => {
                     let name = self.read_string();
                     let value = context.get_value(&name);
 
-                    self.stack.push(value);
+                    self.push_value(value);
                 }
 
                 ByteCode::SetLocalValue => {
@@ -326,7 +324,7 @@ impl VirtualMachine {
                     if actual_index < self.stack.len() {
                         self.stack[actual_index] = value;
                     } else if actual_index == self.stack.len() {
-                        self.stack.push(value);
+                        self.push_value(value);
                     } else {
                         panic!("Trying to set local value outside stack size");
                     }
@@ -347,7 +345,7 @@ impl VirtualMachine {
                     let function_index = self.read_byte();
                     self.read_byte(); // arity
 
-                    self.stack.push(Value::Function(function_index));
+                    self.push_value(Value::Function(function_index));
                 }
 
                 ByteCode::Return => {
@@ -384,13 +382,13 @@ impl VirtualMachine {
                     let result = context.call_function(&name, &function_stack); // TODO(anissen): Should use index instead
                     self.discard(arity); // TODO(anissen): This should not be necessary. I would expect pop_many to mutate the stack
 
-                    self.stack.push(result);
+                    self.push_value(result);
                 }
 
                 ByteCode::Jump => {
                     let offset = self.read_i16();
                     self.program_counter += offset as usize;
-                    metadata.jumps_performed += 1;
+                    self.metadata.jumps_performed += 1;
                 }
 
                 ByteCode::JumpIfTrue => {
@@ -399,7 +397,7 @@ impl VirtualMachine {
                     let condition = self.pop_boolean();
                     if condition {
                         self.program_counter += offset as usize;
-                        metadata.jumps_performed += 1;
+                        self.metadata.jumps_performed += 1;
                     }
                 }
 
@@ -409,7 +407,7 @@ impl VirtualMachine {
                     let condition = self.pop_boolean();
                     if !condition {
                         self.program_counter += offset as usize;
-                        metadata.jumps_performed += 1;
+                        self.metadata.jumps_performed += 1;
                     }
                 }
             }
@@ -443,7 +441,7 @@ impl VirtualMachine {
         self.discard(self.stack.len() as u8 - self.current_call_frame().stack_index);
 
         // Push the return value
-        self.stack.push(result);
+        self.push_value(result);
 
         self.program_counter = self.current_call_frame().return_program_counter;
 
@@ -451,9 +449,16 @@ impl VirtualMachine {
     }
 
     // TODO(anissen): All the function below should be part of the CallFrame impl instead (see https://craftinginterpreters.com/calls-and-functions.html @ "We’ll start at the top and plow through it.")
+
+    // Private helper method to track bytes read in metadata
+    fn track_bytes_read(&mut self, bytes: usize) {
+        self.metadata.bytes_read += bytes;
+    }
+
     fn read_byte(&mut self) -> u8 {
         let byte = self.program[self.program_counter];
         self.program_counter += 1;
+        self.track_bytes_read(1);
         byte
     }
 
@@ -462,6 +467,7 @@ impl VirtualMachine {
             .try_into()
             .unwrap();
         self.program_counter += 2;
+        self.track_bytes_read(2);
         value_bytes
     }
 
@@ -470,6 +476,7 @@ impl VirtualMachine {
             .try_into()
             .unwrap();
         self.program_counter += 4;
+        self.track_bytes_read(4);
         value_bytes
     }
 
@@ -497,6 +504,7 @@ impl VirtualMachine {
         let bytes: Vec<u8> =
             self.program[self.program_counter..self.program_counter + length].into();
         self.program_counter += length;
+        self.track_bytes_read(length);
         String::from_utf8(bytes).unwrap()
     }
 
@@ -541,7 +549,7 @@ impl VirtualMachine {
 
     fn push_boolean(&mut self, value: bool) {
         let v = if value { Value::True } else { Value::False };
-        self.stack.push(v);
+        self.push_value(v);
     }
 
     fn pop_integer(&mut self) -> i32 {
@@ -558,24 +566,37 @@ impl VirtualMachine {
         }
     }
 
+    // Private helper method to track stack operations in metadata
+    fn track_stack_push(&mut self) {
+        self.metadata.stack_allocations += 1;
+        if self.stack.len() > self.metadata.max_stack_height {
+            self.metadata.max_stack_height = self.stack.len();
+        }
+    }
+
+    fn push_value(&mut self, value: Value) {
+        self.stack.push(value);
+        self.track_stack_push();
+    }
+
     fn push_float(&mut self, value: f32) {
-        self.stack.push(Value::Float(value));
+        self.push_value(Value::Float(value));
     }
 
     fn push_integer(&mut self, value: i32) {
-        self.stack.push(Value::Integer(value));
+        self.push_value(Value::Integer(value));
     }
 
     fn push_string(&mut self, value: String) {
-        self.stack.push(Value::String(value));
+        self.push_value(Value::String(value));
     }
 
     fn push_simple_tag(&mut self, name: String) {
-        self.stack.push(Value::SimpleTag(name));
+        self.push_value(Value::SimpleTag(name));
     }
 
     fn push_tag(&mut self, name: String, payload: Value) {
-        self.stack.push(Value::Tag(name, Box::new(payload)));
+        self.push_value(Value::Tag(name, Box::new(payload)));
     }
 
     fn string_concat_values(&self, left: String, right: Value) -> String {

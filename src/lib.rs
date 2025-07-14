@@ -24,6 +24,9 @@ pub struct ExecutionMetadata {
     pub disassembled_instructions: String,
     pub instructions_executed: usize,
     pub jumps_performed: usize,
+    pub bytes_read: usize,
+    pub stack_allocations: usize,
+    pub max_stack_height: usize,
 }
 
 impl Default for ExecutionMetadata {
@@ -34,6 +37,9 @@ impl Default for ExecutionMetadata {
             disassembled_instructions: String::new(),
             instructions_executed: 0,
             jumps_performed: 0,
+            bytes_read: 0,
+            stack_allocations: 0,
+            max_stack_height: 0,
         }
     }
 }

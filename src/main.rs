@@ -34,6 +34,15 @@ fn main() {
                 "  Jumps performed: {}",
                 program_result.metadata.jumps_performed
             );
+            println!("  Bytes read: {}", program_result.metadata.bytes_read);
+            println!(
+                "  Stack allocations: {}",
+                program_result.metadata.stack_allocations
+            );
+            println!(
+                "  Max stack height: {}",
+                program_result.metadata.max_stack_height
+            );
             if debug {
                 println!(
                     "  Disassembled instructions:\n{}",

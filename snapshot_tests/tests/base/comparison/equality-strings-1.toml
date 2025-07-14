@@ -19,5 +19,8 @@ disassembled = """
 """
 
 [output.vm]
+bytes_read = 25
 instructions_executed = 5
 jumps_performed = 0
+max_stack_height = 2
+stack_allocations = 4
