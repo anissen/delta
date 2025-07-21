@@ -6,7 +6,7 @@ use crate::expressions::BooleanOperations;
 use crate::expressions::Comparisons;
 use crate::expressions::EqualityOperations;
 use crate::expressions::Expr;
-use crate::expressions::ExprWithPosition;
+
 use crate::expressions::IsArm;
 use crate::expressions::IsArmPattern;
 use crate::expressions::IsGuard;
@@ -484,15 +484,12 @@ impl Parser {
     }
 
     // call_with_first_arg → IDENTIFIER primary*
-    fn call_with_first_arg(&mut self, expr: Expr, token: Token) -> Result<Option<Expr>, String> {
+    fn call_with_first_arg(&mut self, expr: Expr, _token: Token) -> Result<Option<Expr>, String> {
         self.consume(&Identifier)?;
         let previous = self.previous();
         // TODO(anissen): Check that function name exists and is a function
         let first_arg = expr;
-        let mut args = vec![ExprWithPosition {
-            expr: first_arg,
-            position: token.position,
-        }];
+        let mut args = vec![first_arg];
         // TODO(anissen): Checking for string concatenation here does not feel right
         while !self.is_at_end()
             && !self.check(&NewLine)
@@ -502,10 +499,7 @@ impl Parser {
         {
             let arg = self.primary()?; // precedence after string concatenation
             if let Some(arg) = arg {
-                args.push(ExprWithPosition {
-                    expr: arg,
-                    position: self.previous().position,
-                });
+                args.push(arg);
             }
         }
         let call_expr = Expr::Call {

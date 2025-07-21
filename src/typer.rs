@@ -217,7 +217,7 @@ impl<'env> InferenceContext<'env> {
             Expr::Call { name, args } => {
                 let argument_types = args
                     .iter()
-                    .map(|arg| self.infer_type(&arg.expr))
+                    .map(|arg| self.infer_type(arg))
                     .collect::<Vec<UnificationType>>();
                 let return_type = self.type_placeholder();
 
@@ -352,9 +352,10 @@ impl<'env> InferenceContext<'env> {
                                 .variables
                                 .insert(identifier.lexeme.clone(), is_type.clone());
                             if let Expr::Value {
-                                    value: ValueType::Tag { name, payload },
-                                    token,
-                                } = expr {
+                                value: ValueType::Tag { name, payload },
+                                token,
+                            } = expr
+                            {
                                 if let Some(payload_expr) = payload.as_ref() {
                                     let payload_type = self.infer_type(payload_expr);
                                     self.environment

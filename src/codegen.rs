@@ -175,10 +175,7 @@ impl<'a> Codegen<'a> {
             Expr::Call { name, args } => {
                 let lexeme = &name.lexeme;
                 let arg_count = args.len();
-                // let arg_exprs = args.iter().map(|arg| arg.expr).collect::<Vec<Expr>>();
-                for arg in args {
-                    self.emit_expr(&arg.expr, scope);
-                }
+                self.emit_exprs(args, scope);
 
                 if self.context.has_function(lexeme) {
                     // TODO(anissen): Maybe this should be its own Expr instead?

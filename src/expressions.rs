@@ -1,4 +1,4 @@
-use crate::tokens::{Position, Token};
+use crate::tokens::Token;
 
 #[derive(Debug)]
 pub enum ValueType {
@@ -17,12 +17,6 @@ pub enum ValueType {
 }
 
 #[derive(Debug)]
-pub struct ExprWithPosition {
-    pub expr: Expr,
-    pub position: Position,
-}
-
-#[derive(Debug)]
 pub enum Expr {
     Identifier {
         name: Token,
@@ -34,7 +28,7 @@ pub enum Expr {
     },
     Call {
         name: Token,
-        args: Vec<ExprWithPosition>, // TODO(anissen): Should arguments be named? E.g. `square value:5`.
+        args: Vec<Expr>, // TODO(anissen): Should arguments be named? E.g. `square value:5`.
     },
     // ForeignCall {
     //     name: String,
