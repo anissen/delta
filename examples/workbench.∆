@@ -1,22 +1,13 @@
-func = \result
-    result is
-        :ok "this is some value"
-            "result is ok with some specific content"
-        :ok contents
-            "result is ok: {contents}"
-        :blah
-            "result is blah"
-        :error desc
-            "result is error: {desc}"
-        x
-            "nothing matches: {x}"
+# func = \v
+#     :ok (40 + v)
 
-case1 = (:ok "this is some value") | func
-case2 = (:ok "this is some other value") | func
-case3 = :blah | func
-case4 = (:error "this is an error") | func
-case5a = :error | func
-case5b = (:blah "nothing here") | func
-case5c = :xyz | func
+# 2 | func
 
-"Results are: case1: {case1}, case2: {case2}, case3: {case3}, case4: {case4}, case5a: {case5a}, case5b: {case5b}, case5c: {case5c}"
+match = \v
+	v is
+		:ok v
+			"result is {v}"
+		:err
+			"an error occurred"
+
+(:ok 42) | match
