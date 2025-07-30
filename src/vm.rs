@@ -35,6 +35,7 @@ impl Display for Value {
 
 #[derive(Debug, Clone)]
 struct FunctionObj {
+    name: String,
     ip: u32,
 }
 
@@ -56,11 +57,12 @@ pub struct VirtualMachine<'a> {
 
 pub fn run<'a>(
     bytes: Vec<u8>,
+    function_name: Option<String>,
     context: &'a Context<'a>,
     verbose: bool,
     metadata: &'a mut crate::ExecutionMetadata,
 ) -> Option<Value> {
-    VirtualMachine::new(bytes, verbose, metadata).execute(context)
+    VirtualMachine::new(bytes, verbose, metadata).execute(function_name, context)
 }
 
 impl<'a> VirtualMachine<'a> {
@@ -84,17 +86,18 @@ impl<'a> VirtualMachine<'a> {
 
     fn read_functions(&mut self) {
         while let Ok(ByteCode::FunctionSignature) = ByteCode::try_from(self.read_byte()) {
-            let _name = self.read_string();
+            let name = self.read_string();
             let _local_count = self.read_byte();
             let function_position = self.read_i16();
 
             self.functions.push(FunctionObj {
+                name,
                 ip: function_position as u32,
             });
         }
     }
 
-    pub fn execute(&mut self, context: &Context) -> Option<Value> {
+    pub fn execute(&mut self, function: Option<String>, context: &Context) -> Option<Value> {
         self.read_header();
 
         if self.program_counter >= self.program.len() {
@@ -105,12 +108,20 @@ impl<'a> VirtualMachine<'a> {
 
         // Construct an initial call frame for the top-level code.
         self.program_counter = self.program.len(); // Set return IP to EOF.
-        self.call(
-            FunctionObj {
+
+        let function_to_execute = match function {
+            Some(function_name) => self
+                .functions
+                .iter()
+                .find(|f| f.name == function_name)
+                .unwrap()
+                .clone(),
+            None => FunctionObj {
+                name: "<main>".to_string(),
                 ip: main_start as u32,
             },
-            0,
-        );
+        };
+        self.call(function_to_execute, 0);
 
         while self.program_counter < self.program.len() {
             let next = self.read_byte();

@@ -200,6 +200,22 @@ impl<'a> Program<'a> {
         debug: bool,
         metadata: &mut crate::ExecutionMetadata,
     ) -> Option<vm::Value> {
-        vm::run(bytecodes, &self.context, debug, metadata)
+        vm::run(bytecodes, None, &self.context, debug, metadata)
+    }
+
+    pub fn run_function(
+        &self,
+        bytecodes: Vec<u8>,
+        function_name: String,
+        debug: bool,
+        metadata: &mut crate::ExecutionMetadata,
+    ) -> Option<vm::Value> {
+        vm::run(
+            bytecodes,
+            Some(function_name),
+            &self.context,
+            debug,
+            metadata,
+        )
     }
 }
