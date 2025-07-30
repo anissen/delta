@@ -110,13 +110,17 @@ fn get_error_line(source: &str, token: &Token) -> String {
         return String::new();
     }
 
-    let line = lines[position.line - 1].replace('\t', " ");
+    let line = lines[position.line - 1];
     let mut result = String::new();
     result.push_str(&line);
     result.push('\n');
 
     // Add spaces up to the error column
-    result.push_str(&" ".repeat(position.column - 1));
+    let line_whitespace_ending = line.find(|c: char| !c.is_ascii_whitespace());
+    let original_whitespace = &line[0..line_whitespace_ending.unwrap()];
+    let extra_spaces = &" ".repeat(position.column - original_whitespace.len() - 1);
+    result.push_str(original_whitespace);
+    result.push_str(extra_spaces);
 
     // Add the caret indicators
     result.push_str(&"^".repeat(token.lexeme.len()));
