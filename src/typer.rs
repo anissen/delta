@@ -13,12 +13,12 @@ use crate::unification::{make_constructor, unify, Type, TypeVariable, Unificatio
 // https://github.com/abs0luty/type_inference_in_rust/blob/main/src/main.rs
 
 pub fn type_check<'a>(
-    expressions: &'a Vec<Expr>,
+    expression: &'a Expr,
     context: &'a Context<'a>,
     diagnostics: &mut Diagnostics,
 ) {
     let mut typer = Typer::new(context, diagnostics);
-    typer.type_exprs(expressions);
+    typer.type_expr(expression);
 }
 
 pub struct Typer<'a> {
@@ -34,7 +34,7 @@ impl<'a> Typer<'a> {
         }
     }
 
-    fn type_exprs(&mut self, expressions: &'a Vec<Expr>) {
+    fn type_expr(&mut self, expression: &'a Expr) {
         let mut environment = Environment::new();
 
         let no_position = Position { line: 0, column: 0 }; // TODO(anissen): Get proper position
@@ -121,9 +121,7 @@ impl<'a> Typer<'a> {
 
         let mut context = InferenceContext::new(&mut environment, self.diagnostics);
 
-        for expression in expressions {
-            context.infer_type(expression);
-        }
+        context.infer_type(expression);
 
         context.solve();
     }

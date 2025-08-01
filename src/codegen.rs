@@ -48,11 +48,8 @@ pub struct Codegen<'a> {
     diagnostics: Diagnostics,
 }
 
-pub fn codegen<'a>(
-    expressions: &'a Vec<Expr>,
-    context: &'a Context<'a>,
-) -> Result<Vec<u8>, Diagnostics> {
-    Codegen::new(context).emit(expressions)
+pub fn codegen<'a>(expression: &'a Expr, context: &'a Context<'a>) -> Result<Vec<u8>, Diagnostics> {
+    Codegen::new(context).emit(expression)
 }
 
 // TODO(anissen): Add a function overview mapping for each scope containing { name, arity, starting IP, source line number  }.
@@ -530,14 +527,14 @@ impl<'a> Codegen<'a> {
         self.function_chunks[function_chunk_index].bytes = scope.bytecode.bytes.clone();
     }
 
-    pub fn emit(&mut self, expressions: &'a Vec<Expr>) -> Result<Vec<u8>, Diagnostics> {
+    pub fn emit(&mut self, expression: &'a Expr) -> Result<Vec<u8>, Diagnostics> {
         let mut scope = Scope::new();
         scope
             .bytecode
             .add_op(ByteCode::FunctionChunk)
             .add_string("main");
 
-        self.emit_exprs(expressions, &mut scope);
+        self.emit_expr(expression, &mut scope);
         scope.bytecode.add_op(ByteCode::Return); // TODO(anissen): I may not need this, because I know the function bytecode length
 
         if !self.diagnostics.has_errors() {

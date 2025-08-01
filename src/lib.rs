@@ -18,6 +18,7 @@ use diagnostics::Diagnostics;
 use program::Program;
 
 #[derive(Debug, Clone)]
+#[derive(Default)]
 pub struct ExecutionMetadata {
     pub bytecode: Vec<u8>,
     pub bytecode_length: usize,
@@ -29,20 +30,6 @@ pub struct ExecutionMetadata {
     pub max_stack_height: usize,
 }
 
-impl Default for ExecutionMetadata {
-    fn default() -> Self {
-        Self {
-            bytecode: Vec::new(),
-            bytecode_length: 0,
-            disassembled_instructions: String::new(),
-            instructions_executed: 0,
-            jumps_performed: 0,
-            bytes_read: 0,
-            stack_allocations: 0,
-            max_stack_height: 0,
-        }
-    }
-}
 
 #[derive(Debug, Clone)]
 pub struct ProgramResult {

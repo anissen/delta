@@ -72,7 +72,7 @@ impl Disassembler {
 
     fn print(&mut self, values: Vec<String>) -> String {
         let formatted = format!("{} \t{}\n", self.last_program_counter, values.join(" "));
-        print!("{}", formatted);
+        print!("{formatted}");
         formatted
     }
 
@@ -216,7 +216,7 @@ impl Disassembler {
                 ByteCode::FunctionChunk => {
                     let name = self.read_string();
                     let formatted = self.print(vec![format!("=== function chunk: {} ===", name)]);
-                    format!("\n{}", formatted)
+                    format!("\n{formatted}")
                 }
 
                 ByteCode::Function => {

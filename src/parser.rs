@@ -54,7 +54,7 @@ struct Parser {
     indentation: u8,
 }
 
-pub fn parse(tokens: Vec<Token>) -> Result<Vec<Expr>, Diagnostics> {
+pub fn parse(tokens: Vec<Token>) -> Result<Expr, Diagnostics> {
     Parser::new(tokens).parse()
 }
 
@@ -78,7 +78,7 @@ impl Parser {
         }
     }
 
-    fn parse(&mut self) -> Result<Vec<Expr>, Diagnostics> {
+    fn parse(&mut self) -> Result<Expr, Diagnostics> {
         let mut diagnostics = Diagnostics::new();
         let mut expressions = Vec::new();
         loop {
@@ -109,7 +109,7 @@ impl Parser {
             }
         }
         if !diagnostics.has_errors() {
-            Ok(expressions)
+            Ok(Expr::Block { exprs: expressions })
         } else {
             Err(diagnostics)
         }
