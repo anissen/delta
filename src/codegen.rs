@@ -121,6 +121,10 @@ impl<'a> Codegen<'a> {
                 }
             }
 
+            Expr::ContextIdentifier { name } => {
+                scope.bytecode.add_get_context_value(&name.lexeme);
+            }
+
             Expr::Value {
                 value: ValueType::String(str),
                 token: _,
@@ -209,12 +213,18 @@ impl<'a> Codegen<'a> {
             }
 
             Expr::Assignment {
-                name,
+                target,
                 _operator: _,
                 expr,
-            } => {
-                self.emit_assignment(name, expr, scope);
-            }
+            } => match **target {
+                Expr::Identifier { ref name } => self.emit_assignment(name, expr, scope),
+                Expr::ContextIdentifier { ref name } => {
+                    self.emit_expr(expr, scope);
+                    scope.bytecode.add_set_context_value(&name.lexeme);
+                }
+
+                _ => panic!("Invalid assignment target"),
+            },
 
             Expr::Unary {
                 operator,
@@ -677,6 +687,14 @@ impl BytecodeBuilder {
 
     fn add_get_local_value(&mut self, index: u8) -> &mut Self {
         self.add_op(ByteCode::GetLocalValue).add_byte(index)
+    }
+
+    fn add_get_context_value(&mut self, name: &str) -> &mut Self {
+        self.add_op(ByteCode::GetContextValue).add_string(name)
+    }
+
+    fn add_set_context_value(&mut self, name: &str) -> &mut Self {
+        self.add_op(ByteCode::SetContextValue).add_string(name)
     }
 
     fn patch_jump_to_current_byte(&mut self, byte_offset: usize) {

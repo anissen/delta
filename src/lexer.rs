@@ -96,6 +96,8 @@ impl Lexer {
             '=' => TokenKind::Equal,
             '#' => self.comment(),
             '|' => TokenKind::Pipe,
+            '∆' => TokenKind::Context,
+            '.' => TokenKind::Dot,
             '(' => TokenKind::LeftParen,
             ')' => TokenKind::RightParen,
             '{' => TokenKind::LeftBrace,
@@ -133,6 +135,8 @@ impl Lexer {
             _ if self.match_keyword("if") => TokenKind::KeywordIf,
             _ if self.match_keyword("and") => TokenKind::KeywordAnd,
             _ if self.match_keyword("or") => TokenKind::KeywordOr,
+            // '∆' if self.matches('.') && self.is_letter(self.peek()) => self.context_value(), // TODO(anissen): Key-value pair, e.g. ∆.x = y
+            // '∆' => self.identifier(), // TODO(anissen): Named context, e.g. ∆x or ∆x.y
             c if self.is_letter(c) => self.identifier(),
             _ => TokenKind::SyntaxError("Unexpected token"),
         }
@@ -172,6 +176,16 @@ impl Lexer {
             "false" => TokenKind::False,
             _ => TokenKind::Identifier,
         }
+    }
+
+    fn context_value(&mut self) -> TokenKind {
+        while !self.is_at_end()
+            && (self.is_letter(self.peek()) || self.is_digit(self.peek()) || self.peek() == '_')
+        {
+            self.advance();
+        }
+
+        TokenKind::Identifier
     }
 
     fn match_keyword(&mut self, keyword: &str) -> bool {

@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fmt::Display;
 
 use crate::bytecodes::ByteCode;
@@ -53,6 +54,7 @@ pub struct VirtualMachine<'a> {
     call_stack: Vec<CallFrame>,
     verbose: bool,
     metadata: &'a mut ExecutionMetadata,
+    world_context: HashMap<String, Value>, // TODO(anissen): Find a better name
 }
 
 pub fn run<'a>(
@@ -75,6 +77,7 @@ impl<'a> VirtualMachine<'a> {
             call_stack: Vec::new(),
             verbose,
             metadata,
+            world_context: HashMap::new(),
         }
     }
 
@@ -339,6 +342,20 @@ impl<'a> VirtualMachine<'a> {
                     } else {
                         panic!("Trying to set local value outside stack size");
                     }
+                }
+
+                ByteCode::GetContextValue => {
+                    let name = self.read_string();
+
+                    let value = self.get_context_value(name);
+                    self.push_value(value);
+                }
+
+                ByteCode::SetContextValue => {
+                    let name = self.read_string();
+
+                    self.set_context_value(name, self.peek_top().clone());
+                    // TODO(anissen): Is peek top correct here?
                 }
 
                 ByteCode::FunctionSignature => {
@@ -623,5 +640,13 @@ impl<'a> VirtualMachine<'a> {
             }
             _ => panic!("incompatible types for string concatenation"),
         }
+    }
+
+    fn get_context_value(&self, name: String) -> Value {
+        self.world_context.get(&name).unwrap().clone()
+    }
+
+    fn set_context_value(&mut self, name: String, value: Value) {
+        self.world_context.insert(name, value);
     }
 }

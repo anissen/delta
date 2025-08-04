@@ -21,6 +21,10 @@ pub enum Expr {
     Identifier {
         name: Token,
     },
+    ContextIdentifier {
+        // context: Option<Token>,
+        name: Token,
+    },
     Grouping(Box<Expr>),
     Value {
         value: ValueType,
@@ -35,7 +39,8 @@ pub enum Expr {
     //     args: Vec<Expr>,
     // },
     Assignment {
-        name: Token,
+        // name: Token,
+        target: Box<Expr>,
         _operator: Token,
         expr: Box<Expr>,
     },

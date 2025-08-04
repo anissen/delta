@@ -191,6 +191,11 @@ impl<'env> InferenceContext<'env> {
                 }
             },
 
+            Expr::ContextIdentifier { name } => {
+                // TODO(anissen): Implement
+                make_constructor(Type::Float, name.clone())
+            }
+
             Expr::Value { value, token } => match value {
                 ValueType::Boolean(_) => make_constructor(Type::Boolean, token.clone()),
                 ValueType::Integer(_) => make_constructor(Type::Integer, token.clone()),
@@ -249,14 +254,25 @@ impl<'env> InferenceContext<'env> {
             }
 
             Expr::Assignment {
-                name,
+                target,
                 _operator,
                 expr,
             } => {
                 let expr_type = self.infer_type(expr);
-                self.environment
-                    .variables
-                    .insert(name.lexeme.clone(), expr_type.clone());
+                match **target {
+                    Expr::Identifier { ref name } => {
+                        self.environment
+                            .variables
+                            .insert(name.lexeme.clone(), expr_type.clone());
+                    }
+                    Expr::ContextIdentifier { ref name } => {
+                        // TODO(anissen): This is not right for ContextIdentifier?!?!?
+                        self.environment
+                            .variables
+                            .insert(name.lexeme.clone(), expr_type.clone());
+                    }
+                    _ => panic!("Invalid assignment target"),
+                }
                 expr_type
             }
 

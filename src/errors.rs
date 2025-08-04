@@ -116,8 +116,8 @@ fn get_error_line(source: &str, token: &Token) -> String {
     result.push('\n');
 
     // Add spaces up to the error column
-    let line_whitespace_ending = line.find(|c: char| !c.is_ascii_whitespace());
-    let original_whitespace = &line[0..line_whitespace_ending.unwrap()];
+    let line_whitespace_ending = line.find(|c: char| !c.is_ascii_whitespace()).unwrap_or(0);
+    let original_whitespace = &line[0..line_whitespace_ending];
     let extra_spaces = &" ".repeat(position.column - original_whitespace.len() - 1);
     result.push_str(original_whitespace);
     result.push_str(extra_spaces);

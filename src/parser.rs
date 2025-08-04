@@ -123,25 +123,18 @@ impl Parser {
     fn assignment(&mut self) -> Result<Option<Expr>, String> {
         let expr = self.is()?;
         if expr.is_some() && self.matches(&Equal) {
-            match expr.unwrap() {
-                Expr::Identifier { name } => {
+            let expr = expr.unwrap();
+            match expr {
+                Expr::Identifier { name: _ } | Expr::ContextIdentifier { name: _ } => {
                     let operator = self.previous();
                     let value = self.assignment()?;
-                    // match &value {
-                    //     Some(Expr::Function {
-                    //         slash,
-                    //         params,
-                    //         expr,
-                    //     }) => println!("Assigning function to value {}", name.lexeme),
-                    //     _ => (),
-                    // }
                     Ok(Some(Expr::Assignment {
-                        name,
+                        // name,
+                        target: Box::new(expr),
                         _operator: operator,
                         expr: Box::new(value.unwrap()),
                     }))
                 }
-
                 _ => Err("Invalid assignment target".to_string()),
             }
         } else {
@@ -579,6 +572,18 @@ impl Parser {
         if self.matches(&Identifier) {
             let name = self.previous();
             Ok(Some(Expr::Identifier { name }))
+        } else if self.matches(&TokenKind::Context) {
+            // let name = if self.check(&TokenKind::Identifier) {
+            //     Some(self.consume(&TokenKind::Identifier)?)
+            // } else {
+            //     None
+            // };
+            // if self.matches(&TokenKind::Dot) {
+            //     ...
+            // }
+            self.consume(&TokenKind::Dot)?;
+            let identifier = self.consume(&TokenKind::Identifier)?;
+            Ok(Some(Expr::ContextIdentifier { name: identifier }))
         } else if self.matches(&Integer) {
             let lexeme = self.previous().lexeme;
             let value = lexeme.parse::<i32>();

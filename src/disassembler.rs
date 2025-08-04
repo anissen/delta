@@ -201,6 +201,22 @@ impl Disassembler {
                     self.print(vec!["set_value".to_string(), format!("(index: {})", index)])
                 }
 
+                ByteCode::GetContextValue => {
+                    let name = self.read_string();
+                    self.print(vec![
+                        "get_context_value".to_string(),
+                        format!("(name: {})", name),
+                    ])
+                }
+
+                ByteCode::SetContextValue => {
+                    let name = self.read_string();
+                    self.print(vec![
+                        "set_context_value".to_string(),
+                        format!("(name: {})", name),
+                    ])
+                }
+
                 ByteCode::FunctionSignature => {
                     let name = self.read_string();
                     let local_count = self.read_byte();
