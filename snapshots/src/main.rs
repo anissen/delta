@@ -105,19 +105,22 @@ fn process_toml_file(path: &Path) -> Result<ProcessStatus, Box<dyn std::error::E
                 table.insert("result".to_string(), Value::String(result));
                 table.insert("type".to_string(), Value::String(result_type));
 
+                let compilation_metadata = program_result.metadata.compilation_metadata;
+                let execution_metadata = program_result.metadata.execution_metadata;
+
                 // Add compiler metadata
                 let mut compiler_table = Table::new();
                 compiler_table.insert(
                     "bytecode_length".to_string(),
-                    Value::Integer(program_result.metadata.bytecode_length as i64),
+                    Value::Integer(compilation_metadata.bytecode_length as i64),
                 );
                 compiler_table.insert(
                     "bytecode".to_string(),
-                    Value::String(format!("{:?}", program_result.metadata.bytecode)),
+                    Value::String(format!("{:?}", compilation_metadata.bytecode)),
                 );
                 compiler_table.insert(
                     "disassembled".to_string(),
-                    Value::String(program_result.metadata.disassembled_instructions),
+                    Value::String(compilation_metadata.disassembled_instructions),
                 );
                 table.insert("compiler".to_string(), Value::Table(compiler_table));
 
@@ -125,23 +128,23 @@ fn process_toml_file(path: &Path) -> Result<ProcessStatus, Box<dyn std::error::E
                 let mut vm_table = Table::new();
                 vm_table.insert(
                     "instructions_executed".to_string(),
-                    Value::Integer(program_result.metadata.instructions_executed as i64),
+                    Value::Integer(execution_metadata.instructions_executed as i64),
                 );
                 vm_table.insert(
                     "jumps_performed".to_string(),
-                    Value::Integer(program_result.metadata.jumps_performed as i64),
+                    Value::Integer(execution_metadata.jumps_performed as i64),
                 );
                 vm_table.insert(
                     "bytes_read".to_string(),
-                    Value::Integer(program_result.metadata.bytes_read as i64),
+                    Value::Integer(execution_metadata.bytes_read as i64),
                 );
                 vm_table.insert(
                     "stack_allocations".to_string(),
-                    Value::Integer(program_result.metadata.stack_allocations as i64),
+                    Value::Integer(execution_metadata.stack_allocations as i64),
                 );
                 vm_table.insert(
                     "max_stack_height".to_string(),
-                    Value::Integer(program_result.metadata.max_stack_height as i64),
+                    Value::Integer(execution_metadata.max_stack_height as i64),
                 );
                 table.insert("vm".to_string(), Value::Table(vm_table));
             }

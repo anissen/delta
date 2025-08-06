@@ -22,31 +22,30 @@ fn main() {
                 }
             }
             println!("\nExecution Metadata:");
+            let compilation_metadata = program_result.metadata.compilation_metadata;
+            let execution_metadata = program_result.metadata.execution_metadata;
             println!(
                 "  Bytecode length: {}",
-                program_result.metadata.bytecode_length
+                compilation_metadata.bytecode_length
             );
             println!(
                 "  Instructions executed: {}",
-                program_result.metadata.instructions_executed
+                execution_metadata.instructions_executed
             );
-            println!(
-                "  Jumps performed: {}",
-                program_result.metadata.jumps_performed
-            );
-            println!("  Bytes read: {}", program_result.metadata.bytes_read);
+            println!("  Jumps performed: {}", execution_metadata.jumps_performed);
+            println!("  Bytes read: {}", execution_metadata.bytes_read);
             println!(
                 "  Stack allocations: {}",
-                program_result.metadata.stack_allocations
+                execution_metadata.stack_allocations
             );
             println!(
                 "  Max stack height: {}",
-                program_result.metadata.max_stack_height
+                execution_metadata.max_stack_height
             );
             if debug {
                 println!(
                     "  Disassembled instructions:\n{}",
-                    program_result.metadata.disassembled_instructions
+                    compilation_metadata.disassembled_instructions
                 );
             }
         }

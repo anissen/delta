@@ -18,11 +18,20 @@ use diagnostics::Diagnostics;
 use program::Program;
 
 #[derive(Debug, Clone)]
-#[derive(Default)]
-pub struct ExecutionMetadata {
+pub struct ProgramMetadata {
+    pub compilation_metadata: CompilationMetadata,
+    pub execution_metadata: ExecutionMetadata,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct CompilationMetadata {
     pub bytecode: Vec<u8>,
     pub bytecode_length: usize,
     pub disassembled_instructions: String,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct ExecutionMetadata {
     pub instructions_executed: usize,
     pub jumps_performed: usize,
     pub bytes_read: usize,
@@ -30,11 +39,10 @@ pub struct ExecutionMetadata {
     pub max_stack_height: usize,
 }
 
-
 #[derive(Debug, Clone)]
 pub struct ProgramResult {
     pub value: Option<vm::Value>,
-    pub metadata: ExecutionMetadata,
+    pub metadata: ProgramMetadata,
 }
 
 pub fn read_file(path: &String) -> std::io::Result<String> {
@@ -81,21 +89,20 @@ pub fn run_file(source_path: &String, debug: bool) -> Result<ProgramResult, Diag
     program.dump("∆");
 */
 
-pub fn build(
-    source: &str,
-    file_name: Option<&String>,
-    debug: bool,
-) -> Result<Vec<u8>, Diagnostics> {
-    let default_file_name = "n/a".to_string();
-    println!(
-        "\n# source (file: {}) =>",
-        file_name.unwrap_or(&default_file_name)
-    );
+// pub fn build(
+//     source: &str,
+//     file_name: Option<&String>,
+//     debug: bool,
+// ) -> Result<Program, Diagnostics> {
+//     let default_file_name = "n/a".to_string();
+//     println!(
+//         "\n# source (file: {}) =>",
+//         file_name.unwrap_or(&default_file_name)
+//     );
 
-    let context = program::Context::new();
-    let program = Program::new(context);
-    program.compile(source, debug)
-}
+//     let context = program::Context::new();
+//     Program::new(context, source, debug)
+// }
 
 pub fn run(
     source: &str,
@@ -109,25 +116,26 @@ pub fn run(
     );
 
     let context = program::Context::new();
-    let program = Program::new(context);
-    match program.compile(source, debug) {
-        Ok(bytecodes) => {
-            let mut metadata = ExecutionMetadata::default();
-            metadata.bytecode = bytecodes.clone();
-            metadata.bytecode_length = bytecodes.len();
+    let program = Program::new(context, source, debug);
+    match program {
+        Ok(mut program) => {
+            // let mut metadata = ExecutionMetadata::default();
 
             if debug {
                 println!("\n# disassembly =>");
                 // Generate disassembled instructions and optionally print
-                disassembler::disassemble(bytecodes.clone(), &mut metadata);
+                disassembler::disassemble(
+                    program.bytecode.clone(),
+                    &mut program.metadata.compilation_metadata,
+                );
             }
 
             println!("\n# vm =>");
-            let result = program.run(bytecodes, debug, &mut metadata);
+            let result = program.run();
 
             Ok(ProgramResult {
                 value: result,
-                metadata,
+                metadata: program.metadata,
             })
         }
 

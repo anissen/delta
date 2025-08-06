@@ -7,6 +7,10 @@ use crate::parser;
 use crate::tokens;
 use crate::typer;
 use crate::vm;
+use crate::vm::VirtualMachine;
+use crate::CompilationMetadata;
+use crate::ExecutionMetadata;
+use crate::ProgramMetadata;
 // use crate::vm::VirtualMachine;
 
 // struct CallContext<'a> {
@@ -111,14 +115,13 @@ impl<'a> Context<'a> {
 
 pub struct Program<'a> {
     context: Context<'a>,
+    pub metadata: ProgramMetadata,
+    pub vm: vm::VirtualMachine,
+    pub bytecode: Vec<u8>,
 }
 
 impl<'a> Program<'a> {
-    pub fn new(context: Context<'a>) -> Self {
-        Self { context }
-    }
-
-    pub fn compile(&self, source: &str, debug: bool) -> Result<Vec<u8>, Diagnostics> {
+    pub fn new(context: Context<'a>, source: &str, debug: bool) -> Result<Self, Diagnostics> {
         println!("\n# lexing =>");
         let start = std::time::Instant::now();
         let tokens = lexer::lex(source);
@@ -160,7 +163,7 @@ impl<'a> Program<'a> {
         let start = std::time::Instant::now();
         // TODO(anissen): Diagnostics should be collected in each phase
         let mut diagnostics = Diagnostics::new();
-        typer::type_check(&ast, &self.context, &mut diagnostics);
+        typer::type_check(&ast, &context, &mut diagnostics);
         let duration = start.elapsed();
         println!("Elapsed: {duration:?}");
 
@@ -168,17 +171,12 @@ impl<'a> Program<'a> {
             return Err(diagnostics);
         }
 
-        let foreign_functions = self
-            .context
-            .functions
-            .keys()
-            .cloned()
-            .collect::<Vec<String>>();
+        let foreign_functions = context.functions.keys().cloned().collect::<Vec<String>>();
         println!("foreign functions: {foreign_functions:?}");
 
         println!("\n# code gen =>");
         let start = std::time::Instant::now();
-        let bytecodes = codegen::codegen(&ast, &self.context);
+        let bytecodes = codegen::codegen(&ast, &context);
         let duration = start.elapsed();
         println!("Elapsed: {duration:?}");
 
@@ -188,34 +186,36 @@ impl<'a> Program<'a> {
                     println!("byte code length: {}", bytecodes.len());
                     println!("byte codes: {bytecodes:?}");
                 }
-                Ok(bytecodes)
+
+                let mut compilation_metadata = CompilationMetadata::default();
+                compilation_metadata.bytecode = bytecodes.clone();
+                compilation_metadata.bytecode_length = bytecodes.len();
+
+                let metadata = ProgramMetadata {
+                    compilation_metadata,
+                    execution_metadata: ExecutionMetadata::default(),
+                };
+
+                Ok(Self {
+                    context,
+                    metadata,
+                    vm: VirtualMachine::new(bytecodes.clone(), debug),
+                    bytecode: bytecodes,
+                })
             }
             Err(diagnostics) => Err(diagnostics),
         }
     }
 
-    pub fn run(
-        &self,
-        bytecodes: Vec<u8>,
-        debug: bool,
-        metadata: &mut crate::ExecutionMetadata,
-    ) -> Option<vm::Value> {
-        vm::run(bytecodes, None, &self.context, debug, metadata)
+    pub fn run(&mut self) -> Option<vm::Value> {
+        let result = self.vm.execute(None, &mut self.context);
+        self.metadata.execution_metadata = self.vm.metadata.clone();
+        result
     }
 
-    pub fn run_function(
-        &self,
-        bytecodes: Vec<u8>,
-        function_name: String,
-        debug: bool,
-        metadata: &mut crate::ExecutionMetadata,
-    ) -> Option<vm::Value> {
-        vm::run(
-            bytecodes,
-            Some(function_name),
-            &self.context,
-            debug,
-            metadata,
-        )
+    pub fn run_function(&mut self, function_name: String) -> Option<vm::Value> {
+        let result = self.vm.execute(Some(function_name), &mut self.context);
+        self.metadata.execution_metadata = self.vm.metadata.clone();
+        result
     }
 }

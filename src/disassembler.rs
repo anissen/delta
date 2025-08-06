@@ -1,5 +1,5 @@
 use crate::bytecodes::ByteCode;
-use crate::ExecutionMetadata;
+use crate::{CompilationMetadata, ExecutionMetadata};
 
 pub struct Disassembler {
     program: Vec<u8>,
@@ -7,7 +7,7 @@ pub struct Disassembler {
     last_program_counter: usize,
 }
 
-pub fn disassemble(bytes: Vec<u8>, metadata: &mut ExecutionMetadata) {
+pub fn disassemble(bytes: Vec<u8>, metadata: &mut CompilationMetadata) {
     Disassembler::new(bytes).disassemble(metadata)
 }
 
@@ -76,7 +76,7 @@ impl Disassembler {
         formatted
     }
 
-    pub fn disassemble(&mut self, metadata: &mut ExecutionMetadata) {
+    pub fn disassemble(&mut self, metadata: &mut CompilationMetadata) {
         let mut result = String::new();
 
         while self.program_counter < self.program.len() {

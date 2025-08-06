@@ -46,14 +46,14 @@ struct CallFrame {
     stack_index: u8,
 }
 
-pub struct VirtualMachine<'a> {
+pub struct VirtualMachine {
     program: Vec<u8>,
     program_counter: usize,
     functions: Vec<FunctionObj>,
     stack: Vec<Value>,
     call_stack: Vec<CallFrame>,
     verbose: bool,
-    metadata: &'a mut ExecutionMetadata,
+    pub metadata: ExecutionMetadata,
     world_context: HashMap<String, Value>, // TODO(anissen): Find a better name
 }
 
@@ -62,13 +62,12 @@ pub fn run<'a>(
     function_name: Option<String>,
     context: &'a Context<'a>,
     verbose: bool,
-    metadata: &'a mut crate::ExecutionMetadata,
 ) -> Option<Value> {
-    VirtualMachine::new(bytes, verbose, metadata).execute(function_name, context)
+    VirtualMachine::new(bytes, verbose).execute(function_name, context)
 }
 
-impl<'a> VirtualMachine<'a> {
-    fn new(bytes: Vec<u8>, verbose: bool, metadata: &'a mut ExecutionMetadata) -> Self {
+impl VirtualMachine {
+    pub fn new(bytes: Vec<u8>, verbose: bool) -> Self {
         Self {
             program: bytes,
             program_counter: 0,
@@ -76,7 +75,7 @@ impl<'a> VirtualMachine<'a> {
             stack: Vec::new(),
             call_stack: Vec::new(),
             verbose,
-            metadata,
+            metadata: ExecutionMetadata::default(),
             world_context: HashMap::new(),
         }
     }
