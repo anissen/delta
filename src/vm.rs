@@ -86,8 +86,16 @@ impl VirtualMachine {
         self.read_functions();
     }
 
+    fn get_next_bytecode(&mut self) -> Result<ByteCode, ()> {
+        if self.program_counter < self.program.len() {
+            ByteCode::try_from(self.read_byte())
+        } else {
+            Err(())
+        }
+    }
+
     fn read_functions(&mut self) {
-        while let Ok(ByteCode::FunctionSignature) = ByteCode::try_from(self.read_byte()) {
+        while let Ok(ByteCode::FunctionSignature) = self.get_next_bytecode() {
             let name = self.read_string();
             let _local_count = self.read_byte();
             let function_position = self.read_i16();
@@ -100,6 +108,8 @@ impl VirtualMachine {
     }
 
     pub fn execute(&mut self, function: Option<String>, context: &Context) -> Option<Value> {
+        self.program_counter = 0;
+
         self.read_header();
 
         if self.program_counter >= self.program.len() {

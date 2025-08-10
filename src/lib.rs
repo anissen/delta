@@ -17,7 +17,7 @@ use std::{fs::File, io::Read};
 use diagnostics::Diagnostics;
 use program::Program;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct ProgramMetadata {
     pub compilation_metadata: CompilationMetadata,
     pub execution_metadata: ExecutionMetadata,
@@ -116,9 +116,10 @@ pub fn run(
     );
 
     let context = program::Context::new();
-    let program = Program::new(context, source, debug);
-    match program {
-        Ok(mut program) => {
+    let mut program = Program::new(context, debug);
+    let result = program.reload(source.to_string());
+    match result {
+        None => {
             // let mut metadata = ExecutionMetadata::default();
 
             if debug {
@@ -138,7 +139,6 @@ pub fn run(
                 metadata: program.metadata,
             })
         }
-
-        Err(diagnostics) => Err(diagnostics),
+        Some(diagnostics) => Err(diagnostics),
     }
 }

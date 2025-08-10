@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use crate::codegen;
 use crate::diagnostics::Diagnostics;
+use crate::disassembler;
 use crate::lexer;
 use crate::parser;
 use crate::tokens;
@@ -115,16 +116,40 @@ impl<'a> Context<'a> {
 
 pub struct Program<'a> {
     context: Context<'a>,
+    // source: &'a str,
+    source: String,
+    debug: bool,
     pub metadata: ProgramMetadata,
-    pub vm: vm::VirtualMachine,
+    pub vm: Option<vm::VirtualMachine>,
     pub bytecode: Vec<u8>,
+    pub is_valid: bool,
 }
 
 impl<'a> Program<'a> {
-    pub fn new(context: Context<'a>, source: &str, debug: bool) -> Result<Self, Diagnostics> {
+    pub fn new(context: Context<'a>, debug: bool) -> Self {
+        Self {
+            context,
+            source: "".to_string(),
+            debug,
+            metadata: ProgramMetadata::default(),
+            vm: None, //vm::VirtualMachine::new(Vec::new(), debug),
+            bytecode: Vec::new(),
+            is_valid: false,
+        }
+    }
+
+    pub fn reload(&mut self, source: String) -> Option<Diagnostics> {
+        self.source = source;
+        match self.compile() {
+            Ok(_) => None,
+            Err(diagnostics) => Some(diagnostics),
+        }
+    }
+
+    pub fn compile(&mut self) -> Result<Vec<u8>, Diagnostics> {
         println!("\n# lexing =>");
         let start = std::time::Instant::now();
-        let tokens = lexer::lex(source);
+        let tokens = lexer::lex(&self.source);
         let duration = start.elapsed();
         println!("Elapsed: {duration:?}");
 
@@ -141,7 +166,7 @@ impl<'a> Program<'a> {
             _ => unreachable!(),
         });
 
-        if debug {
+        if self.debug {
             tokens.iter().for_each(|token| {
                 println!(
                     "token: {:?} at '{}' (line {}, column: {})",
@@ -155,7 +180,7 @@ impl<'a> Program<'a> {
         let ast = parser::parse(tokens)?;
         let duration = start.elapsed();
         println!("Elapsed: {duration:?}");
-        if debug {
+        if self.debug {
             println!("ast: {ast:?}");
         }
 
@@ -163,26 +188,34 @@ impl<'a> Program<'a> {
         let start = std::time::Instant::now();
         // TODO(anissen): Diagnostics should be collected in each phase
         let mut diagnostics = Diagnostics::new();
-        typer::type_check(&ast, &context, &mut diagnostics);
+        typer::type_check(&ast, &self.context, &mut diagnostics);
         let duration = start.elapsed();
         println!("Elapsed: {duration:?}");
 
         if diagnostics.has_errors() {
+            println!("{diagnostics}");
             return Err(diagnostics);
         }
 
-        let foreign_functions = context.functions.keys().cloned().collect::<Vec<String>>();
+        let foreign_functions = self
+            .context
+            .functions
+            .keys()
+            .cloned()
+            .collect::<Vec<String>>();
         println!("foreign functions: {foreign_functions:?}");
 
         println!("\n# code gen =>");
         let start = std::time::Instant::now();
-        let bytecodes = codegen::codegen(&ast, &context);
+        let bytecodes = codegen::codegen(&ast, &self.context);
         let duration = start.elapsed();
         println!("Elapsed: {duration:?}");
 
+        self.is_valid = bytecodes.is_ok();
+
         match bytecodes {
             Ok(bytecodes) => {
-                if debug {
+                if self.debug {
                     println!("byte code length: {}", bytecodes.len());
                     println!("byte codes: {bytecodes:?}");
                 }
@@ -191,31 +224,46 @@ impl<'a> Program<'a> {
                 compilation_metadata.bytecode = bytecodes.clone();
                 compilation_metadata.bytecode_length = bytecodes.len();
 
-                let metadata = ProgramMetadata {
+                if self.debug {
+                    println!("\n# disassembly =>");
+                    // Generate disassembled instructions and optionally print
+                    disassembler::disassemble(bytecodes.clone(), &mut compilation_metadata);
+                }
+
+                self.metadata = ProgramMetadata {
                     compilation_metadata,
                     execution_metadata: ExecutionMetadata::default(),
                 };
 
-                Ok(Self {
-                    context,
-                    metadata,
-                    vm: VirtualMachine::new(bytecodes.clone(), debug),
-                    bytecode: bytecodes,
-                })
+                // TODO(anissen): Don't recreate the VM on each compile
+                self.bytecode = bytecodes.clone();
+                self.vm = Some(vm::VirtualMachine::new(bytecodes.clone(), self.debug));
+
+                Ok(bytecodes)
             }
             Err(diagnostics) => Err(diagnostics),
         }
     }
 
     pub fn run(&mut self) -> Option<vm::Value> {
-        let result = self.vm.execute(None, &mut self.context);
-        self.metadata.execution_metadata = self.vm.metadata.clone();
-        result
+        match &mut self.vm {
+            Some(vm) => {
+                let result = vm.execute(None, &mut self.context);
+                self.metadata.execution_metadata = vm.metadata.clone();
+                result
+            }
+            None => None,
+        }
     }
 
     pub fn run_function(&mut self, function_name: String) -> Option<vm::Value> {
-        let result = self.vm.execute(Some(function_name), &mut self.context);
-        self.metadata.execution_metadata = self.vm.metadata.clone();
-        result
+        match &mut self.vm {
+            Some(vm) => {
+                let result = vm.execute(Some(function_name), &mut self.context);
+                self.metadata.execution_metadata = vm.metadata.clone();
+                result
+            }
+            None => None,
+        }
     }
 }
