@@ -8,7 +8,6 @@ use crate::parser;
 use crate::tokens;
 use crate::typer;
 use crate::vm;
-use crate::vm::VirtualMachine;
 use crate::CompilationMetadata;
 use crate::ExecutionMetadata;
 use crate::ProgramMetadata;
@@ -140,10 +139,7 @@ impl<'a> Program<'a> {
 
     pub fn reload(&mut self, source: String) -> Option<Diagnostics> {
         self.source = source;
-        match self.compile() {
-            Ok(_) => None,
-            Err(diagnostics) => Some(diagnostics),
-        }
+        self.compile().err()
     }
 
     pub fn compile(&mut self) -> Result<Vec<u8>, Diagnostics> {

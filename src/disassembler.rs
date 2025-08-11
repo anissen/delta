@@ -1,5 +1,5 @@
 use crate::bytecodes::ByteCode;
-use crate::{CompilationMetadata, ExecutionMetadata};
+use crate::CompilationMetadata;
 
 pub struct Disassembler {
     program: Vec<u8>,
