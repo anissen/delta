@@ -54,7 +54,7 @@ pub struct VirtualMachine {
     call_stack: Vec<CallFrame>,
     verbose: bool,
     pub metadata: ExecutionMetadata,
-    world_context: HashMap<String, Value>, // TODO(anissen): Find a better name
+    pub world_context: HashMap<String, Value>, // TODO(anissen): Find a better name
 }
 
 pub fn run<'a>(

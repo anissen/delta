@@ -231,9 +231,19 @@ impl<'a> Program<'a> {
                     execution_metadata: ExecutionMetadata::default(),
                 };
 
+                // TODO(anissen): This is a horrible hack! The world context should either be on program or persist on the VM.
+                let world_data = match &self.vm {
+                    Some(vm) => Some(vm.world_context.clone()),
+                    None => None,
+                };
+
                 // TODO(anissen): Don't recreate the VM on each compile
                 self.bytecode = bytecodes.clone();
                 self.vm = Some(vm::VirtualMachine::new(bytecodes.clone(), self.debug));
+
+                if world_data.is_some() {
+                    self.vm.as_mut().unwrap().world_context = world_data.unwrap();
+                }
 
                 Ok(bytecodes)
             }
