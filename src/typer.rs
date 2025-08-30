@@ -110,7 +110,7 @@ impl<'a> Typer<'a> {
 
         let tt = UnificationType::Variable(42); // TODO(anissen): This is a horrible hack to fix the return type to the list type parameter
         environment.variables.insert(
-            "index".to_string(),
+            "get_list_element_at_index".to_string(),
             UnificationType::Constructor {
                 typ: Type::Function,
                 generics: vec![
@@ -120,7 +120,7 @@ impl<'a> Typer<'a> {
                         token: no_token.clone(),
                     },
                     make_constructor(Type::Integer, no_token.clone()),
-                    tt, //make_constructor(Type::Integer, no_token.clone()), // TODO: This is not right (ought to be T where list is List[T])
+                    tt,
                 ],
                 token: no_token.clone(),
             },

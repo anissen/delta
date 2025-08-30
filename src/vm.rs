@@ -390,6 +390,12 @@ impl VirtualMachine {
                     // TODO(anissen): Is peek top correct here?
                 }
 
+                ByteCode::GetListElementAtIndex => {
+                    let index = self.pop_integer();
+                    let list = self.pop_list();
+                    self.push_value(list[index as usize].clone());
+                }
+
                 ByteCode::FunctionSignature => {
                     panic!("FunctionSignature: this shouldn't happen")
                 }
@@ -616,6 +622,13 @@ impl VirtualMachine {
         match self.stack.pop().unwrap() {
             Value::Integer(i) => i,
             _ => panic!("expected integer, encountered some other type"),
+        }
+    }
+
+    fn pop_list(&mut self) -> Vec<Value> {
+        match self.stack.pop().unwrap() {
+            Value::List(l) => l,
+            _ => panic!("expected list, encountered some other type"),
         }
     }
 

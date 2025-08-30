@@ -189,38 +189,43 @@ impl<'a> Codegen<'a> {
                 let arg_count = args.len();
                 self.emit_exprs(args, scope);
 
-                if self.context.has_function(lexeme) {
-                    // TODO(anissen): Maybe this should be its own Expr instead?
-                    scope
-                        .bytecode
-                        .add_op(ByteCode::CallForeign)
-                        .add_byte(self.context.get_index(lexeme))
-                        .add_byte(arg_count as u8);
+                // TODO(anissen): Hack
+                if lexeme == "get_list_element_at_index" {
+                    scope.bytecode.add_op(ByteCode::GetListElementAtIndex);
                 } else {
-                    match scope.environment.get(lexeme) {
-                        Some(index) => {
-                            scope
-                                .bytecode
-                                .add_op(ByteCode::Call)
-                                .add_byte(arg_count as u8);
-                            if scope.locals.contains(lexeme) {
-                                scope.bytecode.add_byte(0);
-                            } else {
-                                scope.bytecode.add_byte(1);
+                    if self.context.has_function(lexeme) {
+                        // TODO(anissen): Maybe this should be its own Expr instead?
+                        scope
+                            .bytecode
+                            .add_op(ByteCode::CallForeign)
+                            .add_byte(self.context.get_index(lexeme))
+                            .add_byte(arg_count as u8);
+                    } else {
+                        match scope.environment.get(lexeme) {
+                            Some(index) => {
+                                scope
+                                    .bytecode
+                                    .add_op(ByteCode::Call)
+                                    .add_byte(arg_count as u8);
+                                if scope.locals.contains(lexeme) {
+                                    scope.bytecode.add_byte(0);
+                                } else {
+                                    scope.bytecode.add_byte(1);
+                                }
+                                scope.bytecode.add_byte(*index);
                             }
-                            scope.bytecode.add_byte(*index);
+                            None => {
+                                panic!("Unknown function");
+                            }
                         }
-                        None => {
-                            panic!("Unknown function");
-                        }
-                    }
-                };
+                    };
 
-                if lexeme.len() > 255 {
-                    panic!("function name too long!");
-                    // let msg = Message::new(format!("Function name too long: {}", name), ;
-                }
-                scope.bytecode.add_string(lexeme);
+                    if lexeme.len() > 255 {
+                        panic!("function name too long!");
+                        // let msg = Message::new(format!("Function name too long: {}", name), ;
+                    }
+                    scope.bytecode.add_string(lexeme);
+                };
             }
 
             Expr::Assignment {

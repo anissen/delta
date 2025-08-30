@@ -37,11 +37,13 @@ pub enum ByteCode {
     PushFloat,
     PushInteger,
     PushString,
+    PushList,
 
     PushSimpleTag,
     PushTag,
     GetTagName,
     GetTagPayload,
+    GetListElementAtIndex,
 
     FunctionSignature,
     FunctionChunk,
@@ -114,6 +116,9 @@ impl TryFrom<u8> for ByteCode {
             value if value == ByteCode::PushTag as u8 => Ok(Self::PushTag),
             value if value == ByteCode::GetTagName as u8 => Ok(Self::GetTagName),
             value if value == ByteCode::GetTagPayload as u8 => Ok(Self::GetTagPayload),
+            value if value == ByteCode::GetListElementAtIndex as u8 => {
+                Ok(Self::GetListElementAtIndex)
+            }
 
             value if value == ByteCode::FunctionSignature as u8 => Ok(Self::FunctionSignature),
             value if value == ByteCode::FunctionChunk as u8 => Ok(Self::FunctionChunk),
@@ -128,7 +133,10 @@ impl TryFrom<u8> for ByteCode {
             value if value == ByteCode::JumpIfTrue as u8 => Ok(Self::JumpIfTrue),
             value if value == ByteCode::JumpIfFalse as u8 => Ok(Self::JumpIfFalse),
 
-            _ => Err(()),
+            _ => {
+                dbg!(value);
+                Err(())
+            }
         }
     }
 }
