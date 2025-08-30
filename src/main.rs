@@ -21,28 +21,28 @@ fn main() {
                     println!("\nResult: N/A");
                 }
             }
-            println!("\nExecution Metadata:");
-            let compilation_metadata = program_result.metadata.compilation_metadata;
-            let execution_metadata = program_result.metadata.execution_metadata;
-            println!(
-                "  Bytecode length: {}",
-                compilation_metadata.bytecode_length
-            );
-            println!(
-                "  Instructions executed: {}",
-                execution_metadata.instructions_executed
-            );
-            println!("  Jumps performed: {}", execution_metadata.jumps_performed);
-            println!("  Bytes read: {}", execution_metadata.bytes_read);
-            println!(
-                "  Stack allocations: {}",
-                execution_metadata.stack_allocations
-            );
-            println!(
-                "  Max stack height: {}",
-                execution_metadata.max_stack_height
-            );
             if debug {
+                println!("\nExecution Metadata:");
+                let compilation_metadata = program_result.metadata.compilation_metadata;
+                let execution_metadata = program_result.metadata.execution_metadata;
+                println!(
+                    "  Bytecode length: {}",
+                    compilation_metadata.bytecode_length
+                );
+                println!(
+                    "  Instructions executed: {}",
+                    execution_metadata.instructions_executed
+                );
+                println!("  Jumps performed: {}", execution_metadata.jumps_performed);
+                println!("  Bytes read: {}", execution_metadata.bytes_read);
+                println!(
+                    "  Stack allocations: {}",
+                    execution_metadata.stack_allocations
+                );
+                println!(
+                    "  Max stack height: {}",
+                    execution_metadata.max_stack_height
+                );
                 println!(
                     "  Disassembled instructions:\n{}",
                     compilation_metadata.disassembled_instructions
