@@ -108,6 +108,24 @@ impl<'a> Typer<'a> {
             },
         );
 
+        let tt = UnificationType::Variable(42); // TODO(anissen): This is a horrible hack to fix the return type to the list type parameter
+        environment.variables.insert(
+            "index".to_string(),
+            UnificationType::Constructor {
+                typ: Type::Function,
+                generics: vec![
+                    UnificationType::Constructor {
+                        typ: Type::List,
+                        generics: vec![tt.clone()],
+                        token: no_token.clone(),
+                    },
+                    make_constructor(Type::Integer, no_token.clone()),
+                    tt, //make_constructor(Type::Integer, no_token.clone()), // TODO: This is not right (ought to be T where list is List[T])
+                ],
+                token: no_token.clone(),
+            },
+        );
+
         // for function in self.context.get_function_names() {
         //     environment.variables.insert(
         //         function,
@@ -206,6 +224,26 @@ impl<'env> InferenceContext<'env> {
                     // generics: payload.iter().map(|p| self.infer_type(p)).collect(),
                     generics: Vec::new(),
                     token: token.clone(),
+                },
+                ValueType::List(list) => match list.first() {
+                    Some(first_element) => {
+                        let first_element_type = self.infer_type(first_element);
+                        for index in 1..list.len() {
+                            let elm = list.get(index).unwrap();
+                            self.expects_type(elm, first_element_type.clone());
+                        }
+
+                        UnificationType::Constructor {
+                            typ: Type::List,
+                            generics: vec![first_element_type],
+                            token: token.clone(),
+                        }
+                    }
+                    None => UnificationType::Constructor {
+                        typ: Type::List,
+                        generics: Vec::new(),
+                        token: token.clone(),
+                    },
                 },
                 ValueType::Function { params, expr } => {
                     let param_types = params

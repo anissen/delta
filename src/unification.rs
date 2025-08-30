@@ -12,6 +12,7 @@ pub enum Type {
     Float,
     String,
     Tag, // { name: String, argument_count: u8 },
+    List,
     Function,
 }
 
@@ -45,7 +46,15 @@ impl fmt::Display for UnificationType {
                     // } else {
                     //     &format!("tag :{name}({argument_count})")
                     // }
-                        &"tag".to_string()
+                    &"tag".to_string()
+                }
+                Type::List => {
+                    if !generics.is_empty() {
+                        let typ = generics.first().unwrap();
+                        &format!("list[{typ}]")
+                    } else {
+                        "list[]"
+                    }
                 }
                 Type::Function => {
                     let parameters = generics[0..generics.len() - 1]

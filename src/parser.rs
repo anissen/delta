@@ -162,6 +162,28 @@ impl Parser {
         }))
     }
 
+    fn list(&mut self) -> Result<Option<Expr>, String> {
+        let token = self.previous();
+        let mut list_elements = Vec::new();
+
+        loop {
+            if self.is_at_end() {
+                return Err("Unexpected end of input".to_string());
+            }
+            if self.matches(&RightBracket) {
+                break;
+            }
+            if let Some(expr) = self.expression()? {
+                list_elements.push(expr)
+            }
+        }
+
+        Ok(Some(Expr::Value {
+            value: ValueType::List(list_elements),
+            token,
+        }))
+    }
+
     // is → string_concat "is" NEWLINE is_arm* | string_concat
     fn is(&mut self) -> Result<Option<Expr>, String> {
         let expr = self.string_concat()?;
@@ -628,6 +650,8 @@ impl Parser {
             self.function()
         } else if self.matches(&Tag) {
             self.tag()
+        } else if self.matches(&LeftBracket) {
+            self.list()
         } else {
             self.whitespace()
         }

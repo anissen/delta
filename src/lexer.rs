@@ -100,6 +100,8 @@ impl Lexer {
             '.' => TokenKind::Dot,
             '(' => TokenKind::LeftParen,
             ')' => TokenKind::RightParen,
+            '[' => TokenKind::LeftBracket,
+            ']' => TokenKind::RightBracket,
             '{' => TokenKind::LeftBrace,
             '}' if self.string_interpolation => {
                 self.add_token_kind(TokenKind::StringConcat);

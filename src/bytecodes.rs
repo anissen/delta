@@ -108,6 +108,7 @@ impl TryFrom<u8> for ByteCode {
             value if value == ByteCode::PushFloat as u8 => Ok(Self::PushFloat),
             value if value == ByteCode::PushInteger as u8 => Ok(Self::PushInteger),
             value if value == ByteCode::PushString as u8 => Ok(Self::PushString),
+            value if value == ByteCode::PushList as u8 => Ok(Self::PushList),
 
             value if value == ByteCode::PushSimpleTag as u8 => Ok(Self::PushSimpleTag),
             value if value == ByteCode::PushTag as u8 => Ok(Self::PushTag),

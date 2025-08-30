@@ -137,6 +137,14 @@ impl Disassembler {
                     ])
                 }
 
+                ByteCode::PushList => {
+                    let list_length = self.read_i32();
+                    self.print(vec![
+                        "push_list".to_string(),
+                        format!("(length: {list_length})"),
+                    ])
+                }
+
                 ByteCode::GetTagName => self.print(vec!["get_tag_name".to_string()]),
 
                 ByteCode::GetTagPayload => self.print(vec!["get_tag_payload".to_string()]),

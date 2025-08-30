@@ -14,6 +14,7 @@ pub enum ValueType {
         name: Token,
         payload: Box<Option<Expr>>,
     },
+    List(Vec<Expr>),
 }
 
 #[derive(Debug)]

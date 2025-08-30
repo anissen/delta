@@ -101,6 +101,17 @@ impl<'a> Codegen<'a> {
                 scope.bytecode.add_op(ByteCode::PushFloat).add_f32(f);
             }
 
+            Expr::Value {
+                value: ValueType::List(exprs),
+                token: _,
+            } => {
+                self.emit_exprs(exprs, scope);
+                scope
+                    .bytecode
+                    .add_op(ByteCode::PushList)
+                    .add_i32(&(exprs.len() as i32));
+            }
+
             Expr::Identifier { name } => {
                 let lexeme = &name.lexeme;
                 if self.context.has_value(lexeme) {

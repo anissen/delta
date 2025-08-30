@@ -15,6 +15,7 @@ pub enum Value {
     String(String),
     SimpleTag(String),
     Tag(String, Box<Value>),
+    List(Vec<Value>),
     Function(u8),
 }
 
@@ -28,6 +29,18 @@ impl Display for Value {
             Value::String(s) => write!(f, "{s}")?,
             Value::SimpleTag(t) => write!(f, ":{t}")?,
             Value::Tag(t, a) => write!(f, ":{t}({a})")?,
+            Value::List(l) => {
+                let mut first = true;
+                write!(f, "[")?;
+                for v in l {
+                    if !first {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "{v}")?;
+                    first = false;
+                }
+                write!(f, "]")?;
+            }
             Value::Function(i) => write!(f, "<fn {i}>")?,
         };
         Ok(())
@@ -176,6 +189,16 @@ impl VirtualMachine {
                     let name = self.read_string();
                     let value = self.pop_any();
                     self.push_tag(name, value);
+                }
+
+                ByteCode::PushList => {
+                    let length = self.read_i32();
+
+                    let mut list = Vec::new();
+                    for _ in 0..length {
+                        list.insert(0, self.pop_any()); // TODO(anissen): Is there a more performant approach?
+                    }
+                    self.push_list(list);
                 }
 
                 ByteCode::GetTagName => {
@@ -634,6 +657,10 @@ impl VirtualMachine {
 
     fn push_tag(&mut self, name: String, payload: Value) {
         self.push_value(Value::Tag(name, Box::new(payload)));
+    }
+
+    fn push_list(&mut self, list: Vec<Value>) {
+        self.push_value(Value::List(list));
     }
 
     fn string_concat_values(&self, left: String, right: Value) -> String {
