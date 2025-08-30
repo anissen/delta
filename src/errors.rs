@@ -118,9 +118,12 @@ fn get_error_line(source: &str, token: &Token) -> String {
     // Add spaces up to the error column
     let line_whitespace_ending = line.find(|c: char| !c.is_ascii_whitespace()).unwrap_or(0);
     let original_whitespace = &line[0..line_whitespace_ending];
-    let extra_spaces = &" ".repeat(position.column - original_whitespace.len() - 1);
     result.push_str(original_whitespace);
-    result.push_str(extra_spaces);
+
+    if original_whitespace.len() > position.column + 1 {
+        let extra_spaces = &" ".repeat(position.column - original_whitespace.len() - 1);
+        result.push_str(extra_spaces);
+    }
 
     // Add the caret indicators
     result.push_str(&"^".repeat(token.lexeme.len()));
