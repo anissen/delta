@@ -396,6 +396,11 @@ impl VirtualMachine {
                     self.push_value(list[index as usize].clone());
                 }
 
+                ByteCode::GetArrayLength => match self.peek_top() {
+                    Value::List(list) => self.push_integer(list.len() as i32),
+                    _ => panic!("Expected list found something else"),
+                },
+
                 ByteCode::FunctionSignature => {
                     panic!("FunctionSignature: this shouldn't happen")
                 }

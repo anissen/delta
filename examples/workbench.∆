@@ -1,13 +1,34 @@
-# func = \v
-#     :ok (40 + v)
 
-# 2 | func
+# [4 3 2]
 
-match = \v
-	v is
-		:ok v
-			"result is {v}"
-		:err
-			"an error occurred"
 
-(:ok 42) | match
+# [3 4 + 4 5]
+
+# get_list = \v
+# 	[v*1 v*2 v*3]
+
+# 3 | get_list
+
+# @foreign map = \list: List[T] f: Function[T] => F => List[F]
+# foreach elm in list: f(elm)
+
+# sum = \list
+# 	result = 0
+# 	list | map \v
+# 		result = result + v
+# 	result
+
+# [3 5 7] | sum
+
+# [3 5 6] | index 1
+# [3 5.4 6]
+
+# [3.3 5.4 6.5] | List.get 1
+
+# List.get = \list: List[T] index: int => T
+# List.get = \list index
+# 	@native list_get_element_at_index index
+
+# [3.3 5.4 6.5] | get_list_element_at_index 1
+# [3.3 5.4 6.5] | get_array_length
+

@@ -44,6 +44,7 @@ pub enum ByteCode {
     GetTagName,
     GetTagPayload,
     GetListElementAtIndex,
+    GetArrayLength,
 
     FunctionSignature,
     FunctionChunk,

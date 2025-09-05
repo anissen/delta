@@ -229,6 +229,8 @@ impl Disassembler {
                     self.print(vec!["get_list_element_at_index".to_string()])
                 }
 
+                ByteCode::GetArrayLength => self.print(vec!["get_array_length".to_string()]),
+
                 ByteCode::FunctionSignature => {
                     let name = self.read_string();
                     let local_count = self.read_byte();

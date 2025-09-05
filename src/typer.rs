@@ -126,6 +126,22 @@ impl<'a> Typer<'a> {
             },
         );
 
+        environment.variables.insert(
+            "get_array_length".to_string(),
+            UnificationType::Constructor {
+                typ: Type::Function,
+                generics: vec![
+                    UnificationType::Constructor {
+                        typ: Type::List,
+                        generics: vec![UnificationType::Variable(45)],
+                        token: no_token.clone(),
+                    },
+                    make_constructor(Type::Integer, no_token.clone()),
+                ],
+                token: no_token.clone(),
+            },
+        );
+
         // for function in self.context.get_function_names() {
         //     environment.variables.insert(
         //         function,

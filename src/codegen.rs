@@ -192,6 +192,8 @@ impl<'a> Codegen<'a> {
                 // TODO(anissen): Hack
                 if lexeme == "get_list_element_at_index" {
                     scope.bytecode.add_op(ByteCode::GetListElementAtIndex);
+                } else if lexeme == "get_array_length" {
+                    scope.bytecode.add_op(ByteCode::GetArrayLength);
                 } else {
                     if self.context.has_function(lexeme) {
                         // TODO(anissen): Maybe this should be its own Expr instead?
