@@ -43,8 +43,10 @@ pub enum ByteCode {
     PushTag,
     GetTagName,
     GetTagPayload,
+
     GetListElementAtIndex,
     GetArrayLength,
+    ArrayAppend,
 
     FunctionSignature,
     FunctionChunk,
@@ -120,6 +122,8 @@ impl TryFrom<u8> for ByteCode {
             value if value == ByteCode::GetListElementAtIndex as u8 => {
                 Ok(Self::GetListElementAtIndex)
             }
+            value if value == ByteCode::GetArrayLength as u8 => Ok(Self::GetArrayLength),
+            value if value == ByteCode::ArrayAppend as u8 => Ok(Self::ArrayAppend),
 
             value if value == ByteCode::FunctionSignature as u8 => Ok(Self::FunctionSignature),
             value if value == ByteCode::FunctionChunk as u8 => Ok(Self::FunctionChunk),

@@ -120,7 +120,7 @@ fn get_error_line(source: &str, token: &Token) -> String {
     let original_whitespace = &line[0..line_whitespace_ending];
     result.push_str(original_whitespace);
 
-    if original_whitespace.len() > position.column + 1 {
+    if position.column - 1 > original_whitespace.len() {
         let extra_spaces = &" ".repeat(position.column - original_whitespace.len() - 1);
         result.push_str(extra_spaces);
     }

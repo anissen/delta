@@ -142,6 +142,28 @@ impl<'a> Typer<'a> {
             },
         );
 
+        let ttt = UnificationType::Variable(46); // TODO(anissen): Hack!
+        environment.variables.insert(
+            "append".to_string(),
+            UnificationType::Constructor {
+                typ: Type::Function,
+                generics: vec![
+                    UnificationType::Constructor {
+                        typ: Type::List,
+                        generics: vec![ttt.clone()],
+                        token: no_token.clone(),
+                    },
+                    ttt.clone(),
+                    UnificationType::Constructor {
+                        typ: Type::List,
+                        generics: vec![ttt],
+                        token: no_token.clone(),
+                    },
+                ],
+                token: no_token.clone(),
+            },
+        );
+
         // for function in self.context.get_function_names() {
         //     environment.variables.insert(
         //         function,
@@ -312,6 +334,19 @@ impl<'env> InferenceContext<'env> {
                 _operator,
                 expr,
             } => {
+                match **target {
+                    Expr::Identifier { ref name } => {
+                        self.environment
+                            .variables
+                            .insert(name.lexeme.clone(), UnificationType::Variable(50));
+                    }
+                    Expr::ContextIdentifier { ref name } => {
+                        self.environment
+                            .variables
+                            .insert(name.lexeme.clone(), UnificationType::Variable(50));
+                    }
+                    _ => panic!("Invalid assignment target"),
+                }
                 let expr_type = self.infer_type(expr);
                 match **target {
                     Expr::Identifier { ref name } => {

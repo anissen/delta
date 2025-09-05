@@ -350,7 +350,13 @@ impl VirtualMachine {
                     let value = self
                         .stack
                         .get((stack_index + index) as usize)
-                        .unwrap()
+                        .unwrap_or_else(|| {
+                            panic!(
+                                "Stack underflow: tried to access index {} but stack size is {}",
+                                (stack_index + index) as usize,
+                                self.stack.len()
+                            )
+                        })
                         .clone();
                     self.push_value(value);
                 }
@@ -400,6 +406,14 @@ impl VirtualMachine {
                     Value::List(list) => self.push_integer(list.len() as i32),
                     _ => panic!("Expected list found something else"),
                 },
+
+                ByteCode::ArrayAppend => {
+                    let value = self.pop_any();
+                    // TODO(anissen): This could mutate the list in-place instead.
+                    let mut list = self.pop_list();
+                    list.push(value);
+                    self.push_list(list);
+                }
 
                 ByteCode::FunctionSignature => {
                     panic!("FunctionSignature: this shouldn't happen")
