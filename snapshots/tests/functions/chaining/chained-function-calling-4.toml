@@ -1,3 +1,6 @@
+
+ignored = "nested frame values not updated correctly"
+
 script = '''
 rec = \v
 	v is

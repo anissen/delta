@@ -7,7 +7,7 @@ result = "true"
 type = "boolean"
 
 [output.compiler]
-bytecode = "[34, 4, 109, 97, 105, 110, 25, 24, 24, 15, 16, 36]"
+bytecode = "[35, 4, 109, 97, 105, 110, 25, 24, 24, 15, 16, 37]"
 bytecode_length = 12
 disassembled = """
 
