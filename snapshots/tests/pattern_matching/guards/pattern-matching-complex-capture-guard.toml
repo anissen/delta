@@ -9,8 +9,8 @@ result = "captured 2.5"
 type = "string"
 
 [output.compiler]
-bytecode = "[35, 4, 109, 97, 105, 110, 26, 64, 32, 0, 0, 21, 0, 26, 64, 32, 0, 0, 21, 0, 20, 0, 26, 64, 0, 0, 0, 12, 19, 20, 0, 26, 64, 64, 0, 0, 12, 15, 43, 0, 17, 28, 9, 99, 97, 112, 116, 117, 114, 101, 100, 32, 20, 0, 14, 28, 0, 14, 37]"
-bytecode_length = 59
+bytecode = "[35, 4, 109, 97, 105, 110, 26, 64, 32, 0, 0, 21, 0, 26, 64, 32, 0, 0, 21, 0, 20, 0, 26, 64, 0, 0, 0, 12, 19, 20, 0, 26, 64, 64, 0, 0, 12, 15, 43, 0, 14, 28, 9, 99, 97, 112, 116, 117, 114, 101, 100, 32, 20, 0, 14, 37]"
+bytecode_length = 56
 disassembled = """
 
 0 \t=== function chunk: main ===
@@ -26,18 +26,16 @@ disassembled = """
 31 \tpush_float (value: 3)
 36 \tfloat_lt
 37 \tand
-38 \tjump if false (offset: 17, to byte 58)
+38 \tjump if false (offset: 14, to byte 55)
 41 \tpush_string (value: 'captured ')
 52 \tget_value (index: 0)
 54 \tstr_concat
-55 \tpush_string (value: '')
-57 \tstr_concat
-58 \tret
+55 \tret
 """
 
 [output.vm]
-bytes_read = 60
-instructions_executed = 20
+bytes_read = 57
+instructions_executed = 18
 jumps_performed = 0
 max_stack_height = 5
-stack_allocations = 16
+stack_allocations = 14

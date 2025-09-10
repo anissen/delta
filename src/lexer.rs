@@ -104,9 +104,14 @@ impl Lexer {
             ']' => TokenKind::RightBracket,
             '{' => TokenKind::LeftBrace,
             '}' if self.string_interpolation => {
-                self.add_token_kind(TokenKind::StringConcat);
                 self.string_interpolation = false;
-                self.string()
+                if self.matches('"') {
+                    // String ends after concatenation, skip this token
+                    self.scan_next()
+                } else {
+                    self.add_token_kind(TokenKind::StringConcat);
+                    self.string()
+                }
             }
             '}' => TokenKind::RightBrace,
             '<' if self.matches('=') => {

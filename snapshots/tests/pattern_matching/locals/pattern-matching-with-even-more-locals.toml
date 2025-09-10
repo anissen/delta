@@ -33,11 +33,11 @@ result = "result is 13, 89 and 28"
 type = "string"
 
 [output.compiler]
-bytecode = "[34, 6, 115, 113, 117, 97, 114, 101, 1, 0, 142, 34, 5, 109, 97, 116, 99, 104, 1, 0, 156, 35, 4, 109, 97, 105, 110, 27, 0, 0, 0, 1, 21, 0, 27, 0, 0, 0, 2, 21, 1, 36, 0, 1, 21, 2, 27, 0, 0, 0, 3, 21, 3, 36, 1, 1, 21, 4, 27, 0, 0, 0, 4, 21, 5, 28, 10, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 27, 0, 0, 0, 1, 38, 1, 0, 4, 5, 109, 97, 116, 99, 104, 14, 28, 2, 44, 32, 14, 27, 0, 0, 0, 2, 38, 1, 0, 4, 5, 109, 97, 116, 99, 104, 14, 28, 5, 32, 97, 110, 100, 32, 14, 27, 0, 0, 0, 3, 38, 1, 0, 4, 5, 109, 97, 116, 99, 104, 14, 28, 0, 14, 37, 35, 6, 115, 113, 117, 97, 114, 101, 20, 0, 20, 0, 3, 37, 35, 5, 109, 97, 116, 99, 104, 27, 0, 0, 0, 2, 21, 1, 20, 0, 20, 1, 0, 21, 2, 20, 2, 27, 0, 0, 0, 3, 17, 43, 0, 15, 27, 0, 0, 0, 4, 21, 2, 20, 0, 20, 2, 0, 41, 0, 72, 20, 2, 27, 0, 0, 0, 4, 17, 43, 0, 29, 20, 0, 20, 1, 0, 27, 0, 0, 0, 5, 0, 21, 2, 20, 2, 38, 1, 1, 2, 6, 115, 113, 117, 97, 114, 101, 41, 0, 32, 20, 0, 20, 1, 0, 21, 2, 27, 0, 0, 0, 6, 21, 3, 27, 0, 0, 0, 7, 21, 4, 20, 2, 20, 1, 0, 20, 3, 0, 20, 4, 0, 21, 3, 27, 0, 0, 0, 8, 21, 4, 20, 3, 20, 4, 0, 37]"
-bytecode_length = 290
+bytecode = "[34, 6, 115, 113, 117, 97, 114, 101, 1, 0, 139, 34, 5, 109, 97, 116, 99, 104, 1, 0, 153, 35, 4, 109, 97, 105, 110, 27, 0, 0, 0, 1, 21, 0, 27, 0, 0, 0, 2, 21, 1, 36, 0, 1, 21, 2, 27, 0, 0, 0, 3, 21, 3, 36, 1, 1, 21, 4, 27, 0, 0, 0, 4, 21, 5, 28, 10, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 27, 0, 0, 0, 1, 38, 1, 0, 4, 5, 109, 97, 116, 99, 104, 14, 28, 2, 44, 32, 14, 27, 0, 0, 0, 2, 38, 1, 0, 4, 5, 109, 97, 116, 99, 104, 14, 28, 5, 32, 97, 110, 100, 32, 14, 27, 0, 0, 0, 3, 38, 1, 0, 4, 5, 109, 97, 116, 99, 104, 14, 37, 35, 6, 115, 113, 117, 97, 114, 101, 20, 0, 20, 0, 3, 37, 35, 5, 109, 97, 116, 99, 104, 27, 0, 0, 0, 2, 21, 1, 20, 0, 20, 1, 0, 21, 2, 20, 2, 27, 0, 0, 0, 3, 17, 43, 0, 15, 27, 0, 0, 0, 4, 21, 2, 20, 0, 20, 2, 0, 41, 0, 72, 20, 2, 27, 0, 0, 0, 4, 17, 43, 0, 29, 20, 0, 20, 1, 0, 27, 0, 0, 0, 5, 0, 21, 2, 20, 2, 38, 1, 1, 2, 6, 115, 113, 117, 97, 114, 101, 41, 0, 32, 20, 0, 20, 1, 0, 21, 2, 27, 0, 0, 0, 6, 21, 3, 27, 0, 0, 0, 7, 21, 4, 20, 2, 20, 1, 0, 20, 3, 0, 20, 4, 0, 21, 3, 27, 0, 0, 0, 8, 21, 4, 20, 3, 20, 4, 0, 37]"
+bytecode_length = 287
 disassembled = """
-0 \tfunction signature (name: square) (local count: 1) (function position: 142)
-11 \tfunction signature (name: match) (local count: 1) (function position: 156)
+0 \tfunction signature (name: square) (local count: 1) (function position: 139)
+11 \tfunction signature (name: match) (local count: 1) (function position: 153)
 
 21 \t=== function chunk: main ===
 27 \tpush_integer (value: 1)
@@ -66,73 +66,71 @@ disassembled = """
 122 \tpush_integer (value: 3)
 127 \tcall match (is_global: 0) (arg count: 1, function index: 4)
 137 \tstr_concat
-138 \tpush_string (value: '')
-140 \tstr_concat
-141 \tret
+138 \tret
 
-142 \t=== function chunk: square ===
-150 \tget_value (index: 0)
-152 \tget_value (index: 0)
-154 \tint_mult
-155 \tret
+139 \t=== function chunk: square ===
+147 \tget_value (index: 0)
+149 \tget_value (index: 0)
+151 \tint_mult
+152 \tret
 
-156 \t=== function chunk: match ===
-163 \tpush_integer (value: 2)
-168 \tset_value (index: 1)
-170 \tget_value (index: 0)
-172 \tget_value (index: 1)
-174 \tint_add
-175 \tset_value (index: 2)
-177 \tget_value (index: 2)
-179 \tpush_integer (value: 3)
-184 \teq
-185 \tjump if false (offset: 15, to byte 203)
-188 \tpush_integer (value: 4)
-193 \tset_value (index: 2)
-195 \tget_value (index: 0)
-197 \tget_value (index: 2)
-199 \tint_add
-200 \tjump (offset: 72, to byte 275)
-203 \tget_value (index: 2)
-205 \tpush_integer (value: 4)
-210 \teq
-211 \tjump if false (offset: 29, to byte 243)
-214 \tget_value (index: 0)
-216 \tget_value (index: 1)
-218 \tint_add
-219 \tpush_integer (value: 5)
-224 \tint_add
-225 \tset_value (index: 2)
-227 \tget_value (index: 2)
-229 \tcall square (is_global: 1) (arg count: 1, function index: 2)
-240 \tjump (offset: 32, to byte 275)
-243 \tget_value (index: 0)
-245 \tget_value (index: 1)
-247 \tint_add
-248 \tset_value (index: 2)
-250 \tpush_integer (value: 6)
-255 \tset_value (index: 3)
-257 \tpush_integer (value: 7)
-262 \tset_value (index: 4)
-264 \tget_value (index: 2)
-266 \tget_value (index: 1)
+153 \t=== function chunk: match ===
+160 \tpush_integer (value: 2)
+165 \tset_value (index: 1)
+167 \tget_value (index: 0)
+169 \tget_value (index: 1)
+171 \tint_add
+172 \tset_value (index: 2)
+174 \tget_value (index: 2)
+176 \tpush_integer (value: 3)
+181 \teq
+182 \tjump if false (offset: 15, to byte 200)
+185 \tpush_integer (value: 4)
+190 \tset_value (index: 2)
+192 \tget_value (index: 0)
+194 \tget_value (index: 2)
+196 \tint_add
+197 \tjump (offset: 72, to byte 272)
+200 \tget_value (index: 2)
+202 \tpush_integer (value: 4)
+207 \teq
+208 \tjump if false (offset: 29, to byte 240)
+211 \tget_value (index: 0)
+213 \tget_value (index: 1)
+215 \tint_add
+216 \tpush_integer (value: 5)
+221 \tint_add
+222 \tset_value (index: 2)
+224 \tget_value (index: 2)
+226 \tcall square (is_global: 1) (arg count: 1, function index: 2)
+237 \tjump (offset: 32, to byte 272)
+240 \tget_value (index: 0)
+242 \tget_value (index: 1)
+244 \tint_add
+245 \tset_value (index: 2)
+247 \tpush_integer (value: 6)
+252 \tset_value (index: 3)
+254 \tpush_integer (value: 7)
+259 \tset_value (index: 4)
+261 \tget_value (index: 2)
+263 \tget_value (index: 1)
+265 \tint_add
+266 \tget_value (index: 3)
 268 \tint_add
-269 \tget_value (index: 3)
+269 \tget_value (index: 4)
 271 \tint_add
-272 \tget_value (index: 4)
-274 \tint_add
-275 \tset_value (index: 3)
-277 \tpush_integer (value: 8)
-282 \tset_value (index: 4)
-284 \tget_value (index: 3)
-286 \tget_value (index: 4)
-288 \tint_add
-289 \tret
+272 \tset_value (index: 3)
+274 \tpush_integer (value: 8)
+279 \tset_value (index: 4)
+281 \tget_value (index: 3)
+283 \tget_value (index: 4)
+285 \tint_add
+286 \tret
 """
 
 [output.vm]
-bytes_read = 396
-instructions_executed = 127
+bytes_read = 393
+instructions_executed = 125
 jumps_performed = 5
 max_stack_height = 17
-stack_allocations = 88
+stack_allocations = 86

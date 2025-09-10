@@ -14,10 +14,10 @@ result = "result is 9"
 type = "string"
 
 [output.compiler]
-bytecode = "[34, 5, 109, 97, 116, 99, 104, 1, 0, 53, 35, 4, 109, 97, 105, 110, 36, 0, 1, 21, 0, 28, 10, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 27, 0, 0, 0, 1, 38, 1, 0, 0, 5, 109, 97, 116, 99, 104, 14, 28, 0, 14, 37, 35, 5, 109, 97, 116, 99, 104, 27, 0, 0, 0, 3, 21, 1, 20, 0, 20, 1, 0, 21, 2, 20, 2, 27, 0, 0, 0, 4, 17, 43, 0, 15, 27, 0, 0, 0, 5, 21, 2, 20, 1, 20, 2, 0, 20, 0, 0, 37]"
-bytecode_length = 101
+bytecode = "[34, 5, 109, 97, 116, 99, 104, 1, 0, 50, 35, 4, 109, 97, 105, 110, 36, 0, 1, 21, 0, 28, 10, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 27, 0, 0, 0, 1, 38, 1, 0, 0, 5, 109, 97, 116, 99, 104, 14, 37, 35, 5, 109, 97, 116, 99, 104, 27, 0, 0, 0, 3, 21, 1, 20, 0, 20, 1, 0, 21, 2, 20, 2, 27, 0, 0, 0, 4, 17, 43, 0, 15, 27, 0, 0, 0, 5, 21, 2, 20, 1, 20, 2, 0, 20, 0, 0, 37]"
+bytecode_length = 98
 disassembled = """
-0 \tfunction signature (name: match) (local count: 1) (function position: 53)
+0 \tfunction signature (name: match) (local count: 1) (function position: 50)
 
 10 \t=== function chunk: main ===
 16 \tfunction (function index: 0) (params: 1)
@@ -26,34 +26,32 @@ disassembled = """
 33 \tpush_integer (value: 1)
 38 \tcall match (is_global: 0) (arg count: 1, function index: 0)
 48 \tstr_concat
-49 \tpush_string (value: '')
-51 \tstr_concat
-52 \tret
+49 \tret
 
-53 \t=== function chunk: match ===
-60 \tpush_integer (value: 3)
-65 \tset_value (index: 1)
-67 \tget_value (index: 0)
-69 \tget_value (index: 1)
-71 \tint_add
-72 \tset_value (index: 2)
-74 \tget_value (index: 2)
-76 \tpush_integer (value: 4)
-81 \teq
-82 \tjump if false (offset: 15, to byte 100)
-85 \tpush_integer (value: 5)
-90 \tset_value (index: 2)
-92 \tget_value (index: 1)
-94 \tget_value (index: 2)
+50 \t=== function chunk: match ===
+57 \tpush_integer (value: 3)
+62 \tset_value (index: 1)
+64 \tget_value (index: 0)
+66 \tget_value (index: 1)
+68 \tint_add
+69 \tset_value (index: 2)
+71 \tget_value (index: 2)
+73 \tpush_integer (value: 4)
+78 \teq
+79 \tjump if false (offset: 15, to byte 97)
+82 \tpush_integer (value: 5)
+87 \tset_value (index: 2)
+89 \tget_value (index: 1)
+91 \tget_value (index: 2)
+93 \tint_add
+94 \tget_value (index: 0)
 96 \tint_add
-97 \tget_value (index: 0)
-99 \tint_add
-100 \tret
+97 \tret
 """
 
 [output.vm]
-bytes_read = 102
-instructions_executed = 29
+bytes_read = 99
+instructions_executed = 27
 jumps_performed = 0
 max_stack_height = 8
-stack_allocations = 21
+stack_allocations = 19

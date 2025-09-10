@@ -19,10 +19,10 @@ result = "Lights: :red => :yellow(4) => :green"
 type = "string"
 
 [output.compiler]
-bytecode = "[34, 15, 115, 116, 111, 112, 108, 105, 103, 104, 116, 95, 99, 111, 108, 111, 114, 1, 0, 149, 35, 4, 109, 97, 105, 110, 36, 0, 1, 21, 0, 26, 64, 160, 0, 0, 38, 1, 0, 0, 15, 115, 116, 111, 112, 108, 105, 103, 104, 116, 95, 99, 111, 108, 111, 114, 21, 1, 26, 0, 0, 0, 0, 38, 1, 0, 0, 15, 115, 116, 111, 112, 108, 105, 103, 104, 116, 95, 99, 111, 108, 111, 114, 21, 2, 26, 192, 76, 204, 205, 38, 1, 0, 0, 15, 115, 116, 111, 112, 108, 105, 103, 104, 116, 95, 99, 111, 108, 111, 114, 21, 3, 28, 8, 76, 105, 103, 104, 116, 115, 58, 32, 20, 1, 14, 28, 4, 32, 61, 62, 32, 14, 20, 2, 14, 28, 4, 32, 61, 62, 32, 14, 20, 3, 14, 28, 0, 14, 37, 35, 15, 115, 116, 111, 112, 108, 105, 103, 104, 116, 95, 99, 111, 108, 111, 114, 20, 0, 21, 1, 20, 1, 26, 0, 0, 0, 0, 13, 19, 43, 0, 8, 30, 3, 114, 101, 100, 41, 0, 38, 20, 0, 21, 2, 20, 2, 26, 0, 0, 0, 0, 17, 43, 0, 16, 27, 0, 0, 0, 4, 31, 6, 121, 101, 108, 108, 111, 119, 41, 0, 7, 30, 5, 103, 114, 101, 101, 110, 37]"
-bytecode_length = 229
+bytecode = "[34, 15, 115, 116, 111, 112, 108, 105, 103, 104, 116, 95, 99, 111, 108, 111, 114, 1, 0, 146, 35, 4, 109, 97, 105, 110, 36, 0, 1, 21, 0, 26, 64, 160, 0, 0, 38, 1, 0, 0, 15, 115, 116, 111, 112, 108, 105, 103, 104, 116, 95, 99, 111, 108, 111, 114, 21, 1, 26, 0, 0, 0, 0, 38, 1, 0, 0, 15, 115, 116, 111, 112, 108, 105, 103, 104, 116, 95, 99, 111, 108, 111, 114, 21, 2, 26, 192, 76, 204, 205, 38, 1, 0, 0, 15, 115, 116, 111, 112, 108, 105, 103, 104, 116, 95, 99, 111, 108, 111, 114, 21, 3, 28, 8, 76, 105, 103, 104, 116, 115, 58, 32, 20, 1, 14, 28, 4, 32, 61, 62, 32, 14, 20, 2, 14, 28, 4, 32, 61, 62, 32, 14, 20, 3, 14, 37, 35, 15, 115, 116, 111, 112, 108, 105, 103, 104, 116, 95, 99, 111, 108, 111, 114, 20, 0, 21, 1, 20, 1, 26, 0, 0, 0, 0, 13, 19, 43, 0, 8, 30, 3, 114, 101, 100, 41, 0, 38, 20, 0, 21, 2, 20, 2, 26, 0, 0, 0, 0, 17, 43, 0, 16, 27, 0, 0, 0, 4, 31, 6, 121, 101, 108, 108, 111, 119, 41, 0, 7, 30, 5, 103, 114, 101, 101, 110, 37]"
+bytecode_length = 226
 disassembled = """
-0 \tfunction signature (name: stoplight_color) (local count: 1) (function position: 149)
+0 \tfunction signature (name: stoplight_color) (local count: 1) (function position: 146)
 
 20 \t=== function chunk: main ===
 26 \tfunction (function index: 0) (params: 1)
@@ -47,36 +47,34 @@ disassembled = """
 141 \tstr_concat
 142 \tget_value (index: 3)
 144 \tstr_concat
-145 \tpush_string (value: '')
-147 \tstr_concat
-148 \tret
+145 \tret
 
-149 \t=== function chunk: stoplight_color ===
-166 \tget_value (index: 0)
-168 \tset_value (index: 1)
-170 \tget_value (index: 1)
-172 \tpush_float (value: 0)
-177 \tfloat_lte
-178 \tnot
-179 \tjump if false (offset: 8, to byte 190)
-182 \tpush_simple_tag (value: ':red')
-187 \tjump (offset: 38, to byte 228)
-190 \tget_value (index: 0)
-192 \tset_value (index: 2)
-194 \tget_value (index: 2)
-196 \tpush_float (value: 0)
-201 \teq
-202 \tjump if false (offset: 16, to byte 221)
-205 \tpush_integer (value: 4)
-210 \tpush_tag (value: ':yellow')
-218 \tjump (offset: 7, to byte 228)
-221 \tpush_simple_tag (value: ':green')
-228 \tret
+146 \t=== function chunk: stoplight_color ===
+163 \tget_value (index: 0)
+165 \tset_value (index: 1)
+167 \tget_value (index: 1)
+169 \tpush_float (value: 0)
+174 \tfloat_lte
+175 \tnot
+176 \tjump if false (offset: 8, to byte 187)
+179 \tpush_simple_tag (value: ':red')
+184 \tjump (offset: 38, to byte 225)
+187 \tget_value (index: 0)
+189 \tset_value (index: 2)
+191 \tget_value (index: 2)
+193 \tpush_float (value: 0)
+198 \teq
+199 \tjump if false (offset: 16, to byte 218)
+202 \tpush_integer (value: 4)
+207 \tpush_tag (value: ':yellow')
+215 \tjump (offset: 7, to byte 225)
+218 \tpush_simple_tag (value: ':green')
+225 \tret
 """
 
 [output.vm]
-bytes_read = 313
-instructions_executed = 71
+bytes_read = 310
+instructions_executed = 69
 jumps_performed = 5
 max_stack_height = 8
-stack_allocations = 48
+stack_allocations = 46

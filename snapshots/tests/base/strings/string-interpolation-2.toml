@@ -7,8 +7,8 @@ result = "2 * 3 == 6"
 type = "string"
 
 [output.compiler]
-bytecode = "[35, 4, 109, 97, 105, 110, 28, 0, 27, 0, 0, 0, 2, 14, 28, 3, 32, 42, 32, 14, 27, 0, 0, 0, 2, 27, 0, 0, 0, 1, 0, 14, 28, 4, 32, 61, 61, 32, 14, 27, 0, 0, 0, 2, 27, 0, 0, 0, 2, 27, 0, 0, 0, 1, 0, 3, 14, 28, 0, 14, 37]"
-bytecode_length = 61
+bytecode = "[35, 4, 109, 97, 105, 110, 28, 0, 27, 0, 0, 0, 2, 14, 28, 3, 32, 42, 32, 14, 27, 0, 0, 0, 2, 27, 0, 0, 0, 1, 0, 14, 28, 4, 32, 61, 61, 32, 14, 27, 0, 0, 0, 2, 27, 0, 0, 0, 2, 27, 0, 0, 0, 1, 0, 3, 14, 37]"
+bytecode_length = 58
 disassembled = """
 
 0 \t=== function chunk: main ===
@@ -29,14 +29,12 @@ disassembled = """
 54 \tint_add
 55 \tint_mult
 56 \tstr_concat
-57 \tpush_string (value: '')
-59 \tstr_concat
-60 \tret
+57 \tret
 """
 
 [output.vm]
-bytes_read = 62
-instructions_executed = 21
+bytes_read = 59
+instructions_executed = 19
 jumps_performed = 0
 max_stack_height = 4
-stack_allocations = 20
+stack_allocations = 18

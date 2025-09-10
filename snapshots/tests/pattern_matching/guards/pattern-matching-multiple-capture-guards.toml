@@ -11,8 +11,8 @@ result = "value captured is 2.3"
 type = "string"
 
 [output.compiler]
-bytecode = "[35, 4, 109, 97, 105, 110, 26, 64, 19, 51, 51, 21, 0, 26, 64, 19, 51, 51, 21, 0, 20, 0, 26, 64, 0, 0, 0, 13, 43, 0, 9, 28, 4, 110, 111, 112, 101, 41, 0, 45, 26, 64, 19, 51, 51, 21, 1, 20, 1, 26, 64, 0, 0, 0, 12, 19, 43, 0, 26, 28, 18, 118, 97, 108, 117, 101, 32, 99, 97, 112, 116, 117, 114, 101, 100, 32, 105, 115, 32, 20, 1, 14, 28, 0, 14, 37]"
-bytecode_length = 86
+bytecode = "[35, 4, 109, 97, 105, 110, 26, 64, 19, 51, 51, 21, 0, 26, 64, 19, 51, 51, 21, 0, 20, 0, 26, 64, 0, 0, 0, 13, 43, 0, 9, 28, 4, 110, 111, 112, 101, 41, 0, 42, 26, 64, 19, 51, 51, 21, 1, 20, 1, 26, 64, 0, 0, 0, 12, 19, 43, 0, 23, 28, 18, 118, 97, 108, 117, 101, 32, 99, 97, 112, 116, 117, 114, 101, 100, 32, 105, 115, 32, 20, 1, 14, 37]"
+bytecode_length = 83
 disassembled = """
 
 0 \t=== function chunk: main ===
@@ -25,25 +25,23 @@ disassembled = """
 27 \tfloat_lte
 28 \tjump if false (offset: 9, to byte 40)
 31 \tpush_string (value: 'nope')
-37 \tjump (offset: 45, to byte 85)
+37 \tjump (offset: 42, to byte 82)
 40 \tpush_float (value: 2.3)
 45 \tset_value (index: 1)
 47 \tget_value (index: 1)
 49 \tpush_float (value: 2)
 54 \tfloat_lt
 55 \tnot
-56 \tjump if false (offset: 26, to byte 85)
+56 \tjump if false (offset: 23, to byte 82)
 59 \tpush_string (value: 'value captured is ')
 79 \tget_value (index: 1)
 81 \tstr_concat
-82 \tpush_string (value: '')
-84 \tstr_concat
-85 \tret
+82 \tret
 """
 
 [output.vm]
-bytes_read = 78
-instructions_executed = 22
+bytes_read = 75
+instructions_executed = 20
 jumps_performed = 1
 max_stack_height = 5
-stack_allocations = 16
+stack_allocations = 14

@@ -24,11 +24,11 @@ result = "result is 5, 81 and 15"
 type = "string"
 
 [output.compiler]
-bytecode = "[34, 6, 115, 113, 117, 97, 114, 101, 1, 0, 114, 34, 5, 109, 97, 116, 99, 104, 1, 0, 128, 35, 4, 109, 97, 105, 110, 36, 0, 1, 21, 0, 36, 1, 1, 21, 1, 28, 10, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 27, 0, 0, 0, 1, 38, 1, 0, 1, 5, 109, 97, 116, 99, 104, 14, 28, 2, 44, 32, 14, 27, 0, 0, 0, 2, 38, 1, 0, 1, 5, 109, 97, 116, 99, 104, 14, 28, 5, 32, 97, 110, 100, 32, 14, 27, 0, 0, 0, 3, 38, 1, 0, 1, 5, 109, 97, 116, 99, 104, 14, 28, 0, 14, 37, 35, 6, 115, 113, 117, 97, 114, 101, 20, 0, 20, 0, 3, 37, 35, 5, 109, 97, 116, 99, 104, 27, 0, 0, 0, 2, 21, 1, 20, 0, 20, 1, 0, 21, 2, 20, 2, 27, 0, 0, 0, 3, 17, 43, 0, 15, 27, 0, 0, 0, 4, 21, 2, 20, 0, 20, 2, 0, 41, 0, 73, 20, 2, 27, 0, 0, 0, 4, 17, 43, 0, 29, 20, 0, 20, 1, 0, 27, 0, 0, 0, 5, 0, 21, 2, 20, 2, 38, 1, 1, 0, 6, 115, 113, 117, 97, 114, 101, 41, 0, 33, 20, 2, 27, 0, 0, 0, 5, 17, 43, 0, 22, 27, 0, 0, 0, 6, 21, 2, 27, 0, 0, 0, 7, 21, 3, 20, 1, 20, 2, 0, 20, 3, 0, 37]"
-bytecode_length = 249
+bytecode = "[34, 6, 115, 113, 117, 97, 114, 101, 1, 0, 111, 34, 5, 109, 97, 116, 99, 104, 1, 0, 125, 35, 4, 109, 97, 105, 110, 36, 0, 1, 21, 0, 36, 1, 1, 21, 1, 28, 10, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 27, 0, 0, 0, 1, 38, 1, 0, 1, 5, 109, 97, 116, 99, 104, 14, 28, 2, 44, 32, 14, 27, 0, 0, 0, 2, 38, 1, 0, 1, 5, 109, 97, 116, 99, 104, 14, 28, 5, 32, 97, 110, 100, 32, 14, 27, 0, 0, 0, 3, 38, 1, 0, 1, 5, 109, 97, 116, 99, 104, 14, 37, 35, 6, 115, 113, 117, 97, 114, 101, 20, 0, 20, 0, 3, 37, 35, 5, 109, 97, 116, 99, 104, 27, 0, 0, 0, 2, 21, 1, 20, 0, 20, 1, 0, 21, 2, 20, 2, 27, 0, 0, 0, 3, 17, 43, 0, 15, 27, 0, 0, 0, 4, 21, 2, 20, 0, 20, 2, 0, 41, 0, 73, 20, 2, 27, 0, 0, 0, 4, 17, 43, 0, 29, 20, 0, 20, 1, 0, 27, 0, 0, 0, 5, 0, 21, 2, 20, 2, 38, 1, 1, 0, 6, 115, 113, 117, 97, 114, 101, 41, 0, 33, 20, 2, 27, 0, 0, 0, 5, 17, 43, 0, 22, 27, 0, 0, 0, 6, 21, 2, 27, 0, 0, 0, 7, 21, 3, 20, 1, 20, 2, 0, 20, 3, 0, 37]"
+bytecode_length = 246
 disassembled = """
-0 \tfunction signature (name: square) (local count: 1) (function position: 114)
-11 \tfunction signature (name: match) (local count: 1) (function position: 128)
+0 \tfunction signature (name: square) (local count: 1) (function position: 111)
+11 \tfunction signature (name: match) (local count: 1) (function position: 125)
 
 21 \t=== function chunk: main ===
 27 \tfunction (function index: 0) (params: 1)
@@ -49,65 +49,63 @@ disassembled = """
 94 \tpush_integer (value: 3)
 99 \tcall match (is_global: 0) (arg count: 1, function index: 1)
 109 \tstr_concat
-110 \tpush_string (value: '')
-112 \tstr_concat
-113 \tret
+110 \tret
 
-114 \t=== function chunk: square ===
-122 \tget_value (index: 0)
-124 \tget_value (index: 0)
-126 \tint_mult
-127 \tret
+111 \t=== function chunk: square ===
+119 \tget_value (index: 0)
+121 \tget_value (index: 0)
+123 \tint_mult
+124 \tret
 
-128 \t=== function chunk: match ===
-135 \tpush_integer (value: 2)
-140 \tset_value (index: 1)
-142 \tget_value (index: 0)
-144 \tget_value (index: 1)
-146 \tint_add
-147 \tset_value (index: 2)
-149 \tget_value (index: 2)
-151 \tpush_integer (value: 3)
-156 \teq
-157 \tjump if false (offset: 15, to byte 175)
-160 \tpush_integer (value: 4)
-165 \tset_value (index: 2)
-167 \tget_value (index: 0)
-169 \tget_value (index: 2)
-171 \tint_add
-172 \tjump (offset: 73, to byte 248)
-175 \tget_value (index: 2)
-177 \tpush_integer (value: 4)
-182 \teq
-183 \tjump if false (offset: 29, to byte 215)
-186 \tget_value (index: 0)
-188 \tget_value (index: 1)
-190 \tint_add
-191 \tpush_integer (value: 5)
-196 \tint_add
-197 \tset_value (index: 2)
-199 \tget_value (index: 2)
-201 \tcall square (is_global: 1) (arg count: 1, function index: 0)
-212 \tjump (offset: 33, to byte 248)
-215 \tget_value (index: 2)
-217 \tpush_integer (value: 5)
-222 \teq
-223 \tjump if false (offset: 22, to byte 248)
-226 \tpush_integer (value: 6)
-231 \tset_value (index: 2)
-233 \tpush_integer (value: 7)
-238 \tset_value (index: 3)
-240 \tget_value (index: 1)
-242 \tget_value (index: 2)
+125 \t=== function chunk: match ===
+132 \tpush_integer (value: 2)
+137 \tset_value (index: 1)
+139 \tget_value (index: 0)
+141 \tget_value (index: 1)
+143 \tint_add
+144 \tset_value (index: 2)
+146 \tget_value (index: 2)
+148 \tpush_integer (value: 3)
+153 \teq
+154 \tjump if false (offset: 15, to byte 172)
+157 \tpush_integer (value: 4)
+162 \tset_value (index: 2)
+164 \tget_value (index: 0)
+166 \tget_value (index: 2)
+168 \tint_add
+169 \tjump (offset: 73, to byte 245)
+172 \tget_value (index: 2)
+174 \tpush_integer (value: 4)
+179 \teq
+180 \tjump if false (offset: 29, to byte 212)
+183 \tget_value (index: 0)
+185 \tget_value (index: 1)
+187 \tint_add
+188 \tpush_integer (value: 5)
+193 \tint_add
+194 \tset_value (index: 2)
+196 \tget_value (index: 2)
+198 \tcall square (is_global: 1) (arg count: 1, function index: 0)
+209 \tjump (offset: 33, to byte 245)
+212 \tget_value (index: 2)
+214 \tpush_integer (value: 5)
+219 \teq
+220 \tjump if false (offset: 22, to byte 245)
+223 \tpush_integer (value: 6)
+228 \tset_value (index: 2)
+230 \tpush_integer (value: 7)
+235 \tset_value (index: 3)
+237 \tget_value (index: 1)
+239 \tget_value (index: 2)
+241 \tint_add
+242 \tget_value (index: 3)
 244 \tint_add
-245 \tget_value (index: 3)
-247 \tint_add
-248 \tret
+245 \tret
 """
 
 [output.vm]
-bytes_read = 327
-instructions_executed = 99
+bytes_read = 324
+instructions_executed = 97
 jumps_performed = 5
 max_stack_height = 10
-stack_allocations = 70
+stack_allocations = 68
