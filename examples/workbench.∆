@@ -29,21 +29,27 @@
 # List.get = \list index
 # 	@native list_get_element_at_index index
 
+# --------
+
 # [3.3 5.4 6.5] | get_list_element_at_index 1
+
+# --------
+
 # [3.3 5.4 6.5] | get_array_length
 
+# --------
 
 # map = \list fn
 # 	len = list | get_array_length
 # 	loop = \acc i
 # 		i is
-# 			len
+# 			_ if i == len
 # 				acc
 # 			_
 # 				mapped = list | get_list_element_at_index i | fn
 # 				(acc | append mapped) | loop (i + 1)
 
-# 	[] | loop 0
+# 	[0] | loop 0
 
 # [3, 4, 5] | map \x
 # 	x * x
@@ -52,13 +58,28 @@
 
 # [3, 4, 5] | append 6
 
-repeat = \fn i
-	i is
-		_ if i > 0
-			i | fn
-			fn | repeat (i - 1)
+# --------
 
-hello = \i
-	"hello #{i}"
+# repeat = \fn i
+# 	i is
+# 		_ if i > 0
+# 			i | fn
+# 			fn | repeat (i - 1)
 
-hello | repeat 3
+# hello = \i
+# 	"hello #{i}"
+
+# hello | repeat 3
+
+# --------
+
+rec = \v
+	v is
+		n if n > 0
+			"rec: {v} " | log
+			x = v - 1
+			x | rec
+		_
+			v
+
+2 | rec

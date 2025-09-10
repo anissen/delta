@@ -44,10 +44,6 @@ pub enum ByteCode {
     GetTagName,
     GetTagPayload,
 
-    GetListElementAtIndex,
-    GetArrayLength,
-    ArrayAppend,
-
     FunctionSignature,
     FunctionChunk,
     Function,
@@ -60,6 +56,10 @@ pub enum ByteCode {
     Jump,
     JumpIfTrue,
     JumpIfFalse,
+
+    GetListElementAtIndex,
+    GetArrayLength,
+    ArrayAppend,
 }
 
 impl From<ByteCode> for u8 {

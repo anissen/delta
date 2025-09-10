@@ -65,12 +65,15 @@ impl Parser {
             .into_iter()
             .filter(|token| !matches!(token.kind, Space))
             .collect();
-        // let kinds: Vec<TokenKind> = non_whitespace_tokens
-        //     .clone()
-        //     .into_iter()
-        //     .map(|t| t.kind)
-        //     .collect();
-        // println!("condensed tokens: {:?}", kinds);
+
+        let kinds = non_whitespace_tokens
+            .iter()
+            .filter(|token| token.kind != NewLine && token.kind != Comment && token.kind != Tab)
+            .map(|t| format!("{:?} '{}'", t.kind, t.lexeme))
+            .collect::<Vec<String>>()
+            .join(", ");
+        println!("non-whitespace tokens: {}", kinds);
+
         Self {
             tokens: non_whitespace_tokens,
             current: 0,
@@ -580,10 +583,9 @@ impl Parser {
             Ok(None)
         } else {
             let error = format!(
-                "Parse error of kind {:?} at {:?} ({:?})",
+                "Parse error of kind {:?} at {:?}",
                 self.peek().kind,
                 self.previous().lexeme,
-                self.previous().position
             );
             Err(error)
         }
