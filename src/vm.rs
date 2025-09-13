@@ -415,6 +415,11 @@ impl VirtualMachine {
                     self.push_list(list);
                 }
 
+                ByteCode::Log => {
+                    let value = self.peek_top();
+                    println!("Log: {value}");
+                }
+
                 ByteCode::FunctionSignature => {
                     panic!("FunctionSignature: this shouldn't happen")
                 }

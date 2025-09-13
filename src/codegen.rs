@@ -196,6 +196,8 @@ impl<'a> Codegen<'a> {
                     scope.bytecode.add_op(ByteCode::GetArrayLength);
                 } else if lexeme == "append" {
                     scope.bytecode.add_op(ByteCode::ArrayAppend);
+                } else if lexeme == "log" {
+                    scope.bytecode.add_op(ByteCode::Log);
                 } else {
                     if self.context.has_function(lexeme) {
                         // TODO(anissen): Maybe this should be its own Expr instead?

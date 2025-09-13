@@ -164,6 +164,15 @@ impl<'a> Typer<'a> {
             },
         );
 
+        let tttt = UnificationType::Variable(47); // TODO(anissen): Hack!
+        environment.variables.insert(
+            "log".to_string(),
+            UnificationType::Constructor {
+                typ: Type::Function,
+                generics: vec![tttt.clone(), tttt],
+                token: no_token.clone(),
+            },
+        );
         // for function in self.context.get_function_names() {
         //     environment.variables.insert(
         //         function,

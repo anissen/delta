@@ -138,6 +138,8 @@ impl TryFrom<u8> for ByteCode {
             value if value == ByteCode::JumpIfTrue as u8 => Ok(Self::JumpIfTrue),
             value if value == ByteCode::JumpIfFalse as u8 => Ok(Self::JumpIfFalse),
 
+            value if value == ByteCode::Log as u8 => Ok(Self::Log),
+
             _ => {
                 dbg!(value);
                 Err(())

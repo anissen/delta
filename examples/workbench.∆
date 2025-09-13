@@ -76,7 +76,7 @@
 rec = \v
 	v is
 		n if n > 0
-			"rec: {v} " | log
+			("rec: {v}") | log # Works with parenthesis, not without
 			x = v - 1
 			x | rec
 		_
