@@ -162,14 +162,14 @@ impl<'a> Program<'a> {
             _ => unreachable!(),
         });
 
-        if self.debug {
-            tokens.iter().for_each(|token| {
-                println!(
-                    "token: {:?} at '{}' (line {}, column: {})",
-                    token.kind, token.lexeme, token.position.line, token.position.column
-                )
-            });
-        }
+        // if self.debug {
+        //     tokens.iter().for_each(|token| {
+        //         println!(
+        //             "token: {:?} at '{}' (line {}, column: {})",
+        //             token.kind, token.lexeme, token.position.line, token.position.column
+        //         )
+        //     });
+        // }
 
         println!("\n# parsing =>");
         let start = std::time::Instant::now();
