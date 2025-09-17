@@ -132,7 +132,6 @@ impl Parser {
                     let operator = self.previous();
                     let value = self.assignment()?;
                     Ok(Some(Expr::Assignment {
-                        // name,
                         target: Box::new(expr),
                         _operator: operator,
                         expr: Box::new(value.unwrap()),
@@ -682,7 +681,7 @@ impl Parser {
         if self.check(kind) {
             Ok(self.advance())
         } else {
-            let message = format!("Expected {:?} but found {:?}", kind, &self.peek());
+            let message = format!("Expected {kind:?} but found '{}'", self.peek().lexeme);
             Err(message.to_string())
         }
     }

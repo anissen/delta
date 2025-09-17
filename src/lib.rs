@@ -89,21 +89,6 @@ pub fn run_file(source_path: &String, debug: bool) -> Result<ProgramResult, Diag
     program.dump("∆");
 */
 
-// pub fn build(
-//     source: &str,
-//     file_name: Option<&String>,
-//     debug: bool,
-// ) -> Result<Program, Diagnostics> {
-//     let default_file_name = "n/a".to_string();
-//     println!(
-//         "\n# source (file: {}) =>",
-//         file_name.unwrap_or(&default_file_name)
-//     );
-
-//     let context = program::Context::new();
-//     Program::new(context, source, debug)
-// }
-
 pub fn run(
     source: &str,
     file_name: Option<&String>,
@@ -120,8 +105,6 @@ pub fn run(
     let result = program.reload(source.to_string());
     match result {
         None => {
-            // let mut metadata = ExecutionMetadata::default();
-
             if debug {
                 println!("\n# disassembly =>");
                 // Generate disassembled instructions and optionally print

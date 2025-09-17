@@ -171,5 +171,4 @@ fn run_script(
 ) -> Result<delta::ProgramResult, delta::diagnostics::Diagnostics> {
     // Set a timeout?
     delta::run(source, Some(&file_name), true)
-    // TODO(anissen): Also output bytecode length, bytecode instructions, instructions executed, bytes read, (allocations?)
 }

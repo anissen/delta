@@ -232,10 +232,7 @@ impl<'a> Program<'a> {
                 };
 
                 // TODO(anissen): This is a horrible hack! The world context should either be on program or persist on the VM.
-                let world_data = match &self.vm {
-                    Some(vm) => Some(vm.world_context.clone()),
-                    None => None,
-                };
+                let world_data = self.vm.as_ref().map(|vm| vm.world_context.clone());
 
                 // TODO(anissen): Don't recreate the VM on each compile
                 self.bytecode = bytecodes.clone();
