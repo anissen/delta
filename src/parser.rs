@@ -175,6 +175,9 @@ impl Parser {
             if self.matches(&RightBracket) {
                 break;
             }
+            if !list_elements.is_empty() {
+                self.consume(&Comma)?;
+            }
             if let Some(expr) = self.expression()? {
                 list_elements.push(expr)
             }

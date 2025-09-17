@@ -4,6 +4,7 @@ pub enum TokenKind {
     Bang,
     BangEqual,
     Context,
+    Comma,
     Comment,
     Dot,
     Equal,

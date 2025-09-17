@@ -94,6 +94,7 @@ impl Lexer {
             '!' => TokenKind::Bang,
             '=' if self.matches('=') => TokenKind::EqualEqual,
             '=' => TokenKind::Equal,
+            ',' => TokenKind::Comma,
             '#' => self.comment(),
             '|' => TokenKind::Pipe,
             '∆' => TokenKind::Context,
