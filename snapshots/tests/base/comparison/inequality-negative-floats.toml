@@ -6,4 +6,4 @@ script = """
 error = """
 -2.3 !=. -5.4
      ^^
-Line 1.6: Parse error: Parse error of kind Dot at "!=" (Position { line: 1, column: 6 })"""
+Line 1.6: Parse error: Parse error of kind Dot at "!=""""
