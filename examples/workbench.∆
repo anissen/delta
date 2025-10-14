@@ -1,7 +1,4 @@
 
-# [4 3 2]
-
-
 # [3 4 + 4 5]
 
 # get_list = \v
@@ -100,7 +97,7 @@
 
 # --------
 
-[3 4 5] | append 6
+# [3, 4, 5] | append 6
 
 # --------
 
@@ -127,3 +124,42 @@
 # 			v
 
 # 2 | rec
+
+# sum_loop = \list i value
+# 	len = list | get_array_length
+# 	new_value = value + (list | get_list_element_at_index i)
+# 	i is
+# 		_ if i == len - 1
+# 			new_value
+# 		_
+# 			list | sum_loop (i + 1) new_value
+
+# Listsum = \list
+# 	# len = list | get_array_length
+# 	# sum_loop = \i
+# 	# 	value = value + (list | get_list_element_at_index i)
+# 	# 	i is
+# 	# 		len
+# 	# 			value
+# 	# 		_
+# 	# 			(i + 1) | sum_loop
+# 	# 0 | sum_loop
+# 	list | sum_loop 0 0
+
+# ----------
+
+# Listsum2 = \list
+# 	len = list | get_array_length
+# 	value = 0
+# 	sum_loop = \i
+# 		value = value + (list | get_list_element_at_index i)
+# 		i is
+# 			_ if i == len - 1
+# 				value
+# 			_
+# 				(i + 1) | sum_loop
+# 	0 | sum_loop
+
+# [3, 4, 5] | Listsum2
+
+[4, 3, 2]
