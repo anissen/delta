@@ -368,6 +368,7 @@ impl VirtualMachine {
                     self.push_value(value);
                 }
 
+                // TODO: Add bytecode instructions for ECS operations
                 ByteCode::SetLocalValue => {
                     let index = self.read_byte();
                     let stack_index = self.current_call_frame().stack_index;

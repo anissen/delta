@@ -39,6 +39,7 @@ pub struct Context<'a> {
     functions: HashMap<String, ForeignFunction<'a>>,
     function_count: u8,
     values: HashMap<String, ForeignValue<'a>>,
+    // pub entity_components: HashMap<i32, HashMap<String, vm::Value>>,
 }
 
 impl Default for Context<'_> {
@@ -53,6 +54,7 @@ impl<'a> Context<'a> {
             functions: HashMap::new(),
             function_count: 0,
             values: HashMap::new(),
+            // entity_components: HashMap::new(),
         }
     }
 

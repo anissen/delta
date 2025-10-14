@@ -1,3 +1,4 @@
+// TODO(anissen): Bytecode should be in a higher level format w. values to allow for an simple optimization phase. The format should know how to translate to/from actual bytes.
 #[derive(Debug)]
 pub enum ByteCode {
     IntegerAddition,
@@ -60,6 +61,12 @@ pub enum ByteCode {
     GetListElementAtIndex,
     GetArrayLength,
     ArrayAppend,
+
+    Log,
+    // CreateEntity,
+    // SetComponent, // TODO(anissen): Should be `SetComponents`
+    // GetComponent, // TODO(anissen): Should be `GetComponents`
+    // RunSystem
 }
 
 impl From<ByteCode> for u8 {

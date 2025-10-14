@@ -364,7 +364,7 @@ impl<'env> InferenceContext<'env> {
                             .insert(name.lexeme.clone(), expr_type.clone());
                     }
                     Expr::ContextIdentifier { ref name } => {
-                        // TODO(anissen): This is not right for ContextIdentifier?!?!?
+                        // TODO(anissen): This is not right for ContextIdentifier?!?
                         self.environment
                             .variables
                             .insert(name.lexeme.clone(), expr_type.clone());
