@@ -10,7 +10,7 @@ enum ProcessStatus {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let current_dir = std::env::current_dir()?;
-    let tests_dir = current_dir.join("tests");
+    let tests_dir = current_dir.parent().unwrap().join("snapshots");
 
     let mut files_processed = 0;
     let mut ignored_files = Vec::new();
