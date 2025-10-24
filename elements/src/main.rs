@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 
 type Entity = u32;
 
@@ -65,33 +66,86 @@ impl<T> ComponentStorage<T> {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+struct Component {
+    // values: HashMap<String, f32>,
+    x: f32,
+    y: f32,
+}
+
+// impl Component {
+//     fn new() -> Self {
+//         Self {
+//             values: HashMap::new(),
+//         }
+//     }
+
+//     fn new(x: f32, y: f32) -> Self {
+//         let mut values = HashMap::new();
+//         values.insert("x".to_string(), x);
+//         values.insert("y".to_string(), y);
+//         Self { values }
+//     }
+// }
+
 pub struct World {
-    positions: ComponentStorage<Position>,
-    velocities: ComponentStorage<Velocity>,
+    components: HashMap<u32, ComponentStorage<Component>>,
 }
 
 impl World {
     fn new() -> Self {
         Self {
-            positions: ComponentStorage::new(),
-            velocities: ComponentStorage::new(),
+            components: HashMap::new(),
         }
     }
 
-    fn add_position(&mut self, entity: Entity, position: Position) {
-        self.positions.insert(entity, position);
+    fn add_position(&mut self, entity: Entity, component_id: u32, position: Position) {
+        self.components
+            .entry(component_id)
+            .or_insert_with(|| ComponentStorage::new())
+            .insert(
+                entity,
+                Component {
+                    x: position.x,
+                    y: position.y,
+                },
+            );
+        // self.positions.insert(entity, position);
     }
 
-    fn add_velocity(&mut self, entity: Entity, velocity: Velocity) {
-        self.velocities.insert(entity, velocity);
+    fn add_velocity(&mut self, entity: Entity, component_id: u32, velocity: Velocity) {
+        self.components
+            .entry(component_id)
+            .or_insert_with(|| ComponentStorage::new())
+            .insert(
+                entity,
+                Component {
+                    x: velocity.dx,
+                    y: velocity.dy,
+                },
+            );
     }
 }
 
+const POSITION_ID: u32 = 0;
+const VELOCITY_ID: u32 = 1;
+
 fn movement_system(world: &mut World) {
-    for (entity, pos) in world.positions.iter_mut() {
-        if let Some(vel) = world.velocities.get(entity) {
-            pos.x += vel.dx;
-            pos.y += vel.dy;
+    let positions = world.components.get(&POSITION_ID).unwrap();
+    let velocities = world.components.get(&VELOCITY_ID).unwrap();
+
+    // Collect entities and velocity values that need updating
+    let updates: Vec<(Entity, Component)> = positions
+        .iter()
+        .filter_map(|(entity, _pos)| velocities.get(entity).map(|vel| (entity, *vel)))
+        .collect();
+
+    // Apply updates
+    let positions = world.components.get_mut(&POSITION_ID).unwrap();
+    for (entity, vel) in updates {
+        if let Some(pos) = positions.get_mut(entity) {
+            pos.x += vel.x;
+            pos.y += vel.y;
         }
     }
 }
@@ -212,13 +266,13 @@ fn main() {
     let e3 = entity_manager.create();
 
     // Add components
-    world.add_position(e1, Position { x: 0.0, y: 0.0 });
-    world.add_velocity(e1, Velocity { dx: 1.0, dy: 1.0 });
+    world.add_position(e1, POSITION_ID, Position { x: 0.0, y: 0.0 });
+    world.add_velocity(e1, VELOCITY_ID, Velocity { dx: 1.0, dy: 1.0 });
 
-    world.add_position(e2, Position { x: 10.0, y: -5.0 });
-    world.add_velocity(e2, Velocity { dx: -2.0, dy: 0.5 });
+    world.add_position(e2, POSITION_ID, Position { x: 10.0, y: -5.0 });
+    world.add_velocity(e2, VELOCITY_ID, Velocity { dx: -2.0, dy: 0.5 });
 
-    world.add_position(e3, Position { x: 3.0, y: 3.0 });
+    world.add_position(e3, POSITION_ID, Position { x: 3.0, y: 3.0 });
     // e3 has no velocity—won’t move
 
     // Run the movement system a few times
@@ -226,7 +280,7 @@ fn main() {
         println!("--- Frame {} ---", frame);
         movement_system(&mut world);
 
-        for (entity, pos) in world.positions.iter() {
+        for (entity, pos) in world.components.get(&POSITION_ID).unwrap().iter() {
             println!("Entity {}: Position = ({:.1}, {:.1})", entity, pos.x, pos.y);
         }
     }
