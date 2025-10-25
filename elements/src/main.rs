@@ -53,6 +53,11 @@ impl ComponentColumn {
         }
     }
 
+    fn has(&self, entity: Entity) -> bool {
+        let id = entity as usize;
+        id < self.sparse.len() && self.sparse[id].is_some()
+    }
+
     fn get(&self, entity: Entity) -> Option<&Component> {
         let id = entity as usize;
         self.sparse
@@ -189,8 +194,10 @@ impl ComponentStorage {
 
 #[derive(Debug)]
 enum Value {
+    Marker, // TODO(anissen): Should not be necessary to have for creating a marker component.
     Float(f32),
     Integer(i32),
+    Boolean(bool),
 }
 
 impl Value {
@@ -211,6 +218,7 @@ type ComponentId = u32;
 
 const POSITION_ID: ComponentId = 0;
 const VELOCITY_ID: ComponentId = 1;
+const DEAD_ID: ComponentId = 2;
 
 fn movement_system(components: &mut ComponentStorage) {
     // Collect entities and velocity values that need updating
@@ -248,6 +256,12 @@ fn velocity(dx: f32, dy: f32) -> Component {
     }
 }
 
+fn marker(str: &str) -> Component {
+    Component {
+        values: HashMap::from([(str.to_string(), Value::Marker)]),
+    }
+}
+
 fn main() {
     let mut entity_manager = EntityManager::new();
     let mut components = ComponentStorage::new();
@@ -265,6 +279,7 @@ fn main() {
     dbg!(&components.get(&VELOCITY_ID));
     components.remove(e1, VELOCITY_ID);
     dbg!(&components.get(&VELOCITY_ID));
+
     components.set(e2, POSITION_ID, position(10.0, -5.0));
     components.set(e2, VELOCITY_ID, velocity(-2.0, 0.5));
 
@@ -276,6 +291,7 @@ fn main() {
         println!("--- Frame {} ---", frame);
         movement_system(&mut components);
 
+        let dead_components = components.get(&DEAD_ID);
         for (entity, pos) in components.get(&POSITION_ID).unwrap().iter() {
             println!(
                 "Entity {}: Position = ({:.1}, {:.1})",
@@ -283,7 +299,14 @@ fn main() {
                 pos.values.get("x").unwrap().as_float(),
                 pos.values.get("y").unwrap().as_float()
             );
+            if let Some(dead) = dead_components
+                && dead.has(*entity)
+            {
+                println!("Entity {} is dead", entity);
+            }
         }
+
+        components.set(e2, DEAD_ID, marker("is_dead"));
         components.set(e3, VELOCITY_ID, velocity(1.0, 1.0));
     }
 }
