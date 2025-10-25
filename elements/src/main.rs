@@ -115,6 +115,55 @@ impl ComponentStorage {
         self.component_sets.get(component_id)
     }
 
+    // fn get_two(
+    //     &self,
+    //     component_id1: &ComponentId,
+    //     component_id2: &ComponentId,
+    // ) -> Option<(&ComponentColumn, &ComponentColumn)> {
+    //     let column1 = self.component_sets.get(component_id1)?;
+    //     let column2 = self.component_sets.get(component_id2)?;
+    //     Some((column1, column2))
+    // }
+
+    fn get_two_mut(
+        &mut self,
+        component_id1: &ComponentId,
+        component_id2: &ComponentId,
+    ) -> (&mut ComponentColumn, &mut ComponentColumn) {
+        let [a, b] = self
+            .component_sets
+            .get_disjoint_mut([component_id1, component_id2]);
+        (a.unwrap(), b.unwrap())
+    }
+
+    // fn get_two_mut_iter(
+    //     &mut self,
+    //     component_id1: &ComponentId,
+    //     component_id2: &ComponentId,
+    // ) -> Vec<(&Component, &Component)> {
+    //     let [first, second] = self
+    //         .component_sets
+    //         .get_disjoint_mut([component_id1, component_id2]);
+    //     // let first = self.component_sets.get_mut(component_id1).unwrap();
+    //     let first = &first.unwrap();
+    //     let second = &second.unwrap();
+    //     let entities = &first.dense_entities;
+    //     // let second = self.component_sets.get_mut(component_id2).unwrap();
+    //     let mut rows = Vec::new();
+    //     let mut index = 0;
+    //     for &entity in entities {
+    //         let id = entity as usize;
+    //         if first.sparse.get(id).is_some() && second.sparse.get(id).is_some() {
+    //             rows.push((
+    //                 &first.dense_components[index],
+    //                 &second.dense_components[index],
+    //             ));
+    //         }
+    //         index += 1;
+    //     }
+    //     rows
+    // }
+
     fn get_mut(&mut self, component_id: &ComponentId) -> Option<&mut ComponentColumn> {
         self.component_sets.get_mut(component_id)
     }
@@ -138,6 +187,7 @@ impl ComponentStorage {
     }
 }
 
+#[derive(Debug)]
 enum Value {
     Float(f32),
     Integer(i32),
@@ -152,11 +202,9 @@ impl Value {
     }
 }
 
-// #[derive(Debug, Clone, Copy)]
+#[derive(Debug)]
 struct Component {
     values: HashMap<String, Value>, // TODO(anissen): Could be mapped to Vec<Value> where field names are mapped to indexes.
-                                    // x: f32,
-                                    // y: f32,
 }
 
 type ComponentId = u32;
@@ -165,32 +213,20 @@ const POSITION_ID: ComponentId = 0;
 const VELOCITY_ID: ComponentId = 1;
 
 fn movement_system(components: &mut ComponentStorage) {
-    let positions = components.get(&POSITION_ID).unwrap();
-    let velocities = components.get(&VELOCITY_ID).unwrap();
-
-    // for (entity, position) in positions.iter_mut() {
-    //     if let Some(vel) = velocities.get(entity) {
-    //         position.x += vel.x;
-    //         position.y += vel.y;
-    //     }
-    // }
-
     // Collect entities and velocity values that need updating
-    let x = components.get_two_mut(&POSITION_ID, &VELOCITY_ID);
+    let (positions, velocities) = components.get_two_mut(&POSITION_ID, &VELOCITY_ID);
+    let iter = positions
+        .iter_mut()
+        .filter_map(|(entity, pos)| velocities.get(*entity).map(|vel| (pos, vel)));
 
     // Apply updates
-    // let positions = components.get_mut(&POSITION_ID).unwrap();
-    for (pos, vel) in x {
-        // if let Some(pos) = positions.get_mut(*entity) {
-        // pos.x += vel.x;
-        // pos.y += vel.y;
-        let dx = vel.values.get("x").unwrap().as_float();
-        let dy = vel.values.get("y").unwrap().as_float();
+    for (pos, vel) in iter {
+        let dx = vel.values.get("dx").unwrap().as_float();
+        let dy = vel.values.get("dy").unwrap().as_float();
         let pos_x = pos.values.get("x").unwrap().as_float();
         let pos_y = pos.values.get("y").unwrap().as_float();
         pos.values.insert("x".to_string(), Value::Float(pos_x + dx));
         pos.values.insert("y".to_string(), Value::Float(pos_y + dy));
-        // }
     }
 }
 
@@ -241,7 +277,12 @@ fn main() {
         movement_system(&mut components);
 
         for (entity, pos) in components.get(&POSITION_ID).unwrap().iter() {
-            println!("Entity {}: Position = ({:.1}, {:.1})", entity, pos.x, pos.y);
+            println!(
+                "Entity {}: Position = ({:.1}, {:.1})",
+                entity,
+                pos.values.get("x").unwrap().as_float(),
+                pos.values.get("y").unwrap().as_float()
+            );
         }
         components.set(e3, VELOCITY_ID, velocity(1.0, 1.0));
     }
