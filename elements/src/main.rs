@@ -18,18 +18,6 @@ impl EntityManager {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-struct Position {
-    x: f32,
-    y: f32,
-}
-
-#[derive(Debug, Clone, Copy)]
-struct Velocity {
-    dx: f32,
-    dy: f32,
-}
-
 pub struct ComponentStorage<T> {
     set: SparseSet<T>,
 }
@@ -73,23 +61,10 @@ struct Component {
     y: f32,
 }
 
-// impl Component {
-//     fn new() -> Self {
-//         Self {
-//             values: HashMap::new(),
-//         }
-//     }
-
-//     fn new(x: f32, y: f32) -> Self {
-//         let mut values = HashMap::new();
-//         values.insert("x".to_string(), x);
-//         values.insert("y".to_string(), y);
-//         Self { values }
-//     }
-// }
+type ComponentId = u32;
 
 pub struct World {
-    components: HashMap<u32, ComponentStorage<Component>>,
+    components: HashMap<ComponentId, ComponentStorage<Component>>,
 }
 
 impl World {
@@ -99,36 +74,16 @@ impl World {
         }
     }
 
-    fn add_position(&mut self, entity: Entity, component_id: u32, position: Position) {
+    fn set(&mut self, entity: Entity, component_id: ComponentId, component: Component) {
         self.components
             .entry(component_id)
             .or_insert_with(|| ComponentStorage::new())
-            .insert(
-                entity,
-                Component {
-                    x: position.x,
-                    y: position.y,
-                },
-            );
-        // self.positions.insert(entity, position);
-    }
-
-    fn add_velocity(&mut self, entity: Entity, component_id: u32, velocity: Velocity) {
-        self.components
-            .entry(component_id)
-            .or_insert_with(|| ComponentStorage::new())
-            .insert(
-                entity,
-                Component {
-                    x: velocity.dx,
-                    y: velocity.dy,
-                },
-            );
+            .insert(entity, component);
     }
 }
 
-const POSITION_ID: u32 = 0;
-const VELOCITY_ID: u32 = 1;
+const POSITION_ID: ComponentId = 0;
+const VELOCITY_ID: ComponentId = 1;
 
 fn movement_system(world: &mut World) {
     let positions = world.components.get(&POSITION_ID).unwrap();
@@ -151,22 +106,30 @@ fn movement_system(world: &mut World) {
 }
 
 // fn movement_system(world: &mut World) {
-//     let (positions, velocities) = (&mut world.positions, &world.velocities);
+//     let positions = &mut world.components.get_mut(&POSITION_ID).unwrap();
+//     let velocities = &world.components.get(&VELOCITY_ID).unwrap();
+
+//     // let (positions, velocities) = (
+//     //     &mut world.components.get_mut(&POSITION_ID).unwrap(),
+//     //     &world.components.get(&VELOCITY_ID).unwrap(),
+//     // );
 
 //     // Choose the smaller set to iterate over
 //     let iter = if positions.set.dense_entities.len() <= velocities.set.dense_entities.len() {
 //         positions
 //             .iter_mut()
 //             .filter_map(|(entity, pos)| velocities.get(entity).map(|vel| (pos, vel)))
+//             .collect::<Vec<_>>()
 //     } else {
 //         velocities
 //             .iter()
 //             .filter_map(|(entity, vel)| positions.get_mut(entity).map(|pos| (pos, vel)))
+//             .collect::<Vec<_>>()
 //     };
 
 //     for (pos, vel) in iter {
-//         pos.x += vel.dx;
-//         pos.y += vel.dy;
+//         pos.x += vel.x;
+//         pos.y += vel.y;
 //     }
 // }
 
@@ -188,20 +151,23 @@ impl<T> SparseSet<T> {
 
 impl<T> SparseSet<T> {
     pub fn insert(&mut self, entity: Entity, component: T) {
-        let index = self.dense_components.len();
         let id = entity as usize;
 
-        if id >= self.sparse.len() {
-            self.sparse.resize(id + 1, None);
-        }
+        if id < self.sparse.len() && self.sparse[id].is_some() {
+            // Replace component
+            let index = self.sparse[id].unwrap();
+            self.dense_components[index as usize] = component;
+        } else {
+            // Insert component
+            if id >= self.sparse.len() {
+                self.sparse.resize(id + 1, None);
+            }
 
-        if self.sparse[id].is_some() {
-            panic!("Entity {:?} already has component", entity);
+            let index = self.dense_components.len();
+            self.dense_components.push(component);
+            self.dense_entities.push(entity);
+            self.sparse[id] = Some(index);
         }
-
-        self.dense_components.push(component);
-        self.dense_entities.push(entity);
-        self.sparse[id] = Some(index);
     }
 }
 
@@ -266,13 +232,13 @@ fn main() {
     let e3 = entity_manager.create();
 
     // Add components
-    world.add_position(e1, POSITION_ID, Position { x: 0.0, y: 0.0 });
-    world.add_velocity(e1, VELOCITY_ID, Velocity { dx: 1.0, dy: 1.0 });
+    world.set(e1, POSITION_ID, Component { x: 0.0, y: 0.0 });
+    world.set(e1, VELOCITY_ID, Component { x: 1.0, y: 1.0 });
 
-    world.add_position(e2, POSITION_ID, Position { x: 10.0, y: -5.0 });
-    world.add_velocity(e2, VELOCITY_ID, Velocity { dx: -2.0, dy: 0.5 });
+    world.set(e2, POSITION_ID, Component { x: 10.0, y: -5.0 });
+    world.set(e2, VELOCITY_ID, Component { x: -2.0, y: 0.5 });
 
-    world.add_position(e3, POSITION_ID, Position { x: 3.0, y: 3.0 });
+    world.set(e3, POSITION_ID, Component { x: 3.0, y: 3.0 });
     // e3 has no velocity—won’t move
 
     // Run the movement system a few times
