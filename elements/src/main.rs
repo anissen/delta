@@ -153,10 +153,9 @@ impl<T> SparseSet<T> {
     pub fn insert(&mut self, entity: Entity, component: T) {
         let id = entity as usize;
 
-        if id < self.sparse.len() && self.sparse[id].is_some() {
+        if let Some(Some(index)) = self.sparse.get(id) {
             // Replace component
-            let index = self.sparse[id].unwrap();
-            self.dense_components[index as usize] = component;
+            self.dense_components[*index] = component;
         } else {
             // Insert component
             if id >= self.sparse.len() {
