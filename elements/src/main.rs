@@ -32,9 +32,7 @@ impl<T> SparseSet<T> {
             sparse: Vec::new(),
         }
     }
-}
 
-impl<T> SparseSet<T> {
     pub fn insert(&mut self, entity: Entity, component: T) {
         let id = entity as usize;
 
@@ -53,9 +51,7 @@ impl<T> SparseSet<T> {
             self.sparse[id] = Some(index);
         }
     }
-}
 
-impl<T> SparseSet<T> {
     pub fn get(&self, entity: Entity) -> Option<&T> {
         let id = entity as usize;
         self.sparse
@@ -69,9 +65,7 @@ impl<T> SparseSet<T> {
             .get(id)?
             .map(|index| &mut self.dense_components[index])
     }
-}
 
-impl<T> SparseSet<T> {
     pub fn remove(&mut self, entity: Entity) -> Option<T> {
         let id = entity as usize;
         let index = self.sparse.get_mut(id)?.take()?;
@@ -88,9 +82,7 @@ impl<T> SparseSet<T> {
 
         removed
     }
-}
 
-impl<T> SparseSet<T> {
     pub fn iter(&self) -> impl Iterator<Item = (Entity, &T)> {
         self.dense_entities
             .iter()
