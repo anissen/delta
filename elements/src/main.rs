@@ -18,6 +18,94 @@ impl EntityManager {
     }
 }
 
+pub struct SparseSet<T> {
+    dense_components: Vec<T>,
+    dense_entities: Vec<Entity>,
+    sparse: Vec<Option<usize>>,
+}
+
+impl<T> SparseSet<T> {
+    pub fn new() -> Self {
+        Self {
+            dense_components: Vec::new(),
+            dense_entities: Vec::new(),
+            sparse: Vec::new(),
+        }
+    }
+}
+
+impl<T> SparseSet<T> {
+    pub fn insert(&mut self, entity: Entity, component: T) {
+        let id = entity as usize;
+
+        if let Some(Some(index)) = self.sparse.get(id) {
+            // Replace component
+            self.dense_components[*index] = component;
+        } else {
+            // Insert component
+            if id >= self.sparse.len() {
+                self.sparse.resize(id + 1, None);
+            }
+
+            let index = self.dense_components.len();
+            self.dense_components.push(component);
+            self.dense_entities.push(entity);
+            self.sparse[id] = Some(index);
+        }
+    }
+}
+
+impl<T> SparseSet<T> {
+    pub fn get(&self, entity: Entity) -> Option<&T> {
+        let id = entity as usize;
+        self.sparse
+            .get(id)?
+            .map(|index| &self.dense_components[index])
+    }
+
+    pub fn get_mut(&mut self, entity: Entity) -> Option<&mut T> {
+        let id = entity as usize;
+        self.sparse
+            .get(id)?
+            .map(|index| &mut self.dense_components[index])
+    }
+}
+
+impl<T> SparseSet<T> {
+    pub fn remove(&mut self, entity: Entity) -> Option<T> {
+        let id = entity as usize;
+        let index = self.sparse.get_mut(id)?.take()?;
+
+        let last_index = self.dense_components.len() - 1;
+        self.dense_components.swap(index, last_index);
+        self.dense_entities.swap(index, last_index);
+
+        let moved_entity = self.dense_entities[index];
+        self.sparse[moved_entity as usize] = Some(index);
+
+        self.dense_entities.pop();
+        let removed = self.dense_components.pop();
+
+        removed
+    }
+}
+
+impl<T> SparseSet<T> {
+    pub fn iter(&self) -> impl Iterator<Item = (Entity, &T)> {
+        self.dense_entities
+            .iter()
+            .cloned()
+            .zip(self.dense_components.iter())
+    }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = (Entity, &mut T)> {
+        self.dense_entities
+            .iter()
+            .cloned()
+            .zip(self.dense_components.iter_mut())
+    }
+}
+
 pub struct ComponentStorage<T> {
     set: SparseSet<T>,
 }
@@ -133,94 +221,6 @@ fn movement_system(world: &mut World) {
 //     }
 // }
 
-pub struct SparseSet<T> {
-    dense_components: Vec<T>,
-    dense_entities: Vec<Entity>,
-    sparse: Vec<Option<usize>>,
-}
-
-impl<T> SparseSet<T> {
-    pub fn new() -> Self {
-        Self {
-            dense_components: Vec::new(),
-            dense_entities: Vec::new(),
-            sparse: Vec::new(),
-        }
-    }
-}
-
-impl<T> SparseSet<T> {
-    pub fn insert(&mut self, entity: Entity, component: T) {
-        let id = entity as usize;
-
-        if let Some(Some(index)) = self.sparse.get(id) {
-            // Replace component
-            self.dense_components[*index] = component;
-        } else {
-            // Insert component
-            if id >= self.sparse.len() {
-                self.sparse.resize(id + 1, None);
-            }
-
-            let index = self.dense_components.len();
-            self.dense_components.push(component);
-            self.dense_entities.push(entity);
-            self.sparse[id] = Some(index);
-        }
-    }
-}
-
-impl<T> SparseSet<T> {
-    pub fn get(&self, entity: Entity) -> Option<&T> {
-        let id = entity as usize;
-        self.sparse
-            .get(id)?
-            .map(|index| &self.dense_components[index])
-    }
-
-    pub fn get_mut(&mut self, entity: Entity) -> Option<&mut T> {
-        let id = entity as usize;
-        self.sparse
-            .get(id)?
-            .map(|index| &mut self.dense_components[index])
-    }
-}
-
-impl<T> SparseSet<T> {
-    pub fn remove(&mut self, entity: Entity) -> Option<T> {
-        let id = entity as usize;
-        let index = self.sparse.get_mut(id)?.take()?;
-
-        let last_index = self.dense_components.len() - 1;
-        self.dense_components.swap(index, last_index);
-        self.dense_entities.swap(index, last_index);
-
-        let moved_entity = self.dense_entities[index];
-        self.sparse[moved_entity as usize] = Some(index);
-
-        self.dense_entities.pop();
-        let removed = self.dense_components.pop();
-
-        removed
-    }
-}
-
-impl<T> SparseSet<T> {
-    pub fn iter(&self) -> impl Iterator<Item = (Entity, &T)> {
-        self.dense_entities
-            .iter()
-            .cloned()
-            .zip(self.dense_components.iter())
-    }
-
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = (Entity, &mut T)> {
-        self.dense_entities
-            .iter()
-            .cloned()
-            .zip(self.dense_components.iter_mut())
-    }
-}
-
 fn main() {
     let mut entity_manager = EntityManager::new();
     let mut world = World::new();
@@ -232,6 +232,7 @@ fn main() {
 
     // Add components
     world.set(e1, POSITION_ID, Component { x: 0.0, y: 0.0 });
+    world.set(e1, VELOCITY_ID, Component { x: 1.0, y: 1.0 });
     world.set(e1, VELOCITY_ID, Component { x: 1.0, y: 1.0 });
 
     world.set(e2, POSITION_ID, Component { x: 10.0, y: -5.0 });
@@ -248,6 +249,7 @@ fn main() {
         for (entity, pos) in world.components.get(&POSITION_ID).unwrap().iter() {
             println!("Entity {}: Position = ({:.1}, {:.1})", entity, pos.x, pos.y);
         }
+        world.set(e3, VELOCITY_ID, Component { x: 1.0, y: 1.0 });
     }
 }
 
