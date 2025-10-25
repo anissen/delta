@@ -99,38 +99,50 @@ impl<T> SparseSet<T> {
 }
 
 pub struct ComponentStorage<T> {
-    set: SparseSet<T>,
+    component_sets: HashMap<ComponentId, SparseSet<T>>,
 }
 
 impl<T> ComponentStorage<T> {
     pub fn new() -> Self {
         Self {
-            set: SparseSet::new(),
+            component_sets: HashMap::new(),
         }
     }
 
-    pub fn insert(&mut self, entity: Entity, component: T) {
-        self.set.insert(entity, component);
+    pub fn set(&mut self, entity: Entity, component_id: ComponentId, component: T) {
+        self.component_sets
+            .entry(component_id)
+            .or_insert_with(|| SparseSet::new())
+            .insert(entity, component);
     }
 
-    pub fn get(&self, entity: Entity) -> Option<&T> {
-        self.set.get(entity)
+    pub fn get(&self, component_id: &ComponentId) -> Option<&SparseSet<T>> {
+        self.component_sets.get(component_id)
     }
 
-    pub fn get_mut(&mut self, entity: Entity) -> Option<&mut T> {
-        self.set.get_mut(entity)
+    pub fn get_mut(&mut self, component_id: &ComponentId) -> Option<&mut SparseSet<T>> {
+        self.component_sets.get_mut(component_id)
     }
 
-    pub fn remove(&mut self, entity: Entity) -> Option<T> {
-        self.set.remove(entity)
+    pub fn remove(&mut self, entity: Entity, component_id: ComponentId) -> Option<T> {
+        self.component_sets
+            .get_mut(&component_id)
+            .take()?
+            .remove(entity)
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = (Entity, &T)> {
-        self.set.iter()
+    pub fn iter(&self, component_id: ComponentId) -> impl Iterator<Item = (Entity, &T)> {
+        self.component_sets.get(&component_id).unwrap().iter()
     }
 
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = (Entity, &mut T)> {
-        self.set.iter_mut()
+    pub fn iter_mut(
+        &mut self,
+        component_id: ComponentId,
+    ) -> impl Iterator<Item = (Entity, &mut T)> {
+        self.component_sets
+            .get_mut(&component_id)
+            .unwrap()
+            .iter_mut()
     }
 }
 
@@ -144,21 +156,18 @@ struct Component {
 type ComponentId = u32;
 
 pub struct World {
-    components: HashMap<ComponentId, ComponentStorage<Component>>,
+    components: ComponentStorage<Component>,
 }
 
 impl World {
     fn new() -> Self {
         Self {
-            components: HashMap::new(),
+            components: ComponentStorage::new(),
         }
     }
 
     fn set(&mut self, entity: Entity, component_id: ComponentId, component: Component) {
-        self.components
-            .entry(component_id)
-            .or_insert_with(|| ComponentStorage::new())
-            .insert(entity, component);
+        self.components.set(entity, component_id, component)
     }
 }
 
@@ -168,6 +177,13 @@ const VELOCITY_ID: ComponentId = 1;
 fn movement_system(world: &mut World) {
     let positions = world.components.get(&POSITION_ID).unwrap();
     let velocities = world.components.get(&VELOCITY_ID).unwrap();
+
+    // for (entity, position) in positions.iter_mut() {
+    //     if let Some(vel) = velocities.get(entity) {
+    //         position.x += vel.x;
+    //         position.y += vel.y;
+    //     }
+    // }
 
     // Collect entities and velocity values that need updating
     let updates: Vec<(Entity, Component)> = positions
