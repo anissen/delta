@@ -71,39 +71,25 @@ impl ComponentColumn {
         let id = entity as usize;
         let index = self.sparse.get_mut(id)?.take()?;
 
-        if self.sparse.len() == 1 {
-            self.dense_entities.clear();
-            self.sparse.clear();
-            let removed = self.dense_components.pop();
+        let last_index = self.dense_components.len() - 1;
 
-            removed
-        } else {
-            let last_index = self.dense_components.len() - 1;
+        if index != last_index {
             self.dense_components.swap(index, last_index);
             self.dense_entities.swap(index, last_index);
-
             let moved_entity = self.dense_entities[index];
             self.sparse[moved_entity as usize] = Some(index);
-
-            self.dense_entities.pop();
-            let removed = self.dense_components.pop();
-
-            removed
         }
+
+        self.dense_entities.pop();
+        self.dense_components.pop()
     }
 
-    fn iter(&self) -> impl Iterator<Item = (Entity, &Component)> {
-        self.dense_entities
-            .iter()
-            .cloned()
-            .zip(self.dense_components.iter())
+    fn iter(&self) -> impl Iterator<Item = (&Entity, &Component)> {
+        self.dense_entities.iter().zip(&self.dense_components)
     }
 
-    fn iter_mut(&mut self) -> impl Iterator<Item = (Entity, &mut Component)> {
-        self.dense_entities
-            .iter()
-            .cloned()
-            .zip(self.dense_components.iter_mut())
+    fn iter_mut(&mut self) -> impl Iterator<Item = (&Entity, &mut Component)> {
+        self.dense_entities.iter().zip(&mut self.dense_components)
     }
 }
 
@@ -137,14 +123,14 @@ impl ComponentStorage {
         self.component_sets.get_mut(&component_id)?.remove(entity)
     }
 
-    fn iter(&self, component_id: ComponentId) -> impl Iterator<Item = (Entity, &Component)> {
+    fn iter(&self, component_id: ComponentId) -> impl Iterator<Item = (&Entity, &Component)> {
         self.component_sets.get(&component_id).unwrap().iter()
     }
 
     fn iter_mut(
         &mut self,
         component_id: ComponentId,
-    ) -> impl Iterator<Item = (Entity, &mut Component)> {
+    ) -> impl Iterator<Item = (&Entity, &mut Component)> {
         self.component_sets
             .get_mut(&component_id)
             .unwrap()
@@ -161,28 +147,12 @@ struct Component {
 
 type ComponentId = u32;
 
-pub struct World {
-    components: ComponentStorage,
-}
-
-impl World {
-    fn new() -> Self {
-        Self {
-            components: ComponentStorage::new(),
-        }
-    }
-
-    fn set(&mut self, entity: Entity, component_id: ComponentId, component: Component) {
-        self.components.set(entity, component_id, component)
-    }
-}
-
 const POSITION_ID: ComponentId = 0;
 const VELOCITY_ID: ComponentId = 1;
 
-fn movement_system(world: &mut World) {
-    let positions = world.components.get(&POSITION_ID).unwrap();
-    let velocities = world.components.get(&VELOCITY_ID).unwrap();
+fn movement_system(components: &mut ComponentStorage) {
+    let positions = components.get(&POSITION_ID).unwrap();
+    let velocities = components.get(&VELOCITY_ID).unwrap();
 
     // for (entity, position) in positions.iter_mut() {
     //     if let Some(vel) = velocities.get(entity) {
@@ -194,11 +164,11 @@ fn movement_system(world: &mut World) {
     // Collect entities and velocity values that need updating
     let updates: Vec<(Entity, Component)> = positions
         .iter()
-        .filter_map(|(entity, _pos)| velocities.get(entity).map(|vel| (entity, *vel)))
+        .filter_map(|(entity, _pos)| velocities.get(*entity).map(|vel| (*entity, *vel)))
         .collect();
 
     // Apply updates
-    let positions = world.components.get_mut(&POSITION_ID).unwrap();
+    let positions = components.get_mut(&POSITION_ID).unwrap();
     for (entity, vel) in updates {
         if let Some(pos) = positions.get_mut(entity) {
             pos.x += vel.x;
@@ -207,37 +177,9 @@ fn movement_system(world: &mut World) {
     }
 }
 
-// fn movement_system(world: &mut World) {
-//     let positions = &mut world.components.get_mut(&POSITION_ID).unwrap();
-//     let velocities = &world.components.get(&VELOCITY_ID).unwrap();
-
-//     // let (positions, velocities) = (
-//     //     &mut world.components.get_mut(&POSITION_ID).unwrap(),
-//     //     &world.components.get(&VELOCITY_ID).unwrap(),
-//     // );
-
-//     // Choose the smaller set to iterate over
-//     let iter = if positions.set.dense_entities.len() <= velocities.set.dense_entities.len() {
-//         positions
-//             .iter_mut()
-//             .filter_map(|(entity, pos)| velocities.get(entity).map(|vel| (pos, vel)))
-//             .collect::<Vec<_>>()
-//     } else {
-//         velocities
-//             .iter()
-//             .filter_map(|(entity, vel)| positions.get_mut(entity).map(|pos| (pos, vel)))
-//             .collect::<Vec<_>>()
-//     };
-
-//     for (pos, vel) in iter {
-//         pos.x += vel.x;
-//         pos.y += vel.y;
-//     }
-// }
-
 fn main() {
     let mut entity_manager = EntityManager::new();
-    let mut world = World::new();
+    let mut components = ComponentStorage::new();
 
     // Create a few entities
     let e1 = entity_manager.create();
@@ -245,28 +187,28 @@ fn main() {
     let e3 = entity_manager.create();
 
     // Add components
-    world.set(e1, POSITION_ID, Component { x: 0.0, y: 0.0 });
-    world.set(e1, VELOCITY_ID, Component { x: 1.0, y: 1.0 });
-    world.set(e1, VELOCITY_ID, Component { x: 1.0, y: 1.0 });
+    components.set(e1, POSITION_ID, Component { x: 0.0, y: 0.0 });
+    components.set(e1, VELOCITY_ID, Component { x: 1.0, y: 1.0 });
+    components.set(e1, VELOCITY_ID, Component { x: 1.0, y: 1.0 });
 
-    world.set(e2, POSITION_ID, Component { x: 10.0, y: -5.0 });
-    world.set(e2, VELOCITY_ID, Component { x: -2.0, y: 0.5 });
+    dbg!(&components.get(&VELOCITY_ID));
+    components.remove(e1, VELOCITY_ID);
+    dbg!(&components.get(&VELOCITY_ID));
+    components.set(e2, POSITION_ID, Component { x: 10.0, y: -5.0 });
+    components.set(e2, VELOCITY_ID, Component { x: -2.0, y: 0.5 });
 
-    dbg!(&world.components.get(&VELOCITY_ID));
-    world.components.remove(e1, VELOCITY_ID);
-    dbg!(&world.components.get(&VELOCITY_ID));
-    world.set(e3, POSITION_ID, Component { x: 3.0, y: 3.0 });
+    components.set(e3, POSITION_ID, Component { x: 3.0, y: 3.0 });
     // e3 has no velocity—won’t move
 
     // Run the movement system a few times
     for frame in 0..3 {
         println!("--- Frame {} ---", frame);
-        movement_system(&mut world);
+        movement_system(&mut components);
 
-        for (entity, pos) in world.components.get(&POSITION_ID).unwrap().iter() {
+        for (entity, pos) in components.get(&POSITION_ID).unwrap().iter() {
             println!("Entity {}: Position = ({:.1}, {:.1})", entity, pos.x, pos.y);
         }
-        world.set(e3, VELOCITY_ID, Component { x: 1.0, y: 1.0 });
+        components.set(e3, VELOCITY_ID, Component { x: 1.0, y: 1.0 });
     }
 }
 
