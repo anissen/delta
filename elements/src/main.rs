@@ -18,13 +18,13 @@ impl EntityManager {
     }
 }
 
-pub struct SparseSet<T> {
-    dense_components: Vec<T>,
+pub struct ComponentColumn {
+    dense_components: Vec<Component>,
     dense_entities: Vec<Entity>,
     sparse: Vec<Option<usize>>,
 }
 
-impl<T> SparseSet<T> {
+impl ComponentColumn {
     pub fn new() -> Self {
         Self {
             dense_components: Vec::new(),
@@ -33,7 +33,7 @@ impl<T> SparseSet<T> {
         }
     }
 
-    pub fn insert(&mut self, entity: Entity, component: T) {
+    pub fn insert(&mut self, entity: Entity, component: Component) {
         let id = entity as usize;
 
         if let Some(Some(index)) = self.sparse.get(id) {
@@ -52,21 +52,21 @@ impl<T> SparseSet<T> {
         }
     }
 
-    pub fn get(&self, entity: Entity) -> Option<&T> {
+    pub fn get(&self, entity: Entity) -> Option<&Component> {
         let id = entity as usize;
         self.sparse
             .get(id)?
             .map(|index| &self.dense_components[index])
     }
 
-    pub fn get_mut(&mut self, entity: Entity) -> Option<&mut T> {
+    pub fn get_mut(&mut self, entity: Entity) -> Option<&mut Component> {
         let id = entity as usize;
         self.sparse
             .get(id)?
             .map(|index| &mut self.dense_components[index])
     }
 
-    pub fn remove(&mut self, entity: Entity) -> Option<T> {
+    pub fn remove(&mut self, entity: Entity) -> Option<Component> {
         let id = entity as usize;
         let index = self.sparse.get_mut(id)?.take()?;
 
@@ -83,14 +83,14 @@ impl<T> SparseSet<T> {
         removed
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = (Entity, &T)> {
+    pub fn iter(&self) -> impl Iterator<Item = (Entity, &Component)> {
         self.dense_entities
             .iter()
             .cloned()
             .zip(self.dense_components.iter())
     }
 
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = (Entity, &mut T)> {
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = (Entity, &mut Component)> {
         self.dense_entities
             .iter()
             .cloned()
@@ -98,47 +98,46 @@ impl<T> SparseSet<T> {
     }
 }
 
-pub struct ComponentStorage<T> {
-    component_sets: HashMap<ComponentId, SparseSet<T>>,
+pub struct ComponentStorage {
+    component_sets: HashMap<ComponentId, ComponentColumn>, // TODO: Make this a Vec or SparseSet instead of a HashMap
 }
 
-impl<T> ComponentStorage<T> {
+impl ComponentStorage {
     pub fn new() -> Self {
         Self {
             component_sets: HashMap::new(),
         }
     }
 
-    pub fn set(&mut self, entity: Entity, component_id: ComponentId, component: T) {
+    pub fn set(&mut self, entity: Entity, component_id: ComponentId, component: Component) {
         self.component_sets
             .entry(component_id)
-            .or_insert_with(|| SparseSet::new())
+            .or_insert_with(ComponentColumn::new)
             .insert(entity, component);
     }
 
-    pub fn get(&self, component_id: &ComponentId) -> Option<&SparseSet<T>> {
+    pub fn get(&self, component_id: &ComponentId) -> Option<&ComponentColumn> {
         self.component_sets.get(component_id)
     }
 
-    pub fn get_mut(&mut self, component_id: &ComponentId) -> Option<&mut SparseSet<T>> {
+    pub fn get_mut(&mut self, component_id: &ComponentId) -> Option<&mut ComponentColumn> {
         self.component_sets.get_mut(component_id)
     }
 
-    pub fn remove(&mut self, entity: Entity, component_id: ComponentId) -> Option<T> {
+    pub fn remove(&mut self, entity: Entity, component_id: ComponentId) -> Option<Component> {
         self.component_sets
-            .get_mut(&component_id)
-            .take()?
+            .get_mut(&component_id)?
             .remove(entity)
     }
 
-    pub fn iter(&self, component_id: ComponentId) -> impl Iterator<Item = (Entity, &T)> {
+    pub fn iter(&self, component_id: ComponentId) -> impl Iterator<Item = (Entity, &Component)> {
         self.component_sets.get(&component_id).unwrap().iter()
     }
 
     pub fn iter_mut(
         &mut self,
         component_id: ComponentId,
-    ) -> impl Iterator<Item = (Entity, &mut T)> {
+    ) -> impl Iterator<Item = (Entity, &mut Component)> {
         self.component_sets
             .get_mut(&component_id)
             .unwrap()
@@ -156,7 +155,7 @@ struct Component {
 type ComponentId = u32;
 
 pub struct World {
-    components: ComponentStorage<Component>,
+    components: ComponentStorage,
 }
 
 impl World {
