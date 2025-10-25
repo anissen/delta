@@ -7,17 +7,18 @@ pub struct EntityManager {
 }
 
 impl EntityManager {
-    pub fn new() -> Self {
+    fn new() -> Self {
         EntityManager { next_id: 0 }
     }
 
-    pub fn create(&mut self) -> Entity {
+    fn create(&mut self) -> Entity {
         let id = self.next_id;
         self.next_id += 1;
         id
     }
 }
 
+#[derive(Debug)]
 pub struct ComponentColumn {
     dense_components: Vec<Component>,
     dense_entities: Vec<Entity>,
@@ -25,7 +26,7 @@ pub struct ComponentColumn {
 }
 
 impl ComponentColumn {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self {
             dense_components: Vec::new(),
             dense_entities: Vec::new(),
@@ -33,7 +34,7 @@ impl ComponentColumn {
         }
     }
 
-    pub fn insert(&mut self, entity: Entity, component: Component) {
+    fn insert(&mut self, entity: Entity, component: Component) {
         let id = entity as usize;
 
         if let Some(Some(index)) = self.sparse.get(id) {
@@ -52,45 +53,53 @@ impl ComponentColumn {
         }
     }
 
-    pub fn get(&self, entity: Entity) -> Option<&Component> {
+    fn get(&self, entity: Entity) -> Option<&Component> {
         let id = entity as usize;
         self.sparse
             .get(id)?
             .map(|index| &self.dense_components[index])
     }
 
-    pub fn get_mut(&mut self, entity: Entity) -> Option<&mut Component> {
+    fn get_mut(&mut self, entity: Entity) -> Option<&mut Component> {
         let id = entity as usize;
         self.sparse
             .get(id)?
             .map(|index| &mut self.dense_components[index])
     }
 
-    pub fn remove(&mut self, entity: Entity) -> Option<Component> {
+    fn remove(&mut self, entity: Entity) -> Option<Component> {
         let id = entity as usize;
         let index = self.sparse.get_mut(id)?.take()?;
 
-        let last_index = self.dense_components.len() - 1;
-        self.dense_components.swap(index, last_index);
-        self.dense_entities.swap(index, last_index);
+        if self.sparse.len() == 1 {
+            self.dense_entities.clear();
+            self.sparse.clear();
+            let removed = self.dense_components.pop();
 
-        let moved_entity = self.dense_entities[index];
-        self.sparse[moved_entity as usize] = Some(index);
+            removed
+        } else {
+            let last_index = self.dense_components.len() - 1;
+            self.dense_components.swap(index, last_index);
+            self.dense_entities.swap(index, last_index);
 
-        self.dense_entities.pop();
-        let removed = self.dense_components.pop();
+            let moved_entity = self.dense_entities[index];
+            self.sparse[moved_entity as usize] = Some(index);
 
-        removed
+            self.dense_entities.pop();
+            let removed = self.dense_components.pop();
+
+            removed
+        }
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = (Entity, &Component)> {
+    fn iter(&self) -> impl Iterator<Item = (Entity, &Component)> {
         self.dense_entities
             .iter()
             .cloned()
             .zip(self.dense_components.iter())
     }
 
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = (Entity, &mut Component)> {
+    fn iter_mut(&mut self) -> impl Iterator<Item = (Entity, &mut Component)> {
         self.dense_entities
             .iter()
             .cloned()
@@ -103,38 +112,36 @@ pub struct ComponentStorage {
 }
 
 impl ComponentStorage {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self {
             component_sets: HashMap::new(),
         }
     }
 
-    pub fn set(&mut self, entity: Entity, component_id: ComponentId, component: Component) {
+    fn set(&mut self, entity: Entity, component_id: ComponentId, component: Component) {
         self.component_sets
             .entry(component_id)
             .or_insert_with(ComponentColumn::new)
             .insert(entity, component);
     }
 
-    pub fn get(&self, component_id: &ComponentId) -> Option<&ComponentColumn> {
+    fn get(&self, component_id: &ComponentId) -> Option<&ComponentColumn> {
         self.component_sets.get(component_id)
     }
 
-    pub fn get_mut(&mut self, component_id: &ComponentId) -> Option<&mut ComponentColumn> {
+    fn get_mut(&mut self, component_id: &ComponentId) -> Option<&mut ComponentColumn> {
         self.component_sets.get_mut(component_id)
     }
 
-    pub fn remove(&mut self, entity: Entity, component_id: ComponentId) -> Option<Component> {
-        self.component_sets
-            .get_mut(&component_id)?
-            .remove(entity)
+    fn remove(&mut self, entity: Entity, component_id: ComponentId) -> Option<Component> {
+        self.component_sets.get_mut(&component_id)?.remove(entity)
     }
 
-    pub fn iter(&self, component_id: ComponentId) -> impl Iterator<Item = (Entity, &Component)> {
+    fn iter(&self, component_id: ComponentId) -> impl Iterator<Item = (Entity, &Component)> {
         self.component_sets.get(&component_id).unwrap().iter()
     }
 
-    pub fn iter_mut(
+    fn iter_mut(
         &mut self,
         component_id: ComponentId,
     ) -> impl Iterator<Item = (Entity, &mut Component)> {
@@ -245,6 +252,9 @@ fn main() {
     world.set(e2, POSITION_ID, Component { x: 10.0, y: -5.0 });
     world.set(e2, VELOCITY_ID, Component { x: -2.0, y: 0.5 });
 
+    dbg!(&world.components.get(&VELOCITY_ID));
+    world.components.remove(e1, VELOCITY_ID);
+    dbg!(&world.components.get(&VELOCITY_ID));
     world.set(e3, POSITION_ID, Component { x: 3.0, y: 3.0 });
     // e3 has no velocity—won’t move
 
