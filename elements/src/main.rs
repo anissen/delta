@@ -18,11 +18,121 @@ impl EntityManager {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct BitSet {
+    data: Vec<u64>,
+    len: usize, // number of bits that are *logically* part of the set
+}
+
+impl BitSet {
+    /// Creates a new BitSet capable of holding `len` bits (all false).
+    pub fn new(len: usize) -> Self {
+        let blocks = (len + 63) / 64;
+        Self {
+            data: vec![0; blocks],
+            len,
+        }
+    }
+
+    /// Creates a new BitSet capable of holding `len` bits (all true).
+    // pub fn all_set(len: usize) -> Self {
+    //     let blocks = (len + 63) / 64;
+    //     Self {
+    //         data: vec![1; blocks],
+    //         len,
+    //     }
+    // }
+
+    /// Returns the number of bits in the bitset.
+    pub fn len(&self) -> usize {
+        self.len
+    }
+
+    /// Checks if the bitset is empty (no bits).
+    pub fn is_empty(&self) -> bool {
+        self.len == 0
+    }
+
+    /// Gets the value of a bit.
+    pub fn get(&self, index: usize) -> bool {
+        assert!(index < self.len, "index out of bounds");
+        let block = index / 64;
+        let bit = index % 64;
+        (self.data[block] >> bit) & 1 == 1
+    }
+
+    /// Sets the bit to the given value (resizes automatically if needed).
+    pub fn set(&mut self, index: usize, value: bool) {
+        if index >= self.len {
+            self.resize(index + 1);
+        }
+        let block = index / 64;
+        let bit = index % 64;
+        if value {
+            self.data[block] |= 1 << bit;
+        } else {
+            self.data[block] &= !(1 << bit);
+        }
+    }
+
+    /// Clears all bits (sets all to false).
+    pub fn clear(&mut self) {
+        for block in &mut self.data {
+            *block = 0;
+        }
+    }
+
+    /// Returns the number of bits set to 1.
+    pub fn count_ones(&self) -> usize {
+        self.data.iter().map(|b| b.count_ones() as usize).sum()
+    }
+
+    /// Resizes the bitset to contain `new_len` bits.
+    /// Newly added bits are set to false.
+    pub fn resize(&mut self, new_len: usize) {
+        let new_blocks = (new_len + 63) / 64;
+        if new_blocks > self.data.len() {
+            self.data.resize(new_blocks, 0);
+        }
+        self.len = new_len;
+    }
+
+    /// Performs intersection (AND) with another BitSet in place.
+    /// Truncates to the smaller length.
+    pub fn intersect_with(&mut self, other: &BitSet) {
+        let min_blocks = self.data.len().min(other.data.len());
+        for i in 0..min_blocks {
+            self.data[i] &= other.data[i];
+        }
+        for i in min_blocks..self.data.len() {
+            self.data[i] = 0;
+        }
+        self.len = self.len.min(other.len);
+    }
+
+    /// Returns a new BitSet that is the intersection of two bitsets.
+    pub fn intersection(&self, other: &BitSet) -> BitSet {
+        let min_len = self.len.min(other.len);
+        let mut result = BitSet::new(min_len);
+        for i in 0..result.data.len() {
+            result.data[i] = self.data[i] & other.data[i];
+        }
+        result
+    }
+
+    pub fn print(&self) {
+        for i in 0..self.len() {
+            println!("BitSet {}: {}", i, self.get(i));
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct ComponentColumn {
     dense_components: Vec<Component>,
     dense_entities: Vec<Entity>,
     sparse: Vec<Option<usize>>,
+    bitset: BitSet,
 }
 
 impl ComponentColumn {
@@ -31,6 +141,7 @@ impl ComponentColumn {
             dense_components: Vec::new(),
             dense_entities: Vec::new(),
             sparse: Vec::new(),
+            bitset: BitSet::new(3), // Used to be 64
         }
     }
 
@@ -51,11 +162,14 @@ impl ComponentColumn {
             self.dense_entities.push(entity);
             self.sparse[id] = Some(index);
         }
+
+        self.bitset.set(id, true);
     }
 
     fn has(&self, entity: Entity) -> bool {
         let id = entity as usize;
-        id < self.sparse.len() && self.sparse[id].is_some()
+        // id < self.sparse.len() && self.sparse[id].is_some()
+        id < self.bitset.len() && self.bitset.get(id)
     }
 
     fn get(&self, entity: Entity) -> Option<&Component> {
@@ -85,6 +199,7 @@ impl ComponentColumn {
             self.sparse[moved_entity as usize] = Some(index);
         }
 
+        self.bitset.set(id, false);
         self.dense_entities.pop();
         self.dense_components.pop()
     }
@@ -118,6 +233,38 @@ impl ComponentStorage {
 
     fn get(&self, component_id: &ComponentId) -> Option<&ComponentColumn> {
         self.component_sets.get(component_id)
+    }
+
+    fn entities(&self, component_ids: Vec<&ComponentId>) -> Vec<Entity> {
+        if component_ids.is_empty() {
+            return Vec::new();
+        }
+
+        let first_set = self
+            .component_sets
+            .get(component_ids.first().unwrap())
+            .unwrap();
+
+        if component_ids.len() == 1 {
+            return first_set.dense_entities.clone();
+        }
+
+        let mut intersection = first_set.bitset.clone();
+        component_ids
+            .iter()
+            .map(|id| &self.component_sets.get(id).unwrap().bitset)
+            .for_each(|bitset| intersection.intersect_with(bitset));
+        println!("Intersection: {:?}", intersection);
+        intersection.print();
+        println!("First Set: {:?}", first_set);
+
+        first_set
+            .dense_entities
+            .iter()
+            // .enumerate()
+            .filter(|entity| intersection.get(**entity as usize))
+            .map(|entity| *entity)
+            .collect()
     }
 
     // fn get_two(
@@ -291,6 +438,9 @@ fn main() {
     for frame in 0..3 {
         println!("--- Frame {} ---", frame);
         movement_system(&mut components);
+
+        let matching_entities = components.entities(vec![&DEAD_ID]);
+        println!("Matching entities: {:?}", matching_entities);
 
         let dead_components = components.get(&DEAD_ID);
         for (entity, pos) in components.get(&POSITION_ID).unwrap().iter() {
