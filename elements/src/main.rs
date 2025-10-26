@@ -275,6 +275,7 @@ fn main() {
     components.set(e1, POSITION_ID, position(0.0, 0.0));
     components.set(e1, VELOCITY_ID, velocity(1.0, 1.0));
     components.set(e1, VELOCITY_ID, velocity(1.0, 1.0));
+    components.set(e1, DEAD_ID, marker("is_dead"));
 
     dbg!(&components.get(&VELOCITY_ID));
     components.remove(e1, VELOCITY_ID);
@@ -305,6 +306,7 @@ fn main() {
                 println!("Entity {} is dead", entity);
             }
         }
+        components.remove(e1, DEAD_ID);
 
         components.set(e2, DEAD_ID, marker("is_dead"));
         components.set(e3, VELOCITY_ID, velocity(1.0, 1.0));
