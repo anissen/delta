@@ -235,36 +235,52 @@ impl ComponentStorage {
         self.component_sets.get(component_id)
     }
 
+    fn get_many(&self, component_ids: Vec<&ComponentId>) -> Option<Vec<&ComponentColumn>> {
+        let has_all = component_ids
+            .iter()
+            .all(|id| self.component_sets.contains_key(id));
+        if !has_all {
+            return None;
+        }
+        Some(
+            component_ids
+                .iter()
+                .map(|id| self.component_sets.get(id).unwrap())
+                .collect(),
+        )
+    }
+
     fn entities(&self, component_ids: Vec<&ComponentId>) -> Vec<Entity> {
         if component_ids.is_empty() {
             return Vec::new();
         }
 
-        let first_set = self
-            .component_sets
-            .get(component_ids.first().unwrap())
-            .unwrap();
+        if let Some(components) = self.get_many(component_ids) {
+            let first_set = components.first().unwrap();
 
-        if component_ids.len() == 1 {
-            return first_set.dense_entities.clone();
+            if components.len() == 1 {
+                return first_set.dense_entities.clone();
+            }
+
+            let mut intersection = first_set.bitset.clone();
+            components
+                .iter()
+                .map(|col| &col.bitset)
+                .for_each(|bitset| intersection.intersect_with(bitset));
+            println!("Intersection: {:?}", intersection);
+            intersection.print();
+            println!("First Set: {:?}", first_set);
+
+            first_set
+                .dense_entities
+                .iter()
+                // .enumerate()
+                .filter(|entity| intersection.get(**entity as usize))
+                .map(|entity| *entity)
+                .collect()
+        } else {
+            Vec::new()
         }
-
-        let mut intersection = first_set.bitset.clone();
-        component_ids
-            .iter()
-            .map(|id| &self.component_sets.get(id).unwrap().bitset)
-            .for_each(|bitset| intersection.intersect_with(bitset));
-        println!("Intersection: {:?}", intersection);
-        intersection.print();
-        println!("First Set: {:?}", first_set);
-
-        first_set
-            .dense_entities
-            .iter()
-            // .enumerate()
-            .filter(|entity| intersection.get(**entity as usize))
-            .map(|entity| *entity)
-            .collect()
     }
 
     // fn get_two(
@@ -422,7 +438,7 @@ fn main() {
     components.set(e1, POSITION_ID, position(0.0, 0.0));
     components.set(e1, VELOCITY_ID, velocity(1.0, 1.0));
     components.set(e1, VELOCITY_ID, velocity(1.0, 1.0));
-    components.set(e1, DEAD_ID, marker("is_dead"));
+    // components.set(e1, DEAD_ID, marker("is_dead"));
 
     dbg!(&components.get(&VELOCITY_ID));
     components.remove(e1, VELOCITY_ID);
@@ -439,7 +455,7 @@ fn main() {
         println!("--- Frame {} ---", frame);
         movement_system(&mut components);
 
-        let matching_entities = components.entities(vec![&DEAD_ID]);
+        let matching_entities = components.entities(vec![&POSITION_ID, &VELOCITY_ID]);
         println!("Matching entities: {:?}", matching_entities);
 
         let dead_components = components.get(&DEAD_ID);
