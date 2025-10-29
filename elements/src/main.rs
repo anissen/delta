@@ -242,8 +242,91 @@ impl ComponentStorage {
             .collect()
     }
 
-    fn query(&mut self, include: &Vec<ComponentId>) -> (Vec<Entity>, Vec<&mut ComponentColumn>) {
-        (self.entities(include), self.get_many_mut(include))
+    // type EntityRow = (Entity, Vec<&mut Component>);
+    // Vec<(Entity, Row)>
+    // fn query(&mut self, include: &Vec<ComponentId>) -> Vec<(Entity, Vec<&mut Component>)> {
+    //     if include.is_empty() {
+    //         return Vec::new();
+    //     }
+
+    //     let mut matching_components: Vec<_> = self
+    //         .component_sets
+    //         .iter_mut()
+    //         .filter(|c| include.contains(&c.id))
+    //         .collect();
+
+    //     let matching_entities = if let Some((first, rest)) = matching_components.split_first() {
+    //         if rest.is_empty() {
+    //             first.dense_entities.clone()
+    //         } else {
+    //             let mut intersection = first.bitset.clone();
+    //             rest.iter()
+    //                 .map(|col| &col.bitset)
+    //                 .for_each(|bitset| intersection.intersect_with(bitset));
+
+    //             // println!("Intersection: {:?}", intersection);
+    //             // intersection.print();
+    //             // println!("First Set: {:?}", first_set);
+
+    //             first
+    //                 .dense_entities
+    //                 .iter()
+    //                 .filter(|entity| intersection.get(**entity as usize))
+    //                 .map(|entity| *entity)
+    //                 .collect()
+    //         }
+    //     } else {
+    //         Vec::new()
+    //     };
+
+    //     matching_entities
+    //         .iter()
+    //         .map(|entity| {
+    //             let row: Vec<_> = matching_components
+    //                 .iter_mut()
+    //                 .filter_map(|c| c.get_mut(*entity))
+    //                 .collect();
+    //             (entity, row)
+    //         })
+    //         .collect()
+    // }
+
+    // type Row = Vec<&mut Component>;
+
+    fn system(
+        &mut self,
+        include: &Vec<ComponentId>,
+        mut system: impl FnMut(Entity, Vec<&mut Component>),
+    ) {
+        if include.is_empty() {
+            return;
+        }
+
+        let mut matching_columns: Vec<_> = self
+            .component_sets
+            .iter_mut()
+            .filter(|c| include.contains(&c.id))
+            .collect();
+
+        if let Some(first) = matching_columns.first() {
+            let mut intersection = first.bitset.clone();
+            matching_columns
+                .iter()
+                .map(|col| &col.bitset)
+                .for_each(|bitset| intersection.intersect_with(bitset));
+
+            let entities = first.dense_entities.clone();
+            for i in 0..intersection.len() {
+                if intersection.get(i) {
+                    let entity = entities[i];
+                    let row: Vec<_> = matching_columns
+                        .iter_mut()
+                        .flat_map(|col| col.get_mut(entity))
+                        .collect();
+                    system(entity, row);
+                }
+            }
+        }
     }
 
     fn entities(&self, component_ids: &Vec<ComponentId>) -> Vec<Entity> {
@@ -406,17 +489,15 @@ fn main() {
         let matching_entities = components.entities(&vec![POSITION_ID, VELOCITY_ID]);
         println!("Entities with (pos, vel): {:?}", matching_entities);
 
-        components
-            .get(&POSITION_ID)
-            .iter()
-            .for_each(|(entity, pos)| {
-                println!(
-                    "Entity {}: Position = ({:.1}, {:.1})",
-                    entity,
-                    pos.values.get("x").unwrap().as_float(),
-                    pos.values.get("y").unwrap().as_float()
-                );
-            });
+        components.system(&vec![POSITION_ID], |entity, components| {
+            let pos = components.first().unwrap();
+            println!(
+                "Entity {}: Position = ({:.1}, {:.1})",
+                entity,
+                pos.values.get("x").unwrap().as_float(),
+                pos.values.get("y").unwrap().as_float()
+            );
+        });
 
         components
             .get(&DEAD_ID)
@@ -429,6 +510,21 @@ fn main() {
         components.set(e2, VELOCITY_ID, velocity(1.0, 1.0));
 
         println!();
+    }
+
+    for frame in 0..3 {
+        println!("--- Frame {} ---", frame);
+
+        // TODO(anissen): We probably need to get the list of entities/components out, and then iterate?!?
+        components.system(&vec![POSITION_ID, VELOCITY_ID], |entity, components| {
+            let pos = components.first().unwrap();
+            println!(
+                "Entity {}: Position = ({:.1}, {:.1})",
+                entity,
+                pos.values.get("x").unwrap().as_float(),
+                pos.values.get("y").unwrap().as_float()
+            );
+        });
     }
 }
 
