@@ -120,6 +120,7 @@ impl BitSet {
 
 #[derive(Debug)]
 pub struct ComponentColumn {
+    id: ComponentId,
     dense_components: Vec<Component>,
     dense_entities: Vec<Entity>,
     sparse: Vec<Option<usize>>,
@@ -127,8 +128,9 @@ pub struct ComponentColumn {
 }
 
 impl ComponentColumn {
-    fn new() -> Self {
+    fn new(id: ComponentId) -> Self {
         Self {
+            id,
             dense_components: Vec::new(),
             dense_entities: Vec::new(),
             sparse: Vec::new(),
@@ -229,15 +231,10 @@ impl ComponentStorage {
             return None;
         }
 
-        let mut index: u32 = 0;
         let many: Vec<_> = self
             .component_sets
             .iter()
-            .filter(|_| {
-                let include = component_ids.contains(&&index);
-                index += 1;
-                include
-            })
+            .filter(|c| component_ids.contains(&&c.id))
             .collect();
 
         Some(many)
@@ -256,12 +253,7 @@ impl ComponentStorage {
         let many: Vec<_> = self
             .component_sets
             .iter_mut()
-            .enumerate()
-            .filter(|(index, _)| {
-                let id = *index as u32;
-                component_ids.contains(&&id)
-            })
-            .map(|(_, c)| c)
+            .filter(|c| component_ids.contains(&&c.id))
             .collect();
 
         Some(many)
@@ -387,13 +379,13 @@ fn main() {
     let mut components = ComponentStorage::new();
     components
         .component_sets
-        .insert(POSITION_ID as usize, ComponentColumn::new());
+        .insert(POSITION_ID as usize, ComponentColumn::new(POSITION_ID));
     components
         .component_sets
-        .insert(VELOCITY_ID as usize, ComponentColumn::new());
+        .insert(VELOCITY_ID as usize, ComponentColumn::new(VELOCITY_ID));
     components
         .component_sets
-        .insert(DEAD_ID as usize, ComponentColumn::new());
+        .insert(DEAD_ID as usize, ComponentColumn::new(DEAD_ID));
 
     // Create a few entities
     let e1 = entity_manager.create();
