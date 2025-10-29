@@ -214,40 +214,85 @@ impl ComponentColumn {
 }
 
 pub struct ComponentStorage {
-    component_sets: HashMap<ComponentId, ComponentColumn>, // TODO: Make this a Vec or SparseSet instead of a HashMap
+    // component_sets: HashMap<ComponentId, ComponentColumn>, // TODO: Make this a Vec or SparseSet instead of a HashMap
+    component_sets: Vec<ComponentColumn>,
 }
 
 impl ComponentStorage {
     fn new() -> Self {
         Self {
-            component_sets: HashMap::new(),
+            component_sets: Vec::new(),
         }
     }
 
     fn set(&mut self, entity: Entity, component_id: ComponentId, component: Component) {
-        self.component_sets
-            .entry(component_id)
-            .or_insert_with(ComponentColumn::new)
-            .insert(entity, component);
+        self.component_sets[component_id as usize].insert(entity, component);
     }
 
     fn get(&self, component_id: &ComponentId) -> Option<&ComponentColumn> {
-        self.component_sets.get(component_id)
+        self.component_sets.get(*component_id as usize)
     }
 
     fn get_many(&self, component_ids: Vec<&ComponentId>) -> Option<Vec<&ComponentColumn>> {
-        let has_all = component_ids
-            .iter()
-            .all(|id| self.component_sets.contains_key(id));
+        let len = self.component_sets.len();
+        let has_all = component_ids.iter().all(|id| (**id as usize) < len);
         if !has_all {
             return None;
         }
-        Some(
-            component_ids
-                .iter()
-                .map(|id| self.component_sets.get(id).unwrap())
-                .collect(),
-        )
+
+        let mut index: u32 = 0;
+        let many: Vec<_> = self
+            .component_sets
+            .iter()
+            .filter(|_| {
+                let include = component_ids.contains(&&index);
+                index += 1;
+                include
+            })
+            .collect();
+
+        Some(many)
+    }
+
+    fn get_many_mut(
+        &mut self,
+        component_ids: Vec<&ComponentId>,
+    ) -> Option<Vec<&mut ComponentColumn>> {
+        let len = self.component_sets.len();
+        let has_all = component_ids.iter().all(|id| (**id as usize) < len);
+        if !has_all {
+            return None;
+        }
+
+        // split the self.component_sets vec into N mutable values, one for each index that matches component_ids
+        let mut index: u32 = 0;
+
+        // let ids: Vec<_> = component_ids.iter().map(|id| **id as usize).collect();
+        // let many = self
+        //     .component_sets
+        //     .get_disjoint_mut(ids)
+        // let many = self.component_sets.get_disjoint_mut([ids[0], ids[1]]);
+        // let many = self
+        //     .component_sets
+        //     .split_mut(|_| {
+        //         let include = component_ids.contains(&&index);
+        //         index += 1;
+        //         include
+        //     })
+        //     .map(|mut columns| columns[0])
+        //     .collect::<Vec<&mut ComponentColumn>>();
+        let many: Vec<_> = self
+            .component_sets
+            .iter_mut()
+            .filter(|_| {
+                let include = component_ids.contains(&&index);
+                index += 1;
+                include
+            })
+            .collect();
+
+        // [].mut
+        Some(many)
     }
 
     fn entities(&self, component_ids: Vec<&ComponentId>) -> Vec<Entity> {
@@ -293,16 +338,16 @@ impl ComponentStorage {
     //     Some((column1, column2))
     // }
 
-    fn get_two_mut(
-        &mut self,
-        component_id1: &ComponentId,
-        component_id2: &ComponentId,
-    ) -> (&mut ComponentColumn, &mut ComponentColumn) {
-        let [a, b] = self
-            .component_sets
-            .get_disjoint_mut([component_id1, component_id2]);
-        (a.unwrap(), b.unwrap())
-    }
+    // fn get_two_mut(
+    //     &mut self,
+    //     component_id1: &ComponentId,
+    //     component_id2: &ComponentId,
+    // ) -> (&mut ComponentColumn, &mut ComponentColumn) {
+    //     let [a, b] = self
+    //         .component_sets
+    //         .get_disjoint_mut([component_id1, component_id2]);
+    //     (a.unwrap(), b.unwrap())
+    // }
 
     // fn get_two_mut_iter(
     //     &mut self,
@@ -332,27 +377,29 @@ impl ComponentStorage {
     //     rows
     // }
 
-    fn get_mut(&mut self, component_id: &ComponentId) -> Option<&mut ComponentColumn> {
-        self.component_sets.get_mut(component_id)
-    }
+    // fn get_mut(&mut self, component_id: &ComponentId) -> Option<&mut ComponentColumn> {
+    //     self.component_sets.get_mut(component_id)
+    // }
 
     fn remove(&mut self, entity: Entity, component_id: ComponentId) -> Option<Component> {
-        self.component_sets.get_mut(&component_id)?.remove(entity)
-    }
-
-    fn iter(&self, component_id: ComponentId) -> impl Iterator<Item = (&Entity, &Component)> {
-        self.component_sets.get(&component_id).unwrap().iter()
-    }
-
-    fn iter_mut(
-        &mut self,
-        component_id: ComponentId,
-    ) -> impl Iterator<Item = (&Entity, &mut Component)> {
         self.component_sets
-            .get_mut(&component_id)
-            .unwrap()
-            .iter_mut()
+            .get_mut(component_id as usize)?
+            .remove(entity)
     }
+
+    // fn iter(&self, component_id: ComponentId) -> impl Iterator<Item = (&Entity, &Component)> {
+    //     self.component_sets.get(&component_id).unwrap().iter()
+    // }
+
+    // fn iter_mut(
+    //     &mut self,
+    //     component_id: ComponentId,
+    // ) -> impl Iterator<Item = (&Entity, &mut Component)> {
+    //     self.component_sets
+    //         .get_mut(&component_id)
+    //         .unwrap()
+    //         .iter_mut()
+    // }
 }
 
 #[derive(Debug)]
@@ -385,19 +432,44 @@ const DEAD_ID: ComponentId = 2;
 
 fn movement_system(components: &mut ComponentStorage) {
     // Collect entities and velocity values that need updating
-    let (positions, velocities) = components.get_two_mut(&POSITION_ID, &VELOCITY_ID);
-    let iter = positions
-        .iter_mut()
-        .filter_map(|(entity, pos)| velocities.get(*entity).map(|vel| (pos, vel)));
+    let component_ids = vec![&POSITION_ID, &VELOCITY_ID];
+    let entities = components.entities(vec![&POSITION_ID, &VELOCITY_ID]);
+    if let Some(mut cols) = components.get_many_mut(component_ids) {
+        let (first, rest) = cols.split_at_mut(1);
+        let positions = &mut first[0];
+        let pos_dense = &mut positions.dense_components;
+        let velocities = &rest[0];
 
-    // Apply updates
-    for (pos, vel) in iter {
-        let dx = vel.values.get("dx").unwrap().as_float();
-        let dy = vel.values.get("dy").unwrap().as_float();
-        let pos_x = pos.values.get("x").unwrap().as_float();
-        let pos_y = pos.values.get("y").unwrap().as_float();
-        pos.values.insert("x".to_string(), Value::Float(pos_x + dx));
-        pos.values.insert("y".to_string(), Value::Float(pos_y + dy));
+        // let iter = entities.iter().map(|entity| positions.)
+
+        // let iter = &positions
+        //     .iter_mut()
+        //     .filter_map(|(entity, pos)| velocities.get(*entity).map(|vel| (pos, vel)));
+
+        // let rows = (entity, pos, vel)
+
+        for entity in entities {
+            let id = entity as usize;
+            let pos = &mut pos_dense[positions.sparse[id].unwrap()];
+            let vel = &velocities.dense_components[velocities.sparse[id].unwrap()];
+
+            let dx = vel.values.get("dx").unwrap().as_float();
+            let dy = vel.values.get("dy").unwrap().as_float();
+            let pos_x = pos.values.get("x").unwrap().as_float();
+            let pos_y = pos.values.get("y").unwrap().as_float();
+            pos.values.insert("x".to_string(), Value::Float(pos_x + dx));
+            pos.values.insert("y".to_string(), Value::Float(pos_y + dy));
+        }
+
+        // Apply updates
+        // for (pos, vel) in cols {
+        //     let dx = vel.values.get("dx").unwrap().as_float();
+        //     let dy = vel.values.get("dy").unwrap().as_float();
+        //     let pos_x = pos.values.get("x").unwrap().as_float();
+        //     let pos_y = pos.values.get("y").unwrap().as_float();
+        //     pos.values.insert("x".to_string(), Value::Float(pos_x + dx));
+        //     pos.values.insert("y".to_string(), Value::Float(pos_y + dy));
+        // }
     }
 }
 
@@ -428,6 +500,15 @@ fn marker(str: &str) -> Component {
 fn main() {
     let mut entity_manager = EntityManager::new();
     let mut components = ComponentStorage::new();
+    components
+        .component_sets
+        .insert(POSITION_ID as usize, ComponentColumn::new());
+    components
+        .component_sets
+        .insert(VELOCITY_ID as usize, ComponentColumn::new());
+    components
+        .component_sets
+        .insert(DEAD_ID as usize, ComponentColumn::new());
 
     // Create a few entities
     let e1 = entity_manager.create();
@@ -438,7 +519,7 @@ fn main() {
     components.set(e1, POSITION_ID, position(0.0, 0.0));
     components.set(e1, VELOCITY_ID, velocity(1.0, 1.0));
     components.set(e1, VELOCITY_ID, velocity(1.0, 1.0));
-    // components.set(e1, DEAD_ID, marker("is_dead"));
+    components.set(e1, DEAD_ID, marker("is_dead"));
 
     dbg!(&components.get(&VELOCITY_ID));
     components.remove(e1, VELOCITY_ID);
