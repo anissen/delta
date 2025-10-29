@@ -220,43 +220,26 @@ impl ComponentStorage {
         self.component_sets[component_id as usize].insert(entity, component);
     }
 
-    fn get(&self, component_id: &ComponentId) -> Option<&ComponentColumn> {
-        self.component_sets.get(*component_id as usize)
+    fn get(&self, component_id: &ComponentId) -> &ComponentColumn {
+        self.component_sets.get(*component_id as usize).unwrap()
     }
 
-    fn get_many(&self, component_ids: Vec<&ComponentId>) -> Option<Vec<&ComponentColumn>> {
-        let len = self.component_sets.len();
-        let has_all = component_ids.iter().all(|id| (**id as usize) < len);
-        if !has_all {
-            return None;
-        }
+    fn has(&self, component_id: &ComponentId) -> bool {
+        (*component_id as usize) < self.component_sets.len()
+    }
 
-        let many: Vec<_> = self
-            .component_sets
+    fn get_many(&self, component_ids: Vec<&ComponentId>) -> Vec<&ComponentColumn> {
+        self.component_sets
             .iter()
             .filter(|c| component_ids.contains(&&c.id))
-            .collect();
-
-        Some(many)
+            .collect()
     }
 
-    fn get_many_mut(
-        &mut self,
-        component_ids: Vec<&ComponentId>,
-    ) -> Option<Vec<&mut ComponentColumn>> {
-        let len = self.component_sets.len();
-        let has_all = component_ids.iter().all(|id| (**id as usize) < len);
-        if !has_all {
-            return None;
-        }
-
-        let many: Vec<_> = self
-            .component_sets
+    fn get_many_mut(&mut self, component_ids: Vec<&ComponentId>) -> Vec<&mut ComponentColumn> {
+        self.component_sets
             .iter_mut()
             .filter(|c| component_ids.contains(&&c.id))
-            .collect();
-
-        Some(many)
+            .collect()
     }
 
     fn entities(&self, component_ids: Vec<&ComponentId>) -> Vec<Entity> {
@@ -264,31 +247,28 @@ impl ComponentStorage {
             return Vec::new();
         }
 
-        if let Some(components) = self.get_many(component_ids) {
-            let first_set = components.first().unwrap();
+        let components = self.get_many(component_ids);
+        let first_set = components.first().unwrap();
 
-            if components.len() == 1 {
-                return first_set.dense_entities.clone();
-            }
-
-            let mut intersection = first_set.bitset.clone();
-            components
-                .iter()
-                .map(|col| &col.bitset)
-                .for_each(|bitset| intersection.intersect_with(bitset));
-            // println!("Intersection: {:?}", intersection);
-            // intersection.print();
-            // println!("First Set: {:?}", first_set);
-
-            first_set
-                .dense_entities
-                .iter()
-                .filter(|entity| intersection.get(**entity as usize))
-                .map(|entity| *entity)
-                .collect()
-        } else {
-            Vec::new()
+        if components.len() == 1 {
+            return first_set.dense_entities.clone();
         }
+
+        let mut intersection = first_set.bitset.clone();
+        components
+            .iter()
+            .map(|col| &col.bitset)
+            .for_each(|bitset| intersection.intersect_with(bitset));
+        // println!("Intersection: {:?}", intersection);
+        // intersection.print();
+        // println!("First Set: {:?}", first_set);
+
+        first_set
+            .dense_entities
+            .iter()
+            .filter(|entity| intersection.get(**entity as usize))
+            .map(|entity| *entity)
+            .collect()
     }
 
     fn remove(&mut self, entity: Entity, component_id: ComponentId) -> Option<Component> {
@@ -329,24 +309,23 @@ const DEAD_ID: ComponentId = 2;
 fn movement_system(components: &mut ComponentStorage) {
     let component_ids = vec![&POSITION_ID, &VELOCITY_ID];
     let entities = components.entities(vec![&POSITION_ID, &VELOCITY_ID]);
-    if let Some(mut cols) = components.get_many_mut(component_ids) {
-        let (first, rest) = cols.split_at_mut(1);
-        let positions = &mut first[0];
-        let pos_dense = &mut positions.dense_components;
-        let velocities = &rest[0];
+    let mut cols = components.get_many_mut(component_ids);
+    let (first, rest) = cols.split_at_mut(1);
+    let positions = &mut first[0];
+    let pos_dense = &mut positions.dense_components;
+    let velocities = &rest[0];
 
-        for entity in entities {
-            let id = entity as usize;
-            let pos = &mut pos_dense[positions.sparse[id].unwrap()];
-            let vel = &velocities.dense_components[velocities.sparse[id].unwrap()];
+    for entity in entities {
+        let id = entity as usize;
+        let pos = &mut pos_dense[positions.sparse[id].unwrap()];
+        let vel = &velocities.dense_components[velocities.sparse[id].unwrap()];
 
-            let dx = vel.values.get("dx").unwrap().as_float();
-            let dy = vel.values.get("dy").unwrap().as_float();
-            let pos_x = pos.values.get("x").unwrap().as_float();
-            let pos_y = pos.values.get("y").unwrap().as_float();
-            pos.values.insert("x".to_string(), Value::Float(pos_x + dx));
-            pos.values.insert("y".to_string(), Value::Float(pos_y + dy));
-        }
+        let dx = vel.values.get("dx").unwrap().as_float();
+        let dy = vel.values.get("dy").unwrap().as_float();
+        let pos_x = pos.values.get("x").unwrap().as_float();
+        let pos_y = pos.values.get("y").unwrap().as_float();
+        pos.values.insert("x".to_string(), Value::Float(pos_x + dx));
+        pos.values.insert("y".to_string(), Value::Float(pos_y + dy));
     }
 }
 
@@ -417,19 +396,21 @@ fn main() {
         println!("Matching entities: {:?}", matching_entities);
 
         let dead_components = components.get(&DEAD_ID);
-        for (entity, pos) in components.get(&POSITION_ID).unwrap().iter() {
-            println!(
-                "Entity {}: Position = ({:.1}, {:.1})",
-                entity,
-                pos.values.get("x").unwrap().as_float(),
-                pos.values.get("y").unwrap().as_float()
-            );
-            if let Some(dead) = dead_components
-                && dead.has(*entity)
-            {
-                println!("Entity {} is dead", entity);
-            }
-        }
+
+        components
+            .get(&POSITION_ID)
+            .iter()
+            .for_each(|(entity, pos)| {
+                println!(
+                    "Entity {}: Position = ({:.1}, {:.1})",
+                    entity,
+                    pos.values.get("x").unwrap().as_float(),
+                    pos.values.get("y").unwrap().as_float()
+                );
+                if dead_components.has(*entity) {
+                    println!("Entity {} is dead", entity);
+                }
+            });
         components.remove(e1, DEAD_ID);
 
         components.set(e2, DEAD_ID, marker("is_dead"));
