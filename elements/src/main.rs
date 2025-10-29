@@ -247,28 +247,35 @@ impl ComponentStorage {
             return Vec::new();
         }
 
-        let components = self.get_many(component_ids);
-        let first_set = components.first().unwrap();
+        let matching_components: Vec<_> = self
+            .component_sets
+            .iter()
+            .filter(|c| component_ids.contains(&&c.id))
+            .collect();
 
-        if components.len() == 1 {
-            return first_set.dense_entities.clone();
+        if let Some((first, rest)) = matching_components.split_first() {
+            if rest.is_empty() {
+                return first.dense_entities.clone();
+            }
+
+            let mut intersection = first.bitset.clone();
+            rest.iter()
+                .map(|col| &col.bitset)
+                .for_each(|bitset| intersection.intersect_with(bitset));
+
+            // println!("Intersection: {:?}", intersection);
+            // intersection.print();
+            // println!("First Set: {:?}", first_set);
+
+            first
+                .dense_entities
+                .iter()
+                .filter(|entity| intersection.get(**entity as usize))
+                .map(|entity| *entity)
+                .collect()
+        } else {
+            Vec::new()
         }
-
-        let mut intersection = first_set.bitset.clone();
-        components
-            .iter()
-            .map(|col| &col.bitset)
-            .for_each(|bitset| intersection.intersect_with(bitset));
-        // println!("Intersection: {:?}", intersection);
-        // intersection.print();
-        // println!("First Set: {:?}", first_set);
-
-        first_set
-            .dense_entities
-            .iter()
-            .filter(|entity| intersection.get(**entity as usize))
-            .map(|entity| *entity)
-            .collect()
     }
 
     fn remove(&mut self, entity: Entity, component_id: ComponentId) -> Option<Component> {
@@ -367,24 +374,24 @@ fn main() {
         .insert(DEAD_ID as usize, ComponentColumn::new(DEAD_ID));
 
     // Create a few entities
+    let e0 = entity_manager.create();
     let e1 = entity_manager.create();
     let e2 = entity_manager.create();
-    let e3 = entity_manager.create();
 
     // Add components
-    components.set(e1, POSITION_ID, position(0.0, 0.0));
-    components.set(e1, VELOCITY_ID, velocity(1.0, 1.0));
-    components.set(e1, VELOCITY_ID, velocity(1.0, 1.0));
-    components.set(e1, DEAD_ID, marker("is_dead"));
+    components.set(e0, POSITION_ID, position(0.0, 0.0));
+    components.set(e0, VELOCITY_ID, velocity(1.0, 1.0));
+    components.set(e0, VELOCITY_ID, velocity(1.0, 1.0));
+    components.set(e0, DEAD_ID, marker("is_dead"));
 
-    dbg!(&components.get(&VELOCITY_ID));
-    components.remove(e1, VELOCITY_ID);
-    dbg!(&components.get(&VELOCITY_ID));
+    // dbg!(&components.get(&VELOCITY_ID));
+    components.remove(e0, VELOCITY_ID);
+    // dbg!(&components.get(&VELOCITY_ID));
 
-    components.set(e2, POSITION_ID, position(10.0, -5.0));
-    components.set(e2, VELOCITY_ID, velocity(-2.0, 0.5));
+    components.set(e1, POSITION_ID, position(10.0, -5.0));
+    components.set(e1, VELOCITY_ID, velocity(-2.0, 0.5));
 
-    components.set(e3, POSITION_ID, position(3.0, 3.0));
+    components.set(e2, POSITION_ID, position(3.0, 3.0));
     // e3 has no velocity—won’t move
 
     // Run the movement system a few times
@@ -393,9 +400,7 @@ fn main() {
         movement_system(&mut components);
 
         let matching_entities = components.entities(vec![&POSITION_ID, &VELOCITY_ID]);
-        println!("Matching entities: {:?}", matching_entities);
-
-        let dead_components = components.get(&DEAD_ID);
+        println!("Entities with (pos, vel): {:?}", matching_entities);
 
         components
             .get(&POSITION_ID)
@@ -407,14 +412,19 @@ fn main() {
                     pos.values.get("x").unwrap().as_float(),
                     pos.values.get("y").unwrap().as_float()
                 );
-                if dead_components.has(*entity) {
-                    println!("Entity {} is dead", entity);
-                }
             });
-        components.remove(e1, DEAD_ID);
 
-        components.set(e2, DEAD_ID, marker("is_dead"));
-        components.set(e3, VELOCITY_ID, velocity(1.0, 1.0));
+        components
+            .get(&DEAD_ID)
+            .iter()
+            .for_each(|(entity, _)| println!("Oh, no! Entity {} is dead!", entity));
+
+        components.remove(e0, DEAD_ID);
+
+        components.set(e1, DEAD_ID, marker("is_dead"));
+        components.set(e2, VELOCITY_ID, velocity(1.0, 1.0));
+
+        println!();
     }
 }
 
