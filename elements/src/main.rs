@@ -228,21 +228,25 @@ impl ComponentStorage {
         (*component_id as usize) < self.component_sets.len()
     }
 
-    fn get_many(&self, component_ids: Vec<&ComponentId>) -> Vec<&ComponentColumn> {
+    fn get_many(&self, component_ids: &Vec<ComponentId>) -> Vec<&ComponentColumn> {
         self.component_sets
             .iter()
-            .filter(|c| component_ids.contains(&&c.id))
+            .filter(|c| component_ids.contains(&c.id))
             .collect()
     }
 
-    fn get_many_mut(&mut self, component_ids: Vec<&ComponentId>) -> Vec<&mut ComponentColumn> {
+    fn get_many_mut(&mut self, component_ids: &Vec<ComponentId>) -> Vec<&mut ComponentColumn> {
         self.component_sets
             .iter_mut()
-            .filter(|c| component_ids.contains(&&c.id))
+            .filter(|c| component_ids.contains(&c.id))
             .collect()
     }
 
-    fn entities(&self, component_ids: Vec<&ComponentId>) -> Vec<Entity> {
+    fn query(&mut self, include: &Vec<ComponentId>) -> (Vec<Entity>, Vec<&mut ComponentColumn>) {
+        (self.entities(include), self.get_many_mut(include))
+    }
+
+    fn entities(&self, component_ids: &Vec<ComponentId>) -> Vec<Entity> {
         if component_ids.is_empty() {
             return Vec::new();
         }
@@ -250,7 +254,7 @@ impl ComponentStorage {
         let matching_components: Vec<_> = self
             .component_sets
             .iter()
-            .filter(|c| component_ids.contains(&&c.id))
+            .filter(|c| component_ids.contains(&c.id))
             .collect();
 
         if let Some((first, rest)) = matching_components.split_first() {
@@ -314,9 +318,9 @@ const VELOCITY_ID: ComponentId = 1;
 const DEAD_ID: ComponentId = 2;
 
 fn movement_system(components: &mut ComponentStorage) {
-    let component_ids = vec![&POSITION_ID, &VELOCITY_ID];
-    let entities = components.entities(vec![&POSITION_ID, &VELOCITY_ID]);
-    let mut cols = components.get_many_mut(component_ids);
+    let component_ids = vec![POSITION_ID, VELOCITY_ID];
+    let entities = components.entities(&vec![POSITION_ID, VELOCITY_ID]);
+    let mut cols = components.get_many_mut(&component_ids);
     let (first, rest) = cols.split_at_mut(1);
     let positions = &mut first[0];
     let pos_dense = &mut positions.dense_components;
@@ -399,7 +403,7 @@ fn main() {
         println!("--- Frame {} ---", frame);
         movement_system(&mut components);
 
-        let matching_entities = components.entities(vec![&POSITION_ID, &VELOCITY_ID]);
+        let matching_entities = components.entities(&vec![POSITION_ID, VELOCITY_ID]);
         println!("Entities with (pos, vel): {:?}", matching_entities);
 
         components
