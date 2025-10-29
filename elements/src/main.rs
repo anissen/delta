@@ -34,15 +34,6 @@ impl BitSet {
         }
     }
 
-    /// Creates a new BitSet capable of holding `len` bits (all true).
-    // pub fn all_set(len: usize) -> Self {
-    //     let blocks = (len + 63) / 64;
-    //     Self {
-    //         data: vec![1; blocks],
-    //         len,
-    //     }
-    // }
-
     /// Returns the number of bits in the bitset.
     pub fn len(&self) -> usize {
         self.len
@@ -141,7 +132,7 @@ impl ComponentColumn {
             dense_components: Vec::new(),
             dense_entities: Vec::new(),
             sparse: Vec::new(),
-            bitset: BitSet::new(3), // Used to be 64
+            bitset: BitSet::new(64), // 64 chosen arbitrarily
         }
     }
 
@@ -168,7 +159,6 @@ impl ComponentColumn {
 
     fn has(&self, entity: Entity) -> bool {
         let id = entity as usize;
-        // id < self.sparse.len() && self.sparse[id].is_some()
         id < self.bitset.len() && self.bitset.get(id)
     }
 
@@ -214,7 +204,6 @@ impl ComponentColumn {
 }
 
 pub struct ComponentStorage {
-    // component_sets: HashMap<ComponentId, ComponentColumn>, // TODO: Make this a Vec or SparseSet instead of a HashMap
     component_sets: Vec<ComponentColumn>,
 }
 
@@ -264,34 +253,17 @@ impl ComponentStorage {
             return None;
         }
 
-        // split the self.component_sets vec into N mutable values, one for each index that matches component_ids
-        let mut index: u32 = 0;
-
-        // let ids: Vec<_> = component_ids.iter().map(|id| **id as usize).collect();
-        // let many = self
-        //     .component_sets
-        //     .get_disjoint_mut(ids)
-        // let many = self.component_sets.get_disjoint_mut([ids[0], ids[1]]);
-        // let many = self
-        //     .component_sets
-        //     .split_mut(|_| {
-        //         let include = component_ids.contains(&&index);
-        //         index += 1;
-        //         include
-        //     })
-        //     .map(|mut columns| columns[0])
-        //     .collect::<Vec<&mut ComponentColumn>>();
         let many: Vec<_> = self
             .component_sets
             .iter_mut()
-            .filter(|_| {
-                let include = component_ids.contains(&&index);
-                index += 1;
-                include
+            .enumerate()
+            .filter(|(index, _)| {
+                let id = *index as u32;
+                component_ids.contains(&&id)
             })
+            .map(|(_, c)| c)
             .collect();
 
-        // [].mut
         Some(many)
     }
 
@@ -312,14 +284,13 @@ impl ComponentStorage {
                 .iter()
                 .map(|col| &col.bitset)
                 .for_each(|bitset| intersection.intersect_with(bitset));
-            println!("Intersection: {:?}", intersection);
-            intersection.print();
-            println!("First Set: {:?}", first_set);
+            // println!("Intersection: {:?}", intersection);
+            // intersection.print();
+            // println!("First Set: {:?}", first_set);
 
             first_set
                 .dense_entities
                 .iter()
-                // .enumerate()
                 .filter(|entity| intersection.get(**entity as usize))
                 .map(|entity| *entity)
                 .collect()
@@ -328,86 +299,19 @@ impl ComponentStorage {
         }
     }
 
-    // fn get_two(
-    //     &self,
-    //     component_id1: &ComponentId,
-    //     component_id2: &ComponentId,
-    // ) -> Option<(&ComponentColumn, &ComponentColumn)> {
-    //     let column1 = self.component_sets.get(component_id1)?;
-    //     let column2 = self.component_sets.get(component_id2)?;
-    //     Some((column1, column2))
-    // }
-
-    // fn get_two_mut(
-    //     &mut self,
-    //     component_id1: &ComponentId,
-    //     component_id2: &ComponentId,
-    // ) -> (&mut ComponentColumn, &mut ComponentColumn) {
-    //     let [a, b] = self
-    //         .component_sets
-    //         .get_disjoint_mut([component_id1, component_id2]);
-    //     (a.unwrap(), b.unwrap())
-    // }
-
-    // fn get_two_mut_iter(
-    //     &mut self,
-    //     component_id1: &ComponentId,
-    //     component_id2: &ComponentId,
-    // ) -> Vec<(&Component, &Component)> {
-    //     let [first, second] = self
-    //         .component_sets
-    //         .get_disjoint_mut([component_id1, component_id2]);
-    //     // let first = self.component_sets.get_mut(component_id1).unwrap();
-    //     let first = &first.unwrap();
-    //     let second = &second.unwrap();
-    //     let entities = &first.dense_entities;
-    //     // let second = self.component_sets.get_mut(component_id2).unwrap();
-    //     let mut rows = Vec::new();
-    //     let mut index = 0;
-    //     for &entity in entities {
-    //         let id = entity as usize;
-    //         if first.sparse.get(id).is_some() && second.sparse.get(id).is_some() {
-    //             rows.push((
-    //                 &first.dense_components[index],
-    //                 &second.dense_components[index],
-    //             ));
-    //         }
-    //         index += 1;
-    //     }
-    //     rows
-    // }
-
-    // fn get_mut(&mut self, component_id: &ComponentId) -> Option<&mut ComponentColumn> {
-    //     self.component_sets.get_mut(component_id)
-    // }
-
     fn remove(&mut self, entity: Entity, component_id: ComponentId) -> Option<Component> {
         self.component_sets
             .get_mut(component_id as usize)?
             .remove(entity)
     }
-
-    // fn iter(&self, component_id: ComponentId) -> impl Iterator<Item = (&Entity, &Component)> {
-    //     self.component_sets.get(&component_id).unwrap().iter()
-    // }
-
-    // fn iter_mut(
-    //     &mut self,
-    //     component_id: ComponentId,
-    // ) -> impl Iterator<Item = (&Entity, &mut Component)> {
-    //     self.component_sets
-    //         .get_mut(&component_id)
-    //         .unwrap()
-    //         .iter_mut()
-    // }
 }
 
 #[derive(Debug)]
 enum Value {
     Marker, // TODO(anissen): Should not be necessary to have for creating a marker component.
     Float(f32),
-    Integer(i32),
-    Boolean(bool),
+    // Integer(i32),
+    // Boolean(bool),
 }
 
 impl Value {
@@ -431,7 +335,6 @@ const VELOCITY_ID: ComponentId = 1;
 const DEAD_ID: ComponentId = 2;
 
 fn movement_system(components: &mut ComponentStorage) {
-    // Collect entities and velocity values that need updating
     let component_ids = vec![&POSITION_ID, &VELOCITY_ID];
     let entities = components.entities(vec![&POSITION_ID, &VELOCITY_ID]);
     if let Some(mut cols) = components.get_many_mut(component_ids) {
@@ -439,14 +342,6 @@ fn movement_system(components: &mut ComponentStorage) {
         let positions = &mut first[0];
         let pos_dense = &mut positions.dense_components;
         let velocities = &rest[0];
-
-        // let iter = entities.iter().map(|entity| positions.)
-
-        // let iter = &positions
-        //     .iter_mut()
-        //     .filter_map(|(entity, pos)| velocities.get(*entity).map(|vel| (pos, vel)));
-
-        // let rows = (entity, pos, vel)
 
         for entity in entities {
             let id = entity as usize;
@@ -460,16 +355,6 @@ fn movement_system(components: &mut ComponentStorage) {
             pos.values.insert("x".to_string(), Value::Float(pos_x + dx));
             pos.values.insert("y".to_string(), Value::Float(pos_y + dy));
         }
-
-        // Apply updates
-        // for (pos, vel) in cols {
-        //     let dx = vel.values.get("dx").unwrap().as_float();
-        //     let dy = vel.values.get("dy").unwrap().as_float();
-        //     let pos_x = pos.values.get("x").unwrap().as_float();
-        //     let pos_y = pos.values.get("y").unwrap().as_float();
-        //     pos.values.insert("x".to_string(), Value::Float(pos_x + dx));
-        //     pos.values.insert("y".to_string(), Value::Float(pos_y + dy));
-        // }
     }
 }
 
@@ -562,7 +447,7 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    // use super::*;
 
     #[test]
     fn it_works() {}
