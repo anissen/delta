@@ -101,6 +101,22 @@ impl BitSet {
         self.len = self.len.min(other.len);
     }
 
+    /// Performs relative complement (NOT) with another BitSet in place.
+    /// Truncates to the smaller length.
+    pub fn not_with(&mut self, other: &BitSet) {
+        let min_blocks = self.data.len().min(other.data.len());
+        for i in 0..min_blocks {
+            // if other.data[i] == 1 {
+            //     self.data[i] = 0;
+            // }
+            self.data[i] &= !other.data[i];
+        }
+        for i in min_blocks..self.data.len() {
+            self.data[i] = 0;
+        }
+        self.len = self.len.min(other.len);
+    }
+
     /// Returns a new BitSet that is the intersection of two bitsets.
     pub fn intersection(&self, other: &BitSet) -> BitSet {
         let min_len = self.len.min(other.len);
@@ -296,30 +312,56 @@ impl ComponentStorage {
     fn system(
         &mut self,
         include: &Vec<ComponentId>,
+        exclude: &Vec<ComponentId>,
         mut system: impl FnMut(Entity, Vec<&mut Component>),
     ) {
         if include.is_empty() {
             return;
         }
 
-        let mut matching_columns: Vec<_> = self
+        let exclude_columns: Vec<_> = self
+            .component_sets
+            .iter()
+            .filter(|c| exclude.contains(&c.id))
+            .collect();
+
+        // TODO(anissen): Could split in (first, rest) for optimization
+        let exclude_bitset = if let Some(first) = exclude_columns.first() {
+            let mut bitset = first.bitset.clone();
+            self.component_sets
+                .iter()
+                .filter(|c| exclude.contains(&c.id))
+                .map(|col| &col.bitset)
+                .for_each(|other| bitset.intersect_with(other));
+            // dbg!(&bitset);
+            Some(bitset)
+        } else {
+            None
+        };
+
+        let mut include_columns: Vec<_> = self
             .component_sets
             .iter_mut()
             .filter(|c| include.contains(&c.id))
             .collect();
 
-        if let Some(first) = matching_columns.first() {
+        // TODO(anissen): Could split in (first, rest) for optimization
+        if let Some(first) = include_columns.first() {
             let mut intersection = first.bitset.clone();
-            matching_columns
+            include_columns
                 .iter()
                 .map(|col| &col.bitset)
                 .for_each(|bitset| intersection.intersect_with(bitset));
+
+            if let Some(exclude_bitset) = exclude_bitset {
+                intersection.not_with(&exclude_bitset);
+            }
 
             let entities = first.dense_entities.clone();
             for i in 0..intersection.len() {
                 if intersection.get(i) {
                     let entity = entities[i];
-                    let row: Vec<_> = matching_columns
+                    let row: Vec<_> = include_columns
                         .iter_mut()
                         .flat_map(|col| col.get_mut(entity))
                         .collect();
@@ -495,7 +537,7 @@ fn main() {
         let matching_entities = components.entities(&vec![POSITION_ID, VELOCITY_ID]);
         println!("Entities with (pos, vel): {:?}", matching_entities);
 
-        components.system(&vec![POSITION_ID], |entity, components| {
+        components.system(&vec![POSITION_ID], &vec![], |entity, components| {
             let pos = components.first().unwrap();
             println!(
                 "Entity {}: Position = ({:.1}, {:.1})",
@@ -522,25 +564,29 @@ fn main() {
         println!("--- Frame {} ---", frame);
 
         // TODO(anissen): We probably need to get the list of entities/components out, and then iterate?!?
-        components.system(&vec![POSITION_ID, VELOCITY_ID], |entity, mut components| {
-            let (first, rest) = components.split_at_mut(1);
-            let pos = &mut first[0];
-            let vel = &mut rest[0];
-            let pos_x = pos.values.get("x").unwrap().as_float();
-            let pos_y = pos.values.get("y").unwrap().as_float();
-            let vel_x = vel.values.get("dx").unwrap().as_float();
-            let vel_y = vel.values.get("dy").unwrap().as_float();
-            pos.values
-                .insert("x".to_string(), Value::Float(pos_x + vel_x));
-            pos.values
-                .insert("y".to_string(), Value::Float(pos_y + vel_y));
-            println!(
-                "Entity {}: Position = ({:.1}, {:.1})",
-                entity,
-                pos.values.get("x").unwrap().as_float(),
-                pos.values.get("y").unwrap().as_float()
-            );
-        });
+        components.system(
+            &vec![POSITION_ID, VELOCITY_ID],
+            &vec![DEAD_ID],
+            |entity, mut components| {
+                let (first, rest) = components.split_at_mut(1);
+                let pos = &mut first[0];
+                let vel = &mut rest[0];
+                let pos_x = pos.values.get("x").unwrap().as_float();
+                let pos_y = pos.values.get("y").unwrap().as_float();
+                let vel_x = vel.values.get("dx").unwrap().as_float();
+                let vel_y = vel.values.get("dy").unwrap().as_float();
+                pos.values
+                    .insert("x".to_string(), Value::Float(pos_x + vel_x));
+                pos.values
+                    .insert("y".to_string(), Value::Float(pos_y + vel_y));
+                println!(
+                    "Entity {}: Position = ({:.1}, {:.1})",
+                    entity,
+                    pos.values.get("x").unwrap().as_float(),
+                    pos.values.get("y").unwrap().as_float()
+                );
+            },
+        );
     }
 }
 
