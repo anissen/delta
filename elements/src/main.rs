@@ -389,6 +389,12 @@ impl Value {
     }
 }
 
+// #[derive(Debug)]
+// union ValueX {
+//     float: f32,
+//     int: i32,
+// }
+
 #[derive(Debug)]
 struct Component {
     values: HashMap<String, Value>, // TODO(anissen): Could be mapped to Vec<Value> where field names are mapped to indexes.
