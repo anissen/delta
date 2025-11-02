@@ -516,8 +516,18 @@ fn main() {
         println!("--- Frame {} ---", frame);
 
         // TODO(anissen): We probably need to get the list of entities/components out, and then iterate?!?
-        components.system(&vec![POSITION_ID, VELOCITY_ID], |entity, components| {
-            let pos = components.first().unwrap();
+        components.system(&vec![POSITION_ID, VELOCITY_ID], |entity, mut components| {
+            let (first, rest) = components.split_at_mut(1);
+            let pos = &mut first[0];
+            let vel = &mut rest[0];
+            let pos_x = pos.values.get("x").unwrap().as_float();
+            let pos_y = pos.values.get("y").unwrap().as_float();
+            let vel_x = vel.values.get("dx").unwrap().as_float();
+            let vel_y = vel.values.get("dy").unwrap().as_float();
+            pos.values
+                .insert("x".to_string(), Value::Float(pos_x + vel_x));
+            pos.values
+                .insert("y".to_string(), Value::Float(pos_y + vel_y));
             println!(
                 "Entity {}: Position = ({:.1}, {:.1})",
                 entity,
