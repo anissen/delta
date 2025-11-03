@@ -527,7 +527,10 @@ fn main() {
     components.set(e1, VELOCITY_ID, velocity(-2.0, 0.5));
 
     components.set(e2, POSITION_ID, position(3.0, 3.0));
-    // e3 has no velocity—won’t move
+
+    let e3 = entity_manager.create();
+    components.set(e3, POSITION_ID, position(0.0, 0.0));
+    components.set(e3, VELOCITY_ID, velocity(-1.0, -1.0));
 
     // Run the movement system a few times
     for frame in 0..3 {
