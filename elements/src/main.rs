@@ -135,15 +135,15 @@ impl BitSet {
 }
 
 #[derive(Debug)]
-pub struct ComponentColumn {
+pub struct ComponentColumn<T> {
     id: ComponentId,
-    dense_components: Vec<Component>,
+    dense_components: Vec<T>,
     dense_entities: Vec<Entity>,
     sparse: Vec<Option<usize>>,
     bitset: BitSet,
 }
 
-impl ComponentColumn {
+impl<T> ComponentColumn<T> {
     fn new(id: ComponentId) -> Self {
         Self {
             id,
@@ -154,7 +154,7 @@ impl ComponentColumn {
         }
     }
 
-    fn insert(&mut self, entity: Entity, component: Component) {
+    fn insert(&mut self, entity: Entity, component: T) {
         let id = entity as usize;
 
         if let Some(Some(index)) = self.sparse.get(id) {
@@ -180,21 +180,21 @@ impl ComponentColumn {
         id < self.bitset.len() && self.bitset.get(id)
     }
 
-    fn get(&self, entity: Entity) -> Option<&Component> {
+    fn get(&self, entity: Entity) -> Option<&T> {
         let id = entity as usize;
         self.sparse
             .get(id)?
             .map(|index| &self.dense_components[index])
     }
 
-    fn get_mut(&mut self, entity: Entity) -> Option<&mut Component> {
+    fn get_mut(&mut self, entity: Entity) -> Option<&mut T> {
         let id = entity as usize;
         self.sparse
             .get(id)?
             .map(|index| &mut self.dense_components[index])
     }
 
-    fn remove(&mut self, entity: Entity) -> Option<Component> {
+    fn remove(&mut self, entity: Entity) -> Option<T> {
         let id = entity as usize;
         let index = self.sparse.get_mut(id)?.take()?;
 
@@ -212,17 +212,17 @@ impl ComponentColumn {
         self.dense_components.pop()
     }
 
-    fn iter(&self) -> impl Iterator<Item = (&Entity, &Component)> {
+    fn iter(&self) -> impl Iterator<Item = (&Entity, &T)> {
         self.dense_entities.iter().zip(&self.dense_components)
     }
 
-    fn iter_mut(&mut self) -> impl Iterator<Item = (&Entity, &mut Component)> {
+    fn iter_mut(&mut self) -> impl Iterator<Item = (&Entity, &mut T)> {
         self.dense_entities.iter().zip(&mut self.dense_components)
     }
 }
 
 pub struct ComponentStorage {
-    component_sets: Vec<ComponentColumn>,
+    component_sets: Vec<ComponentColumn<Component>>,
 }
 
 impl ComponentStorage {
@@ -236,7 +236,7 @@ impl ComponentStorage {
         self.component_sets[component_id as usize].insert(entity, component);
     }
 
-    fn get(&self, component_id: &ComponentId) -> &ComponentColumn {
+    fn get(&self, component_id: &ComponentId) -> &ComponentColumn<Component> {
         self.component_sets.get(*component_id as usize).unwrap()
     }
 
@@ -244,14 +244,17 @@ impl ComponentStorage {
         (*component_id as usize) < self.component_sets.len()
     }
 
-    fn get_many(&self, component_ids: &Vec<ComponentId>) -> Vec<&ComponentColumn> {
+    fn get_many(&self, component_ids: &Vec<ComponentId>) -> Vec<&ComponentColumn<Component>> {
         self.component_sets
             .iter()
             .filter(|c| component_ids.contains(&c.id))
             .collect()
     }
 
-    fn get_many_mut(&mut self, component_ids: &Vec<ComponentId>) -> Vec<&mut ComponentColumn> {
+    fn get_many_mut(
+        &mut self,
+        component_ids: &Vec<ComponentId>,
+    ) -> Vec<&mut ComponentColumn<Component>> {
         self.component_sets
             .iter_mut()
             .filter(|c| component_ids.contains(&c.id))
