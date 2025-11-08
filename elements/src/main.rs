@@ -566,6 +566,14 @@ fn main() {
         println!();
     }
 
+    /*
+    Benchmark for 1_000_000 iterations without println
+
+    hyperfine './target/release/elements'
+    Benchmark 1: ./target/release/elements
+      Time (mean ± σ):     435.6 ms ±   4.0 ms    [User: 431.2 ms, System: 2.9 ms]
+      Range (min … max):   431.7 ms … 442.3 ms    10 runs
+    */
     for frame in 0..3 {
         println!("--- Frame {} ---", frame);
 
