@@ -14,119 +14,89 @@ impl EntityManager {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct BitSet {
-    data: Vec<u64>,
-    len: usize, // number of bits that are *logically* part of the set
+#[derive(Clone, Default, Debug)]
+struct BitSet {
+    words: Vec<u64>,
+}
+impl BitSet {
+    fn ensure_capacity(&mut self, entity: Entity) {
+        let word_index = (entity as usize) / 64;
+        if word_index >= self.words.len() {
+            self.words.resize(word_index + 1, 0);
+        }
+    }
+    fn set(&mut self, e: Entity) {
+        self.ensure_capacity(e);
+        let w = (e as usize) / 64;
+        let b = (e as usize) % 64;
+        self.words[w] |= 1u64 << b;
+    }
+    fn unset(&mut self, e: Entity) {
+        let w = (e as usize) / 64;
+        if w < self.words.len() {
+            let b = (e as usize) % 64;
+            self.words[w] &= !(1u64 << b);
+        }
+    }
+
+    fn contains(&self, e: Entity) -> bool {
+        let w = (e as usize) / 64;
+        if w >= self.words.len() {
+            return false;
+        }
+        let b = (e as usize) % 64;
+        (self.words[w] >> b) & 1 != 0
+    }
+
+    pub fn intersect_with(&mut self, other: &BitSet) {
+        let min_words = self.words.len().min(other.words.len());
+        self.words.resize(min_words, 0);
+        for i in 0..min_words {
+            self.words[i] &= other.words[i];
+        }
+    }
+
+    pub fn disjoint_with(&mut self, other: &BitSet) {
+        let min_words = self.words.len().min(other.words.len());
+        self.words.resize(min_words, 0);
+        for i in 0..min_words {
+            self.words[i] &= !other.words[i];
+        }
+    }
+
+    fn is_empty(&self) -> bool {
+        self.words.iter().all(|&w| w == 0)
+    }
+
+    /// Iterate entity ids present in the bitset.
+    fn iter_ids(&self) -> BitSetIter<'_> {
+        BitSetIter {
+            words: &self.words,
+            idx: 0,
+            cur: 0,
+        }
+    }
 }
 
-impl BitSet {
-    /// Creates a new BitSet capable of holding `len` bits (all false).
-    pub fn new(len: usize) -> Self {
-        let blocks = (len + 63) / 64;
-        Self {
-            data: vec![0; blocks],
-            len,
+struct BitSetIter<'a> {
+    words: &'a [u64],
+    idx: usize,
+    cur: u64,
+}
+impl<'a> Iterator for BitSetIter<'a> {
+    type Item = Entity;
+    fn next(&mut self) -> Option<Self::Item> {
+        while self.cur == 0 {
+            if self.idx >= self.words.len() {
+                return None;
+            }
+            self.cur = self.words[self.idx];
+            self.idx += 1;
         }
-    }
-
-    /// Returns the number of bits in the bitset.
-    pub fn len(&self) -> usize {
-        self.len
-    }
-
-    /// Checks if the bitset is empty (no bits).
-    pub fn is_empty(&self) -> bool {
-        self.len == 0
-    }
-
-    /// Gets the value of a bit.
-    pub fn get(&self, index: usize) -> bool {
-        assert!(index < self.len, "index out of bounds");
-        let block = index / 64;
-        let bit = index % 64;
-        (self.data[block] >> bit) & 1 == 1
-    }
-
-    /// Sets the bit to the given value (resizes automatically if needed).
-    pub fn set(&mut self, index: usize, value: bool) {
-        if index >= self.len {
-            self.resize(index + 1);
-        }
-        let block = index / 64;
-        let bit = index % 64;
-        if value {
-            self.data[block] |= 1 << bit;
-        } else {
-            self.data[block] &= !(1 << bit);
-        }
-    }
-
-    /// Clears all bits (sets all to false).
-    pub fn clear(&mut self) {
-        for block in &mut self.data {
-            *block = 0;
-        }
-    }
-
-    /// Returns the number of bits set to 1.
-    pub fn count_ones(&self) -> usize {
-        self.data.iter().map(|b| b.count_ones() as usize).sum()
-    }
-
-    /// Resizes the bitset to contain `new_len` bits.
-    /// Newly added bits are set to false.
-    pub fn resize(&mut self, new_len: usize) {
-        let new_blocks = (new_len + 63) / 64;
-        if new_blocks > self.data.len() {
-            self.data.resize(new_blocks, 0);
-        }
-        self.len = new_len;
-    }
-
-    /// Performs intersection (AND) with another BitSet in place.
-    /// Truncates to the smaller length.
-    pub fn intersect_with(&mut self, other: &BitSet) {
-        let min_blocks = self.data.len().min(other.data.len());
-        for i in 0..min_blocks {
-            self.data[i] &= other.data[i];
-        }
-        for i in min_blocks..self.data.len() {
-            self.data[i] = 0;
-        }
-        self.len = self.len.min(other.len);
-    }
-
-    /// Performs relative complement (NOT) with another BitSet in place.
-    /// Truncates to the smaller length.
-    pub fn not_with(&mut self, other: &BitSet) {
-        let min_blocks = self.data.len().min(other.data.len());
-        for i in 0..min_blocks {
-            // if other.data[i] == 1 {
-            //     self.data[i] = 0;
-            // }
-            self.data[i] &= !other.data[i];
-        }
-        for i in min_blocks..self.data.len() {
-            self.data[i] = 0;
-        }
-        self.len = self.len.min(other.len);
-    }
-
-    /// Returns a new BitSet that is the intersection of two bitsets.
-    pub fn intersection(&self, other: &BitSet) -> BitSet {
-        let min_len = self.len.min(other.len);
-        let mut result = BitSet::new(min_len);
-        for i in 0..result.data.len() {
-            result.data[i] = self.data[i] & other.data[i];
-        }
-        result
-    }
-
-    pub fn print(&self) {
-        for i in 0..self.len() {
-            println!("BitSet {}: {}", i, self.get(i));
-        }
+        let tz = self.cur.trailing_zeros() as usize;
+        self.cur &= !(1u64 << tz);
+        let entity = ((self.idx - 1) * 64 + tz) as Entity;
+        Some(entity)
     }
 }
 
@@ -161,7 +131,7 @@ impl Column {
             dense: vec![0; initial_capacity * layout.size.max(1)], // allow zero-size components
             entities: Vec::with_capacity(initial_capacity),
             sparse: vec![usize::MAX; initial_capacity],
-            bitset: BitSet::new(64), // 64 chosen arbitrarily
+            bitset: BitSet::default(),
         }
     }
 
@@ -209,7 +179,7 @@ impl Column {
             let end = start + self.layout.size;
             self.dense[start..end].copy_from_slice(value_bytes);
         }
-        self.bitset.set(entity as usize, true);
+        self.bitset.set(entity);
     }
 
     pub fn get(&self, entity: Entity) -> Option<&[u8]> {
@@ -261,7 +231,7 @@ impl Column {
             row0.swap_with_slice(row1);
         }
 
-        self.bitset.set(entity as usize, false);
+        self.bitset.unset(entity);
         self.entities.pop();
         true
     }
@@ -358,7 +328,6 @@ impl World {
                 .filter(|c| exclude.contains(&c.id))
                 .map(|col| &col.bitset)
                 .for_each(|other| bitset.intersect_with(other));
-            // dbg!(&bitset);
             Some(bitset)
         } else {
             None
@@ -379,20 +348,16 @@ impl World {
                 .for_each(|bitset| intersection.intersect_with(bitset));
 
             if let Some(exclude_bitset) = exclude_bitset {
-                intersection.not_with(&exclude_bitset);
+                intersection.disjoint_with(&exclude_bitset);
             }
 
-            let entities = first.entities.clone();
-            for i in 0..intersection.len() {
-                if intersection.get(i) {
-                    let entity = entities[i];
-                    let mut row: Vec<_> = include_columns
-                        .iter_mut()
-                        .flat_map(|col| col.get_mut(entity))
-                        .collect();
-                    system(entity, &mut row);
-                }
-            }
+            intersection.iter_ids().for_each(|entity| {
+                let mut row: Vec<_> = include_columns
+                    .iter_mut()
+                    .flat_map(|col| col.get_mut(entity))
+                    .collect();
+                system(entity, &mut row);
+            });
         }
     }
 }
@@ -440,7 +405,7 @@ fn main() {
 
     // Add components
     world.insert(POSITION, e0, &position(0.01, 0.5));
-    world.insert(VELOCITY, e0, &velocity(1.0, 1.0));
+    world.insert(VELOCITY, e0, &velocity(3.3, 3.3));
     world.insert(VELOCITY, e0, &velocity(1.0, 1.0));
     world.insert(DEAD, e0, &[]);
 
