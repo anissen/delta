@@ -137,7 +137,7 @@ impl Column {
 
     fn ensure_entity_capacity(&mut self, entity: Entity) {
         if entity as usize >= self.sparse.len() {
-            self.sparse.resize(entity as usize + 1, usize::MAX);
+            self.sparse.resize(entity as usize + 1, usize::MAX); // TODO(anissen): Use a different magic constant
         }
     }
 
@@ -158,28 +158,27 @@ impl Column {
 
         let idx = self.sparse[entity as usize];
 
-        // Replace component
-        if idx != usize::MAX {
+        if idx == usize::MAX {
+            // Insert component
+            self.ensure_dense_capacity();
+            let new_index = self.entities.len();
+            self.entities.push(entity);
+            self.sparse[entity as usize] = new_index;
+
+            if self.layout.size > 0 {
+                let start = new_index * self.layout.size;
+                let end = start + self.layout.size;
+                self.dense[start..end].copy_from_slice(value_bytes);
+            }
+            self.bitset.set(entity);
+        } else {
+            // Replace component
             if self.layout.size > 0 {
                 let start = idx * self.layout.size;
                 let end = start + self.layout.size;
                 self.dense[start..end].copy_from_slice(value_bytes);
             }
-            return;
         }
-
-        // Insert component
-        self.ensure_dense_capacity();
-        let new_index = self.entities.len();
-        self.entities.push(entity);
-        self.sparse[entity as usize] = new_index;
-
-        if self.layout.size > 0 {
-            let start = new_index * self.layout.size;
-            let end = start + self.layout.size;
-            self.dense[start..end].copy_from_slice(value_bytes);
-        }
-        self.bitset.set(entity);
     }
 
     pub fn get(&self, entity: Entity) -> Option<&[u8]> {
@@ -209,6 +208,7 @@ impl Column {
     }
 
     pub fn remove(&mut self, entity: Entity) -> bool {
+        // TODO(anissen): DRY logic around entity existence check
         let idx = match self.sparse.get(entity as usize) {
             Some(i) if *i != usize::MAX => *i,
             _ => return false,
@@ -237,7 +237,7 @@ impl Column {
     }
 
     pub fn iter(&self) -> impl Iterator<Item = (Entity, &[u8])> {
-        self.entities.iter().enumerate().map(move |(i, &e)| {
+        self.entities.iter().enumerate().map(|(i, &e)| {
             let bytes = if self.layout.size == 0 {
                 &[]
             } else {
@@ -417,6 +417,9 @@ fn main() {
     let e3 = entity_manager.create();
     world.insert(POSITION, e3, &position(0.0, 0.0));
     world.insert(VELOCITY, e3, &velocity(-1.0, -1.0));
+
+    let e4 = entity_manager.create();
+    world.insert(DEAD, e4, &[]);
 
     /*
      * frame 1:
