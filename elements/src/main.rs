@@ -1,7 +1,3 @@
-use std::collections::HashMap;
-
-type Entity = u32;
-
 pub struct EntityManager {
     next_id: Entity,
 }
@@ -134,151 +130,222 @@ impl BitSet {
     }
 }
 
+#[derive(Clone, Copy, Debug)]
+pub struct ComponentLayout {
+    pub size: usize,
+    pub align: usize,
+}
+
+pub type ComponentTypeId = u32;
+pub type Entity = u32;
+
 #[derive(Debug)]
-pub struct ComponentColumn<T> {
-    id: ComponentId,
-    dense_components: Vec<T>,
-    dense_entities: Vec<Entity>,
-    sparse: Vec<Option<usize>>,
+pub struct Column {
+    id: ComponentId, // TODO(anissen): Needs to be encoded in World instead
+    layout: ComponentLayout,
+    dense: Vec<u8>,
+    entities: Vec<Entity>,
+    sparse: Vec<usize>,
     bitset: BitSet,
 }
 
-// struct Column {
-//   void *elements;      // buffer with component data
-//   size_t element_size; // size of a single element
-//   size_t count;        // number of elements
-// }
-
-impl<T> ComponentColumn<T> {
-    fn new(id: ComponentId) -> Self {
+impl Column {
+    pub fn new(
+        component_id: ComponentId,
+        layout: ComponentLayout,
+        initial_capacity: usize,
+    ) -> Self {
         Self {
-            id,
-            dense_components: Vec::new(),
-            dense_entities: Vec::new(),
-            sparse: Vec::new(),
+            id: component_id,
+            layout,
+            dense: vec![0; initial_capacity * layout.size.max(1)], // allow zero-size components
+            entities: Vec::with_capacity(initial_capacity),
+            sparse: vec![usize::MAX; initial_capacity],
             bitset: BitSet::new(64), // 64 chosen arbitrarily
         }
     }
 
-    fn insert(&mut self, entity: Entity, component: T) {
-        let id = entity as usize;
+    fn ensure_entity_capacity(&mut self, entity: Entity) {
+        if entity as usize >= self.sparse.len() {
+            self.sparse.resize(entity as usize + 1, usize::MAX);
+        }
+    }
 
-        if let Some(Some(index)) = self.sparse.get(id) {
-            // Replace component
-            self.dense_components[*index] = component;
-        } else {
-            // Insert component
-            if id >= self.sparse.len() {
-                self.sparse.resize(id + 1, None);
+    fn ensure_dense_capacity(&mut self) {
+        if self.layout.size == 0 {
+            return; // marker component: no storage needed
+        }
+
+        let needed = (self.entities.len() + 1) * self.layout.size;
+        if needed > self.dense.len() {
+            let new_capacity = (self.dense.len().max(self.layout.size) * 2).max(needed);
+            self.dense.resize(new_capacity, 0);
+        }
+    }
+
+    pub fn insert(&mut self, entity: Entity, value_bytes: &[u8]) {
+        self.ensure_entity_capacity(entity);
+
+        let idx = self.sparse[entity as usize];
+
+        // Replace component
+        if idx != usize::MAX {
+            if self.layout.size > 0 {
+                let start = idx * self.layout.size;
+                let end = start + self.layout.size;
+                self.dense[start..end].copy_from_slice(value_bytes);
             }
-
-            let index = self.dense_components.len();
-            self.dense_components.push(component);
-            self.dense_entities.push(entity);
-            self.sparse[id] = Some(index);
+            return;
         }
 
-        self.bitset.set(id, true);
+        // Insert component
+        self.ensure_dense_capacity();
+        let new_index = self.entities.len();
+        self.entities.push(entity);
+        self.sparse[entity as usize] = new_index;
+
+        if self.layout.size > 0 {
+            let start = new_index * self.layout.size;
+            let end = start + self.layout.size;
+            self.dense[start..end].copy_from_slice(value_bytes);
+        }
+        self.bitset.set(entity as usize, true);
     }
 
-    // fn has(&self, entity: Entity) -> bool {
-    //     let id = entity as usize;
-    //     id < self.bitset.len() && self.bitset.get(id)
-    // }
-
-    // fn get(&self, entity: Entity) -> Option<&T> {
-    //     let id = entity as usize;
-    //     self.sparse
-    //         .get(id)?
-    //         .map(|index| &self.dense_components[index])
-    // }
-
-    fn get_mut(&mut self, entity: Entity) -> Option<&mut T> {
-        let id = entity as usize;
-        self.sparse
-            .get(id)?
-            .map(|index| &mut self.dense_components[index])
+    pub fn get(&self, entity: Entity) -> Option<&[u8]> {
+        let idx = self.sparse.get(entity as usize)?;
+        if *idx == usize::MAX {
+            return None;
+        }
+        if self.layout.size == 0 {
+            return Some(&[]);
+        }
+        let start = idx * self.layout.size;
+        let end = start + self.layout.size;
+        Some(&self.dense[start..end])
     }
 
-    fn remove(&mut self, entity: Entity) -> Option<T> {
-        let id = entity as usize;
-        let index = self.sparse.get_mut(id)?.take()?;
+    pub fn get_mut(&mut self, entity: Entity) -> Option<&mut [u8]> {
+        let idx = self.sparse.get(entity as usize)?;
+        if *idx == usize::MAX {
+            return None;
+        }
+        if self.layout.size == 0 {
+            return Some(&mut []);
+        }
+        let start = idx * self.layout.size;
+        let end = start + self.layout.size;
+        Some(&mut self.dense[start..end])
+    }
 
-        let last_index = self.dense_components.len() - 1;
+    pub fn remove(&mut self, entity: Entity) -> bool {
+        let idx = match self.sparse.get(entity as usize) {
+            Some(i) if *i != usize::MAX => *i,
+            _ => return false,
+        };
 
-        if index != last_index {
-            self.dense_components.swap(index, last_index);
-            self.dense_entities.swap(index, last_index);
-            let moved_entity = self.dense_entities[index];
-            self.sparse[moved_entity as usize] = Some(index);
+        let last = self.entities.len() - 1;
+        self.entities.swap(idx, last);
+
+        let moved_entity = self.entities[idx];
+        self.sparse[moved_entity as usize] = idx;
+        self.sparse[entity as usize] = usize::MAX;
+
+        if self.layout.size > 0 {
+            let s0 = idx * self.layout.size;
+            let s1 = last * self.layout.size;
+
+            let (left, right) = self.dense.split_at_mut(s1);
+            let row0 = &mut left[s0..s0 + self.layout.size];
+            let row1 = &mut right[0..self.layout.size];
+            row0.swap_with_slice(row1);
         }
 
-        self.bitset.set(id, false);
-        self.dense_entities.pop();
-        self.dense_components.pop()
+        self.bitset.set(entity as usize, false);
+        self.entities.pop();
+        true
     }
 
-    fn iter(&self) -> impl Iterator<Item = (&Entity, &T)> {
-        self.dense_entities.iter().zip(&self.dense_components)
+    pub fn iter(&self) -> impl Iterator<Item = (Entity, &[u8])> {
+        self.entities.iter().enumerate().map(move |(i, &e)| {
+            let bytes = if self.layout.size == 0 {
+                &[]
+            } else {
+                let start = i * self.layout.size;
+                let end = start + self.layout.size;
+                &self.dense[start..end]
+            };
+            (e, bytes)
+        })
     }
 
-    // fn iter_mut(&mut self) -> impl Iterator<Item = (&Entity, &mut T)> {
-    //     self.dense_entities.iter().zip(&mut self.dense_components)
-    // }
+    pub fn iter_entities(&self) -> impl Iterator<Item = Entity> + '_ {
+        self.entities.iter().copied()
+    }
 }
 
-pub struct ComponentStorage {
-    component_sets: Vec<ComponentColumn<Component>>,
+#[derive(Debug)]
+pub struct World {
+    components: Vec<Column>,
 }
 
-impl ComponentStorage {
-    fn new() -> Self {
+impl World {
+    pub fn new() -> Self {
         Self {
-            component_sets: Vec::new(),
+            components: Vec::new(),
         }
     }
 
-    fn set(&mut self, entity: Entity, component_id: ComponentId, component: Component) {
-        self.component_sets[component_id as usize].insert(entity, component);
+    pub fn register_component(&mut self, id: ComponentTypeId, layout: ComponentLayout) {
+        let idx = id as usize;
+        if self.components.len() <= idx {
+            self.components.resize_with(idx + 1, || {
+                // TODO(anissen): This is probably crap
+                Column::new(
+                    id,
+                    ComponentLayout {
+                        size: 0,
+                        align: 1, /* TODO(anissen): Could this be 0? */
+                    }, // placeholder
+                    0,
+                )
+            });
+        }
+        self.components[idx] = Column::new(id, layout, 16);
     }
 
-    fn get(&self, component_id: &ComponentId) -> &ComponentColumn<Component> {
-        self.component_sets.get(*component_id as usize).unwrap()
+    pub fn insert(&mut self, id: ComponentTypeId, entity: Entity, data: &[u8]) {
+        self.components[id as usize].insert(entity, data);
     }
 
-    // fn has(&self, component_id: &ComponentId) -> bool {
-    //     (*component_id as usize) < self.component_sets.len()
-    // }
+    pub fn remove(&mut self, id: ComponentTypeId, entity: Entity) {
+        self.components[id as usize].remove(entity);
+    }
 
-    // fn get_many(&self, component_ids: &Vec<ComponentId>) -> Vec<&ComponentColumn<Component>> {
-    //     self.component_sets
-    //         .iter()
-    //         .filter(|c| component_ids.contains(&c.id))
-    //         .collect()
-    // }
+    pub fn get(&self, id: ComponentTypeId, entity: Entity) -> Option<&[u8]> {
+        self.components[id as usize].get(entity)
+    }
 
-    // fn get_many_mut(
-    //     &mut self,
-    //     component_ids: &Vec<ComponentId>,
-    // ) -> Vec<&mut ComponentColumn<Component>> {
-    //     self.component_sets
-    //         .iter_mut()
-    //         .filter(|c| component_ids.contains(&c.id))
-    //         .collect()
-    // }
+    pub fn get_mut(&mut self, id: ComponentTypeId, entity: Entity) -> Option<&mut [u8]> {
+        self.components[id as usize].get_mut(entity)
+    }
+
+    pub fn iter(&self, id: ComponentTypeId) -> impl Iterator<Item = (Entity, &[u8])> + '_ {
+        self.components[id as usize].iter()
+    }
 
     fn system(
         &mut self,
         include: &Vec<ComponentId>,
         exclude: &Vec<ComponentId>,
-        mut system: impl FnMut(Entity, &mut Vec<&mut Component>),
+        mut system: impl FnMut(Entity, &mut Vec<&mut [u8]>),
     ) {
         if include.is_empty() {
             return;
         }
 
         let exclude_columns: Vec<_> = self
-            .component_sets
+            .components
             .iter()
             .filter(|c| exclude.contains(&c.id))
             .collect();
@@ -286,7 +353,7 @@ impl ComponentStorage {
         // TODO(anissen): Could split in (first, rest) for optimization
         let exclude_bitset = if let Some(first) = exclude_columns.first() {
             let mut bitset = first.bitset.clone();
-            self.component_sets
+            self.components
                 .iter()
                 .filter(|c| exclude.contains(&c.id))
                 .map(|col| &col.bitset)
@@ -298,7 +365,7 @@ impl ComponentStorage {
         };
 
         let mut include_columns: Vec<_> = self
-            .component_sets
+            .components
             .iter_mut()
             .filter(|c| include.contains(&c.id))
             .collect();
@@ -315,7 +382,7 @@ impl ComponentStorage {
                 intersection.not_with(&exclude_bitset);
             }
 
-            let entities = first.dense_entities.clone();
+            let entities = first.entities.clone();
             for i in 0..intersection.len() {
                 if intersection.get(i) {
                     let entity = entities[i];
@@ -328,120 +395,43 @@ impl ComponentStorage {
             }
         }
     }
-
-    // fn entities(&self, component_ids: &Vec<ComponentId>) -> Vec<Entity> {
-    //     if component_ids.is_empty() {
-    //         return Vec::new();
-    //     }
-
-    //     let matching_components: Vec<_> = self
-    //         .component_sets
-    //         .iter()
-    //         .filter(|c| component_ids.contains(&c.id))
-    //         .collect();
-
-    //     if let Some((first, rest)) = matching_components.split_first() {
-    //         if rest.is_empty() {
-    //             return first.dense_entities.clone();
-    //         }
-
-    //         let mut intersection = first.bitset.clone();
-    //         rest.iter()
-    //             .map(|col| &col.bitset)
-    //             .for_each(|bitset| intersection.intersect_with(bitset));
-
-    //         // println!("Intersection: {:?}", intersection);
-    //         // intersection.print();
-    //         // println!("First Set: {:?}", first_set);
-
-    //         first
-    //             .dense_entities
-    //             .iter()
-    //             .filter(|entity| intersection.get(**entity as usize))
-    //             .map(|entity| *entity)
-    //             .collect()
-    //     } else {
-    //         Vec::new()
-    //     }
-    // }
-
-    fn remove(&mut self, entity: Entity, component_id: ComponentId) -> Option<Component> {
-        self.component_sets
-            .get_mut(component_id as usize)?
-            .remove(entity)
-    }
-}
-
-#[derive(Debug)]
-enum Value {
-    Marker, // TODO(anissen): Should not be necessary to have for creating a marker component.
-    Float(f32),
-    // Integer(i32),
-    // Boolean(bool),
-}
-
-impl Value {
-    fn as_float(&self) -> f32 {
-        match self {
-            Value::Float(f) => *f,
-            _ => panic!("Cannot convert non-float value to float"),
-        }
-    }
-}
-
-// #[derive(Debug)]
-// union ValueX {
-//     float: f32,
-//     int: i32,
-// }
-
-#[derive(Debug)]
-struct Component {
-    values: HashMap<String, Value>, // TODO(anissen): Could be mapped to Vec<Value> where field names are mapped to indexes. However, memory ought to be flat and on the stack rather than on the heap.
 }
 
 type ComponentId = u32;
 
-const POSITION_ID: ComponentId = 0;
-const VELOCITY_ID: ComponentId = 1;
-const DEAD_ID: ComponentId = 2;
-
-fn position(x: f32, y: f32) -> Component {
-    Component {
-        values: HashMap::from([
-            ("x".to_string(), Value::Float(x)),
-            ("y".to_string(), Value::Float(y)),
-        ]),
-    }
+fn f32_bytes(x: f32) -> [u8; 4] {
+    x.to_le_bytes()
+}
+fn read_f32(b: &[u8]) -> f32 {
+    f32::from_le_bytes(b.try_into().unwrap())
 }
 
-fn velocity(dx: f32, dy: f32) -> Component {
-    Component {
-        values: HashMap::from([
-            ("dx".to_string(), Value::Float(dx)),
-            ("dy".to_string(), Value::Float(dy)),
-        ]),
-    }
+fn position(x: f32, y: f32) -> Vec<u8> {
+    [f32_bytes(x), f32_bytes(y)].concat()
 }
 
-fn marker(str: &str) -> Component {
-    Component {
-        values: HashMap::from([(str.to_string(), Value::Marker)]),
-    }
+fn velocity(dx: f32, dy: f32) -> Vec<u8> {
+    [f32_bytes(dx), f32_bytes(dy)].concat()
 }
 
 fn main() {
     let mut entity_manager = EntityManager::new();
-    let mut components = ComponentStorage::new();
-    components
-        .component_sets
-        .insert(POSITION_ID as usize, ComponentColumn::new(POSITION_ID));
-    components
-        .component_sets
-        .insert(VELOCITY_ID as usize, ComponentColumn::new(VELOCITY_ID));
-    components
-        .component_sets
-        .insert(DEAD_ID as usize, ComponentColumn::new(DEAD_ID));
+    let mut world = World::new();
+    // Position { x: f32, y: f32 }
+    let POSITION: ComponentTypeId = 0;
+    world.register_component(POSITION, ComponentLayout { size: 8, align: 4 });
+    // Velocity { dx: f32, dy: f32 }
+    let VELOCITY: ComponentTypeId = 1;
+    world.register_component(VELOCITY, ComponentLayout { size: 8, align: 4 });
+    // Dead (no data)
+    let DEAD: ComponentTypeId = 2;
+    world.register_component(
+        DEAD,
+        ComponentLayout {
+            size: 0,
+            align: 1, /* TODO(anissen): Maybe 0? */
+        },
+    );
 
     // Create a few entities
     let e0 = entity_manager.create();
@@ -449,23 +439,35 @@ fn main() {
     let e2 = entity_manager.create();
 
     // Add components
-    components.set(e0, POSITION_ID, position(0.0, 0.0));
-    components.set(e0, VELOCITY_ID, velocity(1.0, 1.0));
-    components.set(e0, VELOCITY_ID, velocity(1.0, 1.0));
-    components.set(e0, DEAD_ID, marker("is_dead"));
+    world.insert(POSITION, e0, &position(0.01, 0.5));
+    world.insert(VELOCITY, e0, &velocity(1.0, 1.0));
+    world.insert(VELOCITY, e0, &velocity(1.0, 1.0));
+    world.insert(DEAD, e0, &[]);
 
-    // dbg!(&components.get(&VELOCITY_ID));
-    components.remove(e0, VELOCITY_ID);
-    // dbg!(&components.get(&VELOCITY_ID));
+    world.insert(POSITION, e1, &position(10.0, -5.0));
+    world.insert(VELOCITY, e1, &velocity(-2.0, 0.5));
 
-    components.set(e1, POSITION_ID, position(10.0, -5.0));
-    components.set(e1, VELOCITY_ID, velocity(-2.0, 0.5));
-
-    components.set(e2, POSITION_ID, position(3.0, 3.0));
+    world.insert(POSITION, e2, &position(3.0, 3.0));
 
     let e3 = entity_manager.create();
-    components.set(e3, POSITION_ID, position(0.0, 0.0));
-    components.set(e3, VELOCITY_ID, velocity(-1.0, -1.0));
+    world.insert(POSITION, e3, &position(0.0, 0.0));
+    world.insert(VELOCITY, e3, &velocity(-1.0, -1.0));
+
+    /*
+     * frame 1:
+     *  e1: 8, -4.5
+     *  e3: -1, -1
+     *
+     * frame 2:
+     *  e0: 1, 1.5
+     *  e2: 4, 4
+     *  e3: -2, -2
+     *
+     * frame 3:
+     *  e0: 2, 2.5
+     *  e2: 5, 5
+     *  e3: -3, -3
+     */
 
     /*
     Benchmark for 1_000_000 iterations without println
@@ -479,41 +481,37 @@ fn main() {
         println!("--- Frame {} ---", frame);
 
         // TODO(anissen): We probably need to get the list of entities/components out, and then iterate?!?
-        components.system(
-            &vec![POSITION_ID, VELOCITY_ID],
-            &vec![DEAD_ID],
-            movement_system,
-        );
+        world.system(&vec![POSITION, VELOCITY], &vec![DEAD], movement_system);
 
-        components
-            .get(&DEAD_ID)
-            .iter()
+        world
+            .iter(DEAD)
             .for_each(|(entity, _)| println!("Oh, no! Entity {} is dead!", entity));
 
-        components.remove(e0, DEAD_ID);
+        world.remove(DEAD, e0);
 
-        components.set(e1, DEAD_ID, marker("is_dead"));
-        components.set(e2, VELOCITY_ID, velocity(1.0, 1.0));
+        world.insert(DEAD, e1, &[]);
+        world.insert(VELOCITY, e2, &velocity(1.0, 1.0));
     }
 }
 
-fn movement_system(entity: Entity, components: &mut Vec<&mut Component>) {
+fn movement_system(entity: Entity, components: &mut Vec<&mut [u8]>) {
     let (first, rest) = components.split_at_mut(1);
     let pos = &mut first[0];
     let vel = &mut rest[0];
-    let pos_x = pos.values.get("x").unwrap().as_float();
-    let pos_y = pos.values.get("y").unwrap().as_float();
-    let vel_x = vel.values.get("dx").unwrap().as_float();
-    let vel_y = vel.values.get("dy").unwrap().as_float();
-    pos.values
-        .insert("x".to_string(), Value::Float(pos_x + vel_x));
-    pos.values
-        .insert("y".to_string(), Value::Float(pos_y + vel_y));
+    let pos_x = read_f32(&pos[0..4]);
+    let pos_y = read_f32(&pos[4..8]);
+    let vel_x = read_f32(&vel[0..4]);
+    let vel_y = read_f32(&vel[4..8]);
+
+    let new_pos_x = pos_x + vel_x;
+    let new_pos_y = pos_y + vel_y;
+    let new_pos = [f32_bytes(new_pos_x), f32_bytes(new_pos_y)].concat();
+
+    pos.copy_from_slice(&new_pos);
+
     println!(
-        "Entity {}: Position = ({:.1}, {:.1})",
-        entity,
-        pos.values.get("x").unwrap().as_float(),
-        pos.values.get("y").unwrap().as_float()
+        "Entity {} at ({}, {}) with velocity ({}, {})",
+        entity, new_pos_x, new_pos_y, vel_x, vel_y
     );
 }
 
