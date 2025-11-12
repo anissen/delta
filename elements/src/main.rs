@@ -14,11 +14,17 @@ impl EntityManager {
     }
 }
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Debug)]
 struct BitSet {
     words: Vec<u64>,
 }
 impl BitSet {
+    pub fn new(initial_capacity: usize) -> Self {
+        let mut bitset = BitSet { words: Vec::new() };
+        bitset.ensure_capacity(initial_capacity as Entity);
+        bitset
+    }
+
     fn ensure_capacity(&mut self, entity: Entity) {
         let word_index = (entity as usize) / 64;
         if word_index >= self.words.len() {
@@ -131,7 +137,7 @@ impl Column {
             dense: vec![0; initial_capacity * layout.size.max(1)], // allow zero-size components
             entities: Vec::with_capacity(initial_capacity),
             sparse: vec![usize::MAX; initial_capacity],
-            bitset: BitSet::default(),
+            bitset: BitSet::new(initial_capacity),
         }
     }
 
@@ -267,21 +273,13 @@ impl World {
     }
 
     pub fn register_component(&mut self, id: ComponentTypeId, layout: ComponentLayout) {
+        let column = Column::new(id, layout, 16);
         let idx = id as usize;
-        if self.components.len() <= idx {
-            self.components.resize_with(idx + 1, || {
-                // TODO(anissen): This is probably crap
-                Column::new(
-                    id,
-                    ComponentLayout {
-                        size: 0,
-                        align: 1, /* TODO(anissen): Could this be 0? */
-                    }, // placeholder
-                    0,
-                )
-            });
+        if idx < self.components.len() {
+            self.components[idx] = column;
+        } else {
+            self.components.push(column);
         }
-        self.components[idx] = Column::new(id, layout, 16);
     }
 
     pub fn insert(&mut self, id: ComponentTypeId, entity: Entity, data: &[u8]) {
@@ -390,13 +388,7 @@ fn main() {
     world.register_component(VELOCITY, ComponentLayout { size: 8, align: 4 });
     // Dead (no data)
     let DEAD: ComponentTypeId = 2;
-    world.register_component(
-        DEAD,
-        ComponentLayout {
-            size: 0,
-            align: 1, /* TODO(anissen): Maybe 0? */
-        },
-    );
+    world.register_component(DEAD, ComponentLayout { size: 0, align: 0 });
 
     // Create a few entities
     let e0 = entity_manager.create();
