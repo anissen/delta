@@ -137,8 +137,10 @@ impl ErrorDescription for Error {
                     let provided_line = provided_at.position.line;
                     let error_mismatch = get_error_line(source, mismatch_at);
                     let error_provided = get_error_line(source, provided_at);
+                    let start = "\x1b[90m";
+                    let end = "\x1b[0m";
                     format!(
-                        "{error_mismatch} Type mismatch at line {mismatch_line}\n\n{error_provided} Expected this type from line {provided_line}\n\n{error_declared} Got this type from line {declared_line}\n\n{self}"
+                        "{start}Line {mismatch_line}: Type mismatch:{end}\n{error_mismatch}\n\n{start}Line {provided_line}: Expected this type:{end}\n{error_provided}\n\n{start}Line {declared_line}: Got this type:{end}\n{error_declared}\n\n{self}"
                     )
                 } else {
                     format!("{error_declared}\n{self}")
@@ -203,8 +205,11 @@ fn get_error_line(source: &str, token: &Token) -> String {
         result.push_str(extra_spaces);
     }
 
+    result.push_str("\x1b[33m");
+
     // Add the caret indicators
     result.push_str(&"^".repeat(token.lexeme.len()));
+    result.push_str("\x1b[0m");
 
     result
 }
