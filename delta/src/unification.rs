@@ -147,6 +147,7 @@ impl UnificationType {
 pub fn unify(
     left: &UnificationType,
     right: &UnificationType,
+    at: Option<&Token>,
     substitutions: &mut HashMap<TypeVariable, UnificationType>,
     diagnostics: &mut Diagnostics,
 ) {
@@ -169,17 +170,18 @@ pub fn unify(
                     got: left.substitute(substitutions),
                     declared_at: token1,
                     provided_at: token2,
+                    mismatch_at: at.cloned(),
                 });
             }
 
             for (left, right) in zip(generics1, generics2) {
-                unify(&left, &right, substitutions, diagnostics);
+                unify(&left, &right, at, substitutions, diagnostics);
             }
         }
         (UnificationType::Variable(i), UnificationType::Variable(j)) if i == j => {}
         (_, UnificationType::Variable(v)) => match substitutions.get(&v) {
             Some(substitution) => {
-                unify(left, &substitution.clone(), substitutions, diagnostics);
+                unify(left, &substitution.clone(), at, substitutions, diagnostics);
             }
             None => {
                 assert!(!right.occurs_in(left.clone(), substitutions));
@@ -188,7 +190,7 @@ pub fn unify(
         },
         (UnificationType::Variable(v), _) => match substitutions.get(&v) {
             Some(substitution) => {
-                unify(right, &substitution.clone(), substitutions, diagnostics);
+                unify(right, &substitution.clone(), at, substitutions, diagnostics);
             }
             None => {
                 assert!(!left.occurs_in(right.clone(), substitutions));

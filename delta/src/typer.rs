@@ -196,6 +196,7 @@ enum Constraint {
     Eq {
         left: UnificationType,
         right: UnificationType,
+        at: Option<Token>,
     },
 }
 
@@ -245,6 +246,7 @@ impl<'env> InferenceContext<'env> {
         self.constraints.push(Constraint::Eq {
             left: actual_type,
             right: expected_type,
+            at: None,
         });
     }
 
@@ -394,6 +396,7 @@ impl<'env> InferenceContext<'env> {
                             generics: [argument_types, vec![return_type.clone()]].concat(),
                             token: name.clone(),
                         },
+                        at: Some(name.clone()),
                     }),
                     None => self.diagnostics.add_error(Error::FunctionNotFound {
                         name: name.lexeme.clone(),
@@ -590,8 +593,8 @@ impl<'env> InferenceContext<'env> {
 
         for constraint in &self.constraints {
             match constraint {
-                Constraint::Eq { left, right } => {
-                    unify(left, right, &mut substitutions, self.diagnostics);
+                Constraint::Eq { left, right, at } => {
+                    unify(left, right, at.as_ref(), &mut substitutions, self.diagnostics);
                 }
             }
         }

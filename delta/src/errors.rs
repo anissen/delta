@@ -14,6 +14,7 @@ pub enum Error {
         got: UnificationType,
         declared_at: Token,
         provided_at: Token,
+        mismatch_at: Option<Token>,
     },
     NameNotFound {
         token: Token,
@@ -54,7 +55,8 @@ impl fmt::Display for Error {
                 expected,
                 got,
                 declared_at,
-                provided_at: _,
+                provided_at,
+                mismatch_at,
             } => write!(
                 f,
                 "Line {}.{}: Expected {} but got {}.",
@@ -125,9 +127,22 @@ impl ErrorDescription for Error {
                 got,
                 declared_at,
                 provided_at,
+                mismatch_at,
             } => {
-                let error_line = get_error_line(source, declared_at);
-                format!("{error_line}\n{self}")
+                let error_declared = get_error_line(source, declared_at);
+                let declared_line = declared_at.position.line;
+
+                if let Some(mismatch_at) = mismatch_at {
+                    let mismatch_line = mismatch_at.position.line;
+                    let provided_line = provided_at.position.line;
+                    let error_mismatch = get_error_line(source, mismatch_at);
+                    let error_provided = get_error_line(source, provided_at);
+                    format!(
+                        "{error_mismatch} Type mismatch at line {mismatch_line}\n\n{error_provided} Expected this type from line {provided_line}\n\n{error_declared} Got this type from line {declared_line}\n\n{self}"
+                    )
+                } else {
+                    format!("{error_declared}\n{self}")
+                }
             }
             Error::NameNotFound { token } => {
                 let error_line = get_error_line(source, token);
