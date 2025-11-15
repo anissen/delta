@@ -202,6 +202,10 @@ enum Constraint {
 #[derive(Default)]
 struct Environment {
     variables: HashMap<String, UnificationType>,
+    components: HashMap<
+        String, /* TODO(anissen): Should be a Token */
+        Vec<crate::expressions::PropertyDefinition>,
+    >,
 }
 
 impl Environment {
@@ -261,26 +265,65 @@ impl<'env> InferenceContext<'env> {
                 make_constructor(Type::Float, name.clone())
             }
 
-            Expr::ComponentDefinition { name, properties } => UnificationType::Constructor {
-                typ: Type::Component,
-                generics: properties
-                    .iter()
-                    .map(|p| make_constructor(p.type_.clone(), p.name.clone()))
-                    .collect(),
-                token: name.clone(),
-            },
+            Expr::ComponentDefinition { name, properties } => {
+                if self.environment.components.contains_key(&name.lexeme) {
+                    self.diagnostics.add_error(Error::TypeRedefinition {
+                        token: name.clone(),
+                    });
+                }
+
+                self.environment
+                    .components
+                    .insert(name.lexeme.clone(), properties.clone());
+
+                UnificationType::Constructor {
+                    typ: Type::Component,
+                    generics: properties
+                        .iter()
+                        .map(|p| make_constructor(p.type_.clone(), p.name.clone()))
+                        .collect(),
+                    token: name.clone(),
+                }
+            }
 
             Expr::ComponentInitialization { name, properties } => {
-                // TODO(anissen): This is not sufficient because the ordering is not enforced
-                // UnificationType::Constructor {
-                //     typ: Type::Component,
-                //     generics: properties
-                //         .iter()
-                //         .map(|p| self.infer_type(&p.value))
-                //         .collect(),
-                //     token: name.clone(),
-                // }
-                make_constructor(Type::Component, name.clone())
+                let mut map = HashMap::new();
+                for prop in properties {
+                    if let Some(_already_declared) =
+                        map.insert(prop.name.lexeme.clone(), self.infer_type(&prop.value))
+                    {
+                        self.diagnostics.add_error(Error::PropertyDuplicated {
+                            token: prop.name.clone(),
+                        });
+                    }
+                }
+
+                if let Some(definition) = self.environment.components.get(&name.lexeme) {
+                    let filled_in_properties: Vec<_> = definition
+                        .iter()
+                        .flat_map(|def_prop| {
+                            let res = map.get(&def_prop.name.lexeme).cloned();
+                            if res.is_none() {
+                                self.diagnostics.add_error(Error::PropertyMissing {
+                                    property_definition: def_prop.name.clone(),
+                                    token: name.clone(),
+                                });
+                            }
+                            res
+                        })
+                        .collect();
+
+                    UnificationType::Constructor {
+                        typ: Type::Component,
+                        generics: filled_in_properties,
+                        token: name.clone(),
+                    }
+                } else {
+                    self.diagnostics.add_error(Error::TypeNotFound {
+                        token: name.clone(),
+                    });
+                    self.type_placeholder()
+                }
             }
 
             Expr::Value { value, token } => match value {

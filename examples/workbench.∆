@@ -176,12 +176,32 @@
 # Short term syntax?
 component Position { x f32, y f32 }
 component Velocity { dx f32, dy f32 }
-pos = Position { y 2.3, x 4.5 }
+pos = Position { y 2.3, y 4.5 }
 vel = Velocity { dx 1.0, dy 0.5 }
 
+print_vel = \v
+	v | log
+
+vel | print_vel
+pos | print_vel
+
+# for Position p, Velocity v in ∆
+# 	p += v
+
+# component Player {
+# 	p Position
+# 	v Velocity
+# }
+
+# ∆(Player p)
+# 	p.p += p.v
+
+# ∆(Position p, Velocity v)
+# 	| each(.p = )
+
 # TODO(anissen): How to differentiate mutation of ∆ from simply creating a new ∆?
-∆ = ∆(Position p, Velocity v)
-	| map(.p += .v)
+# ∆ = ∆(Position p, Velocity v)
+# 	| map(.p += .v)
 
 # ∆(Position p, Velocity v)
 # 	p += v

@@ -18,6 +18,12 @@ pub enum Error {
     NameNotFound {
         token: Token,
     },
+    TypeRedefinition {
+        token: Token,
+    },
+    TypeNotFound {
+        token: Token,
+    },
     FunctionNotFound {
         name: String,
     },
@@ -25,6 +31,13 @@ pub enum Error {
         token: Token,
     },
     FileErr(String),
+    PropertyMissing {
+        property_definition: Token,
+        token: Token,
+    },
+    PropertyDuplicated {
+        token: Token,
+    },
 }
 
 impl fmt::Display for Error {
@@ -61,6 +74,37 @@ impl fmt::Display for Error {
                 write!(f, "Function name too long; at {:?}", token.position)
             }
             Error::FileErr(error_msg) => write!(f, "File error: {error_msg}"),
+            Error::PropertyMissing {
+                property_definition,
+                token,
+            } => {
+                write!(
+                    f,
+                    "Line {}.{}: Property missing: '{}'",
+                    token.position.line, token.position.column, property_definition.lexeme
+                )
+            }
+            Error::TypeRedefinition { token } => {
+                write!(
+                    f,
+                    "Line {}.{}: Type '{}' redefined",
+                    token.position.line, token.position.column, token.lexeme
+                )
+            }
+            Error::TypeNotFound { token } => {
+                write!(
+                    f,
+                    "Line {}.{}: Type '{}' not found",
+                    token.position.line, token.position.column, token.lexeme
+                )
+            }
+            Error::PropertyDuplicated { token } => {
+                write!(
+                    f,
+                    "Line {}.{}: Property '{}' is duplicated",
+                    token.position.line, token.position.column, token.lexeme
+                )
+            }
         }
     }
 }
@@ -98,6 +142,25 @@ impl ErrorDescription for Error {
             }
             Error::FileErr(error_msg) => {
                 format!("???\n{self}")
+            }
+            Error::TypeRedefinition { token } => {
+                let error_line = get_error_line(source, token);
+                format!("{error_line}\n{self}")
+            }
+            Error::TypeNotFound { token } => {
+                let error_line = get_error_line(source, token);
+                format!("{error_line}\n{self}")
+            }
+            Error::PropertyMissing {
+                property_definition,
+                token,
+            } => {
+                let error_line = get_error_line(source, token);
+                format!("{error_line}\n{self}")
+            }
+            Error::PropertyDuplicated { token } => {
+                let error_line = get_error_line(source, token);
+                format!("{error_line}\n{self}")
             }
         }
     }

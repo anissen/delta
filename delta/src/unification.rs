@@ -35,7 +35,7 @@ impl fmt::Display for UnificationType {
             Self::Constructor {
                 typ,
                 generics,
-                token: _,
+                token,
             } => match typ {
                 Type::Boolean => "bool",
                 Type::Integer => "int",
@@ -66,7 +66,13 @@ impl fmt::Display for UnificationType {
                     let return_type = generics.last().unwrap();
                     &format!("function({parameters}) -> {return_type}")
                 }
-                Type::Component => "component",
+                Type::Component => {
+                    let fields = generics
+                        .iter()
+                        .map(|field| field.to_string())
+                        .collect::<Vec<String>>();
+                    &format!("component {}({})", token.lexeme, fields.join(", "))
+                }
             },
             Self::Variable(i) => &format!("???#{i}"),
         };

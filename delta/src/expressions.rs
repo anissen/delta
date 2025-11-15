@@ -88,7 +88,7 @@ pub enum Expr {
 //     pub properties: Vec<PropertyDefinition>,
 // }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PropertyDefinition {
     pub name: Token,
     pub type_: crate::unification::Type, // TODO(anissen): Also needs to be able to represent complex types
