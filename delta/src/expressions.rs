@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::tokens::Token;
 
 #[derive(Debug)]
@@ -63,7 +65,39 @@ pub enum Expr {
         expr: Box<Expr>,
         arms: Vec<IsArm>,
     },
-    // TODO(anissen): Add an Error and/or Todo expression?
+    ComponentDefinition {
+        name: Token,
+        properties: Vec<PropertyDefinition>,
+    },
+    ComponentInitialization {
+        name: Token,
+        properties: Vec<PropertyDeclaration>,
+    }, // ComponentDefinition(Component),
+       // ComponentInitialization {
+       //     name: Token,
+       //     properties: HashMap<String, Expr>, // TODO(anissen): Key ought to be a Token, or the container a Vec instead
+       //     // properties: Vec<PropertyDeclaration>,
+       //     definition: Component, //Vec<PropertyDefinition>,
+       // },
+       // TODO(anissen): Add an Error and/or Todo expression?
+}
+
+// #[derive(Debug)]
+// pub struct Component {
+//     pub name: Token,
+//     pub properties: Vec<PropertyDefinition>,
+// }
+
+#[derive(Debug)]
+pub struct PropertyDefinition {
+    pub name: Token,
+    pub type_: crate::unification::Type, // TODO(anissen): Also needs to be able to represent complex types
+}
+
+#[derive(Debug)]
+pub struct PropertyDeclaration {
+    pub name: Token,
+    pub value: Expr,
 }
 
 #[derive(Debug)]

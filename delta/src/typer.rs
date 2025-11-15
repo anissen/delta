@@ -8,7 +8,7 @@ use crate::expressions::{
 use crate::program::Context;
 use crate::tokens::Token;
 use crate::tokens::{Position, TokenKind};
-use crate::unification::{make_constructor, unify, Type, TypeVariable, UnificationType};
+use crate::unification::{Type, TypeVariable, UnificationType, make_constructor, unify};
 
 // https://github.com/abs0luty/type_inference_in_rust/blob/main/src/main.rs
 
@@ -259,6 +259,28 @@ impl<'env> InferenceContext<'env> {
             Expr::ContextIdentifier { name } => {
                 // TODO(anissen): Implement
                 make_constructor(Type::Float, name.clone())
+            }
+
+            Expr::ComponentDefinition { name, properties } => UnificationType::Constructor {
+                typ: Type::Component,
+                generics: properties
+                    .iter()
+                    .map(|p| make_constructor(p.type_.clone(), p.name.clone()))
+                    .collect(),
+                token: name.clone(),
+            },
+
+            Expr::ComponentInitialization { name, properties } => {
+                // TODO(anissen): This is not sufficient because the ordering is not enforced
+                // UnificationType::Constructor {
+                //     typ: Type::Component,
+                //     generics: properties
+                //         .iter()
+                //         .map(|p| self.infer_type(&p.value))
+                //         .collect(),
+                //     token: name.clone(),
+                // }
+                make_constructor(Type::Component, name.clone())
             }
 
             Expr::Value { value, token } => match value {

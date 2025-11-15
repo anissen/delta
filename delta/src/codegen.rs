@@ -136,6 +136,23 @@ impl<'a> Codegen<'a> {
                 scope.bytecode.add_get_context_value(&name.lexeme);
             }
 
+            Expr::ComponentDefinition { name, properties } => {
+                // TODO(anissen): Implement component definition
+            }
+
+            Expr::ComponentInitialization { name, properties } => {
+                // TODO: This will fail if the initialization order of properties does not match the definition
+                properties.iter().for_each(|property| {
+                    self.emit_expr(&property.value, scope);
+                });
+
+                let component_id = 0; // TODO(anissen): Implement component initialization
+                scope
+                    .bytecode
+                    .add_op(ByteCode::PushComponent)
+                    .add_i32(&(component_id as i32));
+            }
+
             Expr::Value {
                 value: ValueType::String(str),
                 token: _,

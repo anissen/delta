@@ -143,6 +143,8 @@ impl Lexer {
             _ if self.match_keyword("if") => TokenKind::KeywordIf,
             _ if self.match_keyword("and") => TokenKind::KeywordAnd,
             _ if self.match_keyword("or") => TokenKind::KeywordOr,
+            _ if self.match_keyword("component") => TokenKind::KeywordComponent,
+            _ if self.match_keyword("f32") => TokenKind::KeywordF32,
             // '∆' if self.matches('.') && self.is_letter(self.peek()) => self.context_value(), // TODO(anissen): Key-value pair, e.g. ∆.x = y
             // '∆' => self.identifier(), // TODO(anissen): Named context, e.g. ∆x or ∆x.y
             c if self.is_letter(c) => self.identifier(),
@@ -210,7 +212,8 @@ impl Lexer {
             } else {
                 let token_after_keyword = self.peek_at(keyword.len());
                 match token_after_keyword {
-                    '\0' | ' ' | '\n' => {
+                    '\0' | ' ' | ',' | '\n' => {
+                        // TODO(anissen): This should be an allow-list (e.g. [a-z][0-1]) instead of a black-list
                         self.advance_many(keyword.len() - 1);
                         true
                     }

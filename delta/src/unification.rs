@@ -14,6 +14,7 @@ pub enum Type {
     Tag, // { name: String, argument_count: u8 },
     List,
     Function,
+    Component,
 }
 
 pub type TypeVariable = usize;
@@ -65,6 +66,7 @@ impl fmt::Display for UnificationType {
                     let return_type = generics.last().unwrap();
                     &format!("function({parameters}) -> {return_type}")
                 }
+                Type::Component => "component",
             },
             Self::Variable(i) => &format!("???#{i}"),
         };

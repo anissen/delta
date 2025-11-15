@@ -1,5 +1,5 @@
-use crate::bytecodes::ByteCode;
 use crate::CompilationMetadata;
+use crate::bytecodes::ByteCode;
 
 pub struct Disassembler {
     program: Vec<u8>,
@@ -142,6 +142,14 @@ impl Disassembler {
                     self.print(vec![
                         "push_list".to_string(),
                         format!("(length: {list_length})"),
+                    ])
+                }
+
+                ByteCode::PushComponent => {
+                    let component_id = self.read_i32();
+                    self.print(vec![
+                        "push_component".to_string(),
+                        format!("(id: {component_id})"),
                     ])
                 }
 

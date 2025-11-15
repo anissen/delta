@@ -162,4 +162,32 @@
 
 # [3, 4, 5] | Listsum2
 
-[4, 3, 2]
+# [4, 3, 2]
+
+# Long term syntax?
+# data Position
+# 	x f32
+# 	y f32
+
+# pos = Position
+# 	x: 2.3
+# 	y: 3.4
+
+# Short term syntax?
+component Position { x f32, y f32 }
+component Velocity { dx f32, dy f32 }
+pos = Position { y 2.3, x 4.5 }
+vel = Velocity { dx 1.0, dy 0.5 }
+
+# TODO(anissen): How to differentiate mutation of ∆ from simply creating a new ∆?
+∆ = ∆(Position p, Velocity v)
+	| map(.p += .v)
+
+# ∆(Position p, Velocity v)
+# 	p += v
+
+# entities = ∆(Position p, Velocity v)
+
+# entities
+# 	| each
+# 		.p += .v

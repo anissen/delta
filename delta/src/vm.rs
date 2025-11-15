@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 use std::fmt::Display;
 
+use crate::ExecutionMetadata;
 use crate::bytecodes::ByteCode;
 use crate::program::Context;
-use crate::ExecutionMetadata;
 
 // TODO(anissen): See https://github.com/brightly-salty/rox/blob/master/src/value.rs
 #[derive(Debug, Clone, PartialEq)]
@@ -199,6 +199,11 @@ impl VirtualMachine {
                         list.insert(0, self.pop_any()); // TODO(anissen): Is there a more performant approach?
                     }
                     self.push_list(list);
+                }
+
+                ByteCode::PushComponent => {
+                    let component_id = self.read_i32();
+                    println!("push_component");
                 }
 
                 ByteCode::GetTagName => {
