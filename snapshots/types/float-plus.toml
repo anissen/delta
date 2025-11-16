@@ -5,5 +5,5 @@ script = """
 [output]
 error = """
 1 + 2.4
-    ^^^
+    \u001B[33m^^^\u001B[0m
 Line 1.5: Expected int but got float."""

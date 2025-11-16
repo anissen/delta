@@ -5,5 +5,5 @@ script = """
 [output]
 error = """
 -2.3 !=. -5.4
-     ^^
+     \u001B[33m^^\u001B[0m
 Line 1.6: Parse error: Parse error of kind Dot at "!=""""

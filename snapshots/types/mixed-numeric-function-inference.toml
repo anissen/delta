@@ -8,15 +8,35 @@ add = \v1 v2
 '''
 
 [output]
-error = '''
+error = """
+\u001B[90mLine 4: Type mismatch:\u001B[0m
 3.3 | add 2.2
-^^^
+      \u001B[33m^^^\u001B[0m
+
+\u001B[90mLine 2: Expected this type:\u001B[0m
+\tv1 + v2
+\t   \u001B[33m^\u001B[0m
+
+\u001B[90mLine 4: Got this type:\u001B[0m
+3.3 | add 2.2
+\u001B[33m^^^\u001B[0m
+
 Line 4.1: Expected int but got float.
 
+\u001B[90mLine 4: Type mismatch:\u001B[0m
 3.3 | add 2.2
-          ^^^
+      \u001B[33m^^^\u001B[0m
+
+\u001B[90mLine 2: Expected this type:\u001B[0m
+\tv1 + v2
+\t   \u001B[33m^\u001B[0m
+
+\u001B[90mLine 4: Got this type:\u001B[0m
+3.3 | add 2.2
+          \u001B[33m^^^\u001B[0m
+
 Line 4.11: Expected int but got float.
 
-add = \v1 v2
-      ^
-Line 1.7: Expected int but got function(int, int) -> int.'''
+add = \\v1 v2
+      \u001B[33m^\u001B[0m
+Line 1.7: Expected int but got function(int, int) -> int."""

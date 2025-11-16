@@ -11,6 +11,16 @@ identity | do 4.5
 
 [output]
 error = """
+\u001B[90mLine 8: Type mismatch:\u001B[0m
 identity | do 4.5
-              ^^^
+           \u001B[33m^^\u001B[0m
+
+\u001B[90mLine 7: Expected this type:\u001B[0m
+identity | do 4
+              \u001B[33m^\u001B[0m
+
+\u001B[90mLine 8: Got this type:\u001B[0m
+identity | do 4.5
+              \u001B[33m^^^\u001B[0m
+
 Line 8.15: Expected int but got float."""

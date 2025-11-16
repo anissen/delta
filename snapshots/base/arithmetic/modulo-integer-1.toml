@@ -7,7 +7,7 @@ result = "1"
 type = "integer"
 
 [output.compiler]
-bytecode = "[35, 4, 109, 97, 105, 110, 27, 0, 0, 0, 5, 27, 0, 0, 0, 2, 4, 37]"
+bytecode = "[36, 4, 109, 97, 105, 110, 27, 0, 0, 0, 5, 27, 0, 0, 0, 2, 4, 38]"
 bytecode_length = 18
 disassembled = """
 

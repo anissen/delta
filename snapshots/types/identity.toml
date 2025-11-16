@@ -8,6 +8,16 @@ identity = \x
 
 [output]
 error = """
+\u001B[90mLine 5: Type mismatch:\u001B[0m
 4 | identity
-^
+    \u001B[33m^^^^^^^^\u001B[0m
+
+\u001B[90mLine 4: Expected this type:\u001B[0m
+4.5 | identity
+\u001B[33m^^^\u001B[0m
+
+\u001B[90mLine 5: Got this type:\u001B[0m
+4 | identity
+\u001B[33m^\u001B[0m
+
 Line 5.1: Expected float but got int."""
