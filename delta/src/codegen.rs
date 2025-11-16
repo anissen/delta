@@ -140,19 +140,6 @@ impl<'a> Codegen<'a> {
                 // TODO(anissen): Implement component definition
             }
 
-            Expr::ComponentInitialization { name, properties } => {
-                // TODO: This will fail if the initialization order of properties does not match the definition
-                properties.iter().for_each(|property| {
-                    self.emit_expr(&property.value, scope);
-                });
-
-                let component_id = 0; // TODO(anissen): Implement component initialization
-                scope
-                    .bytecode
-                    .add_op(ByteCode::PushComponent)
-                    .add_i32(&(component_id as i32));
-            }
-
             Expr::Value {
                 value: ValueType::String(str),
                 token: _,
@@ -199,6 +186,26 @@ impl<'a> Codegen<'a> {
                         .add_op(ByteCode::PushSimpleTag)
                         .add_string(&name.lexeme);
                 };
+            }
+
+            Expr::Value {
+                value: ValueType::Component { name, properties },
+                token,
+            } => {
+                // TODO: This will fail if the initialization order of properties does not match the definition
+                properties.iter().for_each(|property| {
+                    self.emit_expr(&property.value, scope);
+                });
+
+                let component_id = 0; // TODO(anissen): Implement component initialization
+                scope
+                    .bytecode
+                    .add_op(ByteCode::PushComponent)
+                    .add_i32(&(component_id as i32));
+
+                // scope.bytecode.add_op(ByteCode::PushComponentInitialization);
+                // scope.bytecode.add_string(&name.lexeme);
+                // self.emit_exprs(properties, scope);
             }
 
             Expr::Call { name, args } => {

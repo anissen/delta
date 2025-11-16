@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use crate::tokens::Token;
 
 #[derive(Debug)]
@@ -17,6 +15,10 @@ pub enum ValueType {
         payload: Box<Option<Expr>>,
     },
     List(Vec<Expr>),
+    Component {
+        name: Token,
+        properties: Vec<PropertyDeclaration>,
+    },
 }
 
 #[derive(Debug)]
@@ -69,17 +71,17 @@ pub enum Expr {
         name: Token,
         properties: Vec<PropertyDefinition>,
     },
-    ComponentInitialization {
-        name: Token,
-        properties: Vec<PropertyDeclaration>,
-    }, // ComponentDefinition(Component),
-       // ComponentInitialization {
-       //     name: Token,
-       //     properties: HashMap<String, Expr>, // TODO(anissen): Key ought to be a Token, or the container a Vec instead
-       //     // properties: Vec<PropertyDeclaration>,
-       //     definition: Component, //Vec<PropertyDefinition>,
-       // },
-       // TODO(anissen): Add an Error and/or Todo expression?
+    // ComponentInitialization {
+    //     name: Token,
+    //     properties: Vec<PropertyDeclaration>,
+    // }, // ComponentDefinition(Component),
+    // ComponentInitialization {
+    //     name: Token,
+    //     properties: HashMap<String, Expr>, // TODO(anissen): Key ought to be a Token, or the container a Vec instead
+    //     // properties: Vec<PropertyDeclaration>,
+    //     definition: Component, //Vec<PropertyDefinition>,
+    // },
+    // TODO(anissen): Add an Error and/or Todo expression?
 }
 
 // #[derive(Debug)]

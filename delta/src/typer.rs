@@ -288,46 +288,6 @@ impl<'env> InferenceContext<'env> {
                 }
             }
 
-            Expr::ComponentInitialization { name, properties } => {
-                let mut map = HashMap::new();
-                for prop in properties {
-                    if let Some(_already_declared) =
-                        map.insert(prop.name.lexeme.clone(), self.infer_type(&prop.value))
-                    {
-                        self.diagnostics.add_error(Error::PropertyDuplicated {
-                            token: prop.name.clone(),
-                        });
-                    }
-                }
-
-                if let Some(definition) = self.environment.components.get(&name.lexeme) {
-                    let filled_in_properties: Vec<_> = definition
-                        .iter()
-                        .flat_map(|def_prop| {
-                            let res = map.get(&def_prop.name.lexeme).cloned();
-                            if res.is_none() {
-                                self.diagnostics.add_error(Error::PropertyMissing {
-                                    property_definition: def_prop.name.clone(),
-                                    token: name.clone(),
-                                });
-                            }
-                            res
-                        })
-                        .collect();
-
-                    UnificationType::Constructor {
-                        typ: Type::Component,
-                        generics: filled_in_properties,
-                        token: name.clone(),
-                    }
-                } else {
-                    self.diagnostics.add_error(Error::TypeNotFound {
-                        token: name.clone(),
-                    });
-                    self.type_placeholder()
-                }
-            }
-
             Expr::Value { value, token } => match value {
                 ValueType::Boolean(_) => make_constructor(Type::Boolean, token.clone()),
                 ValueType::Integer(_) => make_constructor(Type::Integer, token.clone()),
@@ -377,6 +337,45 @@ impl<'env> InferenceContext<'env> {
                         typ: Type::Function,
                         generics: [param_types, vec![value_type]].concat(),
                         token: token.clone(),
+                    }
+                }
+                ValueType::Component { name, properties } => {
+                    let mut map = HashMap::new();
+                    for prop in properties {
+                        if let Some(_already_declared) =
+                            map.insert(prop.name.lexeme.clone(), self.infer_type(&prop.value))
+                        {
+                            self.diagnostics.add_error(Error::PropertyDuplicated {
+                                token: prop.name.clone(),
+                            });
+                        }
+                    }
+
+                    if let Some(definition) = self.environment.components.get(&name.lexeme) {
+                        let filled_in_properties: Vec<_> = definition
+                            .iter()
+                            .flat_map(|def_prop| {
+                                let res = map.get(&def_prop.name.lexeme).cloned();
+                                if res.is_none() {
+                                    self.diagnostics.add_error(Error::PropertyMissing {
+                                        property_definition: def_prop.name.clone(),
+                                        token: name.clone(),
+                                    });
+                                }
+                                res
+                            })
+                            .collect();
+
+                        UnificationType::Constructor {
+                            typ: Type::Component,
+                            generics: filled_in_properties,
+                            token: name.clone(),
+                        }
+                    } else {
+                        self.diagnostics.add_error(Error::TypeNotFound {
+                            token: name.clone(),
+                        });
+                        self.type_placeholder()
                     }
                 }
             },
@@ -594,7 +593,13 @@ impl<'env> InferenceContext<'env> {
         for constraint in &self.constraints {
             match constraint {
                 Constraint::Eq { left, right, at } => {
-                    unify(left, right, at.as_ref(), &mut substitutions, self.diagnostics);
+                    unify(
+                        left,
+                        right,
+                        at.as_ref(),
+                        &mut substitutions,
+                        self.diagnostics,
+                    );
                 }
             }
         }

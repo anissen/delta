@@ -687,12 +687,13 @@ impl Parser {
                     }
                 }
                 // properties.sort_by(|a, b| a.name.lexeme.cmp(&b.name.lexeme));
-                // Ok(Some(Expr::ComponentInitialization {
-                //     name,
-                //     properties,
-                //     definition: component_definition,
-                // }))
-                Ok(Some(Expr::ComponentInitialization { name, properties }))
+                Ok(Some(Expr::Value {
+                    value: ValueType::Component {
+                        name: name.clone(),
+                        properties,
+                    },
+                    token: name,
+                }))
             } else {
                 Ok(Some(Expr::Identifier { name }))
             }
