@@ -75,7 +75,7 @@ impl<'a> Typer<'a> {
                     make_constructor(Type::String, no_token.clone()),
                     make_constructor(Type::Float, no_token.clone()),
                     make_constructor(Type::Float, no_token.clone()),
-                    make_constructor(Type::Float, no_token.clone()),
+                    make_constructor(Type::Boolean, no_token.clone()),
                 ],
                 token: no_token.clone(),
             },
@@ -90,7 +90,21 @@ impl<'a> Typer<'a> {
                     make_constructor(Type::Float, no_token.clone()),
                     make_constructor(Type::Float, no_token.clone()),
                     make_constructor(Type::Float, no_token.clone()),
+                    make_constructor(Type::Boolean, no_token.clone()),
+                ],
+                token: no_token.clone(),
+            },
+        );
+
+        environment.variables.insert(
+            "draw_image".to_string(),
+            UnificationType::Constructor {
+                typ: Type::Function,
+                generics: vec![
+                    make_constructor(Type::String, no_token.clone()),
                     make_constructor(Type::Float, no_token.clone()),
+                    make_constructor(Type::Float, no_token.clone()),
+                    make_constructor(Type::Boolean, no_token.clone()),
                 ],
                 token: no_token.clone(),
             },
