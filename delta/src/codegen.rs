@@ -73,43 +73,17 @@ impl<'a> Codegen<'a> {
     // TODO(anissen): Should this be a method on scope instead?
     fn emit_expr(&mut self, expr: &'a Expr, scope: &mut Scope) {
         match expr {
-            Expr::Value {
-                value: ValueType::Boolean(true),
-                token: _,
-            } => {
-                scope.bytecode.add_op(ByteCode::PushTrue);
-            }
+            Expr::Value { value, token } => self.emit_value(value, token, scope),
 
-            Expr::Value {
-                value: ValueType::Boolean(false),
-                token: _,
-            } => {
-                scope.bytecode.add_op(ByteCode::PushFalse);
-            }
+            Expr::Grouping(expr) => self.emit_expr(expr, scope),
 
-            Expr::Value {
-                value: ValueType::Integer(i),
-                token: _,
-            } => {
-                scope.bytecode.add_op(ByteCode::PushInteger).add_i32(i);
-            }
-
-            Expr::Value {
-                value: ValueType::Float(f),
-                token: _,
-            } => {
-                scope.bytecode.add_op(ByteCode::PushFloat).add_f32(f);
-            }
-
-            Expr::Value {
-                value: ValueType::List(exprs),
-                token: _,
-            } => {
+            Expr::Block { exprs } => {
+                // Emit block with its own environment and locals
+                let locals = scope.locals.clone();
+                let environment = scope.environment.clone();
                 self.emit_exprs(exprs, scope);
-                scope
-                    .bytecode
-                    .add_op(ByteCode::PushList)
-                    .add_i32(&(exprs.len() as i32));
+                scope.locals = locals;
+                scope.environment = environment;
             }
 
             Expr::Identifier { name } => {
@@ -138,74 +112,6 @@ impl<'a> Codegen<'a> {
 
             Expr::ComponentDefinition { name, properties } => {
                 // TODO(anissen): Implement component definition
-            }
-
-            Expr::Value {
-                value: ValueType::String(str),
-                token: _,
-            } => {
-                if str.len() > 255 {
-                    // TODO(anissen): Should add error to a error reporter instead
-                    panic!("string too long!");
-                }
-                scope.bytecode.add_op(ByteCode::PushString).add_string(str);
-            }
-
-            Expr::Grouping(expr) => self.emit_expr(expr, scope),
-
-            Expr::Block { exprs } => {
-                // Emit block with its own environment and locals
-                let locals = scope.locals.clone();
-                let environment = scope.environment.clone();
-                self.emit_exprs(exprs, scope);
-                scope.locals = locals;
-                scope.environment = environment;
-            }
-
-            Expr::Value {
-                value: ValueType::Function { params, expr },
-                token,
-            } => self.emit_function(token, None, params, expr, scope),
-
-            Expr::Value {
-                value: ValueType::Tag { name, payload },
-                token,
-            } => {
-                if name.lexeme.len() > 255 {
-                    panic!("string too long!");
-                }
-                if let Some(payload) = &**payload {
-                    self.emit_expr(payload, scope);
-                    scope
-                        .bytecode
-                        .add_op(ByteCode::PushTag)
-                        .add_string(&name.lexeme);
-                } else {
-                    scope
-                        .bytecode
-                        .add_op(ByteCode::PushSimpleTag)
-                        .add_string(&name.lexeme);
-                };
-            }
-
-            Expr::Value {
-                value: ValueType::Component { name, properties },
-                token,
-            } => {
-                // TODO: This will fail if the initialization order of properties does not match the definition
-                properties.iter().for_each(|property| {
-                    self.emit_expr(&property.value, scope);
-                });
-
-                let component_id = 0; // TODO(anissen): Implement component initialization
-                scope
-                    .bytecode
-                    .add_op(ByteCode::PushComponent)
-                    .add_i32(&(component_id as i32));
-
-                // scope.bytecode.add_op(ByteCode::PushComponentInitialization);
-                // scope.bytecode.add_string(&name.lexeme);
-                // self.emit_exprs(properties, scope);
             }
 
             Expr::Call { name, args } => {
@@ -488,6 +394,81 @@ impl<'a> Codegen<'a> {
                 }
             }
         };
+    }
+
+    fn emit_value(&mut self, value: &'a ValueType, token: &'a Token, scope: &mut Scope) {
+        match value {
+            ValueType::Boolean(true) => {
+                scope.bytecode.add_op(ByteCode::PushTrue);
+            }
+
+            ValueType::Boolean(false) => {
+                scope.bytecode.add_op(ByteCode::PushFalse);
+            }
+
+            ValueType::Integer(i) => {
+                scope.bytecode.add_op(ByteCode::PushInteger).add_i32(i);
+            }
+
+            ValueType::Float(f) => {
+                scope.bytecode.add_op(ByteCode::PushFloat).add_f32(f);
+            }
+
+            ValueType::List(exprs) => {
+                self.emit_exprs(exprs, scope);
+                scope
+                    .bytecode
+                    .add_op(ByteCode::PushList)
+                    .add_i32(&(exprs.len() as i32));
+            }
+
+            ValueType::String(str) => {
+                if str.len() > 255 {
+                    // TODO(anissen): Should add error to a error reporter instead
+                    panic!("string too long!");
+                }
+                scope.bytecode.add_op(ByteCode::PushString).add_string(str);
+            }
+
+            ValueType::Function { params, expr } => {
+                self.emit_function(token, None, params, expr, scope)
+            }
+
+            ValueType::Tag { name, payload } => {
+                if name.lexeme.len() > 255 {
+                    panic!("string too long!");
+                }
+                if let Some(payload) = &**payload {
+                    self.emit_expr(payload, scope);
+                    scope
+                        .bytecode
+                        .add_op(ByteCode::PushTag)
+                        .add_string(&name.lexeme);
+                } else {
+                    scope
+                        .bytecode
+                        .add_op(ByteCode::PushSimpleTag)
+                        .add_string(&name.lexeme);
+                };
+            }
+
+            ValueType::Component { name, properties } => {
+                // TODO: This will fail if the initialization order of properties does not match the definition
+                properties.iter().for_each(|property| {
+                    self.emit_expr(&property.value, scope);
+                });
+
+                let component_id = 0; // TODO(anissen): Implement component initialization
+                scope
+                    .bytecode
+                    .add_op(ByteCode::PushComponent)
+                    .add_i32(&(component_id as i32));
+
+                // scope.bytecode.add_op(ByteCode::PushComponentInitialization);
+                // scope.bytecode.add_string(&name.lexeme);
+                // self.emit_exprs(properties, scope);
+            }
+        }
     }
 
     fn emit_assignment(&mut self, name: &Token, expr: &'a Expr, scope: &mut Scope) {
