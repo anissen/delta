@@ -71,24 +71,8 @@ pub enum Expr {
         name: Token,
         properties: Vec<PropertyDefinition>,
     },
-    // ComponentInitialization {
-    //     name: Token,
-    //     properties: Vec<PropertyDeclaration>,
-    // }, // ComponentDefinition(Component),
-    // ComponentInitialization {
-    //     name: Token,
-    //     properties: HashMap<String, Expr>, // TODO(anissen): Key ought to be a Token, or the container a Vec instead
-    //     // properties: Vec<PropertyDeclaration>,
-    //     definition: Component, //Vec<PropertyDefinition>,
-    // },
     // TODO(anissen): Add an Error and/or Todo expression?
 }
-
-// #[derive(Debug)]
-// pub struct Component {
-//     pub name: Token,
-//     pub properties: Vec<PropertyDefinition>,
-// }
 
 #[derive(Debug, Clone)]
 pub struct PropertyDefinition {
