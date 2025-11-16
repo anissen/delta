@@ -5,7 +5,7 @@ use crate::diagnostics::Diagnostics;
 use crate::errors::Error;
 use crate::expressions::{
     ArithmeticOperations, BinaryOperator, BooleanOperations, Comparisons, EqualityOperations, Expr,
-    IsArmPattern, StringOperations, UnaryOperator, ValueType,
+    IsArm, IsArmPattern, StringOperations, UnaryOperator, ValueType,
 };
 use crate::program::Context;
 use crate::tokens::{Position, Token};
@@ -198,201 +198,9 @@ impl<'a> Codegen<'a> {
                 operator,
                 token: _,
                 right,
-            } => {
-                self.emit_expr(left, scope);
-                self.emit_expr(right, scope);
-                match operator {
-                    BinaryOperator::IntegerOperation(integer_operation) => {
-                        match integer_operation {
-                            ArithmeticOperations::Addition => {
-                                scope.bytecode.add_op(ByteCode::IntegerAddition)
-                            }
-                            ArithmeticOperations::Subtraction => {
-                                scope.bytecode.add_op(ByteCode::IntegerSubtraction)
-                            }
-                            ArithmeticOperations::Multiplication => {
-                                scope.bytecode.add_op(ByteCode::IntegerMultiplication)
-                            }
-                            ArithmeticOperations::Division => {
-                                scope.bytecode.add_op(ByteCode::IntegerDivision)
-                            }
-                            ArithmeticOperations::Modulus => {
-                                scope.bytecode.add_op(ByteCode::IntegerModulo)
-                            }
-                        }
-                    }
-                    BinaryOperator::FloatOperation(float_operation) => match float_operation {
-                        ArithmeticOperations::Addition => {
-                            scope.bytecode.add_op(ByteCode::FloatAddition)
-                        }
-                        ArithmeticOperations::Subtraction => {
-                            scope.bytecode.add_op(ByteCode::FloatSubtraction)
-                        }
-                        ArithmeticOperations::Multiplication => {
-                            scope.bytecode.add_op(ByteCode::FloatMultiplication)
-                        }
-                        ArithmeticOperations::Division => {
-                            scope.bytecode.add_op(ByteCode::FloatDivision)
-                        }
-                        ArithmeticOperations::Modulus => {
-                            scope.bytecode.add_op(ByteCode::FloatModulo)
-                        }
-                    },
-                    BinaryOperator::BooleanOperation(boolean_operation) => {
-                        match boolean_operation {
-                            BooleanOperations::And => scope.bytecode.add_op(ByteCode::BooleanAnd),
-                            BooleanOperations::Or => scope.bytecode.add_op(ByteCode::BooleanOr),
-                        }
-                    }
-                    BinaryOperator::StringOperation(string_operation) => match string_operation {
-                        StringOperations::StringConcat => {
-                            scope.bytecode.add_op(ByteCode::StringConcat)
-                        }
-                    },
-                    BinaryOperator::IntegerComparison(integer_comparison) => {
-                        match integer_comparison {
-                            Comparisons::LessThan => {
-                                scope.bytecode.add_op(ByteCode::IntegerLessThan)
-                            }
-                            Comparisons::LessThanEqual => {
-                                scope.bytecode.add_op(ByteCode::IntegerLessThanEquals)
-                            }
-                            Comparisons::GreaterThan => scope
-                                .bytecode
-                                .add_op(ByteCode::IntegerLessThanEquals)
-                                .add_op(ByteCode::Not),
-                            Comparisons::GreaterThanEqual => scope
-                                .bytecode
-                                .add_op(ByteCode::IntegerLessThan)
-                                .add_op(ByteCode::Not),
-                        }
-                    }
-                    BinaryOperator::FloatComparison(float_comparison) => match float_comparison {
-                        Comparisons::LessThan => scope.bytecode.add_op(ByteCode::FloatLessThan),
-                        Comparisons::LessThanEqual => {
-                            scope.bytecode.add_op(ByteCode::FloatLessThanEquals)
-                        }
-                        Comparisons::GreaterThan => scope
-                            .bytecode
-                            .add_op(ByteCode::FloatLessThanEquals)
-                            .add_op(ByteCode::Not),
-                        Comparisons::GreaterThanEqual => scope
-                            .bytecode
-                            .add_op(ByteCode::FloatLessThan)
-                            .add_op(ByteCode::Not),
-                    },
-                    BinaryOperator::Equality(equality) => match equality {
-                        EqualityOperations::Equal => scope.bytecode.add_op(ByteCode::Equals),
-                        EqualityOperations::NotEqual => scope
-                            .bytecode
-                            .add_op(ByteCode::Equals)
-                            .add_op(ByteCode::Not),
-                    },
-                };
-            }
+            } => self.emit_binary(left, operator, right, scope),
 
-            Expr::Is { expr, arms } => {
-                let index = match **expr {
-                    Expr::Identifier { ref name } => {
-                        // If the value is already in the environment, use its index
-                        let index_option = scope.environment.get(&name.lexeme);
-                        *index_option.unwrap()
-                    }
-                    _ => {
-                        // Otherwise, emit the expression and add it to the locals
-                        // to avoid emitting the same value multiple times
-                        self.emit_expr(expr, scope);
-                        let index = scope.locals.len() as u8;
-                        scope.bytecode.add_set_local_value(index);
-                        index
-                    }
-                };
-
-                let locals_count = scope.locals.len() as u8;
-
-                let mut jump_to_end_offsets = vec![];
-
-                for (arm_index, arm) in arms.iter().enumerate() {
-                    let is_last_arm = arm_index == arms.len() - 1;
-
-                    // Handle pattern matching logic
-                    let mut pattern_jump_offsets = vec![];
-
-                    match &arm.pattern {
-                        IsArmPattern::Expression(pattern) => {
-                            // Emit expression and pattern and compare
-                            scope.bytecode.add_get_local_value(index);
-                            self.emit_expr(pattern, scope);
-                            scope.bytecode.add_op(ByteCode::Equals);
-
-                            // Jump to next arm if not equal
-                            let next_arm_offset = scope.bytecode.add_jump_if_false();
-                            pattern_jump_offsets.push(next_arm_offset);
-                        }
-                        IsArmPattern::Capture { identifier } => {
-                            self.emit_assignment(identifier, expr, scope);
-                        }
-                        IsArmPattern::CaptureTagPayload { expr, identifier } => {
-                            let tag_name = match expr {
-                                Expr::Value {
-                                    value: ValueType::Tag { name, payload },
-                                    token,
-                                } => name.lexeme.clone(),
-                                _ => unreachable!(),
-                            };
-
-                            scope
-                                .bytecode
-                                .add_op(ByteCode::GetTagName)
-                                .add_op(ByteCode::PushString)
-                                .add_string(&tag_name)
-                                .add_op(ByteCode::Equals);
-
-                            // Jump to next arm if not equal
-                            let next_arm_offset = scope.bytecode.add_jump_if_false();
-                            pattern_jump_offsets.push(next_arm_offset);
-
-                            scope.bytecode.add_op(ByteCode::GetTagPayload);
-
-                            // TODO: Is this right?!?
-                            scope
-                                .environment
-                                .insert(identifier.lexeme.clone(), locals_count);
-                            scope.bytecode.add_set_local_value(locals_count);
-                        }
-                        IsArmPattern::Default => {
-                            // No pattern matching needed for default case
-                        }
-                    }
-
-                    // Handle guard condition if present
-                    if let Some(guard) = &arm.guard {
-                        // Check if-guard
-                        self.emit_expr(&guard.condition, scope);
-                        let guard_jump_offset = scope.bytecode.add_jump_if_false();
-                        pattern_jump_offsets.push(guard_jump_offset);
-                    }
-
-                    // Execute arm block
-                    self.emit_expr(&arm.block, scope);
-
-                    if !is_last_arm {
-                        // Jump to end of `is` block
-                        let end_offset = scope.bytecode.add_unconditional_jump();
-                        jump_to_end_offsets.push(end_offset);
-                    }
-
-                    // Patch all jumps to next arm now that we know the position
-                    for offset in pattern_jump_offsets {
-                        scope.bytecode.patch_jump_to_current_byte(offset);
-                    }
-                }
-
-                // Patch all jumps to end of `is` block now that we know where it ends
-                for offset in jump_to_end_offsets {
-                    scope.bytecode.patch_jump_to_current_byte(offset);
-                }
-            }
+            Expr::Is { expr, arms } => self.emit_is(expr, arms, scope),
         };
     }
 
@@ -468,6 +276,184 @@ impl<'a> Codegen<'a> {
                 // scope.bytecode.add_string(&name.lexeme);
                 // self.emit_exprs(properties, scope);
             }
+        }
+    }
+
+    fn emit_binary(
+        &mut self,
+        left: &'a Expr,
+        operator: &BinaryOperator,
+        right: &'a Expr,
+        scope: &mut Scope,
+    ) {
+        self.emit_expr(left, scope);
+        self.emit_expr(right, scope);
+        match operator {
+            BinaryOperator::IntegerOperation(integer_operation) => match integer_operation {
+                ArithmeticOperations::Addition => scope.bytecode.add_op(ByteCode::IntegerAddition),
+                ArithmeticOperations::Subtraction => {
+                    scope.bytecode.add_op(ByteCode::IntegerSubtraction)
+                }
+                ArithmeticOperations::Multiplication => {
+                    scope.bytecode.add_op(ByteCode::IntegerMultiplication)
+                }
+                ArithmeticOperations::Division => scope.bytecode.add_op(ByteCode::IntegerDivision),
+                ArithmeticOperations::Modulus => scope.bytecode.add_op(ByteCode::IntegerModulo),
+            },
+            BinaryOperator::FloatOperation(float_operation) => match float_operation {
+                ArithmeticOperations::Addition => scope.bytecode.add_op(ByteCode::FloatAddition),
+                ArithmeticOperations::Subtraction => {
+                    scope.bytecode.add_op(ByteCode::FloatSubtraction)
+                }
+                ArithmeticOperations::Multiplication => {
+                    scope.bytecode.add_op(ByteCode::FloatMultiplication)
+                }
+                ArithmeticOperations::Division => scope.bytecode.add_op(ByteCode::FloatDivision),
+                ArithmeticOperations::Modulus => scope.bytecode.add_op(ByteCode::FloatModulo),
+            },
+            BinaryOperator::BooleanOperation(boolean_operation) => match boolean_operation {
+                BooleanOperations::And => scope.bytecode.add_op(ByteCode::BooleanAnd),
+                BooleanOperations::Or => scope.bytecode.add_op(ByteCode::BooleanOr),
+            },
+            BinaryOperator::StringOperation(string_operation) => match string_operation {
+                StringOperations::StringConcat => scope.bytecode.add_op(ByteCode::StringConcat),
+            },
+            BinaryOperator::IntegerComparison(integer_comparison) => match integer_comparison {
+                Comparisons::LessThan => scope.bytecode.add_op(ByteCode::IntegerLessThan),
+                Comparisons::LessThanEqual => {
+                    scope.bytecode.add_op(ByteCode::IntegerLessThanEquals)
+                }
+                Comparisons::GreaterThan => scope
+                    .bytecode
+                    .add_op(ByteCode::IntegerLessThanEquals)
+                    .add_op(ByteCode::Not),
+                Comparisons::GreaterThanEqual => scope
+                    .bytecode
+                    .add_op(ByteCode::IntegerLessThan)
+                    .add_op(ByteCode::Not),
+            },
+            BinaryOperator::FloatComparison(float_comparison) => match float_comparison {
+                Comparisons::LessThan => scope.bytecode.add_op(ByteCode::FloatLessThan),
+                Comparisons::LessThanEqual => scope.bytecode.add_op(ByteCode::FloatLessThanEquals),
+                Comparisons::GreaterThan => scope
+                    .bytecode
+                    .add_op(ByteCode::FloatLessThanEquals)
+                    .add_op(ByteCode::Not),
+                Comparisons::GreaterThanEqual => scope
+                    .bytecode
+                    .add_op(ByteCode::FloatLessThan)
+                    .add_op(ByteCode::Not),
+            },
+            BinaryOperator::Equality(equality) => match equality {
+                EqualityOperations::Equal => scope.bytecode.add_op(ByteCode::Equals),
+                EqualityOperations::NotEqual => scope
+                    .bytecode
+                    .add_op(ByteCode::Equals)
+                    .add_op(ByteCode::Not),
+            },
+        };
+    }
+
+    fn emit_is(&mut self, expr: &'a Expr, arms: &'a Vec<IsArm>, scope: &mut Scope) {
+        let index = match *expr {
+            Expr::Identifier { ref name } => {
+                // If the value is already in the environment, use its index
+                let index_option = scope.environment.get(&name.lexeme);
+                *index_option.unwrap()
+            }
+            _ => {
+                // Otherwise, emit the expression and add it to the locals
+                // to avoid emitting the same value multiple times
+                self.emit_expr(expr, scope);
+                let index = scope.locals.len() as u8;
+                scope.bytecode.add_set_local_value(index);
+                index
+            }
+        };
+
+        let locals_count = scope.locals.len() as u8;
+
+        let mut jump_to_end_offsets = vec![];
+
+        for (arm_index, arm) in arms.iter().enumerate() {
+            let is_last_arm = arm_index == arms.len() - 1;
+
+            // Handle pattern matching logic
+            let mut pattern_jump_offsets = vec![];
+
+            match &arm.pattern {
+                IsArmPattern::Expression(pattern) => {
+                    // Emit expression and pattern and compare
+                    scope.bytecode.add_get_local_value(index);
+                    self.emit_expr(pattern, scope);
+                    scope.bytecode.add_op(ByteCode::Equals);
+
+                    // Jump to next arm if not equal
+                    let next_arm_offset = scope.bytecode.add_jump_if_false();
+                    pattern_jump_offsets.push(next_arm_offset);
+                }
+                IsArmPattern::Capture { identifier } => {
+                    self.emit_assignment(identifier, expr, scope);
+                }
+                IsArmPattern::CaptureTagPayload { expr, identifier } => {
+                    let tag_name = match expr {
+                        Expr::Value {
+                            value: ValueType::Tag { name, payload },
+                            token,
+                        } => name.lexeme.clone(),
+                        _ => unreachable!(),
+                    };
+
+                    scope
+                        .bytecode
+                        .add_op(ByteCode::GetTagName)
+                        .add_op(ByteCode::PushString)
+                        .add_string(&tag_name)
+                        .add_op(ByteCode::Equals);
+
+                    // Jump to next arm if not equal
+                    let next_arm_offset = scope.bytecode.add_jump_if_false();
+                    pattern_jump_offsets.push(next_arm_offset);
+
+                    scope.bytecode.add_op(ByteCode::GetTagPayload);
+
+                    // TODO: Is this right?!?
+                    scope
+                        .environment
+                        .insert(identifier.lexeme.clone(), locals_count);
+                    scope.bytecode.add_set_local_value(locals_count);
+                }
+                IsArmPattern::Default => {
+                    // No pattern matching needed for default case
+                }
+            }
+
+            // Handle guard condition if present
+            if let Some(guard) = &arm.guard {
+                // Check if-guard
+                self.emit_expr(&guard.condition, scope);
+                let guard_jump_offset = scope.bytecode.add_jump_if_false();
+                pattern_jump_offsets.push(guard_jump_offset);
+            }
+
+            // Execute arm block
+            self.emit_expr(&arm.block, scope);
+
+            if !is_last_arm {
+                // Jump to end of `is` block
+                let end_offset = scope.bytecode.add_unconditional_jump();
+                jump_to_end_offsets.push(end_offset);
+            }
+
+            // Patch all jumps to next arm now that we know the position
+            for offset in pattern_jump_offsets {
+                scope.bytecode.patch_jump_to_current_byte(offset);
+            }
+        }
+
+        // Patch all jumps to end of `is` block now that we know where it ends
+        for offset in jump_to_end_offsets {
+            scope.bytecode.patch_jump_to_current_byte(offset);
         }
     }
 
