@@ -270,7 +270,7 @@ impl<'a> Codegen<'a> {
                 scope
                     .bytecode
                     .add_op(ByteCode::PushComponent)
-                    .add_i32(&(component_id as i32));
+                    .add_i32(&component_id);
 
                 // scope.bytecode.add_op(ByteCode::PushComponentInitialization);
                 // scope.bytecode.add_string(&name.lexeme);

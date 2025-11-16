@@ -253,7 +253,7 @@ impl<'a> Program<'a> {
     pub fn run(&mut self) -> Option<vm::Value> {
         match &mut self.vm {
             Some(vm) => {
-                let result = vm.execute(None, &mut self.context);
+                let result = vm.execute(None, &self.context);
                 self.metadata.execution_metadata = vm.metadata.clone();
                 result
             }
@@ -264,7 +264,7 @@ impl<'a> Program<'a> {
     pub fn run_function(&mut self, function_name: String) -> Option<vm::Value> {
         match &mut self.vm {
             Some(vm) => {
-                let result = vm.execute(Some(function_name), &mut self.context);
+                let result = vm.execute(Some(function_name), &self.context);
                 self.metadata.execution_metadata = vm.metadata.clone();
                 result
             }

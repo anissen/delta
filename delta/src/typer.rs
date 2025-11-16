@@ -560,13 +560,12 @@ impl<'env> InferenceContext<'env> {
                                 value: ValueType::Tag { name, payload },
                                 token,
                             } = expr
+                                && let Some(payload_expr) = payload.as_ref()
                             {
-                                if let Some(payload_expr) = payload.as_ref() {
-                                    let payload_type = self.infer_type(payload_expr);
-                                    self.environment
-                                        .variables
-                                        .insert(name.lexeme.clone(), payload_type.clone());
-                                }
+                                let payload_type = self.infer_type(payload_expr);
+                                self.environment
+                                    .variables
+                                    .insert(name.lexeme.clone(), payload_type.clone());
                             }
                         }
 

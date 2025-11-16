@@ -123,11 +123,10 @@ impl UnificationType {
     ) -> bool {
         match ty {
             UnificationType::Variable(v) => {
-                if let Some(substitution) = substitutions.get(&v) {
-                    if *substitution != UnificationType::Variable(v) {
+                if let Some(substitution) = substitutions.get(&v)
+                    && *substitution != UnificationType::Variable(v) {
                         return self.occurs_in(substitution.clone(), substitutions);
                     }
-                }
 
                 self == &ty
             }
