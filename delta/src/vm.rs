@@ -79,6 +79,8 @@ pub fn run<'a>(
     VirtualMachine::new(bytes, verbose).execute(function_name, context)
 }
 
+static EMPTY_VALUE: Value = Value::False; // Only used when a function returns no result
+
 impl VirtualMachine {
     pub fn new(bytes: Vec<u8>, verbose: bool) -> Self {
         Self {
@@ -531,7 +533,7 @@ impl VirtualMachine {
     }
 
     fn pop_call_frame(&mut self) {
-        let result = self.stack.pop().unwrap();
+        let result = self.stack.pop().unwrap_or(EMPTY_VALUE.clone());
 
         // Pop the stack back to the call frame's stack index
         self.discard(self.stack.len() as u8 - self.current_call_frame().stack_index);
@@ -546,7 +548,6 @@ impl VirtualMachine {
 
     // TODO(anissen): All the function below should be part of the CallFrame impl instead (see https://craftinginterpreters.com/calls-and-functions.html @ "We’ll start at the top and plow through it.")
 
-    // Private helper method to track bytes read in metadata
     fn track_bytes_read(&mut self, bytes: usize) {
         self.metadata.bytes_read += bytes;
     }

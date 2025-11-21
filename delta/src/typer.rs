@@ -309,8 +309,8 @@ impl<'env> InferenceContext<'env> {
                 ValueType::String(_) => make_constructor(Type::String, token.clone()),
                 ValueType::Tag { name, payload } => UnificationType::Constructor {
                     typ: Type::Tag,
-                    // generics: payload.iter().map(|p| self.infer_type(p)).collect(),
-                    generics: Vec::new(),
+                    generics: payload.iter().map(|p| self.infer_type(p)).collect(),
+                    // generics: Vec::new(),
                     token: token.clone(),
                 },
                 ValueType::List(list) => match list.first() {
@@ -459,7 +459,7 @@ impl<'env> InferenceContext<'env> {
                 .iter()
                 .map(|expr| self.infer_type(expr))
                 .last()
-                .unwrap(),
+                .unwrap_or_else(|| self.type_placeholder()),
 
             Expr::Binary {
                 left,

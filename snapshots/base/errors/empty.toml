@@ -1,8 +1,23 @@
-ignored = "not implemented yet"
-
 script = """
 # nothing here
 """
 
 [output]
-result = "?"
+result = "false"
+type = "boolean"
+
+[output.compiler]
+bytecode = "[36, 4, 109, 97, 105, 110, 38]"
+bytecode_length = 7
+disassembled = """
+
+0 \t=== function chunk: main ===
+6 \tret
+"""
+
+[output.vm]
+bytes_read = 8
+instructions_executed = 2
+jumps_performed = 0
+max_stack_height = 1
+stack_allocations = 1
