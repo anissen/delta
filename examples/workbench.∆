@@ -174,16 +174,56 @@
 # 	y: 3.4
 
 # Short term syntax?
-component Position { x f32, y f32 }
-component Velocity { dx f32, dy f32 }
-pos = Position { y 2.3, y 4.5 }
-vel = Velocity { dx 1.0, dy 0.5 }
+# component Position { x f32, y f32, z f32 }
+# component Velocity { dx f32, dy f32 }
+# pos = Position { y 2.3, x 4.5, z 3.0 }
+# vel = Velocity { dx 1.0, dy 0.5 }
 
-print_vel = \v
-	v | log
+# # 3 + 3.4
 
-vel | print_vel
-pos | print_vel
+# print_vel = \v
+# 	v | log
+
+# pos | print_vel
+# vel | print_vel
+
+# --------------------
+
+# get_render = \z
+# 	:render
+
+# x = 0
+# get_game_event = \v
+# 	x is
+# 		0
+# 			:setup
+# 		_
+# 			(0 | get_render)
+
+# (0 | get_game_event) is
+# 	:setup
+# 		"setup" | log
+# 	:update
+# 		"update" | log
+
+# --------------------
+
+x = 0
+get_game_event = \v
+	x is
+		0
+			:setup
+		_
+			:update
+
+(0 | get_game_event) is
+	:setup
+		"setup" | log
+	:update
+		"update" | log
+
+# --------------------
+
 
 # for Position p, Velocity v in ∆
 # 	p += v

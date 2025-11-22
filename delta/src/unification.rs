@@ -172,6 +172,14 @@ impl UnificationType {
     }
 }
 
+// fn unificationTypeName(ty: &UnificationType) -> String {
+//     match ty {
+//         UnificationType::Constructor { token, .. } => format!("Constructor({})", token.lexeme),
+//         UnificationType::Union(types) => format!("Union({:?})", types),
+//         UnificationType::Variable(v) => format!("Variable({})", v),
+//     }
+// }
+
 pub fn unify(
     left: &UnificationType,
     right: &UnificationType,
@@ -179,6 +187,11 @@ pub fn unify(
     substitutions: &mut HashMap<TypeVariable, UnificationType>,
     diagnostics: &mut Diagnostics,
 ) {
+    // println!(
+    //     "Unifying {} and {}",
+    //     unificationTypeName(left),
+    //     unificationTypeName(right)
+    // );
     match (left.clone(), right.clone()) {
         (
             UnificationType::Constructor {
@@ -225,23 +238,69 @@ pub fn unify(
                 substitutions.insert(v, right.clone());
             }
         },
-        // TODO(anissen): I don't think this pattern is exhaustive:
-        // (UnificationType::Union(types1), UnificationType::Union(types2)) => {
-        //     for typ1 in *types1 {
-        //         for typ2 in *types2 {
-        //             unify(&typ1, &typ2, at, substitutions, diagnostics);
-        //         }
-        //     }
-        // }
-        (UnificationType::Union(types1), _) => {
-            for typ1 in *types1 {
-                unify(&typ1, right, at, substitutions, diagnostics);
+        (
+            UnificationType::Constructor {
+                typ: name1,
+                generics: generics1,
+                token: token1,
+            },
+            UnificationType::Union(union_types),
+        ) => {
+            let mut mismatch_token = None;
+            let has_match = union_types.iter().any(|union_type| match union_type {
+                UnificationType::Constructor {
+                    typ: name2,
+                    generics: generics2,
+                    token: token2,
+                } => {
+                    mismatch_token = Some(token2);
+                    name1 == *name2 && generics1.len() == generics2.len()
+                }
+                UnificationType::Variable(v) => match substitutions.get(&v) {
+                    Some(substitution) => match substitution {
+                        UnificationType::Constructor {
+                            typ: name2,
+                            generics: generics2,
+                            token: token2,
+                        } => {
+                            mismatch_token = Some(token2);
+                            name1 == *name2 && generics1.len() == generics2.len()
+                        }
+                        _ => false,
+                    },
+                    None => false,
+                },
+                UnificationType::Union(union_types) => {
+                    todo!();
+                }
+            });
+            if !has_match {
+                diagnostics.add_error(Error::TypeMismatch {
+                    expected: right.substitute(substitutions),
+                    got: left.substitute(substitutions),
+                    declared_at: token1,
+                    provided_at: mismatch_token.unwrap().clone(),
+                    mismatch_at: at.cloned(),
+                });
             }
+
+            // for (left, right) in zip(generics1, generics2) {
+            //     unify(&left, &right, at, substitutions, diagnostics);
+            // }
         }
-        (_, UnificationType::Union(types2)) => {
-            for typ2 in *types2 {
-                unify(left, &typ2, at, substitutions, diagnostics);
-            }
+        (
+            UnificationType::Union(unification_types),
+            UnificationType::Constructor {
+                typ,
+                generics,
+                token,
+            },
+        ) => todo!(),
+        (
+            UnificationType::Union(unification_types1),
+            UnificationType::Union(unification_types2),
+        ) => {
+            todo!()
         }
     }
 }

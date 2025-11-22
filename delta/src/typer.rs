@@ -212,6 +212,11 @@ enum Constraint {
         right: UnificationType,
         at: Option<Token>,
     },
+    Union {
+        left: UnificationType,
+        right: UnificationType,
+        at: Option<Token>,
+    },
 }
 
 #[derive(Default)]
@@ -263,6 +268,15 @@ impl<'env> InferenceContext<'env> {
             at: None,
         });
     }
+
+    // fn expects_union_type(&mut self, expression: &Expr, expected_type: UnificationType) {
+    //     let actual_type = self.infer_type(expression);
+    //     self.constraints.push(Constraint::Union {
+    //         left: actual_type,
+    //         right: expected_type,
+    //         at: None,
+    //     });
+    // }
 
     fn infer_type(&mut self, expression: &Expr) -> UnificationType {
         match expression {
@@ -591,19 +605,19 @@ impl<'env> InferenceContext<'env> {
 
                     // Check that return types of each arm matches
                     let arm_type = self.infer_type(&arm.block);
-                    if let UnificationType::Constructor {
-                        typ: Type::Tag { name },
-                        generics,
-                        token,
-                    } = arm_type.clone()
-                    {
-                        tag_union.push(arm_type.clone());
-                        return_type = Some(arm_type);
-                    } else if let Some(return_type) = return_type.clone() {
-                        self.expects_type(&arm.block, return_type);
-                    } else {
-                        return_type = Some(arm_type);
-                    }
+                    // if let UnificationType::Constructor {
+                    //     typ: Type::Tag { name },
+                    //     generics,
+                    //     token,
+                    // } = arm_type.clone()
+                    // {
+                    tag_union.push(arm_type.clone());
+                    //     return_type = Some(arm_type);
+                    // } else if let Some(return_type) = return_type.clone() {
+                    //     self.expects_type(&arm.block, return_type);
+                    // } else {
+                    //     return_type = Some(arm_type);
+                    // }
                 }
 
                 if let Expr::Identifier { name } = &**expr {
@@ -611,8 +625,6 @@ impl<'env> InferenceContext<'env> {
                         .variables
                         .insert(name.lexeme.clone(), is_type.clone());
                 }
-
-                // dbg!(&tag_union);
 
                 if !tag_union.is_empty() {
                     UnificationType::Union(Box::new(tag_union))
@@ -637,6 +649,7 @@ impl<'env> InferenceContext<'env> {
                         self.diagnostics,
                     );
                 }
+                Constraint::Union { left, right, at } => (),
             }
         }
 
