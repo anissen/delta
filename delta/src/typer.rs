@@ -308,7 +308,9 @@ impl<'env> InferenceContext<'env> {
                 ValueType::Float(_) => make_constructor(Type::Float, token.clone()),
                 ValueType::String(_) => make_constructor(Type::String, token.clone()),
                 ValueType::Tag { name, payload } => UnificationType::Constructor {
-                    typ: Type::Tag,
+                    typ: Type::Tag {
+                        name: name.lexeme.clone(),
+                    },
                     generics: payload.iter().map(|p| self.infer_type(p)).collect(),
                     // generics: Vec::new(),
                     token: token.clone(),
@@ -551,7 +553,12 @@ impl<'env> InferenceContext<'env> {
                             self.expects_type(expr, is_type.clone());
                             self.expects_type(
                                 expr,
-                                make_constructor(Type::Tag, identifier.clone()),
+                                make_constructor(
+                                    Type::Tag {
+                                        name: identifier.lexeme.clone(),
+                                    },
+                                    identifier.clone(),
+                                ),
                             );
                             self.environment
                                 .variables

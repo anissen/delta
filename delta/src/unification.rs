@@ -11,7 +11,7 @@ pub enum Type {
     Integer,
     Float,
     String,
-    Tag, // { name: String, argument_count: u8 },
+    Tag { name: String },
     List,
     Function,
     Component,
@@ -41,13 +41,16 @@ impl fmt::Display for UnificationType {
                 Type::Integer => "int",
                 Type::Float => "float",
                 Type::String => "string",
-                Type::Tag => {
-                    // if *argument_count == 0 {
-                    //     &format!("tag :{name}")
-                    // } else {
-                    //     &format!("tag :{name}({argument_count})")
-                    // }
-                    &"tag".to_string()
+                Type::Tag { name } => {
+                    let fields = generics
+                        .iter()
+                        .map(|field| field.to_string())
+                        .collect::<Vec<String>>();
+                    if fields.is_empty() {
+                        &format!("tag :{}", name)
+                    } else {
+                        &format!("tag :{}({})", name, fields.join(", "))
+                    }
                 }
                 Type::List => {
                     if !generics.is_empty() {
@@ -124,9 +127,10 @@ impl UnificationType {
         match ty {
             UnificationType::Variable(v) => {
                 if let Some(substitution) = substitutions.get(&v)
-                    && *substitution != UnificationType::Variable(v) {
-                        return self.occurs_in(substitution.clone(), substitutions);
-                    }
+                    && *substitution != UnificationType::Variable(v)
+                {
+                    return self.occurs_in(substitution.clone(), substitutions);
+                }
 
                 self == &ty
             }
