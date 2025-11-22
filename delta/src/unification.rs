@@ -27,6 +27,7 @@ pub enum UnificationType {
         token: Token,
     },
     Variable(TypeVariable),
+    Union(Box<Vec<UnificationType>>),
 }
 
 impl fmt::Display for UnificationType {
@@ -78,6 +79,14 @@ impl fmt::Display for UnificationType {
                 }
             },
             Self::Variable(i) => &format!("???#{i}"),
+            Self::Union(types) => {
+                let types = types
+                    .iter()
+                    .map(|typ| typ.to_string())
+                    .collect::<Vec<String>>()
+                    .join(", ");
+                &format!("union({types})")
+            }
         };
         write!(f, "{type_name}")
     }
@@ -116,6 +125,13 @@ impl UnificationType {
                     self.clone()
                 }
             }
+            UnificationType::Union(types) => {
+                let types = types
+                    .iter()
+                    .map(|typ| typ.substitute(substitutions))
+                    .collect::<Vec<UnificationType>>();
+                UnificationType::Union(Box::new(types))
+            }
         }
     }
 
@@ -137,6 +153,15 @@ impl UnificationType {
             UnificationType::Constructor { generics, .. } => {
                 for generic in generics {
                     if self.occurs_in(generic, substitutions) {
+                        return true;
+                    }
+                }
+
+                false
+            }
+            UnificationType::Union(types) => {
+                for typ in *types {
+                    if self.occurs_in(typ.clone(), substitutions) {
                         return true;
                     }
                 }
@@ -200,5 +225,23 @@ pub fn unify(
                 substitutions.insert(v, right.clone());
             }
         },
+        // TODO(anissen): I don't think this pattern is exhaustive:
+        // (UnificationType::Union(types1), UnificationType::Union(types2)) => {
+        //     for typ1 in *types1 {
+        //         for typ2 in *types2 {
+        //             unify(&typ1, &typ2, at, substitutions, diagnostics);
+        //         }
+        //     }
+        // }
+        (UnificationType::Union(types1), _) => {
+            for typ1 in *types1 {
+                unify(&typ1, right, at, substitutions, diagnostics);
+            }
+        }
+        (_, UnificationType::Union(types2)) => {
+            for typ2 in *types2 {
+                unify(left, &typ2, at, substitutions, diagnostics);
+            }
+        }
     }
 }

@@ -534,6 +534,7 @@ impl<'env> InferenceContext<'env> {
             Expr::Is { expr, arms } => {
                 let is_type = self.infer_type(expr);
                 let mut return_type = None;
+                let mut tag_union = Vec::new();
 
                 // TODO(anissen): Add positions here
                 for arm in arms {
@@ -589,10 +590,19 @@ impl<'env> InferenceContext<'env> {
                     // TODO(anissen): Check for exhaustiveness
 
                     // Check that return types of each arm matches
-                    if let Some(return_type) = return_type.clone() {
+                    let arm_type = self.infer_type(&arm.block);
+                    if let UnificationType::Constructor {
+                        typ: Type::Tag { name },
+                        generics,
+                        token,
+                    } = arm_type.clone()
+                    {
+                        tag_union.push(arm_type.clone());
+                        return_type = Some(arm_type);
+                    } else if let Some(return_type) = return_type.clone() {
                         self.expects_type(&arm.block, return_type);
                     } else {
-                        return_type = Some(self.infer_type(&arm.block));
+                        return_type = Some(arm_type);
                     }
                 }
 
@@ -602,7 +612,13 @@ impl<'env> InferenceContext<'env> {
                         .insert(name.lexeme.clone(), is_type.clone());
                 }
 
-                return_type.unwrap()
+                // dbg!(&tag_union);
+
+                if !tag_union.is_empty() {
+                    UnificationType::Union(Box::new(tag_union))
+                } else {
+                    return_type.unwrap()
+                }
             }
         }
     }
