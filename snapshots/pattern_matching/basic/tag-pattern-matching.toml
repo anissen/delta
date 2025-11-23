@@ -11,9 +11,9 @@ script = """
 [output]
 error = """
     :yo
-    \u001B[33m^^\u001B[0m
+    \u001B[33m^^^\u001B[0m
 Line 2.5: Expected tag :hello but got tag :yo.
 
     :hi
-    \u001B[33m^^\u001B[0m
+    \u001B[33m^^^\u001B[0m
 Line 6.5: Expected tag :hello but got tag :hi."""

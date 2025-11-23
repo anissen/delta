@@ -9,8 +9,8 @@ result = ":hello(4)"
 type = "tag"
 
 [output.compiler]
-bytecode = "[35, 4, 98, 108, 97, 104, 1, 0, 35, 36, 4, 109, 97, 105, 110, 37, 0, 1, 21, 0, 27, 0, 0, 0, 4, 39, 1, 0, 0, 4, 98, 108, 97, 104, 38, 36, 4, 98, 108, 97, 104, 20, 0, 32, 5, 104, 101, 108, 108, 111, 38]"
-bytecode_length = 51
+bytecode = "[35, 4, 98, 108, 97, 104, 1, 0, 35, 36, 4, 109, 97, 105, 110, 37, 0, 1, 21, 0, 27, 0, 0, 0, 4, 39, 1, 0, 0, 4, 98, 108, 97, 104, 38, 36, 4, 98, 108, 97, 104, 20, 0, 32, 6, 58, 104, 101, 108, 108, 111, 38]"
+bytecode_length = 52
 disassembled = """
 0 \tfunction signature (name: blah) (local count: 1) (function position: 35)
 
@@ -24,11 +24,11 @@ disassembled = """
 35 \t=== function chunk: blah ===
 41 \tget_value (index: 0)
 43 \tpush_tag (value: ':hello')
-50 \tret
+51 \tret
 """
 
 [output.vm]
-bytes_read = 52
+bytes_read = 53
 instructions_executed = 10
 jumps_performed = 0
 max_stack_height = 3

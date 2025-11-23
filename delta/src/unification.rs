@@ -48,9 +48,9 @@ impl fmt::Display for UnificationType {
                         .map(|field| field.to_string())
                         .collect::<Vec<String>>();
                     if fields.is_empty() {
-                        &format!("tag :{}", name)
+                        &format!("tag {}", name)
                     } else {
-                        &format!("tag :{}({})", name, fields.join(", "))
+                        &format!("tag {}({})", name, fields.join(", "))
                     }
                 }
                 Type::List => {

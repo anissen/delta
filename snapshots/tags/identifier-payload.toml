@@ -8,8 +8,8 @@ result = ":color(45)"
 type = "tag"
 
 [output.compiler]
-bytecode = "[36, 4, 109, 97, 105, 110, 27, 0, 0, 0, 45, 21, 0, 20, 0, 32, 5, 99, 111, 108, 111, 114, 38]"
-bytecode_length = 23
+bytecode = "[36, 4, 109, 97, 105, 110, 27, 0, 0, 0, 45, 21, 0, 20, 0, 32, 6, 58, 99, 111, 108, 111, 114, 38]"
+bytecode_length = 24
 disassembled = """
 
 0 \t=== function chunk: main ===
@@ -17,11 +17,11 @@ disassembled = """
 11 \tset_value (index: 0)
 13 \tget_value (index: 0)
 15 \tpush_tag (value: ':color')
-22 \tret
+23 \tret
 """
 
 [output.vm]
-bytes_read = 24
+bytes_read = 25
 instructions_executed = 6
 jumps_performed = 0
 max_stack_height = 2

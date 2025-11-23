@@ -124,7 +124,7 @@ impl Disassembler {
 
                     self.print(vec![
                         "push_simple_tag".to_string(),
-                        format!("(value: ':{tag_name}')"),
+                        format!("(value: '{tag_name}')"),
                     ])
                 }
 
@@ -133,7 +133,7 @@ impl Disassembler {
 
                     self.print(vec![
                         "push_tag".to_string(),
-                        format!("(value: ':{}')", tag_name),
+                        format!("(value: '{}')", tag_name),
                     ])
                 }
 

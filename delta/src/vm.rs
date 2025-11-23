@@ -27,8 +27,8 @@ impl Display for Value {
             Value::Integer(i) => write!(f, "{i}")?,
             Value::Float(d) => write!(f, "{d}")?,
             Value::String(s) => write!(f, "{s}")?,
-            Value::SimpleTag(t) => write!(f, ":{t}")?,
-            Value::Tag(t, a) => write!(f, ":{t}({a})")?,
+            Value::SimpleTag(t) => write!(f, "{t}")?,
+            Value::Tag(t, a) => write!(f, "{t}({a})")?,
             Value::List(l) => {
                 let mut first = true;
                 write!(f, "[")?;
@@ -714,10 +714,8 @@ impl VirtualMachine {
             Value::Float(right) => left + &right.to_string(),
             Value::True => left + "true",
             Value::False => left + "false",
-            Value::SimpleTag(name) => left + ":" + &name,
-            Value::Tag(name, value) => {
-                self.string_concat_values(left + ":" + &name + "(", *value) + ")"
-            }
+            Value::SimpleTag(name) => left + &name,
+            Value::Tag(name, value) => self.string_concat_values(left + &name + "(", *value) + ")",
             _ => panic!("incompatible types for string concatenation"),
         }
     }

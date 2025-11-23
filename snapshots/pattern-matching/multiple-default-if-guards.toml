@@ -15,8 +15,8 @@ result = ":yellow(4)"
 type = "tag"
 
 [output.compiler]
-bytecode = "[35, 15, 115, 116, 111, 112, 108, 105, 103, 104, 116, 95, 99, 111, 108, 111, 114, 1, 0, 57, 36, 4, 109, 97, 105, 110, 37, 0, 1, 21, 0, 26, 0, 0, 0, 0, 39, 1, 0, 0, 15, 115, 116, 111, 112, 108, 105, 103, 104, 116, 95, 99, 111, 108, 111, 114, 38, 36, 15, 115, 116, 111, 112, 108, 105, 103, 104, 116, 95, 99, 111, 108, 111, 114, 20, 0, 26, 0, 0, 0, 0, 13, 19, 44, 0, 8, 31, 3, 114, 101, 100, 42, 0, 34, 20, 0, 26, 0, 0, 0, 0, 17, 44, 0, 16, 27, 0, 0, 0, 4, 32, 6, 121, 101, 108, 108, 111, 119, 42, 0, 7, 31, 5, 103, 114, 101, 101, 110, 38]"
-bytecode_length = 129
+bytecode = "[35, 15, 115, 116, 111, 112, 108, 105, 103, 104, 116, 95, 99, 111, 108, 111, 114, 1, 0, 57, 36, 4, 109, 97, 105, 110, 37, 0, 1, 21, 0, 26, 0, 0, 0, 0, 39, 1, 0, 0, 15, 115, 116, 111, 112, 108, 105, 103, 104, 116, 95, 99, 111, 108, 111, 114, 38, 36, 15, 115, 116, 111, 112, 108, 105, 103, 104, 116, 95, 99, 111, 108, 111, 114, 20, 0, 26, 0, 0, 0, 0, 13, 19, 44, 0, 9, 31, 4, 58, 114, 101, 100, 42, 0, 36, 20, 0, 26, 0, 0, 0, 0, 17, 44, 0, 17, 27, 0, 0, 0, 4, 32, 7, 58, 121, 101, 108, 108, 111, 119, 42, 0, 8, 31, 6, 58, 103, 114, 101, 101, 110, 38]"
+bytecode_length = 132
 disassembled = """
 0 \tfunction signature (name: stoplight_color) (local count: 1) (function position: 57)
 
@@ -32,22 +32,22 @@ disassembled = """
 76 \tpush_float (value: 0)
 81 \tfloat_lte
 82 \tnot
-83 \tjump if false (offset: 8, to byte 94)
+83 \tjump if false (offset: 9, to byte 95)
 86 \tpush_simple_tag (value: ':red')
-91 \tjump (offset: 34, to byte 128)
-94 \tget_value (index: 0)
-96 \tpush_float (value: 0)
-101 \teq
-102 \tjump if false (offset: 16, to byte 121)
-105 \tpush_integer (value: 4)
-110 \tpush_tag (value: ':yellow')
-118 \tjump (offset: 7, to byte 128)
-121 \tpush_simple_tag (value: ':green')
-128 \tret
+92 \tjump (offset: 36, to byte 131)
+95 \tget_value (index: 0)
+97 \tpush_float (value: 0)
+102 \teq
+103 \tjump if false (offset: 17, to byte 123)
+106 \tpush_integer (value: 4)
+111 \tpush_tag (value: ':yellow')
+120 \tjump (offset: 8, to byte 131)
+123 \tpush_simple_tag (value: ':green')
+131 \tret
 """
 
 [output.vm]
-bytes_read = 115
+bytes_read = 116
 instructions_executed = 20
 jumps_performed = 2
 max_stack_height = 4
