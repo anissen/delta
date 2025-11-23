@@ -564,13 +564,16 @@ impl<'env> InferenceContext<'env> {
                                 .insert(identifier.lexeme.clone(), is_type.clone());
                         }
 
-                        IsArmPattern::CaptureTagPayload { expr, identifier } => {
-                            self.expects_type(expr, is_type.clone());
+                        IsArmPattern::CaptureTagPayload {
+                            tag_name,
+                            expr,
+                            identifier,
+                        } => {
                             self.expects_type(
                                 expr,
                                 make_constructor(
                                     Type::Tag {
-                                        name: identifier.lexeme.clone(),
+                                        name: tag_name.lexeme.clone(),
                                     },
                                     identifier.clone(),
                                 ),
@@ -625,6 +628,8 @@ impl<'env> InferenceContext<'env> {
                         .variables
                         .insert(name.lexeme.clone(), is_type.clone());
                 }
+
+                // TODO(anissen): Check that types are the same (or tag)
 
                 if !tag_union.is_empty() {
                     UnificationType::Union(Box::new(tag_union))

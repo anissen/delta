@@ -395,20 +395,16 @@ impl<'a> Codegen<'a> {
                 IsArmPattern::Capture { identifier } => {
                     self.emit_assignment(identifier, expr, scope);
                 }
-                IsArmPattern::CaptureTagPayload { expr, identifier } => {
-                    let tag_name = match expr {
-                        Expr::Value {
-                            value: ValueType::Tag { name, payload },
-                            token,
-                        } => name.lexeme.clone(),
-                        _ => unreachable!(),
-                    };
-
+                IsArmPattern::CaptureTagPayload {
+                    tag_name,
+                    expr,
+                    identifier,
+                } => {
                     scope
                         .bytecode
                         .add_op(ByteCode::GetTagName)
                         .add_op(ByteCode::PushString)
-                        .add_string(&tag_name)
+                        .add_string(&tag_name.lexeme)
                         .add_op(ByteCode::Equals);
 
                     // Jump to next arm if not equal

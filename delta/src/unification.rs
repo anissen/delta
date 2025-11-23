@@ -295,7 +295,7 @@ pub fn unify(
                 generics,
                 token,
             },
-        ) => todo!(),
+        ) => {}
         (
             UnificationType::Union(unification_types1),
             UnificationType::Union(unification_types2),

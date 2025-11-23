@@ -106,7 +106,7 @@ pub enum IsArmPattern {
         identifier: Token,
     },
     CaptureTagPayload {
-        // tag_name: Token,
+        tag_name: Token,
         expr: Expr, /* TODO(anissen): Should this be a Value instead? */
         identifier: Token,
     },

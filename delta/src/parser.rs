@@ -305,6 +305,7 @@ impl Parser {
                     if let Some(payload) = *payload {
                         match payload {
                             Expr::Identifier { name } => IsArmPattern::CaptureTagPayload {
+                                tag_name: tag_name.clone(),
                                 expr: Expr::Value {
                                     value: ValueType::Tag {
                                         name: tag_name,

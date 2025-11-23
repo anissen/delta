@@ -1,7 +1,7 @@
 script = '''
 match = \tag
 	tag is
-		:yellow
+		:yellow 0
 			"no"
 		:yellow 3
 			"almost"
@@ -17,8 +17,8 @@ result = "yes"
 type = "string"
 
 [output.compiler]
-bytecode = "[35, 5, 109, 97, 116, 99, 104, 1, 0, 45, 36, 4, 109, 97, 105, 110, 37, 0, 1, 21, 0, 27, 0, 0, 0, 5, 32, 6, 121, 101, 108, 108, 111, 119, 39, 1, 0, 0, 5, 109, 97, 116, 99, 104, 38, 36, 5, 109, 97, 116, 99, 104, 20, 0, 31, 6, 121, 101, 108, 108, 111, 119, 17, 44, 0, 7, 28, 2, 110, 111, 42, 0, 66, 20, 0, 27, 0, 0, 0, 3, 32, 6, 121, 101, 108, 108, 111, 119, 17, 44, 0, 11, 28, 6, 97, 108, 109, 111, 115, 116, 42, 0, 36, 20, 0, 27, 0, 0, 0, 5, 32, 6, 121, 101, 108, 108, 111, 119, 17, 44, 0, 8, 28, 3, 121, 101, 115, 42, 0, 9, 28, 7, 97, 108, 115, 111, 32, 110, 111, 38]"
-bytecode_length = 140
+bytecode = "[35, 5, 109, 97, 116, 99, 104, 1, 0, 45, 36, 4, 109, 97, 105, 110, 37, 0, 1, 21, 0, 27, 0, 0, 0, 5, 32, 6, 121, 101, 108, 108, 111, 119, 39, 1, 0, 0, 5, 109, 97, 116, 99, 104, 38, 36, 5, 109, 97, 116, 99, 104, 20, 0, 27, 0, 0, 0, 0, 32, 6, 121, 101, 108, 108, 111, 119, 17, 44, 0, 7, 28, 2, 110, 111, 42, 0, 66, 20, 0, 27, 0, 0, 0, 3, 32, 6, 121, 101, 108, 108, 111, 119, 17, 44, 0, 11, 28, 6, 97, 108, 109, 111, 115, 116, 42, 0, 36, 20, 0, 27, 0, 0, 0, 5, 32, 6, 121, 101, 108, 108, 111, 119, 17, 44, 0, 8, 28, 3, 121, 101, 115, 42, 0, 9, 28, 7, 97, 108, 115, 111, 32, 110, 111, 38]"
+bytecode_length = 145
 disassembled = """
 0 \tfunction signature (name: match) (local count: 1) (function position: 45)
 
@@ -32,32 +32,33 @@ disassembled = """
 
 45 \t=== function chunk: match ===
 52 \tget_value (index: 0)
-54 \tpush_simple_tag (value: ':yellow')
-62 \teq
-63 \tjump if false (offset: 7, to byte 73)
-66 \tpush_string (value: 'no')
-70 \tjump (offset: 66, to byte 139)
-73 \tget_value (index: 0)
-75 \tpush_integer (value: 3)
-80 \tpush_tag (value: ':yellow')
-88 \teq
-89 \tjump if false (offset: 11, to byte 103)
-92 \tpush_string (value: 'almost')
-100 \tjump (offset: 36, to byte 139)
-103 \tget_value (index: 0)
-105 \tpush_integer (value: 5)
-110 \tpush_tag (value: ':yellow')
-118 \teq
-119 \tjump if false (offset: 8, to byte 130)
-122 \tpush_string (value: 'yes')
-127 \tjump (offset: 9, to byte 139)
-130 \tpush_string (value: 'also no')
-139 \tret
+54 \tpush_integer (value: 0)
+59 \tpush_tag (value: ':yellow')
+67 \teq
+68 \tjump if false (offset: 7, to byte 78)
+71 \tpush_string (value: 'no')
+75 \tjump (offset: 66, to byte 144)
+78 \tget_value (index: 0)
+80 \tpush_integer (value: 3)
+85 \tpush_tag (value: ':yellow')
+93 \teq
+94 \tjump if false (offset: 11, to byte 108)
+97 \tpush_string (value: 'almost')
+105 \tjump (offset: 36, to byte 144)
+108 \tget_value (index: 0)
+110 \tpush_integer (value: 5)
+115 \tpush_tag (value: ':yellow')
+123 \teq
+124 \tjump if false (offset: 8, to byte 135)
+127 \tpush_string (value: 'yes')
+132 \tjump (offset: 9, to byte 144)
+135 \tpush_string (value: 'also no')
+144 \tret
 """
 
 [output.vm]
-bytes_read = 114
-instructions_executed = 25
+bytes_read = 119
+instructions_executed = 26
 jumps_performed = 3
 max_stack_height = 4
-stack_allocations = 17
+stack_allocations = 18

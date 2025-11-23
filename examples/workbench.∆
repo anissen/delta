@@ -208,19 +208,19 @@
 
 # --------------------
 
-x = 0
-get_game_event = \v
-	x is
-		0
-			:setup
-		_
-			:update
+# x = 0
+# get_game_event = \v
+# 	x is
+# 		0
+# 			:setup
+# 		_
+# 			:update
 
-(0 | get_game_event) is
-	:setup
-		"setup" | log
-	:update
-		"update" | log
+# (0 | get_game_event) is
+# 	:setup
+# 		"setup" | log
+# 	:update
+# 		"update" | log
 
 # --------------------
 
@@ -251,3 +251,13 @@ get_game_event = \v
 # entities
 # 	| each
 # 		.p += .v
+
+match = \tag
+	tag is
+		:yellow 3
+			"almost"
+		:yellow 5
+			"yes"
+		_
+			"also no"
+(:yellow 5) | match
