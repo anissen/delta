@@ -246,7 +246,7 @@ impl<'a> Codegen<'a> {
                 if name.lexeme.len() > 255 {
                     panic!("string too long!");
                 }
-                if let Some(payload) = &**payload {
+                if let Some(payload) = payload {
                     self.emit_expr(payload, scope);
                     scope
                         .bytecode

@@ -12,7 +12,7 @@ pub enum ValueType {
     },
     Tag {
         name: Token,
-        payload: Box<Option<Expr>>,
+        payload: Option<Box<Expr>>,
     },
     List(Vec<Expr>),
     Component {
