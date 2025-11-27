@@ -28,112 +28,112 @@ result = "Results are: case1: result is ok with some specific content, case2: re
 type = "string"
 
 [output.compiler]
-bytecode = "[35, 4, 102, 117, 110, 99, 1, 1, 77, 36, 4, 109, 97, 105, 110, 37, 0, 1, 21, 0, 28, 18, 116, 104, 105, 115, 32, 105, 115, 32, 115, 111, 109, 101, 32, 118, 97, 108, 117, 101, 32, 2, 111, 107, 39, 1, 0, 0, 4, 102, 117, 110, 99, 21, 1, 28, 24, 116, 104, 105, 115, 32, 105, 115, 32, 115, 111, 109, 101, 32, 111, 116, 104, 101, 114, 32, 118, 97, 108, 117, 101, 32, 2, 111, 107, 39, 1, 0, 0, 4, 102, 117, 110, 99, 21, 2, 31, 4, 98, 108, 97, 104, 39, 1, 0, 0, 4, 102, 117, 110, 99, 21, 3, 28, 16, 116, 104, 105, 115, 32, 105, 115, 32, 97, 110, 32, 101, 114, 114, 111, 114, 32, 5, 101, 114, 114, 111, 114, 39, 1, 0, 0, 4, 102, 117, 110, 99, 21, 4, 31, 5, 101, 114, 114, 111, 114, 39, 1, 0, 0, 4, 102, 117, 110, 99, 21, 5, 28, 12, 110, 111, 116, 104, 105, 110, 103, 32, 104, 101, 114, 101, 32, 4, 98, 108, 97, 104, 39, 1, 0, 0, 4, 102, 117, 110, 99, 21, 6, 31, 3, 120, 121, 122, 39, 1, 0, 0, 4, 102, 117, 110, 99, 21, 7, 28, 20, 82, 101, 115, 117, 108, 116, 115, 32, 97, 114, 101, 58, 32, 99, 97, 115, 101, 49, 58, 32, 20, 1, 14, 28, 9, 44, 32, 99, 97, 115, 101, 50, 58, 32, 14, 20, 2, 14, 28, 9, 44, 32, 99, 97, 115, 101, 51, 58, 32, 14, 20, 3, 14, 28, 9, 44, 32, 99, 97, 115, 101, 52, 58, 32, 14, 20, 4, 14, 28, 10, 44, 32, 99, 97, 115, 101, 53, 97, 58, 32, 14, 20, 5, 14, 28, 10, 44, 32, 99, 97, 115, 101, 53, 98, 58, 32, 14, 20, 6, 14, 28, 10, 44, 32, 99, 97, 115, 101, 53, 99, 58, 32, 14, 20, 7, 14, 38, 36, 4, 102, 117, 110, 99, 20, 0, 28, 18, 116, 104, 105, 115, 32, 105, 115, 32, 115, 111, 109, 101, 32, 118, 97, 108, 117, 101, 32, 2, 111, 107, 17, 44, 0, 44, 28, 39, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 111, 107, 32, 119, 105, 116, 104, 32, 115, 111, 109, 101, 32, 115, 112, 101, 99, 105, 102, 105, 99, 32, 99, 111, 110, 116, 101, 110, 116, 42, 0, 131, 33, 28, 2, 111, 107, 17, 44, 0, 25, 34, 21, 1, 28, 14, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 111, 107, 58, 32, 20, 1, 14, 42, 0, 97, 20, 0, 31, 4, 98, 108, 97, 104, 17, 44, 0, 19, 28, 14, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 98, 108, 97, 104, 42, 0, 66, 33, 28, 5, 101, 114, 114, 111, 114, 17, 44, 0, 28, 34, 21, 1, 28, 17, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 101, 114, 114, 111, 114, 58, 32, 20, 1, 14, 42, 0, 26, 20, 0, 21, 1, 28, 17, 110, 111, 116, 104, 105, 110, 103, 32, 109, 97, 116, 99, 104, 101, 115, 58, 32, 20, 1, 14, 38]"
-bytecode_length = 545
+bytecode = "[35, 4, 102, 117, 110, 99, 1, 1, 84, 36, 4, 109, 97, 105, 110, 37, 0, 1, 21, 0, 28, 18, 116, 104, 105, 115, 32, 105, 115, 32, 115, 111, 109, 101, 32, 118, 97, 108, 117, 101, 32, 3, 58, 111, 107, 39, 1, 0, 0, 4, 102, 117, 110, 99, 21, 1, 28, 24, 116, 104, 105, 115, 32, 105, 115, 32, 115, 111, 109, 101, 32, 111, 116, 104, 101, 114, 32, 118, 97, 108, 117, 101, 32, 3, 58, 111, 107, 39, 1, 0, 0, 4, 102, 117, 110, 99, 21, 2, 31, 5, 58, 98, 108, 97, 104, 39, 1, 0, 0, 4, 102, 117, 110, 99, 21, 3, 28, 16, 116, 104, 105, 115, 32, 105, 115, 32, 97, 110, 32, 101, 114, 114, 111, 114, 32, 6, 58, 101, 114, 114, 111, 114, 39, 1, 0, 0, 4, 102, 117, 110, 99, 21, 4, 31, 6, 58, 101, 114, 114, 111, 114, 39, 1, 0, 0, 4, 102, 117, 110, 99, 21, 5, 28, 12, 110, 111, 116, 104, 105, 110, 103, 32, 104, 101, 114, 101, 32, 5, 58, 98, 108, 97, 104, 39, 1, 0, 0, 4, 102, 117, 110, 99, 21, 6, 31, 4, 58, 120, 121, 122, 39, 1, 0, 0, 4, 102, 117, 110, 99, 21, 7, 28, 20, 82, 101, 115, 117, 108, 116, 115, 32, 97, 114, 101, 58, 32, 99, 97, 115, 101, 49, 58, 32, 20, 1, 14, 28, 9, 44, 32, 99, 97, 115, 101, 50, 58, 32, 14, 20, 2, 14, 28, 9, 44, 32, 99, 97, 115, 101, 51, 58, 32, 14, 20, 3, 14, 28, 9, 44, 32, 99, 97, 115, 101, 52, 58, 32, 14, 20, 4, 14, 28, 10, 44, 32, 99, 97, 115, 101, 53, 97, 58, 32, 14, 20, 5, 14, 28, 10, 44, 32, 99, 97, 115, 101, 53, 98, 58, 32, 14, 20, 6, 14, 28, 10, 44, 32, 99, 97, 115, 101, 53, 99, 58, 32, 14, 20, 7, 14, 38, 36, 4, 102, 117, 110, 99, 20, 0, 28, 18, 116, 104, 105, 115, 32, 105, 115, 32, 115, 111, 109, 101, 32, 118, 97, 108, 117, 101, 32, 3, 58, 111, 107, 17, 44, 0, 44, 28, 39, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 111, 107, 32, 119, 105, 116, 104, 32, 115, 111, 109, 101, 32, 115, 112, 101, 99, 105, 102, 105, 99, 32, 99, 111, 110, 116, 101, 110, 116, 42, 0, 134, 33, 28, 3, 58, 111, 107, 17, 44, 0, 25, 34, 21, 1, 28, 14, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 111, 107, 58, 32, 20, 1, 14, 42, 0, 99, 20, 0, 31, 5, 58, 98, 108, 97, 104, 17, 44, 0, 19, 28, 14, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 98, 108, 97, 104, 42, 0, 67, 33, 28, 6, 58, 101, 114, 114, 111, 114, 17, 44, 0, 28, 34, 21, 1, 28, 17, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 101, 114, 114, 111, 114, 58, 32, 20, 1, 14, 42, 0, 26, 20, 0, 21, 1, 28, 17, 110, 111, 116, 104, 105, 110, 103, 32, 109, 97, 116, 99, 104, 101, 115, 58, 32, 20, 1, 14, 38]"
+bytecode_length = 556
 disassembled = """
-0 \tfunction signature (name: func) (local count: 1) (function position: 333)
+0 \tfunction signature (name: func) (local count: 1) (function position: 340)
 
 9 \t=== function chunk: main ===
 15 \tfunction (function index: 0) (params: 1)
 18 \tset_value (index: 0)
 20 \tpush_string (value: 'this is some value')
 40 \tpush_tag (value: ':ok')
-44 \tcall func (is_global: 0) (arg count: 1, function index: 0)
-53 \tset_value (index: 1)
-55 \tpush_string (value: 'this is some other value')
-81 \tpush_tag (value: ':ok')
-85 \tcall func (is_global: 0) (arg count: 1, function index: 0)
-94 \tset_value (index: 2)
-96 \tpush_simple_tag (value: ':blah')
-102 \tcall func (is_global: 0) (arg count: 1, function index: 0)
-111 \tset_value (index: 3)
-113 \tpush_string (value: 'this is an error')
-131 \tpush_tag (value: ':error')
-138 \tcall func (is_global: 0) (arg count: 1, function index: 0)
-147 \tset_value (index: 4)
-149 \tpush_simple_tag (value: ':error')
-156 \tcall func (is_global: 0) (arg count: 1, function index: 0)
-165 \tset_value (index: 5)
-167 \tpush_string (value: 'nothing here')
-181 \tpush_tag (value: ':blah')
-187 \tcall func (is_global: 0) (arg count: 1, function index: 0)
-196 \tset_value (index: 6)
-198 \tpush_simple_tag (value: ':xyz')
-203 \tcall func (is_global: 0) (arg count: 1, function index: 0)
-212 \tset_value (index: 7)
-214 \tpush_string (value: 'Results are: case1: ')
-236 \tget_value (index: 1)
-238 \tstr_concat
-239 \tpush_string (value: ', case2: ')
-250 \tstr_concat
-251 \tget_value (index: 2)
-253 \tstr_concat
-254 \tpush_string (value: ', case3: ')
-265 \tstr_concat
-266 \tget_value (index: 3)
-268 \tstr_concat
-269 \tpush_string (value: ', case4: ')
-280 \tstr_concat
-281 \tget_value (index: 4)
-283 \tstr_concat
-284 \tpush_string (value: ', case5a: ')
-296 \tstr_concat
-297 \tget_value (index: 5)
-299 \tstr_concat
-300 \tpush_string (value: ', case5b: ')
-312 \tstr_concat
-313 \tget_value (index: 6)
-315 \tstr_concat
-316 \tpush_string (value: ', case5c: ')
-328 \tstr_concat
-329 \tget_value (index: 7)
-331 \tstr_concat
-332 \tret
+45 \tcall func (is_global: 0) (arg count: 1, function index: 0)
+54 \tset_value (index: 1)
+56 \tpush_string (value: 'this is some other value')
+82 \tpush_tag (value: ':ok')
+87 \tcall func (is_global: 0) (arg count: 1, function index: 0)
+96 \tset_value (index: 2)
+98 \tpush_simple_tag (value: ':blah')
+105 \tcall func (is_global: 0) (arg count: 1, function index: 0)
+114 \tset_value (index: 3)
+116 \tpush_string (value: 'this is an error')
+134 \tpush_tag (value: ':error')
+142 \tcall func (is_global: 0) (arg count: 1, function index: 0)
+151 \tset_value (index: 4)
+153 \tpush_simple_tag (value: ':error')
+161 \tcall func (is_global: 0) (arg count: 1, function index: 0)
+170 \tset_value (index: 5)
+172 \tpush_string (value: 'nothing here')
+186 \tpush_tag (value: ':blah')
+193 \tcall func (is_global: 0) (arg count: 1, function index: 0)
+202 \tset_value (index: 6)
+204 \tpush_simple_tag (value: ':xyz')
+210 \tcall func (is_global: 0) (arg count: 1, function index: 0)
+219 \tset_value (index: 7)
+221 \tpush_string (value: 'Results are: case1: ')
+243 \tget_value (index: 1)
+245 \tstr_concat
+246 \tpush_string (value: ', case2: ')
+257 \tstr_concat
+258 \tget_value (index: 2)
+260 \tstr_concat
+261 \tpush_string (value: ', case3: ')
+272 \tstr_concat
+273 \tget_value (index: 3)
+275 \tstr_concat
+276 \tpush_string (value: ', case4: ')
+287 \tstr_concat
+288 \tget_value (index: 4)
+290 \tstr_concat
+291 \tpush_string (value: ', case5a: ')
+303 \tstr_concat
+304 \tget_value (index: 5)
+306 \tstr_concat
+307 \tpush_string (value: ', case5b: ')
+319 \tstr_concat
+320 \tget_value (index: 6)
+322 \tstr_concat
+323 \tpush_string (value: ', case5c: ')
+335 \tstr_concat
+336 \tget_value (index: 7)
+338 \tstr_concat
+339 \tret
 
-333 \t=== function chunk: func ===
-339 \tget_value (index: 0)
-341 \tpush_string (value: 'this is some value')
-361 \tpush_tag (value: ':ok')
-365 \teq
-366 \tjump if false (offset: 44, to byte 413)
-369 \tpush_string (value: 'result is ok with some specific content')
-410 \tjump (offset: 131, to byte 544)
-413 \tget_tag_name
-414 \tpush_string (value: 'ok')
-418 \teq
-419 \tjump if false (offset: 25, to byte 447)
-422 \tget_tag_payload
-423 \tset_value (index: 1)
-425 \tpush_string (value: 'result is ok: ')
-441 \tget_value (index: 1)
-443 \tstr_concat
-444 \tjump (offset: 97, to byte 544)
-447 \tget_value (index: 0)
-449 \tpush_simple_tag (value: ':blah')
-455 \teq
-456 \tjump if false (offset: 19, to byte 478)
-459 \tpush_string (value: 'result is blah')
-475 \tjump (offset: 66, to byte 544)
-478 \tget_tag_name
-479 \tpush_string (value: 'error')
-486 \teq
-487 \tjump if false (offset: 28, to byte 518)
-490 \tget_tag_payload
-491 \tset_value (index: 1)
-493 \tpush_string (value: 'result is error: ')
-512 \tget_value (index: 1)
-514 \tstr_concat
-515 \tjump (offset: 26, to byte 544)
-518 \tget_value (index: 0)
-520 \tset_value (index: 1)
-522 \tpush_string (value: 'nothing matches: ')
-541 \tget_value (index: 1)
-543 \tstr_concat
-544 \tret
+340 \t=== function chunk: func ===
+346 \tget_value (index: 0)
+348 \tpush_string (value: 'this is some value')
+368 \tpush_tag (value: ':ok')
+373 \teq
+374 \tjump if false (offset: 44, to byte 421)
+377 \tpush_string (value: 'result is ok with some specific content')
+418 \tjump (offset: 134, to byte 555)
+421 \tget_tag_name
+422 \tpush_string (value: ':ok')
+427 \teq
+428 \tjump if false (offset: 25, to byte 456)
+431 \tget_tag_payload
+432 \tset_value (index: 1)
+434 \tpush_string (value: 'result is ok: ')
+450 \tget_value (index: 1)
+452 \tstr_concat
+453 \tjump (offset: 99, to byte 555)
+456 \tget_value (index: 0)
+458 \tpush_simple_tag (value: ':blah')
+465 \teq
+466 \tjump if false (offset: 19, to byte 488)
+469 \tpush_string (value: 'result is blah')
+485 \tjump (offset: 67, to byte 555)
+488 \tget_tag_name
+489 \tpush_string (value: ':error')
+497 \teq
+498 \tjump if false (offset: 28, to byte 529)
+501 \tget_tag_payload
+502 \tset_value (index: 1)
+504 \tpush_string (value: 'result is error: ')
+523 \tget_value (index: 1)
+525 \tstr_concat
+526 \tjump (offset: 26, to byte 555)
+529 \tget_value (index: 0)
+531 \tset_value (index: 1)
+533 \tpush_string (value: 'nothing matches: ')
+552 \tget_value (index: 1)
+554 \tstr_concat
+555 \tret
 """
 
 [output.vm]
-bytes_read = 949
+bytes_read = 978
 instructions_executed = 196
 jumps_performed = 22
 max_stack_height = 11

@@ -601,9 +601,13 @@ impl<'env> InferenceContext<'env> {
                         }
 
                         IsArmPattern::Capture { identifier } => {
-                            // self.environment
-                            //     .variables
-                            //     .insert(identifier.lexeme.clone(), is_type.clone());
+                            // dbg!(&identifier);
+                            let x = self.type_placeholder();
+                            self.environment
+                                .variables
+                                .insert(identifier.lexeme.clone(), x);
+
+                            has_wildcard = true;
                         }
 
                         IsArmPattern::CaptureTagPayload {
