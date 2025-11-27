@@ -12,6 +12,7 @@ pub enum Type {
     Float,
     String,
     Tag { name: String },
+    // TagUnion {  }
     List,
     Function,
     Component,
@@ -172,13 +173,13 @@ impl UnificationType {
     }
 }
 
-// fn unificationTypeName(ty: &UnificationType) -> String {
-//     match ty {
-//         UnificationType::Constructor { token, .. } => format!("Constructor({})", token.lexeme),
-//         UnificationType::Union(types) => format!("Union({:?})", types),
-//         UnificationType::Variable(v) => format!("Variable({})", v),
-//     }
-// }
+fn unificationTypeName(ty: &UnificationType) -> String {
+    match ty {
+        UnificationType::Constructor { token, .. } => format!("Constructor({})", token.lexeme),
+        UnificationType::Union(types) => format!("Union({:?})", types),
+        UnificationType::Variable(v) => format!("Variable({})", v),
+    }
+}
 
 pub fn unify(
     left: &UnificationType,
@@ -187,11 +188,11 @@ pub fn unify(
     substitutions: &mut HashMap<TypeVariable, UnificationType>,
     diagnostics: &mut Diagnostics,
 ) {
-    // println!(
-    //     "Unifying {} and {}",
-    //     unificationTypeName(left),
-    //     unificationTypeName(right)
-    // );
+    println!(
+        "Unifying {} and {}",
+        unificationTypeName(left),
+        unificationTypeName(right)
+    );
     match (left.clone(), right.clone()) {
         (
             UnificationType::Constructor {
@@ -205,6 +206,13 @@ pub fn unify(
                 token: token2,
             },
         ) => {
+            // if let Type::Tag { name: tag_name1 } = name1
+            //     && let Type::Tag { name: tag_name2 } = name2
+            // {
+            //     substitutions.insert(k, v)
+            //     UnificationType::Union(vec![left, right])
+            // }
+
             if name1 != name2 || generics1.len() != generics2.len() {
                 diagnostics.add_error(Error::TypeMismatch {
                     expected: right.substitute(substitutions),
@@ -222,6 +230,21 @@ pub fn unify(
         (UnificationType::Variable(i), UnificationType::Variable(j)) if i == j => {}
         (_, UnificationType::Variable(v)) => match substitutions.get(&v) {
             Some(substitution) => {
+                if let UnificationType::Constructor {
+                    typ: Type::Tag { name: tag_name1 },
+                    ..
+                } = left
+                    && let UnificationType::Constructor {
+                        typ: Type::Tag { name: tag_name2 },
+                        ..
+                    } = &substitution
+                {
+                    // substitutions.insert(
+                    //     v,
+                    //     UnificationType::Union(Box::new(vec![left.clone(), right.clone()])),
+                    // );
+                }
+
                 unify(left, &substitution.clone(), at, substitutions, diagnostics);
             }
             None => {
@@ -253,23 +276,44 @@ pub fn unify(
                     generics: generics2,
                     token: token2,
                 } => {
-                    mismatch_token = Some(token2);
-                    name1 == *name2 && generics1.len() == generics2.len()
+                    mismatch_token = Some(token2).cloned();
+                    println!("*************************");
+                    dbg!(&name1, &name2, &generics1, &generics2);
+                    if name1 != *name2 || generics1.len() != generics2.len() {
+                        return false;
+                    }
+
+                    for (left, right) in zip(&generics1, generics2) {
+                        unify(&left, &right, at, substitutions, diagnostics);
+                    }
+                    true
                 }
-                UnificationType::Variable(v) => match substitutions.get(&v) {
-                    Some(substitution) => match substitution {
-                        UnificationType::Constructor {
-                            typ: name2,
-                            generics: generics2,
-                            token: token2,
-                        } => {
-                            mismatch_token = Some(token2);
-                            name1 == *name2 && generics1.len() == generics2.len()
-                        }
-                        _ => false,
-                    },
-                    None => false,
-                },
+                UnificationType::Variable(v) => {
+                    let m = substitutions.get(&v).cloned();
+                    match m {
+                        Some(ref substitution) => match substitution {
+                            UnificationType::Constructor {
+                                typ: name2,
+                                generics: generics2,
+                                token: token2,
+                            } => {
+                                mismatch_token = Some(token2).cloned();
+                                println!("*!!!!************************");
+                                dbg!(&name1, &name2, &generics1, &generics2);
+                                if name1 != *name2 || generics1.len() != generics2.len() {
+                                    return false;
+                                }
+
+                                for (left, right) in zip(&generics1, generics2) {
+                                    unify(&left, &right, at, substitutions, diagnostics);
+                                }
+                                true
+                            }
+                            _ => todo!(),
+                        },
+                        None => todo!(),
+                    }
+                }
                 UnificationType::Union(union_types) => {
                     todo!();
                 }
@@ -278,8 +322,8 @@ pub fn unify(
                 diagnostics.add_error(Error::TypeMismatch {
                     expected: right.substitute(substitutions),
                     got: left.substitute(substitutions),
-                    declared_at: token1,
-                    provided_at: mismatch_token.unwrap().clone(),
+                    declared_at: token1.clone(),
+                    provided_at: mismatch_token.unwrap_or(token1),
                     mismatch_at: at.cloned(),
                 });
             }
@@ -295,12 +339,26 @@ pub fn unify(
                 generics,
                 token,
             },
-        ) => {}
-        (
-            UnificationType::Union(unification_types1),
-            UnificationType::Union(unification_types2),
         ) => {
-            todo!()
+            // todo!();
+        }
+        (UnificationType::Union(types1), UnificationType::Union(types2)) => {
+            todo!();
+            // check if each set of types is able to unify
+            // if let Some(first) = types1.first() {
+            //     types1
+            //         .iter()
+            //         .for_each(|t| unify(first, t, at, substitutions, diagnostics));
+            // }
+            // if let Some(first) = types2.first() {
+            //     types2
+            //         .iter()
+            //         .for_each(|t| unify(first, t, at, substitutions, diagnostics));
+            // }
+
+            // for (left, right) in zip(types1.iter(), types2.iter()) {
+            //     unify(left, right, at, substitutions, diagnostics);
+            // }
         }
     }
 }

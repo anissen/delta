@@ -376,14 +376,17 @@ impl<'env> InferenceContext<'env> {
                             parameter_type
                         })
                         .collect::<Vec<UnificationType>>();
+                    dbg!(&param_types);
 
                     let value_type = self.infer_type(expr);
 
-                    UnificationType::Constructor {
+                    let res = UnificationType::Constructor {
                         typ: Type::Function,
                         generics: [param_types, vec![value_type]].concat(),
                         token: token.clone(),
-                    }
+                    };
+                    dbg!(&res);
+                    res
                 }
                 ValueType::Component { name, properties } => {
                     let mut map = HashMap::new();
@@ -562,22 +565,44 @@ impl<'env> InferenceContext<'env> {
             Expr::Grouping(expr) => self.infer_type(expr),
 
             Expr::Is { expr, arms } => {
-                let is_type = self.infer_type(expr);
-                let mut return_type = None;
-                let mut tag_union = Vec::new();
+                // let is_type = self.infer_type(expr);
+                // let mut return_type = None;
+
+                let mut arm_expr_types = Vec::new();
+                let mut return_types = Vec::new();
 
                 // TODO(anissen): Add positions here
                 for arm in arms {
+                    dbg!(&arm.pattern);
                     // Check that arm pattern types match expr type
                     match &arm.pattern {
                         IsArmPattern::Expression(expr) => {
-                            self.expects_type(expr, is_type.clone());
+                            println!("-----------=======================-----");
+                            dbg!(&expr);
+                            dbg!(self.infer_type(expr));
+                            println!("-----------=======================-----");
+                            // if let Expr::Value {
+                            //     value: ValueType::Tag { name, payload },
+                            //     token,
+                            // } = expr
+                            // {
+                            //     arm_expr_types.push(UnificationType::Constructor {
+                            //         typ: Type::Tag {
+                            //             name: tag_name.lexeme.clone(),
+                            //         },
+                            //         // Option<T> to Vec<T>
+                            //         generics: payload_types,
+                            //         token: identifier.clone(),
+                            //     });
+                            // } else {
+                            // }
+                            arm_expr_types.push(self.infer_type(expr));
                         }
 
                         IsArmPattern::Capture { identifier } => {
-                            self.environment
-                                .variables
-                                .insert(identifier.lexeme.clone(), is_type.clone());
+                            // self.environment
+                            //     .variables
+                            //     .insert(identifier.lexeme.clone(), is_type.clone());
                         }
 
                         IsArmPattern::CaptureTagPayload {
@@ -585,29 +610,43 @@ impl<'env> InferenceContext<'env> {
                             expr,
                             identifier,
                         } => {
-                            self.expects_type(
-                                expr,
-                                make_constructor(
-                                    Type::Tag {
-                                        name: tag_name.lexeme.clone(),
-                                    },
-                                    identifier.clone(),
-                                ),
-                            );
-                            self.environment
-                                .variables
-                                .insert(identifier.lexeme.clone(), is_type.clone());
-                            if let Expr::Value {
+                            let payload_types = if let Expr::Value {
                                 value: ValueType::Tag { name, payload },
                                 token,
                             } = expr
                                 && let Some(payload_expr) = payload.as_ref()
                             {
-                                let payload_type = self.infer_type(payload_expr);
-                                self.environment
-                                    .variables
-                                    .insert(name.lexeme.clone(), payload_type.clone());
-                            }
+                                vec![self.infer_type(payload_expr)]
+                                // self.environment
+                                //     .variables
+                                //     .insert(name.lexeme.clone(), payload_type.clone());
+                            } else {
+                                Vec::new()
+                            };
+                            // println!("-----------=======================-----");
+                            dbg!(&payload_types);
+                            arm_expr_types.push(UnificationType::Constructor {
+                                typ: Type::Tag {
+                                    name: tag_name.lexeme.clone(),
+                                },
+                                // Option<T> to Vec<T>
+                                generics: payload_types,
+                                token: identifier.clone(),
+                            });
+                            // self.environment
+                            //     .variables
+                            //     .insert(identifier.lexeme.clone(), is_type.clone());
+                            // if let Expr::Value {
+                            //     value: ValueType::Tag { name, payload },
+                            //     token,
+                            // } = expr
+                            //     && let Some(payload_expr) = payload.as_ref()
+                            // {
+                            //     let payload_type = self.infer_type(payload_expr);
+                            //     self.environment
+                            //         .variables
+                            //         .insert(name.lexeme.clone(), payload_type.clone());
+                            // }
                         }
 
                         IsArmPattern::Default => (),
@@ -630,7 +669,7 @@ impl<'env> InferenceContext<'env> {
                     //     token,
                     // } = arm_type.clone()
                     // {
-                    tag_union.push(arm_type.clone());
+                    return_types.push(arm_type);
                     //     return_type = Some(arm_type);
                     // } else if let Some(return_type) = return_type.clone() {
                     //     self.expects_type(&arm.block, return_type);
@@ -639,19 +678,19 @@ impl<'env> InferenceContext<'env> {
                     // }
                 }
 
-                if let Expr::Identifier { name } = &**expr {
-                    self.environment
-                        .variables
-                        .insert(name.lexeme.clone(), is_type.clone());
-                }
+                // if let Expr::Identifier { name } = &**expr {
+                //     self.environment
+                //         .variables
+                //         .insert(name.lexeme.clone(), is_type.clone());
+                // }
 
                 // TODO(anissen): Check that types are the same (or tag)
+                dbg!(&arm_expr_types);
+                self.expects_type(expr, UnificationType::Union(Box::new(arm_expr_types)));
+                dbg!(&return_types);
 
-                if !tag_union.is_empty() {
-                    UnificationType::Union(Box::new(tag_union))
-                } else {
-                    return_type.unwrap()
-                }
+                // UnificationType::Union(Box::new(return_types))
+                self.type_placeholder()
             }
         }
     }
