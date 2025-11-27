@@ -110,7 +110,10 @@ impl<'a> Codegen<'a> {
                 scope.bytecode.add_get_context_value(&name.lexeme);
             }
 
-            Expr::ComponentDefinition { name, properties } => {
+            Expr::ComponentDefinition {
+                name: _,
+                properties: _,
+            } => {
                 // TODO(anissen): Implement component definition
             }
 
@@ -260,7 +263,10 @@ impl<'a> Codegen<'a> {
                 };
             }
 
-            ValueType::Component { name, properties } => {
+            ValueType::Component {
+                name: _,
+                properties,
+            } => {
                 // TODO: This will fail if the initialization order of properties does not match the definition
                 properties.iter().for_each(|property| {
                     self.emit_expr(&property.value, scope);

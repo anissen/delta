@@ -204,7 +204,7 @@ impl VirtualMachine {
                 }
 
                 ByteCode::PushComponent => {
-                    let component_id = self.read_i32();
+                    let _component_id = self.read_i32();
                     println!("push_component");
                 }
 

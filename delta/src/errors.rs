@@ -55,8 +55,8 @@ impl fmt::Display for Error {
                 expected,
                 got,
                 declared_at,
-                provided_at,
-                mismatch_at,
+                provided_at: _,
+                mismatch_at: _,
             } => write!(
                 f,
                 "Line {}.{}: Expected {} but got {}.",
@@ -118,13 +118,13 @@ pub trait ErrorDescription {
 impl ErrorDescription for Error {
     fn print(&self, source: &str) -> String {
         match self {
-            Error::ParseErr { message, token } => {
+            Error::ParseErr { message: _, token } => {
                 let error_line = get_error_line(source, token);
                 format!("{error_line}\n{self}")
             }
             Error::TypeMismatch {
-                expected,
-                got,
+                expected: _,
+                got: _,
                 declared_at,
                 provided_at,
                 mismatch_at,
@@ -150,14 +150,14 @@ impl ErrorDescription for Error {
                 let error_line = get_error_line(source, token);
                 format!("{error_line}\n{self}")
             }
-            Error::FunctionNotFound { name } => {
+            Error::FunctionNotFound { name: _ } => {
                 format!("???\n{self}")
             }
             Error::FunctionNameTooLong { token } => {
                 let error_line = get_error_line(source, token);
                 format!("{error_line}\n{self}")
             }
-            Error::FileErr(error_msg) => {
+            Error::FileErr(_error_msg) => {
                 format!("???\n{self}")
             }
             Error::TypeRedefinition { token } => {
@@ -169,7 +169,7 @@ impl ErrorDescription for Error {
                 format!("{error_line}\n{self}")
             }
             Error::PropertyMissing {
-                property_definition,
+                property_definition: _,
                 token,
             } => {
                 let error_line = get_error_line(source, token);

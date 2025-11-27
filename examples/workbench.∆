@@ -252,15 +252,53 @@
 # 	| each
 # 		.p += .v
 
-stoplight_str = \color
-    color is
-        :red
-        	"red"
-        :green 5
-        	"green"
-        :yellow
-        	"yellow"
-        _
-        	"something else"
+# --------------
 
-:blue | stoplight_str
+# stoplight_str = \color
+#     color is
+#         :red
+#         	"red"
+#         :green 5
+#         	"green"
+#         :yellow
+#         	"yellow"
+#         _
+#         	"something else"
+
+# :blue | stoplight_str
+
+# --------------
+
+# stoplight_color = \v
+# 	v is
+# 		_ if v >. 0.0
+# 			:red
+# 		_ if v == 0.0
+# 			:yellow 4
+# 		_
+# 			:green
+# res = (0.0 | stoplight_color)
+
+# res is
+# 	:red
+# 		"maybe"
+# 	:yellow
+# 		"nope"
+# 	_
+# 		"also no"
+
+# --------------
+
+read_file = \file
+	file is
+		"blah"
+			:ok "file contents"
+		_
+			:error "something went wrong"
+
+result = "blah" | read_file
+result is
+	:ok contents
+		"result is ok: {contents}"
+	else
+	    "result was not ok"

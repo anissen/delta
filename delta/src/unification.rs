@@ -176,7 +176,7 @@ impl UnificationType {
             }
             UnificationType::Union {
                 types,
-                has_wildcard,
+                has_wildcard: _,
             } => {
                 for typ in *types {
                     if self.occurs_in(typ.clone(), substitutions) {
@@ -190,24 +190,24 @@ impl UnificationType {
     }
 }
 
-fn unification_type_name(ty: &UnificationType) -> String {
-    match ty {
-        UnificationType::Constructor { token, .. } => format!("Constructor({})", token.lexeme),
-        UnificationType::Union {
-            types,
-            has_wildcard,
-        } => format!(
-            "Union({}, wildcard: {})",
-            (**types)
-                .iter()
-                .map(unification_type_name)
-                .collect::<Vec<_>>()
-                .join(", "),
-            has_wildcard
-        ),
-        UnificationType::Variable(v) => format!("Variable({})", v),
-    }
-}
+// fn unification_type_name(ty: &UnificationType) -> String {
+//     match ty {
+//         UnificationType::Constructor { token, .. } => format!("Constructor({})", token.lexeme),
+//         UnificationType::Union {
+//             types,
+//             has_wildcard,
+//         } => format!(
+//             "Union({}, wildcard: {})",
+//             (**types)
+//                 .iter()
+//                 .map(unification_type_name)
+//                 .collect::<Vec<_>>()
+//                 .join(", "),
+//             has_wildcard
+//         ),
+//         UnificationType::Variable(v) => format!("Variable({})", v),
+//     }
+// }
 
 pub fn unify(
     left: &UnificationType,
@@ -216,11 +216,11 @@ pub fn unify(
     substitutions: &mut HashMap<TypeVariable, UnificationType>,
     diagnostics: &mut Diagnostics,
 ) {
-    println!(
-        "Unifying {} and {}",
-        unification_type_name(left),
-        unification_type_name(right)
-    );
+    // println!(
+    //     "Unifying {} and {}",
+    //     unification_type_name(left),
+    //     unification_type_name(right)
+    // );
     match (left.clone(), right.clone()) {
         (
             UnificationType::Constructor {
@@ -320,8 +320,8 @@ pub fn unify(
                     }
                 }
                 UnificationType::Union {
-                    types,
-                    has_wildcard,
+                    types: _,
+                    has_wildcard: _,
                 } => {
                     todo!();
                 }
@@ -339,31 +339,31 @@ pub fn unify(
         (
             UnificationType::Union {
                 types,
-                has_wildcard,
+                has_wildcard: _,
             },
             UnificationType::Constructor {
                 typ,
-                generics,
+                generics: _,
                 token,
             },
         ) => {
             // todo!();
-            dbg!(&types);
-            dbg!(&typ);
-            dbg!(&token);
+            // dbg!(&types);
+            // dbg!(&typ);
+            // dbg!(&token);
         }
         (
             UnificationType::Union {
                 types: types1,
-                has_wildcard: has_wildcard1,
+                has_wildcard: _has_wildcard1,
             },
             UnificationType::Union {
                 types: types2,
-                has_wildcard: has_wildcard2,
+                has_wildcard: _has_wildcard2,
             },
         ) => {
-            dbg!(&types1);
-            dbg!(&types2);
+            // dbg!(&types1);
+            // dbg!(&types2);
             // Check that all tags in `types1` can be unified to a type in `types2`
             for type1 in *types1 {
                 if let UnificationType::Constructor {
@@ -376,7 +376,7 @@ pub fn unify(
                         if let UnificationType::Constructor {
                             typ: name2,
                             generics: generics2,
-                            token: token2,
+                            token: _token2,
                         } = t2
                         {
                             name1 == name2 && generics1.len() == generics2.len()

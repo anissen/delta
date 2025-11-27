@@ -10,8 +10,6 @@ use crate::tokens::Token;
 use crate::tokens::{Position, TokenKind};
 use crate::unification::{Type, TypeVariable, UnificationType, make_constructor, unify};
 
-// https://github.com/abs0luty/type_inference_in_rust/blob/main/src/main.rs
-
 pub fn type_check<'a>(
     expression: &'a Expr,
     context: &'a Context<'a>,
@@ -228,11 +226,6 @@ enum Constraint {
         right: UnificationType,
         at: Option<Token>,
     },
-    Union {
-        left: UnificationType,
-        right: UnificationType,
-        at: Option<Token>,
-    },
 }
 
 #[derive(Default)]
@@ -284,15 +277,6 @@ impl<'env> InferenceContext<'env> {
             at: None,
         });
     }
-
-    // fn expects_union_type(&mut self, expression: &Expr, expected_type: UnificationType) {
-    //     let actual_type = self.infer_type(expression);
-    //     self.constraints.push(Constraint::Union {
-    //         left: actual_type,
-    //         right: expected_type,
-    //         at: None,
-    //     });
-    // }
 
     fn infer_type(&mut self, expression: &Expr) -> UnificationType {
         match expression {
@@ -379,13 +363,11 @@ impl<'env> InferenceContext<'env> {
 
                     let value_type = self.infer_type(expr);
 
-                    let res = UnificationType::Constructor {
+                    UnificationType::Constructor {
                         typ: Type::Function,
                         generics: [param_types, vec![value_type]].concat(),
                         token: token.clone(),
-                    };
-                    dbg!(&res);
-                    res
+                    }
                 }
                 ValueType::Component { name, properties } => {
                     let mut map = HashMap::new();
@@ -631,7 +613,6 @@ impl<'env> InferenceContext<'env> {
                     types: Box::new(return_types),
                     has_wildcard: false,
                 }
-                // self.type_placeholder()
             }
         }
     }
@@ -650,7 +631,6 @@ impl<'env> InferenceContext<'env> {
                         self.diagnostics,
                     );
                 }
-                Constraint::Union { left, right, at } => (),
             }
         }
 
