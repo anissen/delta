@@ -299,6 +299,7 @@ impl<'env> InferenceContext<'env> {
             Expr::Identifier { name } => match self.environment.variables.get(&name.lexeme) {
                 Some(value) => value.clone(),
                 None => {
+                    panic!();
                     self.diagnostics.add_error(Error::NameNotFound {
                         token: name.clone(),
                     });
@@ -376,7 +377,6 @@ impl<'env> InferenceContext<'env> {
                             parameter_type
                         })
                         .collect::<Vec<UnificationType>>();
-                    dbg!(&param_types);
 
                     let value_type = self.infer_type(expr);
 
@@ -565,43 +565,19 @@ impl<'env> InferenceContext<'env> {
             Expr::Grouping(expr) => self.infer_type(expr),
 
             Expr::Is { expr, arms } => {
-                // let is_type = self.infer_type(expr);
-                // let mut return_type = None;
-
                 let mut has_wildcard = false;
                 let mut arm_expr_types = Vec::new();
                 let mut return_types = Vec::new();
 
                 // TODO(anissen): Add positions here
                 for arm in arms {
-                    dbg!(&arm.pattern);
                     // Check that arm pattern types match expr type
                     match &arm.pattern {
                         IsArmPattern::Expression(expr) => {
-                            println!("-----------=======================-----");
-                            dbg!(&expr);
-                            dbg!(self.infer_type(expr));
-                            println!("-----------=======================-----");
-                            // if let Expr::Value {
-                            //     value: ValueType::Tag { name, payload },
-                            //     token,
-                            // } = expr
-                            // {
-                            //     arm_expr_types.push(UnificationType::Constructor {
-                            //         typ: Type::Tag {
-                            //             name: tag_name.lexeme.clone(),
-                            //         },
-                            //         // Option<T> to Vec<T>
-                            //         generics: payload_types,
-                            //         token: identifier.clone(),
-                            //     });
-                            // } else {
-                            // }
                             arm_expr_types.push(self.infer_type(expr));
                         }
 
                         IsArmPattern::Capture { identifier } => {
-                            // dbg!(&identifier);
                             let x = self.type_placeholder();
                             self.environment
                                 .variables
@@ -615,43 +591,30 @@ impl<'env> InferenceContext<'env> {
                             expr,
                             identifier,
                         } => {
+                            dbg!(&expr);
                             let payload_types = if let Expr::Value {
                                 value: ValueType::Tag { name, payload },
                                 token,
                             } = expr
                                 && let Some(payload_expr) = payload.as_ref()
                             {
-                                vec![self.infer_type(payload_expr)]
-                                // self.environment
-                                //     .variables
-                                //     .insert(name.lexeme.clone(), payload_type.clone());
+                                let typ = if let Expr::Identifier { name } = payload_expr {
+                                    self.type_placeholder()
+                                } else {
+                                    self.infer_type(payload_expr)
+                                };
+                                vec![typ]
                             } else {
                                 Vec::new()
                             };
-                            // println!("-----------=======================-----");
                             dbg!(&payload_types);
                             arm_expr_types.push(UnificationType::Constructor {
                                 typ: Type::Tag {
                                     name: tag_name.lexeme.clone(),
                                 },
-                                // Option<T> to Vec<T>
                                 generics: payload_types,
                                 token: identifier.clone(),
                             });
-                            // self.environment
-                            //     .variables
-                            //     .insert(identifier.lexeme.clone(), is_type.clone());
-                            // if let Expr::Value {
-                            //     value: ValueType::Tag { name, payload },
-                            //     token,
-                            // } = expr
-                            //     && let Some(payload_expr) = payload.as_ref()
-                            // {
-                            //     let payload_type = self.infer_type(payload_expr);
-                            //     self.environment
-                            //         .variables
-                            //         .insert(name.lexeme.clone(), payload_type.clone());
-                            // }
                         }
 
                         IsArmPattern::Default => {
@@ -670,29 +633,10 @@ impl<'env> InferenceContext<'env> {
 
                     // Check that return types of each arm matches
                     let arm_type = self.infer_type(&arm.block);
-                    // if let UnificationType::Constructor {
-                    //     typ: Type::Tag { name },
-                    //     generics,
-                    //     token,
-                    // } = arm_type.clone()
-                    // {
                     return_types.push(arm_type);
-                    //     return_type = Some(arm_type);
-                    // } else if let Some(return_type) = return_type.clone() {
-                    //     self.expects_type(&arm.block, return_type);
-                    // } else {
-                    //     return_type = Some(arm_type);
-                    // }
                 }
 
-                // if let Expr::Identifier { name } = &**expr {
-                //     self.environment
-                //         .variables
-                //         .insert(name.lexeme.clone(), is_type.clone());
-                // }
-
                 // TODO(anissen): Check that types are the same (or tag)
-                dbg!(&arm_expr_types);
                 self.expects_type(
                     expr,
                     UnificationType::Union {
@@ -700,10 +644,12 @@ impl<'env> InferenceContext<'env> {
                         has_wildcard,
                     },
                 );
-                dbg!(&return_types);
 
-                // UnificationType::Union(Box::new(return_types))
-                self.type_placeholder()
+                UnificationType::Union {
+                    types: Box::new(return_types),
+                    has_wildcard: false,
+                }
+                // self.type_placeholder()
             }
         }
     }
