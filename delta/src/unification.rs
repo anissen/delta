@@ -28,7 +28,10 @@ pub enum UnificationType {
         token: Token,
     },
     Variable(TypeVariable),
-    Union(Box<Vec<UnificationType>>),
+    Union {
+        types: Box<Vec<UnificationType>>,
+        has_wildcard: bool,
+    },
 }
 
 impl fmt::Display for UnificationType {
@@ -49,9 +52,9 @@ impl fmt::Display for UnificationType {
                         .map(|field| field.to_string())
                         .collect::<Vec<String>>();
                     if fields.is_empty() {
-                        &format!("tag {}", name)
+                        name
                     } else {
-                        &format!("tag {}({})", name, fields.join(", "))
+                        &format!("{}({})", name, fields.join(", "))
                     }
                 }
                 Type::List => {
@@ -80,13 +83,18 @@ impl fmt::Display for UnificationType {
                 }
             },
             Self::Variable(i) => &format!("???#{i}"),
-            Self::Union(types) => {
-                let types = types
+            Self::Union {
+                types,
+                has_wildcard,
+            } => {
+                let mut types_str = types
                     .iter()
                     .map(|typ| typ.to_string())
-                    .collect::<Vec<String>>()
-                    .join(", ");
-                &format!("union({types})")
+                    .collect::<Vec<String>>();
+                if *has_wildcard {
+                    types_str.push("*".to_string())
+                }
+                &format!("[{}]", types_str.join(", "))
             }
         };
         write!(f, "{type_name}")
@@ -126,12 +134,18 @@ impl UnificationType {
                     self.clone()
                 }
             }
-            UnificationType::Union(types) => {
+            UnificationType::Union {
+                types,
+                has_wildcard,
+            } => {
                 let types = types
                     .iter()
                     .map(|typ| typ.substitute(substitutions))
                     .collect::<Vec<UnificationType>>();
-                UnificationType::Union(Box::new(types))
+                UnificationType::Union {
+                    types: Box::new(types),
+                    has_wildcard: *has_wildcard,
+                }
             }
         }
     }
@@ -160,7 +174,10 @@ impl UnificationType {
 
                 false
             }
-            UnificationType::Union(types) => {
+            UnificationType::Union {
+                types,
+                has_wildcard,
+            } => {
                 for typ in *types {
                     if self.occurs_in(typ.clone(), substitutions) {
                         return true;
@@ -173,10 +190,13 @@ impl UnificationType {
     }
 }
 
-fn unificationTypeName(ty: &UnificationType) -> String {
+fn unification_type_name(ty: &UnificationType) -> String {
     match ty {
         UnificationType::Constructor { token, .. } => format!("Constructor({})", token.lexeme),
-        UnificationType::Union(types) => format!("Union({:?})", types),
+        UnificationType::Union {
+            types,
+            has_wildcard,
+        } => format!("Union({:?}, wildcard: {})", types, has_wildcard),
         UnificationType::Variable(v) => format!("Variable({})", v),
     }
 }
@@ -190,8 +210,8 @@ pub fn unify(
 ) {
     println!(
         "Unifying {} and {}",
-        unificationTypeName(left),
-        unificationTypeName(right)
+        unification_type_name(left),
+        unification_type_name(right)
     );
     match (left.clone(), right.clone()) {
         (
@@ -267,10 +287,13 @@ pub fn unify(
                 generics: generics1,
                 token: token1,
             },
-            UnificationType::Union(union_types),
+            UnificationType::Union {
+                types,
+                has_wildcard,
+            },
         ) => {
             let mut mismatch_token = None;
-            let has_match = union_types.iter().any(|union_type| match union_type {
+            let has_match = types.iter().any(|union_type| match union_type {
                 UnificationType::Constructor {
                     typ: name2,
                     generics: generics2,
@@ -314,11 +337,14 @@ pub fn unify(
                         None => todo!(),
                     }
                 }
-                UnificationType::Union(union_types) => {
+                UnificationType::Union {
+                    types,
+                    has_wildcard,
+                } => {
                     todo!();
                 }
             });
-            if !has_match {
+            if !has_match && !has_wildcard {
                 diagnostics.add_error(Error::TypeMismatch {
                     expected: right.substitute(substitutions),
                     got: left.substitute(substitutions),
@@ -333,7 +359,10 @@ pub fn unify(
             // }
         }
         (
-            UnificationType::Union(unification_types),
+            UnificationType::Union {
+                types,
+                has_wildcard,
+            },
             UnificationType::Constructor {
                 typ,
                 generics,
@@ -342,7 +371,16 @@ pub fn unify(
         ) => {
             // todo!();
         }
-        (UnificationType::Union(types1), UnificationType::Union(types2)) => {
+        (
+            UnificationType::Union {
+                types: types1,
+                has_wildcard: has_wildcard1,
+            },
+            UnificationType::Union {
+                types: types2,
+                has_wildcard: has_wildcard2,
+            },
+        ) => {
             todo!();
             // check if each set of types is able to unify
             // if let Some(first) = types1.first() {

@@ -9,11 +9,40 @@ script = """
 """
 
 [output]
-error = """
-    :yo
-    \u001B[33m^^^\u001B[0m
-Line 2.5: Expected tag :hello but got tag :yo.
+result = "world"
+type = "string"
 
-    :hi
-    \u001B[33m^^^\u001B[0m
-Line 6.5: Expected tag :hello but got tag :hi."""
+[output.compiler]
+bytecode = "[36, 4, 109, 97, 105, 110, 31, 6, 58, 104, 101, 108, 108, 111, 21, 0, 20, 0, 31, 3, 58, 121, 111, 17, 44, 0, 9, 28, 4, 100, 97, 119, 103, 42, 0, 41, 20, 0, 31, 6, 58, 104, 101, 108, 108, 111, 17, 44, 0, 10, 28, 5, 119, 111, 114, 108, 100, 42, 0, 17, 20, 0, 31, 3, 58, 104, 105, 17, 44, 0, 6, 28, 4, 106, 111, 104, 110, 38]"
+bytecode_length = 78
+disassembled = """
+
+0 \t=== function chunk: main ===
+6 \tpush_simple_tag (value: ':hello')
+14 \tset_value (index: 0)
+16 \tget_value (index: 0)
+18 \tpush_simple_tag (value: ':yo')
+23 \teq
+24 \tjump if false (offset: 9, to byte 36)
+27 \tpush_string (value: 'dawg')
+33 \tjump (offset: 41, to byte 77)
+36 \tget_value (index: 0)
+38 \tpush_simple_tag (value: ':hello')
+46 \teq
+47 \tjump if false (offset: 10, to byte 60)
+50 \tpush_string (value: 'world')
+57 \tjump (offset: 17, to byte 77)
+60 \tget_value (index: 0)
+62 \tpush_simple_tag (value: ':hi')
+67 \teq
+68 \tjump if false (offset: 6, to byte 77)
+71 \tpush_string (value: 'john')
+77 \tret
+"""
+
+[output.vm]
+bytes_read = 53
+instructions_executed = 14
+jumps_performed = 2
+max_stack_height = 3
+stack_allocations = 9

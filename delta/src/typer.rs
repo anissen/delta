@@ -568,6 +568,7 @@ impl<'env> InferenceContext<'env> {
                 // let is_type = self.infer_type(expr);
                 // let mut return_type = None;
 
+                let mut has_wildcard = false;
                 let mut arm_expr_types = Vec::new();
                 let mut return_types = Vec::new();
 
@@ -649,7 +650,9 @@ impl<'env> InferenceContext<'env> {
                             // }
                         }
 
-                        IsArmPattern::Default => (),
+                        IsArmPattern::Default => {
+                            has_wildcard = true;
+                        }
                     }
 
                     if let Some(IsGuard { token, condition }) = &arm.guard {
@@ -686,7 +689,13 @@ impl<'env> InferenceContext<'env> {
 
                 // TODO(anissen): Check that types are the same (or tag)
                 dbg!(&arm_expr_types);
-                self.expects_type(expr, UnificationType::Union(Box::new(arm_expr_types)));
+                self.expects_type(
+                    expr,
+                    UnificationType::Union {
+                        types: Box::new(arm_expr_types),
+                        has_wildcard,
+                    },
+                );
                 dbg!(&return_types);
 
                 // UnificationType::Union(Box::new(return_types))

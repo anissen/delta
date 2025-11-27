@@ -252,12 +252,15 @@
 # 	| each
 # 		.p += .v
 
-match = \tag
-	tag is
-		:yellow 3
-			"almost"
-		:yellow 5
-			"yes"
-		_
-			"also no"
-(:yellow 5) | match
+stoplight_str = \color
+    color is
+        :red
+        	"red"
+        :green 5
+        	"green"
+        :yellow
+        	"yellow"
+        _
+        	"something else"
+
+:blue | stoplight_str

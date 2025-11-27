@@ -2,51 +2,60 @@ script = '''
 match = \tag
 	tag is
 		:red
-			"no"
+			"the color is red"
 		:yellow
-			"yes"
+			"the color is yellow"
 		_
-			"no"
-:yellow | match
+			"no match"
+:blue | match | log
+:red | match | log
+:yellow | match | log
 '''
 
 [output]
-result = "yes"
+result = "the color is yellow"
 type = "string"
 
 [output.compiler]
-bytecode = "[35, 5, 109, 97, 116, 99, 104, 1, 0, 40, 36, 4, 109, 97, 105, 110, 37, 0, 1, 21, 0, 31, 6, 121, 101, 108, 108, 111, 119, 39, 1, 0, 0, 5, 109, 97, 116, 99, 104, 38, 36, 5, 109, 97, 116, 99, 104, 20, 0, 31, 3, 114, 101, 100, 17, 44, 0, 7, 28, 2, 110, 111, 42, 0, 26, 20, 0, 31, 6, 121, 101, 108, 108, 111, 119, 17, 44, 0, 8, 28, 3, 121, 101, 115, 42, 0, 4, 28, 2, 110, 111, 38]"
-bytecode_length = 92
+bytecode = "[35, 5, 109, 97, 116, 99, 104, 1, 0, 77, 36, 4, 109, 97, 105, 110, 37, 0, 1, 21, 0, 31, 5, 58, 98, 108, 117, 101, 39, 1, 0, 0, 5, 109, 97, 116, 99, 104, 48, 31, 4, 58, 114, 101, 100, 39, 1, 0, 0, 5, 109, 97, 116, 99, 104, 48, 31, 7, 58, 121, 101, 108, 108, 111, 119, 39, 1, 0, 0, 5, 109, 97, 116, 99, 104, 48, 38, 36, 5, 109, 97, 116, 99, 104, 20, 0, 31, 4, 58, 114, 101, 100, 17, 44, 0, 21, 28, 16, 116, 104, 101, 32, 99, 111, 108, 111, 114, 32, 105, 115, 32, 114, 101, 100, 42, 0, 49, 20, 0, 31, 7, 58, 121, 101, 108, 108, 111, 119, 17, 44, 0, 24, 28, 19, 116, 104, 101, 32, 99, 111, 108, 111, 114, 32, 105, 115, 32, 121, 101, 108, 108, 111, 119, 42, 0, 10, 28, 8, 110, 111, 32, 109, 97, 116, 99, 104, 38]"
+bytecode_length = 167
 disassembled = """
-0 \tfunction signature (name: match) (local count: 1) (function position: 40)
+0 \tfunction signature (name: match) (local count: 1) (function position: 77)
 
 10 \t=== function chunk: main ===
 16 \tfunction (function index: 0) (params: 1)
 19 \tset_value (index: 0)
-21 \tpush_simple_tag (value: ':yellow')
-29 \tcall match (is_global: 0) (arg count: 1, function index: 0)
-39 \tret
+21 \tpush_simple_tag (value: ':blue')
+28 \tcall match (is_global: 0) (arg count: 1, function index: 0)
+38 \tlog
+39 \tpush_simple_tag (value: ':red')
+45 \tcall match (is_global: 0) (arg count: 1, function index: 0)
+55 \tlog
+56 \tpush_simple_tag (value: ':yellow')
+65 \tcall match (is_global: 0) (arg count: 1, function index: 0)
+75 \tlog
+76 \tret
 
-40 \t=== function chunk: match ===
-47 \tget_value (index: 0)
-49 \tpush_simple_tag (value: ':red')
-54 \teq
-55 \tjump if false (offset: 7, to byte 65)
-58 \tpush_string (value: 'no')
-62 \tjump (offset: 26, to byte 91)
-65 \tget_value (index: 0)
-67 \tpush_simple_tag (value: ':yellow')
-75 \teq
-76 \tjump if false (offset: 8, to byte 87)
-79 \tpush_string (value: 'yes')
-84 \tjump (offset: 4, to byte 91)
-87 \tpush_string (value: 'no')
-91 \tret
+77 \t=== function chunk: match ===
+84 \tget_value (index: 0)
+86 \tpush_simple_tag (value: ':red')
+92 \teq
+93 \tjump if false (offset: 21, to byte 117)
+96 \tpush_string (value: 'the color is red')
+114 \tjump (offset: 49, to byte 166)
+117 \tget_value (index: 0)
+119 \tpush_simple_tag (value: ':yellow')
+128 \teq
+129 \tjump if false (offset: 24, to byte 156)
+132 \tpush_string (value: 'the color is yellow')
+153 \tjump (offset: 10, to byte 166)
+156 \tpush_string (value: 'no match')
+166 \tret
 """
 
 [output.vm]
-bytes_read = 82
-instructions_executed = 18
-jumps_performed = 2
-max_stack_height = 4
-stack_allocations = 11
+bytes_read = 223
+instructions_executed = 44
+jumps_performed = 5
+max_stack_height = 6
+stack_allocations = 26
