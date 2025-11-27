@@ -215,7 +215,7 @@ impl Parser {
         Ok(Some(Expr::Value {
             value: ValueType::Tag {
                 name: name.clone(),
-                payload: expr.map(|expr| Box::new(expr)),
+                payload: expr.map(Box::new),
             },
             token: name,
         }))
@@ -305,7 +305,7 @@ impl Parser {
                     if let Some(payload) = payload {
                         match *payload {
                             Expr::Identifier { name } => IsArmPattern::CaptureTagPayload {
-                                tag_name: tag_name,
+                                tag_name,
                                 identifier: name,
                             },
                             expr => IsArmPattern::Expression(Expr::Value {

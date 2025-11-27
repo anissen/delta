@@ -200,7 +200,7 @@ fn unification_type_name(ty: &UnificationType) -> String {
             "Union({}, wildcard: {})",
             (**types)
                 .iter()
-                .map(|t| unification_type_name(t))
+                .map(unification_type_name)
                 .collect::<Vec<_>>()
                 .join(", "),
             has_wildcard
@@ -291,12 +291,12 @@ pub fn unify(
                     }
 
                     for (left, right) in zip(&generics1, generics2) {
-                        unify(&left, &right, at, substitutions, diagnostics);
+                        unify(left, right, at, substitutions, diagnostics);
                     }
                     true
                 }
                 UnificationType::Variable(v) => {
-                    let m = substitutions.get(&v).cloned();
+                    let m = substitutions.get(v).cloned();
                     match m {
                         Some(ref substitution) => match substitution {
                             UnificationType::Constructor {
@@ -310,7 +310,7 @@ pub fn unify(
                                 }
 
                                 for (left, right) in zip(&generics1, generics2) {
-                                    unify(&left, &right, at, substitutions, diagnostics);
+                                    unify(left, right, at, substitutions, diagnostics);
                                 }
                                 true
                             }
