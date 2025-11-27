@@ -397,7 +397,7 @@ impl<'a> Codegen<'a> {
                 }
                 IsArmPattern::CaptureTagPayload {
                     tag_name,
-                    expr,
+
                     identifier,
                 } => {
                     scope

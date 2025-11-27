@@ -299,7 +299,6 @@ impl<'env> InferenceContext<'env> {
             Expr::Identifier { name } => match self.environment.variables.get(&name.lexeme) {
                 Some(value) => value.clone(),
                 None => {
-                    panic!();
                     self.diagnostics.add_error(Error::NameNotFound {
                         token: name.clone(),
                     });
@@ -588,31 +587,14 @@ impl<'env> InferenceContext<'env> {
 
                         IsArmPattern::CaptureTagPayload {
                             tag_name,
-                            expr,
                             identifier,
                         } => {
-                            dbg!(&expr);
-                            let payload_types = if let Expr::Value {
-                                value: ValueType::Tag { name, payload },
-                                token,
-                            } = expr
-                                && let Some(payload_expr) = payload.as_ref()
-                            {
-                                let typ = if let Expr::Identifier { name } = payload_expr {
-                                    self.type_placeholder()
-                                } else {
-                                    self.infer_type(payload_expr)
-                                };
-                                vec![typ]
-                            } else {
-                                Vec::new()
-                            };
-                            dbg!(&payload_types);
+                            let capture = self.type_placeholder();
                             arm_expr_types.push(UnificationType::Constructor {
                                 typ: Type::Tag {
                                     name: tag_name.lexeme.clone(),
                                 },
-                                generics: payload_types,
+                                generics: vec![capture],
                                 token: identifier.clone(),
                             });
                         }

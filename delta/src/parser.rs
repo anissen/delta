@@ -304,20 +304,10 @@ impl Parser {
                 } => {
                     if let Some(payload) = *payload {
                         match payload {
-                            Expr::Identifier { ref name } => {
-                                let name = name.clone();
-                                IsArmPattern::CaptureTagPayload {
-                                    tag_name: tag_name.clone(),
-                                    expr: Expr::Value {
-                                        value: ValueType::Tag {
-                                            name: tag_name,
-                                            payload: Box::new(Some(payload)),
-                                        },
-                                        token,
-                                    },
-                                    identifier: name,
-                                }
-                            }
+                            Expr::Identifier { name } => IsArmPattern::CaptureTagPayload {
+                                tag_name: tag_name,
+                                identifier: name,
+                            },
                             expr => IsArmPattern::Expression(Expr::Value {
                                 value: ValueType::Tag {
                                     name: tag_name,

@@ -102,14 +102,8 @@ pub struct IsArm {
 #[derive(Debug)]
 pub enum IsArmPattern {
     Expression(Expr),
-    Capture {
-        identifier: Token,
-    },
-    CaptureTagPayload {
-        tag_name: Token,
-        expr: Expr, /* TODO(anissen): Should this be a Value instead? */
-        identifier: Token,
-    },
+    Capture { identifier: Token },
+    CaptureTagPayload { tag_name: Token, identifier: Token },
     Default,
 }
 
