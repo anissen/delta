@@ -379,14 +379,18 @@ impl VirtualMachine {
                 ByteCode::SetLocalValue => {
                     let index = self.read_byte();
                     let stack_index = self.current_call_frame().stack_index;
-                    let value = self.peek_top().clone();
                     let actual_index = (stack_index + index) as usize;
-                    if actual_index < self.stack.len() {
-                        self.stack[actual_index] = value;
-                    } else if actual_index == self.stack.len() {
-                        self.push_value(value);
-                    } else {
-                        panic!("Trying to set local value outside stack size");
+
+                    // If we would assign to the current stack top, we are already done
+                    if actual_index != self.stack.len() - 1 {
+                        let value = self.pop_any();
+                        if actual_index < self.stack.len() {
+                            self.stack[actual_index] = value;
+                        } else if actual_index == self.stack.len() {
+                            self.push_value(value);
+                        } else {
+                            panic!("Trying to set local value outside stack size");
+                        }
                     }
                 }
 

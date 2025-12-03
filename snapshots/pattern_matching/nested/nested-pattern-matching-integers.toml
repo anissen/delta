@@ -76,5 +76,5 @@ disassembled = """
 bytes_read = 94
 instructions_executed = 31
 jumps_performed = 4
-max_stack_height = 5
+max_stack_height = 3
 stack_allocations = 21
