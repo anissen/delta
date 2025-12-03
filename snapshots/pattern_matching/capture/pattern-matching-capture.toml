@@ -9,24 +9,22 @@ result = "value captured is 2"
 type = "string"
 
 [output.compiler]
-bytecode = "[36, 4, 109, 97, 105, 110, 27, 0, 0, 0, 2, 21, 0, 27, 0, 0, 0, 2, 21, 0, 28, 18, 118, 97, 108, 117, 101, 32, 99, 97, 112, 116, 117, 114, 101, 100, 32, 105, 115, 32, 20, 0, 14, 38]"
-bytecode_length = 44
+bytecode = "[36, 4, 109, 97, 105, 110, 27, 0, 0, 0, 2, 21, 0, 28, 18, 118, 97, 108, 117, 101, 32, 99, 97, 112, 116, 117, 114, 101, 100, 32, 105, 115, 32, 20, 0, 14, 38]"
+bytecode_length = 37
 disassembled = """
 
 0 \t=== function chunk: main ===
 6 \tpush_integer (value: 2)
 11 \tset_value (index: 0)
-13 \tpush_integer (value: 2)
-18 \tset_value (index: 0)
-20 \tpush_string (value: 'value captured is ')
-40 \tget_value (index: 0)
-42 \tstr_concat
-43 \tret
+13 \tpush_string (value: 'value captured is ')
+33 \tget_value (index: 0)
+35 \tstr_concat
+36 \tret
 """
 
 [output.vm]
-bytes_read = 45
-instructions_executed = 9
+bytes_read = 38
+instructions_executed = 7
 jumps_performed = 0
 max_stack_height = 3
-stack_allocations = 6
+stack_allocations = 5

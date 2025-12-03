@@ -399,7 +399,8 @@ impl<'a> Codegen<'a> {
                     pattern_jump_offsets.push(next_arm_offset);
                 }
                 IsArmPattern::Capture { identifier } => {
-                    self.emit_assignment(identifier, expr, scope);
+                    scope.environment.insert(identifier.lexeme.clone(), index);
+                    scope.locals.insert(identifier.lexeme.clone());
                 }
                 IsArmPattern::CaptureTagPayload {
                     tag_name,

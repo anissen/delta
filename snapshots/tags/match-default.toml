@@ -13,8 +13,8 @@ result = "nothing matches: :xyz"
 type = "string"
 
 [output.compiler]
-bytecode = "[36, 4, 109, 97, 105, 110, 31, 4, 58, 120, 121, 122, 21, 0, 33, 28, 3, 58, 111, 107, 17, 44, 0, 25, 34, 21, 0, 28, 14, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 111, 107, 58, 32, 20, 0, 14, 42, 0, 71, 33, 28, 6, 58, 101, 114, 114, 111, 114, 17, 44, 0, 28, 34, 21, 0, 28, 17, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 101, 114, 114, 111, 114, 58, 32, 20, 0, 14, 42, 0, 30, 31, 4, 58, 120, 121, 122, 21, 0, 28, 17, 110, 111, 116, 104, 105, 110, 103, 32, 109, 97, 116, 99, 104, 101, 115, 58, 32, 20, 0, 14, 38]"
-bytecode_length = 121
+bytecode = "[36, 4, 109, 97, 105, 110, 31, 4, 58, 120, 121, 122, 21, 0, 33, 28, 3, 58, 111, 107, 17, 44, 0, 25, 34, 21, 0, 28, 14, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 111, 107, 58, 32, 20, 0, 14, 42, 0, 63, 33, 28, 6, 58, 101, 114, 114, 111, 114, 17, 44, 0, 28, 34, 21, 0, 28, 17, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 101, 114, 114, 111, 114, 58, 32, 20, 0, 14, 42, 0, 22, 28, 17, 110, 111, 116, 104, 105, 110, 103, 32, 109, 97, 116, 99, 104, 101, 115, 58, 32, 20, 0, 14, 38]"
+bytecode_length = 113
 disassembled = """
 
 0 \t=== function chunk: main ===
@@ -29,7 +29,7 @@ disassembled = """
 27 \tpush_string (value: 'result is ok: ')
 43 \tget_value (index: 0)
 45 \tstr_concat
-46 \tjump (offset: 71, to byte 120)
+46 \tjump (offset: 63, to byte 112)
 49 \tget_tag_name
 50 \tpush_string (value: ':error')
 58 \teq
@@ -39,18 +39,16 @@ disassembled = """
 65 \tpush_string (value: 'result is error: ')
 84 \tget_value (index: 0)
 86 \tstr_concat
-87 \tjump (offset: 30, to byte 120)
-90 \tpush_simple_tag (value: ':xyz')
-96 \tset_value (index: 0)
-98 \tpush_string (value: 'nothing matches: ')
-117 \tget_value (index: 0)
-119 \tstr_concat
-120 \tret
+87 \tjump (offset: 22, to byte 112)
+90 \tpush_string (value: 'nothing matches: ')
+109 \tget_value (index: 0)
+111 \tstr_concat
+112 \tret
 """
 
 [output.vm]
-bytes_read = 69
-instructions_executed = 17
+bytes_read = 61
+instructions_executed = 15
 jumps_performed = 2
 max_stack_height = 3
-stack_allocations = 12
+stack_allocations = 11

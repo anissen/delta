@@ -19,10 +19,10 @@ result = "result is ok: file contents"
 type = "string"
 
 [output.compiler]
-bytecode = "[35, 9, 114, 101, 97, 100, 95, 102, 105, 108, 101, 1, 0, 106, 36, 4, 109, 97, 105, 110, 37, 0, 1, 21, 0, 28, 4, 98, 108, 97, 104, 39, 1, 0, 0, 9, 114, 101, 97, 100, 95, 102, 105, 108, 101, 21, 1, 33, 28, 3, 58, 111, 107, 17, 44, 0, 25, 34, 21, 2, 28, 14, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 111, 107, 58, 32, 20, 2, 14, 42, 0, 23, 20, 1, 21, 2, 28, 17, 114, 101, 115, 117, 108, 116, 32, 119, 97, 115, 32, 110, 111, 116, 32, 111, 107, 38, 36, 9, 114, 101, 97, 100, 95, 102, 105, 108, 101, 20, 0, 28, 4, 98, 108, 97, 104, 17, 44, 0, 23, 28, 13, 102, 105, 108, 101, 32, 99, 111, 110, 116, 101, 110, 116, 115, 32, 3, 58, 111, 107, 42, 0, 30, 28, 20, 115, 111, 109, 101, 116, 104, 105, 110, 103, 32, 119, 101, 110, 116, 32, 119, 114, 111, 110, 103, 32, 6, 58, 101, 114, 114, 111, 114, 38]"
-bytecode_length = 183
+bytecode = "[35, 9, 114, 101, 97, 100, 95, 102, 105, 108, 101, 1, 0, 102, 36, 4, 109, 97, 105, 110, 37, 0, 1, 21, 0, 28, 4, 98, 108, 97, 104, 39, 1, 0, 0, 9, 114, 101, 97, 100, 95, 102, 105, 108, 101, 21, 1, 33, 28, 3, 58, 111, 107, 17, 44, 0, 25, 34, 21, 2, 28, 14, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 111, 107, 58, 32, 20, 2, 14, 42, 0, 19, 28, 17, 114, 101, 115, 117, 108, 116, 32, 119, 97, 115, 32, 110, 111, 116, 32, 111, 107, 38, 36, 9, 114, 101, 97, 100, 95, 102, 105, 108, 101, 20, 0, 28, 4, 98, 108, 97, 104, 17, 44, 0, 23, 28, 13, 102, 105, 108, 101, 32, 99, 111, 110, 116, 101, 110, 116, 115, 32, 3, 58, 111, 107, 42, 0, 30, 28, 20, 115, 111, 109, 101, 116, 104, 105, 110, 103, 32, 119, 101, 110, 116, 32, 119, 114, 111, 110, 103, 32, 6, 58, 101, 114, 114, 111, 114, 38]"
+bytecode_length = 179
 disassembled = """
-0 \tfunction signature (name: read_file) (local count: 1) (function position: 106)
+0 \tfunction signature (name: read_file) (local count: 1) (function position: 102)
 
 14 \t=== function chunk: main ===
 20 \tfunction (function index: 0) (params: 1)
@@ -39,23 +39,21 @@ disassembled = """
 60 \tpush_string (value: 'result is ok: ')
 76 \tget_value (index: 2)
 78 \tstr_concat
-79 \tjump (offset: 23, to byte 105)
-82 \tget_value (index: 1)
-84 \tset_value (index: 2)
-86 \tpush_string (value: 'result was not ok')
-105 \tret
+79 \tjump (offset: 19, to byte 101)
+82 \tpush_string (value: 'result was not ok')
+101 \tret
 
-106 \t=== function chunk: read_file ===
-117 \tget_value (index: 0)
-119 \tpush_string (value: 'blah')
-125 \teq
-126 \tjump if false (offset: 23, to byte 152)
-129 \tpush_string (value: 'file contents')
-144 \tpush_tag (value: ':ok')
-149 \tjump (offset: 30, to byte 182)
-152 \tpush_string (value: 'something went wrong')
-174 \tpush_tag (value: ':error')
-182 \tret
+102 \t=== function chunk: read_file ===
+113 \tget_value (index: 0)
+115 \tpush_string (value: 'blah')
+121 \teq
+122 \tjump if false (offset: 23, to byte 148)
+125 \tpush_string (value: 'file contents')
+140 \tpush_tag (value: ':ok')
+145 \tjump (offset: 30, to byte 178)
+148 \tpush_string (value: 'something went wrong')
+170 \tpush_tag (value: ':error')
+178 \tret
 """
 
 [output.vm]

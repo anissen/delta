@@ -33,8 +33,8 @@ result = "result is 13, 89 and 28"
 type = "string"
 
 [output.compiler]
-bytecode = "[35, 6, 115, 113, 117, 97, 114, 101, 1, 0, 139, 35, 5, 109, 97, 116, 99, 104, 1, 0, 153, 36, 4, 109, 97, 105, 110, 27, 0, 0, 0, 1, 21, 0, 27, 0, 0, 0, 2, 21, 1, 37, 0, 1, 21, 2, 27, 0, 0, 0, 3, 21, 3, 37, 1, 1, 21, 4, 27, 0, 0, 0, 4, 21, 5, 28, 10, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 27, 0, 0, 0, 1, 39, 1, 0, 4, 5, 109, 97, 116, 99, 104, 14, 28, 2, 44, 32, 14, 27, 0, 0, 0, 2, 39, 1, 0, 4, 5, 109, 97, 116, 99, 104, 14, 28, 5, 32, 97, 110, 100, 32, 14, 27, 0, 0, 0, 3, 39, 1, 0, 4, 5, 109, 97, 116, 99, 104, 14, 38, 36, 6, 115, 113, 117, 97, 114, 101, 20, 0, 20, 0, 3, 38, 36, 5, 109, 97, 116, 99, 104, 27, 0, 0, 0, 2, 21, 1, 20, 0, 20, 1, 0, 21, 2, 20, 2, 27, 0, 0, 0, 3, 17, 44, 0, 15, 27, 0, 0, 0, 4, 21, 2, 20, 0, 20, 2, 0, 42, 0, 72, 20, 2, 27, 0, 0, 0, 4, 17, 44, 0, 29, 20, 0, 20, 1, 0, 27, 0, 0, 0, 5, 0, 21, 2, 20, 2, 39, 1, 1, 2, 6, 115, 113, 117, 97, 114, 101, 42, 0, 32, 20, 0, 20, 1, 0, 21, 2, 27, 0, 0, 0, 6, 21, 3, 27, 0, 0, 0, 7, 21, 4, 20, 2, 20, 1, 0, 20, 3, 0, 20, 4, 0, 21, 3, 27, 0, 0, 0, 8, 21, 4, 20, 3, 20, 4, 0, 38]"
-bytecode_length = 287
+bytecode = "[35, 6, 115, 113, 117, 97, 114, 101, 1, 0, 139, 35, 5, 109, 97, 116, 99, 104, 1, 0, 153, 36, 4, 109, 97, 105, 110, 27, 0, 0, 0, 1, 21, 0, 27, 0, 0, 0, 2, 21, 1, 37, 0, 1, 21, 2, 27, 0, 0, 0, 3, 21, 3, 37, 1, 1, 21, 4, 27, 0, 0, 0, 4, 21, 5, 28, 10, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 27, 0, 0, 0, 1, 39, 1, 0, 4, 5, 109, 97, 116, 99, 104, 14, 28, 2, 44, 32, 14, 27, 0, 0, 0, 2, 39, 1, 0, 4, 5, 109, 97, 116, 99, 104, 14, 28, 5, 32, 97, 110, 100, 32, 14, 27, 0, 0, 0, 3, 39, 1, 0, 4, 5, 109, 97, 116, 99, 104, 14, 38, 36, 6, 115, 113, 117, 97, 114, 101, 20, 0, 20, 0, 3, 38, 36, 5, 109, 97, 116, 99, 104, 27, 0, 0, 0, 2, 21, 1, 20, 0, 20, 1, 0, 21, 2, 20, 2, 27, 0, 0, 0, 3, 17, 44, 0, 15, 27, 0, 0, 0, 4, 21, 2, 20, 0, 20, 2, 0, 42, 0, 65, 20, 2, 27, 0, 0, 0, 4, 17, 44, 0, 29, 20, 0, 20, 1, 0, 27, 0, 0, 0, 5, 0, 21, 2, 20, 2, 39, 1, 1, 2, 6, 115, 113, 117, 97, 114, 101, 42, 0, 25, 27, 0, 0, 0, 6, 21, 3, 27, 0, 0, 0, 7, 21, 4, 20, 2, 20, 1, 0, 20, 3, 0, 20, 4, 0, 21, 3, 27, 0, 0, 0, 8, 21, 4, 20, 3, 20, 4, 0, 38]"
+bytecode_length = 280
 disassembled = """
 0 \tfunction signature (name: square) (local count: 1) (function position: 139)
 11 \tfunction signature (name: match) (local count: 1) (function position: 153)
@@ -90,7 +90,7 @@ disassembled = """
 192 \tget_value (index: 0)
 194 \tget_value (index: 2)
 196 \tint_add
-197 \tjump (offset: 72, to byte 272)
+197 \tjump (offset: 65, to byte 265)
 200 \tget_value (index: 2)
 202 \tpush_integer (value: 4)
 207 \teq
@@ -103,34 +103,30 @@ disassembled = """
 222 \tset_value (index: 2)
 224 \tget_value (index: 2)
 226 \tcall square (is_global: 1) (arg count: 1, function index: 2)
-237 \tjump (offset: 32, to byte 272)
-240 \tget_value (index: 0)
-242 \tget_value (index: 1)
-244 \tint_add
-245 \tset_value (index: 2)
-247 \tpush_integer (value: 6)
-252 \tset_value (index: 3)
-254 \tpush_integer (value: 7)
-259 \tset_value (index: 4)
-261 \tget_value (index: 2)
-263 \tget_value (index: 1)
-265 \tint_add
-266 \tget_value (index: 3)
-268 \tint_add
-269 \tget_value (index: 4)
-271 \tint_add
-272 \tset_value (index: 3)
-274 \tpush_integer (value: 8)
-279 \tset_value (index: 4)
-281 \tget_value (index: 3)
-283 \tget_value (index: 4)
-285 \tint_add
-286 \tret
+237 \tjump (offset: 25, to byte 265)
+240 \tpush_integer (value: 6)
+245 \tset_value (index: 3)
+247 \tpush_integer (value: 7)
+252 \tset_value (index: 4)
+254 \tget_value (index: 2)
+256 \tget_value (index: 1)
+258 \tint_add
+259 \tget_value (index: 3)
+261 \tint_add
+262 \tget_value (index: 4)
+264 \tint_add
+265 \tset_value (index: 3)
+267 \tpush_integer (value: 8)
+272 \tset_value (index: 4)
+274 \tget_value (index: 3)
+276 \tget_value (index: 4)
+278 \tint_add
+279 \tret
 """
 
 [output.vm]
-bytes_read = 393
-instructions_executed = 125
+bytes_read = 386
+instructions_executed = 121
 jumps_performed = 5
 max_stack_height = 14
-stack_allocations = 86
+stack_allocations = 83
