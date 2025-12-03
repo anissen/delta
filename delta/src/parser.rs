@@ -250,6 +250,7 @@ impl Parser {
     fn is(&mut self) -> Result<Option<Expr>, String> {
         let expr = self.string_concat()?;
         if self.matches(&KeywordIs) {
+            self.comment();
             self.consume(&NewLine)?;
             self.increase_indentation();
             let mut arms = vec![];
@@ -345,6 +346,8 @@ impl Parser {
         } else {
             None
         };
+
+        self.comment();
 
         if let Some(block) = self.block()? {
             Ok(IsArm {
@@ -616,6 +619,8 @@ impl Parser {
                 exprs.push(expr);
             }
 
+            self.comment();
+
             // Required when having nested blocks to avoid each consuming the newline
             if self.check(&NewLine) {
                 self.consume(&NewLine)?;
@@ -623,6 +628,7 @@ impl Parser {
 
             if !self.matches_indentation() {
                 // TODO(anissen): Should probably Err if indentation is wrong
+                // return Err("Unexpected indentation".to_string());
                 break;
             }
         }
@@ -780,6 +786,16 @@ impl Parser {
             let message = format!("Expected {kind:?} but found '{}'", self.peek().lexeme);
             Err(message.to_string())
         }
+    }
+
+    fn optional(&mut self, kind: &TokenKind) {
+        if self.check(kind) {
+            self.advance();
+        }
+    }
+
+    fn comment(&mut self) {
+        self.optional(&Comment);
     }
 
     fn check(&self, kind: &TokenKind) -> bool {
