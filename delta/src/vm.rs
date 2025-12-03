@@ -72,7 +72,7 @@ pub struct VirtualMachine {
 
 pub fn run<'a>(
     bytes: Vec<u8>,
-    function_name: Option<String>,
+    function_name: Option<(String, Vec<Value>)>,
     context: &'a Context<'a>,
     verbose: bool,
 ) -> Option<Value> {
@@ -122,7 +122,11 @@ impl VirtualMachine {
         }
     }
 
-    pub fn execute(&mut self, function: Option<String>, context: &Context) -> Option<Value> {
+    pub fn execute(
+        &mut self,
+        function: Option<(String, Vec<Value>)>,
+        context: &Context,
+    ) -> Option<Value> {
         self.program_counter = 0;
 
         self.read_header();
@@ -136,19 +140,25 @@ impl VirtualMachine {
         // Construct an initial call frame for the top-level code.
         self.program_counter = self.program.len(); // Set return IP to EOF.
 
-        let function_to_execute = match function {
-            Some(function_name) => self
+        if let Some((function_name, args)) = function {
+            let arity = args.len() as u8;
+            self.stack = args;
+            let function_to_execute = self
                 .functions
                 .iter()
                 .find(|f| f.name == function_name)
                 .unwrap()
-                .clone(),
-            None => FunctionObj {
-                name: "<main>".to_string(),
-                ip: main_start as u32,
-            },
-        };
-        self.call(function_to_execute, 0);
+                .clone();
+            self.call(function_to_execute, arity);
+        } else {
+            self.call(
+                FunctionObj {
+                    name: "<main>".to_string(),
+                    ip: main_start as u32,
+                },
+                0,
+            );
+        }
 
         while self.program_counter < self.program.len() {
             let next = self.read_byte();
@@ -381,15 +391,21 @@ impl VirtualMachine {
                     let stack_index = self.current_call_frame().stack_index;
                     let actual_index = (stack_index + index) as usize;
 
+                    let stack_top_index = self.stack.len() - 1;
+
                     // If we would assign to the current stack top, we are already done
-                    if actual_index != self.stack.len() - 1 {
+                    if actual_index != stack_top_index {
                         let value = self.pop_any();
                         if actual_index < self.stack.len() {
                             self.stack[actual_index] = value;
                         } else if actual_index == self.stack.len() {
                             self.push_value(value);
                         } else {
-                            panic!("Trying to set local value outside stack size");
+                            panic!(
+                                "Trying to set local value outside stack size. Index: {}, stack size: {}",
+                                actual_index,
+                                self.stack.len()
+                            );
                         }
                     }
                 }

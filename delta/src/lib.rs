@@ -105,15 +105,6 @@ pub fn run(
     let result = program.reload(source.to_string());
     match result {
         None => {
-            if debug {
-                println!("\n# disassembly =>");
-                // Generate disassembled instructions and optionally print
-                disassembler::disassemble(
-                    program.bytecode.clone(),
-                    &mut program.metadata.compilation_metadata,
-                );
-            }
-
             println!("\n# vm =>");
             let result = program.run();
 

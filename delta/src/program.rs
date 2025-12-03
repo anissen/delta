@@ -1,5 +1,8 @@
 use std::collections::HashMap;
 
+use crate::CompilationMetadata;
+use crate::ExecutionMetadata;
+use crate::ProgramMetadata;
 use crate::codegen;
 use crate::diagnostics::Diagnostics;
 use crate::disassembler;
@@ -8,9 +11,7 @@ use crate::parser;
 use crate::tokens;
 use crate::typer;
 use crate::vm;
-use crate::CompilationMetadata;
-use crate::ExecutionMetadata;
-use crate::ProgramMetadata;
+use crate::vm::Value;
 // use crate::vm::VirtualMachine;
 
 // struct CallContext<'a> {
@@ -261,10 +262,10 @@ impl<'a> Program<'a> {
         }
     }
 
-    pub fn run_function(&mut self, function_name: String) -> Option<vm::Value> {
+    pub fn run_function(&mut self, function_name: String, args: Vec<Value>) -> Option<vm::Value> {
         match &mut self.vm {
             Some(vm) => {
-                let result = vm.execute(Some(function_name), &self.context);
+                let result = vm.execute(Some((function_name, args)), &self.context);
                 self.metadata.execution_metadata = vm.metadata.clone();
                 result
             }

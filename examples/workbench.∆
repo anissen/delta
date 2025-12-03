@@ -289,16 +289,54 @@
 
 # --------------
 
-read_file = \file
-	file is
-		"blah"
-			:ok "file contents"
-		_
-			:error "something went wrong"
+# read_file = \file
+# 	file is
+# 		"blah"
+# 			:ok "file contents"
+# 		_
+# 			:error "something went wrong"
 
-result = "blah" | read_file
-result is
-	:ok contents
-		"result is ok: {contents}"
-	else
-	    "result was not ok"
+# result = "blah" | read_file
+# result is
+# 	:ok contents
+# 		"result is ok: {contents}"
+# 	else
+# 	    "result was not ok"
+
+
+# --------------
+
+# 1 + 1 is
+# 	_ if false
+# 		1.2
+# 	v1 if v1 < 0
+# 		3.4
+# 	v2 if v2 > 0
+# 		5.4
+
+# 2.3 is
+#     other if other <=. 2.0
+#         "nope"
+#     other if other >=. 2.0
+#         "value captured is {other}"
+
+match = \v
+	v is
+		captured
+			w = 6
+			captured + w
+
+4 | match
+
+# ∆.y = 10.0
+# ∆.move_speed = 1.0
+# update = \dt
+# 	∆.y = true is
+# 		true
+# 			∆.y +. ∆.move_speed *. dt
+# 		false
+# 			∆.y
+
+# 0.1 | update
+
+# ∆.y

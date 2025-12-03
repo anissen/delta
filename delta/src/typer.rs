@@ -125,6 +125,21 @@ impl<'a> Typer<'a> {
         );
 
         environment.variables.insert(
+            "draw_image_rotated".to_string(),
+            UnificationType::Constructor {
+                typ: Type::Function,
+                generics: vec![
+                    make_constructor(Type::String, no_token.clone()),
+                    make_constructor(Type::Float, no_token.clone()),
+                    make_constructor(Type::Float, no_token.clone()),
+                    make_constructor(Type::Float, no_token.clone()),
+                    make_constructor(Type::Boolean, no_token.clone()),
+                ],
+                token: no_token.clone(),
+            },
+        );
+
+        environment.variables.insert(
             "is_key_down".to_string(),
             UnificationType::Constructor {
                 typ: Type::Function,
