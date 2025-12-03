@@ -424,7 +424,6 @@ impl<'a> Codegen<'a> {
                     scope
                         .environment
                         .insert(identifier.lexeme.clone(), locals_count);
-                    scope.bytecode.add_set_local_value(locals_count);
                 }
                 IsArmPattern::Default => {
                     // No pattern matching needed for default case
