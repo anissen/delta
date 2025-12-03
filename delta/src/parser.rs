@@ -256,6 +256,13 @@ impl Parser {
             let mut arms = vec![];
             let mut has_default = false;
             while self.matches_indentation() {
+                for _ in 0..self.indentation {
+                    self.consume(&Tab)?;
+                }
+                if self.matches(&Comment) {
+                    self.consume(&NewLine)?;
+                    continue;
+                }
                 let arm = self.is_arm()?;
                 if has_default {
                     return match arm.pattern {
@@ -286,10 +293,6 @@ impl Parser {
 
     // is_arm → INDENT ( ( "_" | expression ) block )
     fn is_arm(&mut self) -> Result<IsArm, String> {
-        for _ in 0..self.indentation {
-            self.consume(&Tab)?;
-        }
-
         let pattern = if self.matches(&Underscore) {
             IsArmPattern::Default
         } else if let Some(pattern) = self.expression()? {

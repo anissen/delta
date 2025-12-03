@@ -1,0 +1,43 @@
+script = """
+x = 2 # 0
+3 + x is # 1*
+    # comment here
+    captured # this is a captured variable
+        # and here
+        w = 0 # 3
+        captured + x + w # return
+        # also here even
+"""
+
+[output]
+result = "7"
+type = "integer"
+
+[output.compiler]
+bytecode = "[36, 4, 109, 97, 105, 110, 27, 0, 0, 0, 2, 21, 0, 27, 0, 0, 0, 3, 20, 0, 0, 21, 1, 27, 0, 0, 0, 0, 21, 2, 20, 1, 20, 0, 0, 20, 2, 0, 38]"
+bytecode_length = 39
+disassembled = """
+
+0 \t=== function chunk: main ===
+6 \tpush_integer (value: 2)
+11 \tset_value (index: 0)
+13 \tpush_integer (value: 3)
+18 \tget_value (index: 0)
+20 \tint_add
+21 \tset_value (index: 1)
+23 \tpush_integer (value: 0)
+28 \tset_value (index: 2)
+30 \tget_value (index: 1)
+32 \tget_value (index: 0)
+34 \tint_add
+35 \tget_value (index: 2)
+37 \tint_add
+38 \tret
+"""
+
+[output.vm]
+bytes_read = 40
+instructions_executed = 15
+jumps_performed = 0
+max_stack_height = 5
+stack_allocations = 11
