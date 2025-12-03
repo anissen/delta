@@ -336,40 +336,22 @@ pub fn unify(
                 });
             }
         }
-        (
-            UnificationType::Union {
-                types,
-                has_wildcard: _,
-            },
-            UnificationType::Constructor {
-                typ,
-                generics: _,
-                token,
-            },
-        ) => {
-            // todo!();
-            // dbg!(&types);
-            // dbg!(&typ);
-            // dbg!(&token);
+
+        // Union vs Constructor: swap and reuse the Constructor vs Union logic
+        (UnificationType::Union { .. }, UnificationType::Constructor { .. }) => {
+            unify(right, left, at, substitutions, diagnostics);
         }
+
+        // Union vs Union: check that all types in left union exist in right union
         (
-            UnificationType::Union {
-                types: types1,
-                has_wildcard: _has_wildcard1,
-            },
-            UnificationType::Union {
-                types: types2,
-                has_wildcard: _has_wildcard2,
-            },
+            UnificationType::Union { types: types1, .. },
+            UnificationType::Union { types: types2, .. },
         ) => {
-            // dbg!(&types1);
-            // dbg!(&types2);
-            // Check that all tags in `types1` can be unified to a type in `types2`
-            for type1 in *types1 {
+            for type1 in types1.iter() {
                 if let UnificationType::Constructor {
-                    typ: ref name1,
-                    generics: ref generics1,
-                    token: ref token1,
+                    typ: name1,
+                    generics: generics1,
+                    token: token1,
                 } = type1
                 {
                     let has_match = (**types2).iter().any(|t2| {
@@ -394,7 +376,7 @@ pub fn unify(
                         });
                     }
                 } else {
-                    panic!()
+                    panic!("Union contains non-constructor type: {:?}", type1);
                 }
             }
         }

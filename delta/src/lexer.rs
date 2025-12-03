@@ -188,15 +188,15 @@ impl Lexer {
         }
     }
 
-    fn context_value(&mut self) -> TokenKind {
-        while !self.is_at_end()
-            && (self.is_letter(self.peek()) || self.is_digit(self.peek()) || self.peek() == '_')
-        {
-            self.advance();
-        }
+    // fn context_value(&mut self) -> TokenKind {
+    //     while !self.is_at_end()
+    //         && (self.is_letter(self.peek()) || self.is_digit(self.peek()) || self.peek() == '_')
+    //     {
+    //         self.advance();
+    //     }
 
-        TokenKind::Identifier
-    }
+    //     TokenKind::Identifier
+    // }
 
     fn match_keyword(&mut self, keyword: &str) -> bool {
         if self.source.len() <= self.current + keyword.len() {
