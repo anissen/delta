@@ -498,7 +498,6 @@ impl VirtualMachine {
 
                     let function_stack = self.pop_many(arity);
                     let result = context.call_function(&name, &function_stack); // TODO(anissen): Should use index instead
-                    self.discard(arity); // TODO(anissen): This should not be necessary. I would expect pop_many to mutate the stack
 
                     self.push_value(result);
                 }
