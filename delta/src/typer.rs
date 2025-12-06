@@ -216,6 +216,31 @@ impl<'a> Typer<'a> {
                 token: no_token.clone(),
             },
         );
+
+        environment.variables.insert(
+            "sin".to_string(),
+            UnificationType::Constructor {
+                typ: Type::Function,
+                generics: vec![
+                    make_constructor(Type::Float, no_token.clone()),
+                    make_constructor(Type::Float, no_token.clone()),
+                ],
+                token: no_token.clone(),
+            },
+        );
+
+        environment.variables.insert(
+            "cos".to_string(),
+            UnificationType::Constructor {
+                typ: Type::Function,
+                generics: vec![
+                    make_constructor(Type::Float, no_token.clone()),
+                    make_constructor(Type::Float, no_token.clone()),
+                ],
+                token: no_token.clone(),
+            },
+        );
+
         // for function in self.context.get_function_names() {
         //     environment.variables.insert(
         //         function,
