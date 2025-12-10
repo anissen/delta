@@ -1,0 +1,61 @@
+script = '''
+stoplight_str = \color
+    color is
+        :red
+        	"red"
+        :green 5
+        	"green"
+        :yellow
+        	"yellow"
+        _
+        	"something else"
+:blue | stoplight_str
+'''
+
+[output]
+result = "something else"
+type = "string"
+
+[output.compiler]
+bytecode = "[35, 13, 115, 116, 111, 112, 108, 105, 103, 104, 116, 95, 115, 116, 114, 1, 0, 55, 36, 4, 109, 97, 105, 110, 37, 0, 1, 21, 0, 31, 5, 58, 98, 108, 117, 101, 39, 1, 0, 0, 13, 115, 116, 111, 112, 108, 105, 103, 104, 116, 95, 115, 116, 114, 38, 36, 13, 115, 116, 111, 112, 108, 105, 103, 104, 116, 95, 115, 116, 114, 20, 0, 31, 4, 58, 114, 101, 100, 17, 44, 0, 8, 28, 3, 114, 101, 100, 42, 0, 71, 20, 0, 27, 0, 0, 0, 5, 32, 6, 58, 103, 114, 101, 101, 110, 17, 44, 0, 10, 28, 5, 103, 114, 101, 101, 110, 42, 0, 42, 20, 0, 31, 7, 58, 121, 101, 108, 108, 111, 119, 17, 44, 0, 11, 28, 6, 121, 101, 108, 108, 111, 119, 42, 0, 16, 28, 14, 115, 111, 109, 101, 116, 104, 105, 110, 103, 32, 101, 108, 115, 101, 38]"
+bytecode_length = 162
+disassembled = """
+0 \tfunction signature (name: stoplight_str) (local count: 1) (function position: 55)
+
+18 \t=== function chunk: main ===
+24 \tfunction (function index: 0) (params: 1)
+27 \tset_value (index: 0)
+29 \tpush_simple_tag (value: ':blue')
+36 \tcall stoplight_str (is_global: 0) (arg count: 1, function index: 0)
+54 \tret
+
+55 \t=== function chunk: stoplight_str ===
+70 \tget_value (index: 0)
+72 \tpush_simple_tag (value: ':red')
+78 \teq
+79 \tjump if false (offset: 8, to byte 90)
+82 \tpush_string (value: 'red')
+87 \tjump (offset: 71, to byte 161)
+90 \tget_value (index: 0)
+92 \tpush_integer (value: 5)
+97 \tpush_tag (value: ':green')
+105 \teq
+106 \tjump if false (offset: 10, to byte 119)
+109 \tpush_string (value: 'green')
+116 \tjump (offset: 42, to byte 161)
+119 \tget_value (index: 0)
+121 \tpush_simple_tag (value: ':yellow')
+130 \teq
+131 \tjump if false (offset: 11, to byte 145)
+134 \tpush_string (value: 'yellow')
+142 \tjump (offset: 16, to byte 161)
+145 \tpush_string (value: 'something else')
+161 \tret
+"""
+
+[output.vm]
+bytes_read = 134
+instructions_executed = 22
+jumps_performed = 3
+max_stack_height = 4
+stack_allocations = 15

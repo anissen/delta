@@ -1,0 +1,28 @@
+script = """
+[3.3, 5.4, 6.5] | get_array_length
+"""
+
+[output]
+result = "3"
+type = "integer"
+
+[output.compiler]
+bytecode = "[36, 4, 109, 97, 105, 110, 26, 64, 83, 51, 51, 26, 64, 172, 204, 205, 26, 64, 208, 0, 0, 29, 0, 0, 0, 3, 46, 38]"
+bytecode_length = 28
+disassembled = """
+
+0 \t=== function chunk: main ===
+6 \tpush_float (value: 3.3)
+11 \tpush_float (value: 5.4)
+16 \tpush_float (value: 6.5)
+21 \tpush_list (length: 3)
+26 \tget_array_length
+27 \tret
+"""
+
+[output.vm]
+bytes_read = 29
+instructions_executed = 7
+jumps_performed = 0
+max_stack_height = 3
+stack_allocations = 6

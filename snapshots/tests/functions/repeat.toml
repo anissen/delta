@@ -1,0 +1,12 @@
+ignored = "recursive functions not yet properly supported"
+
+script = '''
+repeat = \fn i
+	i is
+		_ if i > 0
+			i | fn
+			fn | repeat (i - 1)
+hello = \i
+	"hello #{i}"
+hello | repeat 3
+'''

@@ -1,169 +1,4 @@
 
-# [3 4 + 4 5]
-
-# get_list = \v
-# 	[v*1 v*2 v*3]
-
-# 3 | get_list
-
-# @foreign map = \list: List[T] f: Function[T] => F => List[F]
-# foreach elm in list: f(elm)
-
-# sum = \list
-# 	result = 0
-# 	list | map \v
-# 		result = result + v
-# 	result
-
-# [3 5 7] | sum
-
-# [3 5 6] | index 1
-# [3 5.4 6]
-
-# [3.3 5.4 6.5] | List.get 1
-
-# List.get = \list: List[T] index: int => T
-# List.get = \list index
-# 	@native list_get_element_at_index index
-
-# --------
-
-# [3.3 5.4 6.5] | get_list_element_at_index 1
-
-# --------
-
-# [3.3 5.4 6.5] | get_array_length
-
-# --------
-
-# map = \list fn
-# 	len = list | get_array_length
-# 	loop = \acc i
-# 		("acc {i}") | log
-# 		i is
-# 			_ if i == len
-# 				acc
-# 			_
-# 				mapped = list | get_list_element_at_index i | fn
-# 				(acc | append mapped) | loop (i + 1)
-
-# 	base = [0]
-# 	base | loop 0
-
-# [3, 4, 5] | map \x
-# 	x * x
-
-# --------
-
-# map_one = \list i fn
-# 	(list | get_list_element_at_index i) | fn
-
-# [3, 4, 5] | map_one 1 \x
-# 	x * x
-
-# --------
-
-# map_one = \fn
-# 	list = [3, 4, 5]
-# 	elm = list | get_list_element_at_index 1
-# 	elm | fn
-
-# f = \x
-# 	x * x
-
-# f | map_one
-
-# --------
-
-# # works
-# map_one = \list fn
-# 	list | get_list_element_at_index 1 | fn
-
-# f = \x
-# 	x * x
-
-# [3, 4, 5] | map_one f
-
-# --------
-
-# # does not work
-# map_one = \list i fn
-# 	list | get_list_element_at_index i | fn
-
-# f = \x
-# 	x * x
-
-# [3, 4, 5] | map_one 1 f
-
-# --------
-
-# [3, 4, 5] | append 6
-
-# --------
-
-# repeat = \fn i
-# 	i is
-# 		_ if i > 0
-# 			i | fn
-# 			fn | repeat (i - 1)
-
-# hello = \i
-# 	"hello #{i}"
-
-# hello | repeat 3
-
-# --------
-
-# rec = \v
-# 	v is
-# 		n if n > 0
-# 			("rec: {v}") | log # Works with parenthesis, not without
-# 			x = v - 1
-# 			x | rec
-# 		_
-# 			v
-
-# 2 | rec
-
-# sum_loop = \list i value
-# 	len = list | get_array_length
-# 	new_value = value + (list | get_list_element_at_index i)
-# 	i is
-# 		_ if i == len - 1
-# 			new_value
-# 		_
-# 			list | sum_loop (i + 1) new_value
-
-# Listsum = \list
-# 	# len = list | get_array_length
-# 	# sum_loop = \i
-# 	# 	value = value + (list | get_list_element_at_index i)
-# 	# 	i is
-# 	# 		len
-# 	# 			value
-# 	# 		_
-# 	# 			(i + 1) | sum_loop
-# 	# 0 | sum_loop
-# 	list | sum_loop 0 0
-
-# ----------
-
-# Listsum2 = \list
-# 	len = list | get_array_length
-# 	value = 0
-# 	sum_loop = \i
-# 		value = value + (list | get_list_element_at_index i)
-# 		i is
-# 			_ if i == len - 1
-# 				value
-# 			_
-# 				(i + 1) | sum_loop
-# 	0 | sum_loop
-
-# [3, 4, 5] | Listsum2
-
-# [4, 3, 2]
-
 # Long term syntax?
 # data Position
 # 	x f32
@@ -179,51 +14,7 @@
 # pos = Position { y 2.3, x 4.5, z 3.0 }
 # vel = Velocity { dx 1.0, dy 0.5 }
 
-# # 3 + 3.4
-
-# print_vel = \v
-# 	v | log
-
-# pos | print_vel
-# vel | print_vel
-
 # --------------------
-
-# get_render = \z
-# 	:render
-
-# x = 0
-# get_game_event = \v
-# 	x is
-# 		0
-# 			:setup
-# 		_
-# 			(0 | get_render)
-
-# (0 | get_game_event) is
-# 	:setup
-# 		"setup" | log
-# 	:update
-# 		"update" | log
-
-# --------------------
-
-# x = 0
-# get_game_event = \v
-# 	x is
-# 		0
-# 			:setup
-# 		_
-# 			:update
-
-# (0 | get_game_event) is
-# 	:setup
-# 		"setup" | log
-# 	:update
-# 		"update" | log
-
-# --------------------
-
 
 # for Position p, Velocity v in ∆
 # 	p += v
@@ -254,89 +45,27 @@
 
 # --------------
 
-# stoplight_str = \color
-#     color is
-#         :red
-#         	"red"
-#         :green 5
-#         	"green"
-#         :yellow
-#         	"yellow"
-#         _
-#         	"something else"
+# TODO:
+# - Move more examples from workbench into snapshots
+# - Add a result diff to snapshot runs
+# - Improve time steps for prism?
+# - Initial query support for components
+# - Exhaustiveness tests for `is`
+# - Shorthand for partial `is`?
 
-# :blue | stoplight_str
-
-# --------------
-
-# stoplight_color = \v
-# 	v is
-# 		_ if v >. 0.0
-# 			:red
-# 		_ if v == 0.0
-# 			:yellow 4
-# 		_
-# 			:green
-# res = (0.0 | stoplight_color)
-
-# res is
-# 	:red
-# 		"maybe"
-# 	:yellow
-# 		"nope"
-# 	_
-# 		"also no"
-
-# --------------
-
-# read_file = \file
-# 	file is
-# 		"blah"
-# 			:ok "file contents"
-# 		_
-# 			:error "something went wrong"
-
-# result = "blah" | read_file
-# result is
-# 	:ok contents
-# 		"result is ok: {contents}"
-# 	else
-# 	    "result was not ok"
-
-
-# --------------
-
-# 1 + 1 is
-# 	_ if false
-# 		1.2
-# 	v1 if v1 < 0
-# 		3.4
-# 	v2 if v2 > 0
-# 		5.4
-
-# 2.3 is
-#     other if other <=. 2.0
-#         "nope"
-#     other if other >=. 2.0
-#         "value captured is {other}"
-
-match = \v
+stoplight_color = \v
 	v is
-		captured
-			w = 6
-			captured + w
-
-4 | match
-
-# ∆.y = 10.0
-# ∆.move_speed = 1.0
-# update = \dt
-# 	∆.y = true is
-# 		true
-# 			∆.y +. ∆.move_speed *. dt
-# 		false
-# 			∆.y
-
-# 0.1 | update
-
-# ∆.y
+		_ if v >. 0.0
+			:red
+		_ if v == 0.0
+			:yellow 4
+		_
+			:green
+res = (0.0 | stoplight_color)
+res is
+	:red
+		"maybe"
+	:yellow x
+		"yellow with value {x}"
+	_
+		"also no"
