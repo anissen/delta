@@ -77,7 +77,11 @@ fn process_toml_file(path: &Path) -> Result<ProcessStatus, Box<dyn std::error::E
 
     let file_name = path.file_name().unwrap().display().to_string();
 
-    let result = run_script(file_name.clone(), &script);
+    let result = run_script(
+        file_name.clone(),
+        &script,
+        true, /* TODO: This should be false but that removes disassembly */
+    );
 
     // Always create/replace the output section with a new empty table
     doc.insert("output".to_string(), Value::Table(Table::new()));
@@ -168,7 +172,8 @@ fn process_toml_file(path: &Path) -> Result<ProcessStatus, Box<dyn std::error::E
 fn run_script(
     file_name: String,
     source: &str,
+    debug: bool,
 ) -> Result<delta::ProgramResult, delta::diagnostics::Diagnostics> {
     // Set a timeout?
-    delta::run(source, Some(&file_name), true)
+    delta::run(source, Some(&file_name), debug)
 }
