@@ -544,14 +544,13 @@ impl VirtualMachine {
 
                 ByteCode::ContextQuery => {
                     let component_count = self.read_byte();
-                    let mut components = Vec::new();
+                    println!("query components:");
                     // collect all component ids and names for printing
                     for _ in 0..component_count {
                         let component_id = self.read_byte();
                         let component_name = self.read_string();
-                        components.push(format!("{} ({})", component_id, component_name));
+                        println!("{} (id: {})", component_name, component_id);
                     }
-                    dbg!(format!("query components: {}", components.join(", ")));
                 }
             }
             if self.verbose {

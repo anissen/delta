@@ -62,15 +62,24 @@
 component Position { x f32, y f32 }
 component Velocity { dx f32, dy f32 }
 
-[Position { x 32.0, y 64.0 }, Velocity { dx 0.0, dy 0.0 }] | log
+# ∆ | new [Position { x 32.0, y 64.0 }, Velocity { dx 1.0, dy 0.5 }]
 
-# (arr | get_list_element_at_index 0) | log
-# (arr | get_list_element_at_index 1) | log
+# e = ∆.new([Position{...}])
 
-# Position { x 32.0, y 64.0 } | log
+# e = ∆ | new [Position { x 32.0, y 64.0 }]
 
-# ∆ | new [Position { x 32, y 64 }, Velocity { x 32, y 64 }]
+# ∆ | new [ Position { x 32.0, y 64.0 }, Velocity { dx 1.0, dy 0.5 } ]
 
-# ∆ query
-# 	Position p
-# 		p | log
+# ∆ | new
+# 	Position { x 32.0, y 64.0 }
+# 	Velocity { dx 1.0, dy 0.5 }
+
+# ∆ | new
+# | set Position { x 32.0, y 64.0 }
+# | set Velocity { dx 1.0, dy 0.5 }
+
+# create [ Position { x 32.0, y 64.0 }, Velocity { dx 1.0, dy 0.5 } ]
+
+query
+	Position p
+		p | log

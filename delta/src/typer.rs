@@ -684,7 +684,13 @@ impl<'env> InferenceContext<'env> {
 
             Expr::Query { components, expr } => {
                 components.iter().for_each(|component| {
-                    // TODO(anissen): Type should be look-up of a named component
+                    let component_name = component.type_.lexeme.clone();
+                    if self.environment.components.get(&component_name).is_none() {
+                        self.diagnostics.add_error(Error::TypeNotFound {
+                            token: component.type_.clone(),
+                        });
+                    };
+
                     let v = self.type_placeholder();
                     self.environment
                         .variables

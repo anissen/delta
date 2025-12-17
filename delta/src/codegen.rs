@@ -479,19 +479,17 @@ impl<'a> Codegen<'a> {
             .iter()
             .enumerate()
             .for_each(|(index, component)| {
-                let name = component.name.lexeme.clone();
+                let component_type_name = component.type_.lexeme.clone();
 
                 // TODO(anissen): This ought to be an id/index (and possibly name for debug)
                 let id = 42;
-                scope
-                    .bytecode
-                    .add_byte(id)
-                    .add_string(&component.name.lexeme);
+                scope.bytecode.add_byte(id).add_string(&component_type_name);
 
                 // TODO(anissen): This index is probably wrong!
                 let env_index = (scope.environment.len() + index) as u8;
                 // dbg!(&name);
                 // dbg!(&env_index);
+                let name = component.name.lexeme.clone();
                 scope.environment.insert(name.clone(), env_index);
                 scope.locals.insert(name);
             });

@@ -68,7 +68,7 @@ pub enum ByteCode {
 
     ContextQuery,
     // CreateEntity,
-    // SetComponent, // TODO(anissen): Should be `SetComponents`
+    // SetComponent, // TODO(anissen): Should be `UpsertComponents`
     // GetComponent, // TODO(anissen): Should be `GetComponents`
     // RunSystem
 }

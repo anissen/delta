@@ -102,6 +102,7 @@ fn process_toml_file(path: &Path) -> Result<ProcessStatus, Box<dyn std::error::E
                             delta::vm::Value::Tag { .. } => "tag".to_string(),
                             delta::vm::Value::Function(_) => "function".to_string(),
                             delta::vm::Value::List(_) => "list".to_string(),
+                            delta::vm::Value::Component(_) => "component".to_string(),
                         };
                         (value.to_string(), result_type)
                     }
