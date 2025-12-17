@@ -26,8 +26,11 @@ pub enum Expr {
     Identifier {
         name: Token,
     },
+    Context {
+        name: Token,
+    },
     ContextIdentifier {
-        // context: Option<Token>,
+        context: Token,
         name: Token,
     },
     Grouping(Box<Expr>),
@@ -67,11 +70,21 @@ pub enum Expr {
         expr: Box<Expr>,
         arms: Vec<IsArm>,
     },
+    Query {
+        components: Vec<NamedType>,
+        expr: Box<Expr>,
+    },
     ComponentDefinition {
         name: Token,
         properties: Vec<PropertyDefinition>,
     },
     // TODO(anissen): Add an Error and/or Todo expression?
+}
+
+#[derive(Debug)]
+pub struct NamedType {
+    pub type_: Token,
+    pub name: Token,
 }
 
 #[derive(Debug, Clone)]

@@ -97,7 +97,7 @@ impl Lexer {
             ',' => TokenKind::Comma,
             '#' => self.comment(),
             '|' => TokenKind::Pipe,
-            '∆' => TokenKind::Context,
+            '∆' => self.context(),
             '.' => TokenKind::Dot,
             '(' => TokenKind::LeftParen,
             ')' => TokenKind::RightParen,
@@ -144,6 +144,7 @@ impl Lexer {
             _ if self.match_keyword("and") => TokenKind::KeywordAnd,
             _ if self.match_keyword("or") => TokenKind::KeywordOr,
             _ if self.match_keyword("component") => TokenKind::KeywordComponent,
+            _ if self.match_keyword("query") => TokenKind::KeywordQuery,
             _ if self.match_keyword("f32") => TokenKind::KeywordF32,
             // '∆' if self.matches('.') && self.is_letter(self.peek()) => self.context_value(), // TODO(anissen): Key-value pair, e.g. ∆.x = y
             // '∆' => self.identifier(), // TODO(anissen): Named context, e.g. ∆x or ∆x.y
@@ -238,6 +239,11 @@ impl Lexer {
         } else {
             TokenKind::Integer
         }
+    }
+
+    fn context(&mut self) -> TokenKind {
+        self.identifier();
+        TokenKind::Context
     }
 
     fn comment(&mut self) -> TokenKind {

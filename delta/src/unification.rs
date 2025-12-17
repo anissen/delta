@@ -16,6 +16,7 @@ pub enum Type {
     List,
     Function,
     Component,
+    Context,
 }
 
 pub type TypeVariable = usize;
@@ -81,6 +82,7 @@ impl fmt::Display for UnificationType {
                         .collect::<Vec<String>>();
                     &format!("component {}({})", token.lexeme, fields.join(", "))
                 }
+                Type::Context => "context",
             },
             Self::Variable(i) => &format!("???#{i}"),
             Self::Union {

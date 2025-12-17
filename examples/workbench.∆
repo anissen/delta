@@ -43,29 +43,34 @@
 # 	| each
 # 		.p += .v
 
+# ∆ query
+# 	Position p, Velocity v
+# 		p += v
+# 	Player p, IsTarget? t, !Dead
+# 		t if :some t
+# 			p.xyz = t
+
 # --------------
 
 # TODO:
-# - Move more examples from workbench into snapshots
 # - Add a result diff to snapshot runs
 # - Improve time steps for prism?
 # - Initial query support for components
 # - Exhaustiveness tests for `is`
 # - Shorthand for partial `is`?
 
-stoplight_color = \v
-	v is
-		_ if v >. 0.0
-			:red
-		_ if v == 0.0
-			:yellow 4
-		_
-			:green
-res = (0.0 | stoplight_color)
-res is
-	:red
-		"maybe"
-	:yellow x
-		"yellow with value {x}"
-	_
-		"also no"
+component Position { x f32, y f32 }
+component Velocity { dx f32, dy f32 }
+
+[Position { x 32.0, y 64.0 }, Velocity { dx 0.0, dy 0.0 }] | log
+
+# (arr | get_list_element_at_index 0) | log
+# (arr | get_list_element_at_index 1) | log
+
+# Position { x 32.0, y 64.0 } | log
+
+# ∆ | new [Position { x 32, y 64 }, Velocity { x 32, y 64 }]
+
+# ∆ query
+# 	Position p
+# 		p | log

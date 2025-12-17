@@ -147,9 +147,10 @@ impl Disassembler {
 
                 ByteCode::PushComponent => {
                     let component_id = self.read_i32();
+                    let property_count = self.read_byte();
                     self.print(vec![
                         "push_component".to_string(),
-                        format!("(id: {component_id})"),
+                        format!("(id: {component_id}, properties: {property_count})"),
                     ])
                 }
 
@@ -324,6 +325,18 @@ impl Disassembler {
                         offset,
                         self.program_counter + offset as usize
                     )])
+                }
+
+                ByteCode::ContextQuery => {
+                    let component_count = self.read_byte();
+                    let mut components = Vec::new();
+                    // collect all component ids and names for printing
+                    for _ in 0..component_count {
+                        let component_id = self.read_byte();
+                        let component_name = self.read_string();
+                        components.push(format!("{} ({})", component_id, component_name));
+                    }
+                    self.print(vec![format!("query components: {}", components.join(", "))])
                 }
             };
 

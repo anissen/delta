@@ -5,7 +5,7 @@ use crate::diagnostics::Diagnostics;
 use crate::errors::Error;
 use crate::expressions::{
     ArithmeticOperations, BinaryOperator, BooleanOperations, Comparisons, EqualityOperations, Expr,
-    IsArm, IsArmPattern, StringOperations, UnaryOperator, ValueType,
+    IsArm, IsArmPattern, NamedType, StringOperations, UnaryOperator, ValueType,
 };
 use crate::program::Context;
 use crate::tokens::{Position, Token};
@@ -106,8 +106,12 @@ impl<'a> Codegen<'a> {
                 }
             }
 
-            Expr::ContextIdentifier { name } => {
+            Expr::ContextIdentifier { context: _, name } => {
                 scope.bytecode.add_get_context_value(&name.lexeme);
+            }
+
+            Expr::Context { name: _ } => {
+                todo!("Implement context expression")
             }
 
             Expr::ComponentDefinition {
@@ -173,7 +177,10 @@ impl<'a> Codegen<'a> {
                 expr,
             } => match **target {
                 Expr::Identifier { ref name } => self.emit_assignment(name, expr, scope),
-                Expr::ContextIdentifier { ref name } => {
+                Expr::ContextIdentifier {
+                    context: _,
+                    ref name,
+                } => {
                     self.emit_expr(expr, scope);
                     scope.bytecode.add_set_context_value(&name.lexeme);
                 }
@@ -204,6 +211,8 @@ impl<'a> Codegen<'a> {
             } => self.emit_binary(left, operator, right, scope),
 
             Expr::Is { expr, arms } => self.emit_is(expr, arms, scope),
+
+            Expr::Query { components, expr } => self.emit_query(components, expr, scope),
         };
     }
 
@@ -276,7 +285,8 @@ impl<'a> Codegen<'a> {
                 scope
                     .bytecode
                     .add_op(ByteCode::PushComponent)
-                    .add_i32(&component_id);
+                    .add_i32(&component_id)
+                    .add_byte(properties.len() as u8);
 
                 // scope.bytecode.add_op(ByteCode::PushComponentInitialization);
                 // scope.bytecode.add_string(&name.lexeme);
@@ -404,7 +414,6 @@ impl<'a> Codegen<'a> {
                 }
                 IsArmPattern::CaptureTagPayload {
                     tag_name,
-
                     identifier,
                 } => {
                     scope
@@ -424,6 +433,7 @@ impl<'a> Codegen<'a> {
                     scope
                         .environment
                         .insert(identifier.lexeme.clone(), locals_count);
+                    // scope.locals.insert(identifier.lexeme.clone());
                 }
                 IsArmPattern::Default => {
                     // No pattern matching needed for default case
@@ -457,6 +467,36 @@ impl<'a> Codegen<'a> {
         for offset in jump_to_end_offsets {
             scope.bytecode.patch_jump_to_current_byte(offset);
         }
+    }
+
+    fn emit_query(&mut self, components: &Vec<NamedType>, expr: &'a Expr, scope: &mut Scope) {
+        scope
+            .bytecode
+            .add_op(ByteCode::ContextQuery)
+            .add_byte(components.len() as u8);
+
+        components
+            .iter()
+            .enumerate()
+            .for_each(|(index, component)| {
+                let name = component.name.lexeme.clone();
+
+                // TODO(anissen): This ought to be an id/index (and possibly name for debug)
+                let id = 42;
+                scope
+                    .bytecode
+                    .add_byte(id)
+                    .add_string(&component.name.lexeme);
+
+                // TODO(anissen): This index is probably wrong!
+                let env_index = (scope.environment.len() + index) as u8;
+                // dbg!(&name);
+                // dbg!(&env_index);
+                scope.environment.insert(name.clone(), env_index);
+                scope.locals.insert(name);
+            });
+
+        self.emit_expr(expr, scope);
     }
 
     fn emit_assignment(&mut self, name: &Token, expr: &'a Expr, scope: &mut Scope) {
@@ -497,9 +537,11 @@ impl<'a> Codegen<'a> {
             panic!("Too many parameters");
         }
 
-        scope.bytecode.add_op(ByteCode::Function);
-        scope.bytecode.add_byte(self.function_chunks.len() as u8);
-        scope.bytecode.add_byte(params.len() as u8);
+        scope
+            .bytecode
+            .add_op(ByteCode::Function)
+            .add_byte(self.function_chunks.len() as u8)
+            .add_byte(params.len() as u8);
 
         self.create_function_chunk(name, &slash.position, params, body, &mut scope.function());
     }

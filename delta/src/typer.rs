@@ -346,10 +346,15 @@ impl<'env> InferenceContext<'env> {
                 }
             },
 
-            Expr::ContextIdentifier { name } => {
+            Expr::ContextIdentifier {
+                context: _,
+                name: _,
+            } => {
                 // TODO(anissen): Implement
-                make_constructor(Type::Float, name.clone())
+                self.type_placeholder()
             }
+
+            Expr::Context { name } => make_constructor(Type::Context, name.clone()),
 
             Expr::ComponentDefinition { name, properties } => {
                 if self.environment.components.contains_key(&name.lexeme) {
@@ -502,7 +507,10 @@ impl<'env> InferenceContext<'env> {
                             .variables
                             .insert(name.lexeme.clone(), UnificationType::Variable(50));
                     }
-                    Expr::ContextIdentifier { ref name } => {
+                    Expr::ContextIdentifier {
+                        context: _,
+                        ref name,
+                    } => {
                         self.environment
                             .variables
                             .insert(name.lexeme.clone(), UnificationType::Variable(50));
@@ -516,7 +524,10 @@ impl<'env> InferenceContext<'env> {
                             .variables
                             .insert(name.lexeme.clone(), expr_type.clone());
                     }
-                    Expr::ContextIdentifier { ref name } => {
+                    Expr::ContextIdentifier {
+                        context: _,
+                        ref name,
+                    } => {
                         // TODO(anissen): This is not right for ContextIdentifier?!?
                         self.environment
                             .variables
@@ -669,6 +680,17 @@ impl<'env> InferenceContext<'env> {
                     types: Box::new(return_types),
                     has_wildcard: false,
                 }
+            }
+
+            Expr::Query { components, expr } => {
+                components.iter().for_each(|component| {
+                    // TODO(anissen): Type should be look-up of a named component
+                    let v = self.type_placeholder();
+                    self.environment
+                        .variables
+                        .insert(component.name.lexeme.clone(), v);
+                });
+                self.infer_type(expr)
             }
         }
     }

@@ -1,3 +1,6 @@
+use std::path::Component;
+use std::thread::panicking;
+
 use crate::diagnostics::Diagnostics;
 use crate::errors;
 use crate::expressions::ArithmeticOperations;
@@ -10,6 +13,7 @@ use crate::expressions::Expr;
 use crate::expressions::IsArm;
 use crate::expressions::IsArmPattern;
 use crate::expressions::IsGuard;
+use crate::expressions::NamedType;
 use crate::expressions::PropertyDeclaration;
 use crate::expressions::PropertyDefinition;
 use crate::expressions::StringOperations;
@@ -181,11 +185,15 @@ impl Parser {
 
     // assignment → IDENTIFIER "=" logic_or
     fn assignment(&mut self) -> Result<Option<Expr>, String> {
-        let expr = self.is()?;
+        let expr = self.query()?;
         if expr.is_some() && self.matches(&Equal) {
             let expr = expr.unwrap();
             match expr {
-                Expr::Identifier { name: _ } | Expr::ContextIdentifier { name: _ } => {
+                Expr::Identifier { name: _ }
+                | Expr::ContextIdentifier {
+                    context: _,
+                    name: _,
+                } => {
                     let operator = self.previous();
                     let value = self.assignment()?;
                     Ok(Some(Expr::Assignment {
@@ -246,6 +254,44 @@ impl Parser {
         }))
     }
 
+    // query → ...
+    fn query(&mut self) -> Result<Option<Expr>, String> {
+        let expr = self.is()?;
+        if self.matches(&KeywordQuery) {
+            self.comment();
+            self.consume(&NewLine)?;
+            self.increase_indentation();
+            self.consume_indentation()?;
+
+            let mut components = vec![];
+            // parse components
+            while !self.check(&NewLine) {
+                if self.is_at_end() {
+                    return Err("Unexpected end of input".to_string());
+                }
+
+                let type_ = self.consume(&Identifier)?;
+                print!("Type: {:?}", &type_);
+                let name = self.consume(&Identifier)?;
+                print!("Name: {:?}", &name);
+                components.push(NamedType { type_, name });
+            }
+
+            // expr for matches
+            if let Some(expr) = self.block()? {
+                self.decrease_indentation();
+                Ok(Some(Expr::Query {
+                    components,
+                    expr: Box::new(expr),
+                }))
+            } else {
+                Err("Unexpected end of input".to_string())
+            }
+        } else {
+            Ok(expr)
+        }
+    }
+
     // is → string_concat "is" NEWLINE is_arm* | string_concat
     fn is(&mut self) -> Result<Option<Expr>, String> {
         let expr = self.string_concat()?;
@@ -256,9 +302,7 @@ impl Parser {
             let mut arms = vec![];
             let mut has_default = false;
             while self.matches_indentation() {
-                for _ in 0..self.indentation {
-                    self.consume(&Tab)?;
-                }
+                self.consume_indentation()?;
                 if self.matches(&Comment) {
                     self.consume(&NewLine)?;
                     continue;
@@ -615,9 +659,7 @@ impl Parser {
         self.increase_indentation();
         let mut exprs = vec![];
         loop {
-            for _ in 0..self.indentation {
-                self.consume(&Tab)?;
-            }
+            self.consume_indentation()?;
             if let Some(expr) = self.expression()? {
                 exprs.push(expr);
             }
@@ -701,17 +743,16 @@ impl Parser {
                 Ok(Some(Expr::Identifier { name }))
             }
         } else if self.matches(&TokenKind::Context) {
-            // let name = if self.check(&TokenKind::Identifier) {
-            //     Some(self.consume(&TokenKind::Identifier)?)
-            // } else {
-            //     None
-            // };
-            // if self.matches(&TokenKind::Dot) {
-            //     ...
-            // }
-            self.consume(&TokenKind::Dot)?;
-            let identifier = self.consume(&TokenKind::Identifier)?;
-            Ok(Some(Expr::ContextIdentifier { name: identifier }))
+            let name = self.previous();
+            if self.matches(&TokenKind::Dot) {
+                let identifier = self.consume(&TokenKind::Identifier)?;
+                Ok(Some(Expr::ContextIdentifier {
+                    context: name,
+                    name: identifier,
+                }))
+            } else {
+                Ok(Some(Expr::Context { name }))
+            }
         } else if self.matches(&Integer) {
             let lexeme = self.previous().lexeme;
             let value = lexeme.parse::<i32>();
@@ -834,5 +875,12 @@ impl Parser {
 
     fn decrease_indentation(&mut self) {
         self.indentation -= 1;
+    }
+
+    fn consume_indentation(&mut self) -> Result<(), String> {
+        for _ in 0..self.indentation {
+            self.consume(&Tab)?;
+        }
+        Ok(())
     }
 }

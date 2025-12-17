@@ -17,6 +17,7 @@ pub enum Value {
     Tag(String, Box<Value>),
     List(Vec<Value>),
     Function(u8),
+    Component(Vec<Value>),
 }
 
 impl Display for Value {
@@ -25,7 +26,7 @@ impl Display for Value {
             Value::True => write!(f, "true")?,
             Value::False => write!(f, "false")?,
             Value::Integer(i) => write!(f, "{i}")?,
-            Value::Float(d) => write!(f, "{d}")?,
+            Value::Float(d) => write!(f, "{d:.1}")?,
             Value::String(s) => write!(f, "{s}")?,
             Value::SimpleTag(t) => write!(f, "{t}")?,
             Value::Tag(t, a) => write!(f, "{t}({a})")?,
@@ -42,6 +43,14 @@ impl Display for Value {
                 write!(f, "]")?;
             }
             Value::Function(i) => write!(f, "<fn {i}>")?,
+            Value::Component(properties) => {
+                let properties_str = properties
+                    .iter()
+                    .map(|p| p.to_string())
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                write!(f, "component({properties_str})")?;
+            }
         };
         Ok(())
     }
@@ -215,7 +224,12 @@ impl VirtualMachine {
 
                 ByteCode::PushComponent => {
                     let _component_id = self.read_i32();
-                    println!("push_component");
+                    let property_count = self.read_byte();
+                    let mut properties = Vec::new();
+                    for _ in 0..property_count {
+                        properties.insert(0, self.pop_any()); // TODO(anissen): Is there a more performant approach?
+                    }
+                    self.push_component(properties);
                 }
 
                 ByteCode::GetTagName => {
@@ -527,6 +541,18 @@ impl VirtualMachine {
                         self.metadata.jumps_performed += 1;
                     }
                 }
+
+                ByteCode::ContextQuery => {
+                    let component_count = self.read_byte();
+                    let mut components = Vec::new();
+                    // collect all component ids and names for printing
+                    for _ in 0..component_count {
+                        let component_id = self.read_byte();
+                        let component_name = self.read_string();
+                        components.push(format!("{} ({})", component_id, component_name));
+                    }
+                    dbg!(format!("query components: {}", components.join(", ")));
+                }
             }
             if self.verbose {
                 println!("Stack: {:?}", self.stack);
@@ -724,6 +750,10 @@ impl VirtualMachine {
 
     fn push_list(&mut self, list: Vec<Value>) {
         self.push_value(Value::List(list));
+    }
+
+    fn push_component(&mut self, properties: Vec<Value>) {
+        self.push_value(Value::Component(properties));
     }
 
     fn string_concat_values(&self, left: String, right: Value) -> String {

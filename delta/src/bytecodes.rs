@@ -1,4 +1,5 @@
 // TODO(anissen): Bytecode should be in a higher level format w. values to allow for an simple optimization phase. The format should know how to translate to/from actual bytes.
+// TODO: Serialized types ought to be serialized by index, but also include a name in debug mode
 #[derive(Debug)]
 pub enum ByteCode {
     IntegerAddition,
@@ -64,6 +65,8 @@ pub enum ByteCode {
     ArrayAppend,
 
     Log,
+
+    ContextQuery,
     // CreateEntity,
     // SetComponent, // TODO(anissen): Should be `SetComponents`
     // GetComponent, // TODO(anissen): Should be `GetComponents`
@@ -148,6 +151,7 @@ impl TryFrom<u8> for ByteCode {
             value if value == ByteCode::JumpIfFalse as u8 => Ok(Self::JumpIfFalse),
 
             value if value == ByteCode::Log as u8 => Ok(Self::Log),
+            value if value == ByteCode::ContextQuery as u8 => Ok(Self::ContextQuery),
 
             _ => {
                 dbg!(value);
