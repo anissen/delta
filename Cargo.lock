@@ -5,6 +5,9 @@ version = 4
 [[package]]
 name = "delta"
 version = "0.1.0"
+dependencies = [
+ "elements",
+]
 
 [[package]]
 name = "elements"

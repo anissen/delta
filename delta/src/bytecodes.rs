@@ -67,6 +67,7 @@ pub enum ByteCode {
     Log,
 
     ContextQuery,
+    GetNextComponentColumn,
     // CreateEntity,
     // SetComponent, // TODO(anissen): Should be `UpsertComponents`
     // GetComponent, // TODO(anissen): Should be `GetComponents`
@@ -151,7 +152,11 @@ impl TryFrom<u8> for ByteCode {
             value if value == ByteCode::JumpIfFalse as u8 => Ok(Self::JumpIfFalse),
 
             value if value == ByteCode::Log as u8 => Ok(Self::Log),
+
             value if value == ByteCode::ContextQuery as u8 => Ok(Self::ContextQuery),
+            value if value == ByteCode::GetNextComponentColumn as u8 => {
+                Ok(Self::GetNextComponentColumn)
+            }
 
             _ => {
                 dbg!(value);

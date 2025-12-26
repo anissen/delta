@@ -1,4 +1,5 @@
 use std::collections::{HashMap, HashSet};
+use std::path::Component;
 
 use crate::bytecodes::ByteCode;
 use crate::diagnostics::Diagnostics;
@@ -481,8 +482,7 @@ impl<'a> Codegen<'a> {
             .for_each(|(index, component)| {
                 let component_type_name = component.type_.lexeme.clone();
 
-                // TODO(anissen): This ought to be an id/index (and possibly name for debug)
-                let id = 42;
+                let id = 0; // TODO(anissen): Implement this!
                 scope.bytecode.add_byte(id).add_string(&component_type_name);
 
                 // TODO(anissen): This index is probably wrong!
@@ -494,7 +494,37 @@ impl<'a> Codegen<'a> {
                 scope.locals.insert(name);
             });
 
+        /*
+        context_query
+        :start
+        get_next_component_column (sets components + pushes true/false on the stack)
+        if false, jump to end
+        (set_local 0...n)
+        [expr]
+        jump_to_label start
+        :end
+        */
+
+        let start_label = scope.bytecode.bytes.len() as i16;
+
+        scope.bytecode.add_op(ByteCode::GetNextComponentColumn);
+
+        let end_offset = scope.bytecode.add_jump_if_false();
+
+        // for i in 0..components.len() {
+        //     scope.bytecode.add_set_local_value(index)
+        // }
+
         self.emit_expr(expr, scope);
+
+        // Unconditional jump to start label
+        scope.bytecode.add_op(ByteCode::Jump);
+        let start_offset =
+            start_label - (scope.bytecode.bytes.len() as i16 + 2/* jump offset bytes */);
+        scope.bytecode.add_i16(&start_offset);
+        // scope.bytecode.add_unconditional_jump()
+
+        scope.bytecode.patch_jump_to_current_byte(end_offset);
     }
 
     fn emit_assignment(&mut self, name: &Token, expr: &'a Expr, scope: &mut Scope) {
@@ -665,6 +695,10 @@ impl BytecodeBuilder {
     fn add_bytes<const COUNT: usize>(&mut self, value: &[u8; COUNT]) -> &mut Self {
         self.bytes.extend_from_slice(value);
         self
+    }
+
+    fn add_i16(&mut self, value: &i16) -> &mut Self {
+        self.add_bytes(&value.to_be_bytes())
     }
 
     fn add_i32(&mut self, value: &i32) -> &mut Self {

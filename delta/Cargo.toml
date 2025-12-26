@@ -5,3 +5,4 @@ edition = "2024"
 default-run = "delta"
 
 [dependencies]
+elements = { path = "../elements" }

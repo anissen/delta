@@ -1,20 +1,4 @@
-use elements::{ComponentLayout, ComponentTypeId, Entity, world::World};
-
-pub struct EntityManager {
-    next_id: Entity,
-}
-
-impl EntityManager {
-    fn new() -> Self {
-        EntityManager { next_id: 0 }
-    }
-
-    fn create(&mut self) -> Entity {
-        let id = self.next_id;
-        self.next_id += 1;
-        id
-    }
-}
+use elements::{ComponentLayout, ComponentTypeId, Entity, EntityManager, world::World};
 
 fn f32_bytes(x: f32) -> [u8; 4] {
     x.to_le_bytes()
@@ -30,6 +14,82 @@ fn position(x: f32, y: f32) -> Vec<u8> {
 fn velocity(dx: f32, dy: f32) -> Vec<u8> {
     [f32_bytes(dx), f32_bytes(dy)].concat()
 }
+
+// ------------------------------------------------------------
+// Packed component layout description
+// ------------------------------------------------------------
+
+// #[derive(Debug)]
+// pub struct FieldLayout {
+//     pub name: String,
+//     pub offset: usize,
+//     pub size: usize,
+// }
+
+// #[derive(Debug)]
+// pub struct ComponentLayout {
+//     pub size: usize,              // packed byte size
+//     pub fields: Vec<FieldLayout>, // ordered field offsets
+// }
+
+// // ------------------------------------------------------------
+// // Helpers: fixed-size types
+// // ------------------------------------------------------------
+
+// fn primitive_size(ty: &Type) -> usize {
+//     match ty {
+//         Type::Boolean => 1,
+//         Type::Integer => 4,
+//         Type::Float => 4,
+//         Type::String => 8, // VM string handle
+//         Type::Tag => 0,
+//         Type::List => 16,    // pointer + len
+//         Type::Function => 8, // function handle
+//         Type::Component => unreachable!("Handled separately"),
+//     }
+// }
+
+// // ------------------------------------------------------------
+// // Packed layout generator (recursive, no padding)
+// // ------------------------------------------------------------
+
+// pub fn layout_component(
+//     def: &ComponentDefinition,
+//     components: &HashMap<String, ComponentDefinition>,
+// ) -> ComponentLayout {
+//     let mut fields = Vec::new();
+//     let mut offset = 0usize;
+
+//     for prop in &def.properties {
+//         let size = match &prop.type_ {
+//             Type::Component => {
+//                 // nested component → compute recursively
+//                 let nested_def = components
+//                     .get(&prop.name)
+//                     .unwrap_or_else(|| panic!("Unknown nested component {}", prop.name));
+
+//                 let nested_layout = layout_component(nested_def, components);
+//                 nested_layout.size
+//             }
+//             other => primitive_size(other),
+//         };
+
+//         fields.push(FieldLayout {
+//             name: prop.name.clone(),
+//             offset,
+//             size,
+//         });
+
+//         offset += size; // packed: no padding
+//     }
+
+//     ComponentLayout {
+//         size: offset,
+//         fields,
+//     }
+// }
+
+// TODO(anissen): Look at MemorySegment + MemoryLayout from JDK for API inspiration
 
 fn main() {
     let mut entity_manager = EntityManager::new();

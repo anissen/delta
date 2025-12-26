@@ -1,5 +1,5 @@
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use toml::{Table, Value};
 use walkdir::WalkDir;
 
@@ -8,14 +8,31 @@ enum ProcessStatus {
     Ignored(String),
 }
 
+struct TestFile {
+    path: PathBuf,
+    script: String,
+    previous_instructions: Option<usize>,
+}
+
+struct TestResult {
+    path: PathBuf,
+    status: ProcessStatus,
+    instructions_diff: Option<InstructionsDiff>,
+}
+
+struct InstructionsDiff {
+    previous: usize,
+    current: usize,
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let current_dir = std::env::current_dir()?;
     let tests_dir = current_dir.join("snapshots");
 
-    let mut files_processed = 0;
-    let mut ignored_files = Vec::new();
+    // Phase 1: Collect all test files and their data
+    println!("Collecting test files...");
+    let mut test_files = Vec::new();
 
-    // Walk through all files in the current directory and subdirectories
     for entry in WalkDir::new(&tests_dir) {
         let entry = entry?;
         let path = entry.path();
@@ -25,61 +42,141 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             continue;
         }
 
-        let process_reuslt = process_toml_file(path)?;
-        match process_reuslt {
-            ProcessStatus::Processed => files_processed += 1,
-            ProcessStatus::Ignored(reason) => {
-                ignored_files.push((path.display().to_string(), reason))
-            }
-        };
-    }
-
-    if !ignored_files.is_empty() {
-        println!("Ignored {} file(s)", ignored_files.len());
-        for (ref path, reason) in ignored_files {
-            println!(
-                "  => Ignored {}: {}",
-                Path::strip_prefix(Path::new(path), &tests_dir)
-                    .unwrap()
-                    .display(),
-                reason
-            );
+        if let Some(test_file) = collect_test_data(path)? {
+            test_files.push(test_file);
         }
-        println!();
     }
 
-    println!(
-        "Successfully processed {} TOML files in {}",
-        files_processed,
-        tests_dir.display()
-    );
+    println!("Found {} test file(s)\n", test_files.len());
+
+    // Phase 2: Execute all tests and collect results
+    println!("Executing tests...");
+    let mut results = Vec::new();
+
+    for test_file in test_files {
+        let result = process_toml_file(&test_file)?;
+        results.push(result);
+    }
+
+    println!("\n{}", "=".repeat(80));
+    println!("Test Execution Report");
+    println!("{}", "=".repeat(80));
+
+    // Phase 3: Print comprehensive report
+    let mut files_processed = 0;
+    let mut ignored_files = Vec::new();
+    let mut instruction_changes = Vec::new();
+
+    for result in results {
+        match result.status {
+            ProcessStatus::Processed => {
+                files_processed += 1;
+                if let Some(diff) = result.instructions_diff {
+                    if diff.previous != diff.current {
+                        instruction_changes.push((result.path, diff));
+                    }
+                }
+            }
+            ProcessStatus::Ignored(reason) => {
+                ignored_files.push((result.path, reason));
+            }
+        }
+    }
+
+    // Print instruction changes
+    if !instruction_changes.is_empty() {
+        println!(
+            "\nInstruction Count Changes ({}):",
+            instruction_changes.len()
+        );
+        println!("{}", "-".repeat(80));
+        for (path, diff) in &instruction_changes {
+            let rel_path = Path::strip_prefix(path, &tests_dir)
+                .unwrap_or(path)
+                .display();
+            let change = diff.current as i64 - diff.previous as i64;
+            let sign = if change > 0 { "+" } else { "" };
+            println!(
+                "  {} -> {} ({}{})",
+                diff.previous, diff.current, sign, change
+            );
+            println!("    {}", rel_path);
+        }
+    }
+
+    let ignored_file_count = ignored_files.len();
+    // Print ignored files
+    if !ignored_files.is_empty() {
+        println!("\nIgnored Files ({}):", ignored_file_count);
+        println!("{}", "-".repeat(80));
+        for (path, reason) in ignored_files {
+            let rel_path = Path::strip_prefix(&path, &tests_dir)
+                .unwrap_or(&path)
+                .display();
+            println!("  {}", rel_path);
+            println!("    Reason: {}", reason);
+        }
+    }
+
+    // Print summary
+    println!("\n{}", "=".repeat(80));
+    println!("Summary:");
+    println!("  Processed: {}", files_processed);
+    println!("  Ignored: {}", ignored_file_count);
+    println!("  Instruction changes: {}", instruction_changes.len());
+    println!("{}", "=".repeat(80));
 
     Ok(())
 }
 
-fn process_toml_file(path: &Path) -> Result<ProcessStatus, Box<dyn std::error::Error>> {
-    // Read the file
+fn collect_test_data(path: &Path) -> Result<Option<TestFile>, Box<dyn std::error::Error>> {
     let content = fs::read_to_string(path)?;
+    let doc: Table = content.parse()?;
 
-    // Parse as TOML
-    let mut doc: Table = content.parse()?;
+    // Check if file should be ignored
+    if doc.get("ignored").is_some() {
+        return Ok(None);
+    }
 
-    // Get "script" value from doc
     let script = doc
         .get("script")
         .and_then(|v| v.as_str())
-        .unwrap()
-        .to_string();
+        .ok_or("Missing 'script' field")?;
+
+    let previous_instructions = doc
+        .get("output")
+        .and_then(|v| v.as_table())
+        .and_then(|t| t.get("vm"))
+        .and_then(|v| v.as_table())
+        .and_then(|t| t.get("instructions_executed"))
+        .and_then(|v| v.as_integer())
+        .map(|v| v as usize);
+
+    Ok(Some(TestFile {
+        path: path.to_path_buf(),
+        script: script.to_string(),
+        previous_instructions,
+    }))
+}
+
+fn process_toml_file(test_file: &TestFile) -> Result<TestResult, Box<dyn std::error::Error>> {
+    // Read the file again
+    let content = fs::read_to_string(&test_file.path)?;
+    let mut doc: Table = content.parse()?;
 
     if let Some(ignored) = doc.get("ignored") {
-        return Ok(ProcessStatus::Ignored(ignored.to_string()));
+        return Ok(TestResult {
+            path: test_file.path.clone(),
+            status: ProcessStatus::Ignored(ignored.to_string()),
+            instructions_diff: None,
+        });
     }
 
-    let file_name = path.file_name().unwrap().display().to_string();
+    let file_name = test_file.path.file_name().unwrap().display().to_string();
 
     let result = run_script(
         file_name.clone(),
-        &script,
+        &test_file.script,
         true, /* TODO: This should be false but that removes disassembly */
     );
 
@@ -132,9 +229,10 @@ fn process_toml_file(path: &Path) -> Result<ProcessStatus, Box<dyn std::error::E
 
                 // Add VM metadata
                 let mut vm_table = Table::new();
+                let current_instructions = execution_metadata.instructions_executed;
                 vm_table.insert(
                     "instructions_executed".to_string(),
-                    Value::Integer(execution_metadata.instructions_executed as i64),
+                    Value::Integer(current_instructions as i64),
                 );
                 vm_table.insert(
                     "jumps_performed".to_string(),
@@ -153,9 +251,30 @@ fn process_toml_file(path: &Path) -> Result<ProcessStatus, Box<dyn std::error::E
                     Value::Integer(execution_metadata.max_stack_height as i64),
                 );
                 table.insert("vm".to_string(), Value::Table(vm_table));
+
+                // Calculate instruction diff
+                let instructions_diff =
+                    test_file
+                        .previous_instructions
+                        .map(|prev| InstructionsDiff {
+                            previous: prev,
+                            current: current_instructions,
+                        });
+
+                // Convert back to TOML string
+                let new_content = toml::to_string_pretty(&doc)?;
+
+                // Write back to file
+                fs::write(&test_file.path, new_content)?;
+
+                return Ok(TestResult {
+                    path: test_file.path.clone(),
+                    status: ProcessStatus::Processed,
+                    instructions_diff,
+                });
             }
             Err(diagnostics) => {
-                let errors = diagnostics.print(&script).join("\n\n");
+                let errors = diagnostics.print(&test_file.script).join("\n\n");
                 table.insert("error".to_string(), Value::String(errors));
             }
         }
@@ -165,9 +284,13 @@ fn process_toml_file(path: &Path) -> Result<ProcessStatus, Box<dyn std::error::E
     let new_content = toml::to_string_pretty(&doc)?;
 
     // Write back to file
-    fs::write(path, new_content)?;
+    fs::write(&test_file.path, new_content)?;
 
-    Ok(ProcessStatus::Processed)
+    Ok(TestResult {
+        path: test_file.path.clone(),
+        status: ProcessStatus::Processed,
+        instructions_diff: None,
+    })
 }
 
 fn run_script(

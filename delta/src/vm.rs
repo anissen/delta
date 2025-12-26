@@ -5,6 +5,13 @@ use crate::ExecutionMetadata;
 use crate::bytecodes::ByteCode;
 use crate::program::Context;
 
+use elements::ComponentLayout;
+use elements::ComponentTypeId;
+use elements::Entity;
+use elements::EntityManager;
+use elements::world::QueryResultIter;
+use elements::world::World;
+
 // TODO(anissen): See https://github.com/brightly-salty/rox/blob/master/src/value.rs
 #[derive(Debug, Clone, PartialEq)]
 pub enum Value {
@@ -26,7 +33,7 @@ impl Display for Value {
             Value::True => write!(f, "true")?,
             Value::False => write!(f, "false")?,
             Value::Integer(i) => write!(f, "{i}")?,
-            Value::Float(d) => write!(f, "{d:.1}")?,
+            Value::Float(d) => write!(f, "{d:.2}")?,
             Value::String(s) => write!(f, "{s}")?,
             Value::SimpleTag(t) => write!(f, "{t}")?,
             Value::Tag(t, a) => write!(f, "{t}({a})")?,
@@ -168,6 +175,43 @@ impl VirtualMachine {
                 0,
             );
         }
+
+        let mut entity_manager = EntityManager::new();
+        let mut world = World::new();
+        // Position { x: f32, y: f32 }
+        let POSITION: ComponentTypeId = 0;
+        world.register_component(POSITION, ComponentLayout { size: 8, align: 4 });
+        // Velocity { dx: f32, dy: f32 }
+        let VELOCITY: ComponentTypeId = 1;
+        world.register_component(VELOCITY, ComponentLayout { size: 8, align: 4 });
+        // Dead (no data)
+        let DEAD: ComponentTypeId = 2;
+        world.register_component(DEAD, ComponentLayout { size: 0, align: 0 });
+
+        // Create a few entities
+        let e0 = entity_manager.create();
+        let e1 = entity_manager.create();
+        let e2 = entity_manager.create();
+
+        // Add components
+        world.insert(POSITION, e0, &position(0.01, 0.5));
+        world.insert(VELOCITY, e0, &velocity(3.3, 3.3));
+        world.insert(VELOCITY, e0, &velocity(1.0, 1.0));
+        world.insert(DEAD, e0, &[]);
+
+        world.insert(POSITION, e1, &position(10.0, -5.0));
+        world.insert(VELOCITY, e1, &velocity(-2.0, 0.5));
+
+        world.insert(POSITION, e2, &position(3.0, 3.0));
+
+        let e3 = entity_manager.create();
+        world.insert(POSITION, e3, &position(0.0, 0.0));
+        world.insert(VELOCITY, e3, &velocity(-1.0, -1.0));
+
+        let e4 = entity_manager.create();
+        world.insert(DEAD, e4, &[]);
+
+        let mut query_results = QueryResultIter::empty(); // TODO(anissen): Should probably be a stack to allow nested results
 
         while self.program_counter < self.program.len() {
             let next = self.read_byte();
@@ -399,7 +443,6 @@ impl VirtualMachine {
                     self.push_value(value);
                 }
 
-                // TODO: Add bytecode instructions for ECS operations
                 ByteCode::SetLocalValue => {
                     let index = self.read_byte();
                     let stack_index = self.current_call_frame().stack_index;
@@ -518,7 +561,8 @@ impl VirtualMachine {
 
                 ByteCode::Jump => {
                     let offset = self.read_i16();
-                    self.program_counter += offset as usize;
+                    self.program_counter = self.program_counter.strict_add_signed(offset as isize);
+                    println!("Jumping to offset {}, pc {}", offset, self.program_counter);
                     self.metadata.jumps_performed += 1;
                 }
 
@@ -527,7 +571,8 @@ impl VirtualMachine {
 
                     let condition = self.pop_boolean();
                     if condition {
-                        self.program_counter += offset as usize;
+                        self.program_counter =
+                            self.program_counter.strict_add_signed(offset as isize);
                         self.metadata.jumps_performed += 1;
                     }
                 }
@@ -537,7 +582,8 @@ impl VirtualMachine {
 
                     let condition = self.pop_boolean();
                     if !condition {
-                        self.program_counter += offset as usize;
+                        self.program_counter =
+                            self.program_counter.strict_add_signed(offset as isize);
                         self.metadata.jumps_performed += 1;
                     }
                 }
@@ -546,10 +592,83 @@ impl VirtualMachine {
                     let component_count = self.read_byte();
                     println!("query components:");
                     // collect all component ids and names for printing
+                    let mut component_ids = Vec::new();
                     for _ in 0..component_count {
                         let component_id = self.read_byte();
+                        component_ids.push(component_id as u32);
                         let component_name = self.read_string();
                         println!("{} (id: {})", component_name, component_id);
+                    }
+
+                    // matched_components = Vec<Component>
+                    // matched_components_for_all_entitites = Vec<Vec<Component>>
+                    // push first components to stack
+                    // for each matched_component in matched_components_for_all_entities
+                    //     replace stack top components with matched_component
+                    //     execute expression block
+
+                    /*
+                    generated bytecode:
+
+                    context_query
+                    :start
+                    get_next_component_column (sets components + pushes true/false on the stack)
+                    if false, jump to end
+                    [expr]
+                    jump_to_label start
+                    :end
+                     */
+
+                    /*
+                    while i < matches
+                      get_components i
+                      [expr]
+                    */
+
+                    query_results = world.query(&component_ids, &vec![]);
+                    // should probably have a short of call frame where the column data is part of the frame
+
+                    // query_results.for_each(|r| {
+                    //     dbg!(&r);
+                    // });
+                    // world.system(
+                    //     &component_ids,
+                    //     &vec![],
+                    //     |entity: Entity, components: &mut Vec<&mut [u8]>| {
+                    //         let (first, rest) = components.split_at_mut(1);
+                    //         let pos = &mut first[0];
+                    //         let vel = &mut rest[0];
+                    //         let pos_x = read_f32(&pos[0..4]);
+                    //         let pos_y = read_f32(&pos[4..8]);
+                    //         let vel_x = read_f32(&vel[0..4]);
+                    //         let vel_y = read_f32(&vel[4..8]);
+
+                    //         let new_pos_x = pos_x + vel_x;
+                    //         let new_pos_y = pos_y + vel_y;
+                    //         let new_pos = [f32_bytes(new_pos_x), f32_bytes(new_pos_y)].concat();
+
+                    //         pos.copy_from_slice(&new_pos);
+
+                    //         println!(
+                    //             "Entity {} at ({}, {}) with velocity ({}, {})",
+                    //             entity, new_pos_x, new_pos_y, vel_x, vel_y
+                    //         );
+                    //     },
+                    // );
+                }
+
+                ByteCode::GetNextComponentColumn => {
+                    if let Some((entity, column)) = query_results.next() {
+                        column.iter().for_each(|component| {
+                            println!("Entity {} has component {:?}", entity, component);
+                            let pos_x = read_f32(&component[0..4]);
+                            let pos_y = read_f32(&component[4..8]);
+                            println!("Position: ({}, {})", pos_x, pos_y);
+                            self.push_component(vec![Value::Float(pos_x), Value::Float(pos_y)]);
+                        });
+                        self.push_boolean(true);
+                    } else {
+                        self.push_boolean(false);
                     }
                 }
             }
@@ -775,4 +894,20 @@ impl VirtualMachine {
     fn set_context_value(&mut self, name: String, value: Value) {
         self.world_context.insert(name, value);
     }
+}
+
+fn read_f32(b: &[u8]) -> f32 {
+    f32::from_le_bytes(b.try_into().unwrap())
+}
+
+fn f32_bytes(x: f32) -> [u8; 4] {
+    x.to_le_bytes()
+}
+
+fn position(x: f32, y: f32) -> Vec<u8> {
+    [f32_bytes(x), f32_bytes(y)].concat()
+}
+
+fn velocity(dx: f32, dy: f32) -> Vec<u8> {
+    [f32_bytes(dx), f32_bytes(dy)].concat()
 }
