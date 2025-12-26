@@ -3,7 +3,7 @@ script = """
 """
 
 [output]
-result = "16.5"
+result = "16.50"
 type = "float"
 
 [output.compiler]

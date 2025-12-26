@@ -6,7 +6,7 @@ mult_float = \x y
 '''
 
 [output]
-result = "21.319998"
+result = "21.32"
 type = "float"
 
 [output.compiler]
