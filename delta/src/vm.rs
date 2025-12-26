@@ -211,6 +211,7 @@ impl VirtualMachine {
         world.insert(dead_id, e4, &[]);
 
         let mut query_results = QueryResultIter::empty(); // TODO(anissen): Should probably be a stack to allow nested results
+        let mut query_results_stack_index = 0; // TODO(anissen): Should probably be a stack to allow nested results
 
         while self.program_counter < self.program.len() {
             let next = self.read_byte();
@@ -618,8 +619,14 @@ impl VirtualMachine {
                       [expr]
                     */
 
+                    // Need: is_first_iteration, stack frame index
+
                     query_results = world.query(&component_ids, &vec![]);
+                    query_results_stack_index = self.stack.len();
+
                     // should probably have a short of call frame where the column data is part of the frame
+                    // call frame example:
+                    // ... [false [c1 c2 c3]]
 
                     // query_results.for_each(|r| {
                     //     dbg!(&r);
@@ -650,18 +657,28 @@ impl VirtualMachine {
                     // );
                 }
 
-                ByteCode::GetNextComponentColumn => {
+                ByteCode::SetNextComponentColumnOrJump => {
+                    let offset = self.read_i16();
+                    let is_first_query_result = query_results_stack_index == self.stack.len();
                     if let Some((entity, column)) = query_results.next() {
-                        column.iter().for_each(|component| {
+                        column.iter().enumerate().for_each(|(index, component)| {
                             println!("Entity {} has component {:?}", entity, component);
                             let pos_x = read_f32(&component[0..4]);
                             let pos_y = read_f32(&component[4..8]);
                             println!("Position: ({}, {})", pos_x, pos_y);
-                            self.push_component(vec![Value::Float(pos_x), Value::Float(pos_y)]);
+                            let component = vec![Value::Float(pos_x), Value::Float(pos_y)];
+                            if is_first_query_result {
+                                // Push components on the stack
+                                self.push_component(component);
+                            } else {
+                                // Replace components on the stack
+                                self.stack[query_results_stack_index + index] =
+                                    Value::Component(component);
+                            }
                         });
-                        self.push_boolean(true);
                     } else {
-                        self.push_boolean(false);
+                        self.discard((self.stack.len() - query_results_stack_index) as u8);
+                        self.jump_offset(offset);
                     }
                 }
             }

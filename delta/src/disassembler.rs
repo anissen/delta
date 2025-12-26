@@ -154,7 +154,7 @@ impl Disassembler {
                     ])
                 }
 
-                ByteCode::GetNextComponentColumn => {
+                ByteCode::SetNextComponentColumnOrJump => {
                     self.print(vec!["get_next_component_column".to_string()])
                 }
 

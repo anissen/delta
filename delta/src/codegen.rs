@@ -494,9 +494,35 @@ impl<'a> Codegen<'a> {
             });
 
         /*
+        context_query (pushes [false, ...components] on the stack)
+        :start
+        if false, jump to end
+        (set_local 0...n)
+        [expr]
+        get_next_component_column (replaces components or pops when done)
+        jump_to_label start
+        :end
+        */
+
+        /*
         context_query
         :start
-        get_next_component_column (sets components + pushes true/false on the stack)
+        has_more_components
+
+        lisa
+        og
+        far
+        og
+        mor
+        og
+        viktor
+        og
+        leo
+        og
+        nero
+
+        loop_while true
+        set_next_component_column (set/replace components on the stack, pushing false when done)
         if false, jump to end
         (set_local 0...n)
         [expr]
@@ -504,15 +530,29 @@ impl<'a> Codegen<'a> {
         :end
         */
 
+        /*
+        context_query_or_jump (pushes [...components] on the stack)
+        :start
+        [expr]
+        set_next_component_column_and_jump (replaces components or pops when done)
+        :end
+        */
+
+        /*
+        context_query
+        :start
+        set_next_component_column_or_jump (set/replaces components or pops when done)
+        [expr]
+        jump_to_label start
+        :end
+        */
+
         let start_label = scope.bytecode.bytes.len() as i16;
 
-        scope.bytecode.add_op(ByteCode::GetNextComponentColumn);
-
-        let end_offset = scope.bytecode.add_jump_if_false();
-
-        // for i in 0..components.len() {
-        //     scope.bytecode.add_set_local_value(index)
-        // }
+        let end_offset = scope
+            .bytecode
+            .add_op(ByteCode::SetNextComponentColumnOrJump)
+            .get_patchable_i16_offset();
 
         self.emit_expr(expr, scope);
 
