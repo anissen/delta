@@ -494,51 +494,6 @@ impl<'a> Codegen<'a> {
             });
 
         /*
-        context_query (pushes [false, ...components] on the stack)
-        :start
-        if false, jump to end
-        (set_local 0...n)
-        [expr]
-        get_next_component_column (replaces components or pops when done)
-        jump_to_label start
-        :end
-        */
-
-        /*
-        context_query
-        :start
-        has_more_components
-
-        lisa
-        og
-        far
-        og
-        mor
-        og
-        viktor
-        og
-        leo
-        og
-        nero
-
-        loop_while true
-        set_next_component_column (set/replace components on the stack, pushing false when done)
-        if false, jump to end
-        (set_local 0...n)
-        [expr]
-        jump_to_label start
-        :end
-        */
-
-        /*
-        context_query_or_jump (pushes [...components] on the stack)
-        :start
-        [expr]
-        set_next_component_column_and_jump (replaces components or pops when done)
-        :end
-        */
-
-        /*
         context_query
         :start
         set_next_component_column_or_jump (set/replaces components or pops when done)
@@ -561,7 +516,6 @@ impl<'a> Codegen<'a> {
         let start_offset =
             start_label - (scope.bytecode.bytes.len() as i16 + 2/* jump offset bytes */);
         scope.bytecode.add_i16(&start_offset);
-        // scope.bytecode.add_unconditional_jump()
 
         scope.bytecode.patch_jump_to_current_byte(end_offset);
     }
