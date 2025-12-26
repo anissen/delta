@@ -1,5 +1,3 @@
-use std::path::Component;
-use std::thread::panicking;
 
 use crate::diagnostics::Diagnostics;
 use crate::errors;

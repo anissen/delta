@@ -1,5 +1,4 @@
 use std::collections::{HashMap, HashSet};
-use std::path::Component;
 
 use crate::bytecodes::ByteCode;
 use crate::diagnostics::Diagnostics;

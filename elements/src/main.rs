@@ -95,14 +95,14 @@ fn main() {
     let mut entity_manager = EntityManager::new();
     let mut world = World::new();
     // Position { x: f32, y: f32 }
-    let POSITION: ComponentTypeId = 0;
-    world.register_component(POSITION, ComponentLayout { size: 8, align: 4 });
+    let position_id: ComponentTypeId = 0;
+    world.register_component(position_id, ComponentLayout { size: 8, align: 4 });
     // Velocity { dx: f32, dy: f32 }
-    let VELOCITY: ComponentTypeId = 1;
-    world.register_component(VELOCITY, ComponentLayout { size: 8, align: 4 });
+    let velocity_id: ComponentTypeId = 1;
+    world.register_component(velocity_id, ComponentLayout { size: 8, align: 4 });
     // Dead (no data)
-    let DEAD: ComponentTypeId = 2;
-    world.register_component(DEAD, ComponentLayout { size: 0, align: 0 });
+    let dead_id: ComponentTypeId = 2;
+    world.register_component(dead_id, ComponentLayout { size: 0, align: 0 });
 
     // Create a few entities
     let e0 = entity_manager.create();
@@ -110,22 +110,22 @@ fn main() {
     let e2 = entity_manager.create();
 
     // Add components
-    world.insert(POSITION, e0, &position(0.01, 0.5));
-    world.insert(VELOCITY, e0, &velocity(3.3, 3.3));
-    world.insert(VELOCITY, e0, &velocity(1.0, 1.0));
-    world.insert(DEAD, e0, &[]);
+    world.insert(position_id, e0, &position(0.01, 0.5));
+    world.insert(velocity_id, e0, &velocity(3.3, 3.3));
+    world.insert(velocity_id, e0, &velocity(1.0, 1.0));
+    world.insert(dead_id, e0, &[]);
 
-    world.insert(POSITION, e1, &position(10.0, -5.0));
-    world.insert(VELOCITY, e1, &velocity(-2.0, 0.5));
+    world.insert(position_id, e1, &position(10.0, -5.0));
+    world.insert(velocity_id, e1, &velocity(-2.0, 0.5));
 
-    world.insert(POSITION, e2, &position(3.0, 3.0));
+    world.insert(position_id, e2, &position(3.0, 3.0));
 
     let e3 = entity_manager.create();
-    world.insert(POSITION, e3, &position(0.0, 0.0));
-    world.insert(VELOCITY, e3, &velocity(-1.0, -1.0));
+    world.insert(position_id, e3, &position(0.0, 0.0));
+    world.insert(velocity_id, e3, &velocity(-1.0, -1.0));
 
     let e4 = entity_manager.create();
-    world.insert(DEAD, e4, &[]);
+    world.insert(dead_id, e4, &[]);
 
     /*
      * frame 1:
@@ -155,16 +155,20 @@ fn main() {
         println!("--- Frame {} ---", frame);
 
         // TODO(anissen): We probably need to get the list of entities/components out, and then iterate?!?
-        world.system(&vec![POSITION, VELOCITY], &vec![DEAD], movement_system);
+        world.system(
+            &vec![position_id, velocity_id],
+            &vec![dead_id],
+            movement_system,
+        );
 
         world
-            .iter(DEAD)
+            .iter(dead_id)
             .for_each(|(entity, _)| println!("Oh, no! Entity {} is dead!", entity));
 
-        world.remove(DEAD, e0);
+        world.remove(dead_id, e0);
 
-        world.insert(DEAD, e1, &[]);
-        world.insert(VELOCITY, e2, &velocity(1.0, 1.0));
+        world.insert(dead_id, e1, &[]);
+        world.insert(velocity_id, e2, &velocity(1.0, 1.0));
     }
 }
 
