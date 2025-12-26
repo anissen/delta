@@ -7,7 +7,6 @@ use crate::program::Context;
 
 use elements::ComponentLayout;
 use elements::ComponentTypeId;
-use elements::Entity;
 use elements::EntityManager;
 use elements::world::QueryResultIter;
 use elements::world::World;
@@ -561,9 +560,7 @@ impl VirtualMachine {
 
                 ByteCode::Jump => {
                     let offset = self.read_i16();
-                    self.program_counter = self.program_counter.strict_add_signed(offset as isize);
-                    println!("Jumping to offset {}, pc {}", offset, self.program_counter);
-                    self.metadata.jumps_performed += 1;
+                    self.jump_offset(offset);
                 }
 
                 ByteCode::JumpIfTrue => {
@@ -571,9 +568,7 @@ impl VirtualMachine {
 
                     let condition = self.pop_boolean();
                     if condition {
-                        self.program_counter =
-                            self.program_counter.strict_add_signed(offset as isize);
-                        self.metadata.jumps_performed += 1;
+                        self.jump_offset(offset);
                     }
                 }
 
@@ -582,9 +577,7 @@ impl VirtualMachine {
 
                     let condition = self.pop_boolean();
                     if !condition {
-                        self.program_counter =
-                            self.program_counter.strict_add_signed(offset as isize);
-                        self.metadata.jumps_performed += 1;
+                        self.jump_offset(offset);
                     }
                 }
 
@@ -766,6 +759,15 @@ impl VirtualMachine {
         self.program_counter += length;
         self.track_bytes_read(length);
         String::from_utf8(bytes).unwrap()
+    }
+
+    fn jump(&mut self, pc: u32) {
+        self.program_counter = pc as usize;
+        self.metadata.jumps_performed += 1;
+    }
+
+    fn jump_offset(&mut self, offset: i16) {
+        self.jump(self.program_counter.strict_add_signed(offset as isize) as u32);
     }
 
     fn pop_boolean(&mut self) -> bool {
