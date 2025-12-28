@@ -586,15 +586,16 @@ impl VirtualMachine {
                     let component_count = self.read_byte();
                     println!("query components:");
                     // collect all component ids and names for printing
-                    let mut component_ids = Vec::new();
+                    let mut include_component_ids = Vec::new();
                     for _ in 0..component_count {
                         let component_id = self.read_byte();
-                        component_ids.push(component_id as u32);
+                        include_component_ids.push(component_id as u32);
                         let component_name = self.read_string();
                         println!("{} (id: {})", component_name, component_id);
                     }
+                    let exclude_component_ids = Vec::new(); // TODO(anissen): Implement exclude component ids
 
-                    query_results = world.query(&component_ids, &vec![]);
+                    query_results = world.query(&include_component_ids, &exclude_component_ids);
                     query_results_stack_index = self.stack.len();
                 }
 
