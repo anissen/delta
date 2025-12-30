@@ -23,7 +23,7 @@ pub enum Value {
     Tag(String, Box<Value>),
     List(Vec<Value>),
     Function(u8),
-    Component(Vec<Value>),
+    Component { id: u8, properties: Vec<Value> },
 }
 
 impl Display for Value {
@@ -49,13 +49,13 @@ impl Display for Value {
                 write!(f, "]")?;
             }
             Value::Function(i) => write!(f, "<fn {i}>")?,
-            Value::Component(properties) => {
+            Value::Component { id, properties } => {
                 let properties_str = properties
                     .iter()
                     .map(|p| p.to_string())
                     .collect::<Vec<_>>()
                     .join(", ");
-                write!(f, "component({properties_str})")?;
+                write!(f, "component({id}, {properties_str})")?;
             }
         };
         Ok(())
@@ -247,10 +247,10 @@ impl VirtualMachine {
                 }
 
                 ByteCode::PushComponent => {
-                    let _component_id = self.read_i32();
+                    let component_id = self.read_byte();
                     let property_count = self.read_byte();
                     let properties = self.pop_many(property_count);
-                    self.push_component(properties);
+                    self.push_component(component_id, properties);
                 }
 
                 ByteCode::GetTagName => {
@@ -603,14 +603,17 @@ impl VirtualMachine {
                             let pos_x = read_f32(&component[0..4]);
                             let pos_y = read_f32(&component[4..8]);
                             // println!("Position: ({}, {})", pos_x, pos_y);
+                            let id = 0; // TODO(anissen): Implement
                             let component = vec![Value::Float(pos_x), Value::Float(pos_y)];
                             if is_first_query_result {
                                 // Push components on the stack
-                                self.push_component(component);
+                                self.push_component(id, component);
                             } else {
                                 // Replace components on the stack
-                                self.stack[query_results_stack_index + index] =
-                                    Value::Component(component);
+                                self.stack[query_results_stack_index + index] = Value::Component {
+                                    id,
+                                    properties: component,
+                                };
                             }
                         });
                     } else {
@@ -626,10 +629,10 @@ impl VirtualMachine {
                     let components = self.pop_list();
                     for component in components {
                         match component {
-                            Value::Component(values) => {
-                                match values[..] {
+                            Value::Component { id, properties } => {
+                                match properties[..] {
                                     [Value::Float(x), Value::Float(y)] => {
-                                        world.insert(position_id, entity, &position(x, y));
+                                        world.insert(id as u32, entity, &position(x, y));
                                         // world.insert(component.id, entity, &component.value);
                                     }
                                     _ => panic!("Expected two values for position component"),
@@ -638,9 +641,6 @@ impl VirtualMachine {
                             _ => panic!("Expected component type"),
                         }
                     }
-                    // world.insert(position_id, entity, &position(0.01, 0.5));
-                    // world.insert(velocity_id, entity, &velocity(3.3, 3.3));
-                    // world.insert(velocity_id, entity, &velocity(1.0, 1.0));
                 }
             }
             if self.verbose {
@@ -850,8 +850,8 @@ impl VirtualMachine {
         self.push_value(Value::List(list));
     }
 
-    fn push_component(&mut self, properties: Vec<Value>) {
-        self.push_value(Value::Component(properties));
+    fn push_component(&mut self, id: u8, properties: Vec<Value>) {
+        self.push_value(Value::Component { id, properties });
     }
 
     fn string_concat_values(&self, left: String, right: Value) -> String {

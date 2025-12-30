@@ -45,6 +45,7 @@ impl Scope {
 pub struct Codegen<'a> {
     function_chunks: Vec<FunctionChunk<'a>>,
     context: &'a Context<'a>,
+    component_ids: HashMap<String, u8>,
     diagnostics: Diagnostics,
 }
 
@@ -60,6 +61,7 @@ impl<'a> Codegen<'a> {
         Self {
             function_chunks: vec![],
             context,
+            component_ids: HashMap::new(),
             diagnostics: Diagnostics::new(),
         }
     }
@@ -115,10 +117,13 @@ impl<'a> Codegen<'a> {
             }
 
             Expr::ComponentDefinition {
-                name: _,
+                name,
                 properties: _,
             } => {
                 // TODO(anissen): Implement component definition
+
+                self.component_ids
+                    .insert(name.lexeme.clone(), self.component_ids.len() as u8);
             }
 
             Expr::Call { name, args } => {
@@ -280,20 +285,17 @@ impl<'a> Codegen<'a> {
                 };
             }
 
-            ValueType::Component {
-                name: _,
-                properties,
-            } => {
+            ValueType::Component { name, properties } => {
                 // TODO: This will fail if the initialization order of properties does not match the definition
                 properties.iter().for_each(|property| {
                     self.emit_expr(&property.value, scope);
                 });
 
-                let component_id = 0; // TODO(anissen): Implement component initialization
+                let component_id = self.component_ids.get(&name.lexeme).unwrap();
                 scope
                     .bytecode
                     .add_op(ByteCode::PushComponent)
-                    .add_i32(&component_id)
+                    .add_byte(*component_id)
                     .add_byte(properties.len() as u8);
 
                 // scope.bytecode.add_op(ByteCode::PushComponentInitialization);

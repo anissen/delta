@@ -146,7 +146,7 @@ impl Disassembler {
                 }
 
                 ByteCode::PushComponent => {
-                    let component_id = self.read_i32();
+                    let component_id = self.read_byte();
                     let property_count = self.read_byte();
                     self.print(vec![
                         "push_component".to_string(),

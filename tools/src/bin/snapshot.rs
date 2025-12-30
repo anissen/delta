@@ -199,7 +199,9 @@ fn process_toml_file(test_file: &TestFile) -> Result<TestResult, Box<dyn std::er
                             delta::vm::Value::Tag { .. } => "tag".to_string(),
                             delta::vm::Value::Function(_) => "function".to_string(),
                             delta::vm::Value::List(_) => "list".to_string(),
-                            delta::vm::Value::Component(_) => "component".to_string(),
+                            delta::vm::Value::Component { id, properties: _ } => {
+                                format!("component ({})", id)
+                            }
                         };
                         (value.to_string(), result_type)
                     }
