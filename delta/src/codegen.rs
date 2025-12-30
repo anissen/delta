@@ -494,8 +494,6 @@ impl<'a> Codegen<'a> {
 
                 // TODO(anissen): This index is probably wrong!
                 let env_index = (scope.environment.len() + index) as u8;
-                // dbg!(&name);
-                // dbg!(&env_index);
                 let name = component.name.lexeme.clone();
                 scope.environment.insert(name.clone(), env_index);
                 scope.locals.insert(name);

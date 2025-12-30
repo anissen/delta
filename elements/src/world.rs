@@ -1,10 +1,36 @@
 use crate::{ComponentId, ComponentLayout, ComponentTypeId, Entity, column::Column};
 
-pub struct QueryResultIter<'a> {
+pub struct QueryResultIter {
+    iter: std::vec::IntoIter<(u32, Vec<Vec<u8>>)>,
+}
+
+impl QueryResultIter {
+    pub fn new(results: Vec<(Entity, Vec<Vec<u8>>)>) -> Self {
+        Self {
+            iter: results.into_iter(),
+        }
+    }
+
+    pub fn empty() -> Self {
+        Self {
+            iter: Vec::new().into_iter(),
+        }
+    }
+}
+
+impl Iterator for QueryResultIter {
+    type Item = (Entity, Vec<Vec<u8>>);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter.next()
+    }
+}
+
+pub struct QueryResultMutIter<'a> {
     iter: std::vec::IntoIter<(u32, Vec<&'a mut [u8]>)>,
 }
 
-impl<'a> QueryResultIter<'a> {
+impl<'a> QueryResultMutIter<'a> {
     pub fn new(results: Vec<(Entity, Vec<&'a mut [u8]>)>) -> Self {
         Self {
             iter: results.into_iter(),
@@ -18,7 +44,7 @@ impl<'a> QueryResultIter<'a> {
     }
 }
 
-impl<'a> Iterator for QueryResultIter<'a> {
+impl<'a> Iterator for QueryResultMutIter<'a> {
     type Item = (Entity, Vec<&'a mut [u8]>);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -131,14 +157,14 @@ impl World {
         }
     }
 
-    pub fn query<'a>(
+    pub fn query_mut<'a>(
         &'a mut self,
         include: &Vec<ComponentId>,
         exclude: &Vec<ComponentId>,
-    ) -> QueryResultIter<'a> {
+    ) -> QueryResultMutIter<'a> {
         // ) -> Vec<(Entity, Vec<&mut [u8]>)> {
         if include.is_empty() {
-            return QueryResultIter::empty();
+            return QueryResultMutIter::empty();
         }
 
         let exclude_columns: Vec<_> = self
@@ -203,6 +229,65 @@ impl World {
                 result.push((entity, row));
             }
 
+            QueryResultMutIter::new(result)
+        } else {
+            QueryResultMutIter::empty()
+        }
+    }
+
+    pub fn query(&self, include: &Vec<ComponentId>, exclude: &Vec<ComponentId>) -> QueryResultIter {
+        if include.is_empty() {
+            return QueryResultIter::empty();
+        }
+
+        let exclude_columns: Vec<_> = self
+            .components
+            .iter()
+            .filter(|c| exclude.contains(&c.id))
+            .collect(); // TODO(anissen): Do I need to collect here?
+
+        // TODO(anissen): Could split in (first, rest) for optimization
+        let exclude_bitset = if let Some(first) = exclude_columns.first() {
+            let mut bitset = first.bitset.clone();
+            self.components
+                .iter()
+                .filter(|c| exclude.contains(&c.id))
+                .map(|col| &col.bitset)
+                .for_each(|other| bitset.intersect_with(other));
+            Some(bitset)
+        } else {
+            None
+        };
+
+        let include_columns: Vec<_> = self
+            .components
+            .iter()
+            .filter(|c| include.contains(&c.id))
+            .collect(); // TODO(anissen): Do I need to collect here?
+
+        // TODO(anissen): Could split in (first, rest) for optimization
+        if let Some(first) = include_columns.first() {
+            let mut intersection = first.bitset.clone();
+            include_columns
+                .iter()
+                .map(|col| &col.bitset)
+                .for_each(|bitset| intersection.intersect_with(bitset));
+
+            if let Some(exclude_bitset) = exclude_bitset {
+                intersection.disjoint_with(&exclude_bitset);
+            }
+
+            let result = intersection
+                .iter_ids()
+                .map(move |entity| {
+                    // TODO(anissen): This is probably expensive:
+                    let row = include_columns
+                        .iter()
+                        .map(|row| row.get(entity).unwrap().to_vec())
+                        .collect();
+                    (entity.clone(), row)
+                })
+                .collect();
             QueryResultIter::new(result)
         } else {
             QueryResultIter::empty()

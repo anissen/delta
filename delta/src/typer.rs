@@ -327,8 +327,8 @@ impl<'env> InferenceContext<'env> {
 
     fn expects_type(&mut self, expression: &Expr, expected_type: UnificationType) {
         let actual_type = self.infer_type(expression);
-        dbg!(&actual_type);
-        dbg!(&expected_type);
+        // dbg!(&actual_type);
+        // dbg!(&expected_type);
         self.constraints.push(Constraint::Eq {
             left: actual_type,
             right: expected_type,

@@ -129,7 +129,7 @@ impl Parser {
 
     fn component(&mut self) -> Result<Option<Expr>, String> {
         let component_name = self.consume(&Identifier)?;
-        println!("Component: {}", component_name.lexeme);
+        // println!("Component: {}", component_name.lexeme);
         self.consume(&LeftBrace)?;
         let mut properties = Vec::new();
         while !self.matches(&RightBrace) {
@@ -145,10 +145,10 @@ impl Parser {
                 TokenKind::KeywordF32 => unification::Type::Float,
                 _ => return Err("Unknown property type declaration".to_string()),
             };
-            println!(
-                "Property: {}, Type: {:?}",
-                property_name.lexeme, property_type
-            );
+            // println!(
+            //     "Property: {}, Type: {:?}",
+            //     property_name.lexeme, property_type
+            // );
             let property = PropertyDefinition {
                 name: property_name,
                 type_: property_type,
@@ -730,7 +730,7 @@ impl Parser {
                         return Err("Unterminated data initialization".to_string());
                     }
 
-                    println!("Property: {}, Value: {:?}", property_name.lexeme, value);
+                    // println!("Property: {}, Value: {:?}", property_name.lexeme, value);
                     let property = PropertyDeclaration {
                         name: property_name,
                         value: value.unwrap(),

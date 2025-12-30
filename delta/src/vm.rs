@@ -187,7 +187,10 @@ impl VirtualMachine {
         let dead_id: ComponentTypeId = 2;
         world.register_component(dead_id, ComponentLayout { size: 0, align: 0 });
 
+        // Store query results as owned data (entity + owned component bytes) to avoid holding borrow on world
+        // let mut query_results: Vec<(u32, Vec<Vec<u8>>)> = Vec::new(); // TODO(anissen): Should probably be a stack to allow nested results
         let mut query_results = QueryResultIter::empty(); // TODO(anissen): Should probably be a stack to allow nested results
+        // let mut query_results_index = 0; // Current index in query_results
         let mut query_results_stack_index = 0; // TODO(anissen): Should probably be a stack to allow nested results
 
         while self.program_counter < self.program.len() {
@@ -246,10 +249,7 @@ impl VirtualMachine {
                 ByteCode::PushComponent => {
                     let _component_id = self.read_i32();
                     let property_count = self.read_byte();
-                    let mut properties = Vec::new();
-                    for _ in 0..property_count {
-                        properties.insert(0, self.pop_any()); // TODO(anissen): Is there a more performant approach?
-                    }
+                    let properties = self.pop_many(property_count);
                     self.push_component(properties);
                 }
 
@@ -572,19 +572,37 @@ impl VirtualMachine {
                     }
                     let exclude_component_ids = Vec::new(); // TODO(anissen): Implement exclude component ids
 
+                    // TODO(anissen): Alternatively, create a structure to encapsulate a query-execution-state, allowing component scope to be expressed for the borrow checker
                     query_results = world.query(&include_component_ids, &exclude_component_ids);
+                    // query_results = world
+                    //     .query(&include_component_ids, &exclude_component_ids)
+                    //     .map(|(entity, columns)| {
+                    //         let owned_columns: Vec<Vec<u8>> =
+                    //             columns.iter().map(|c| c.to_vec()).collect();
+                    //         (entity, owned_columns)
+                    //     })
+                    //     .collect();
+                    // query_results_index = 0;
                     query_results_stack_index = self.stack.len();
                 }
 
                 ByteCode::SetNextComponentColumnOrJump => {
                     let offset = self.read_i16();
                     let is_first_query_result = query_results_stack_index == self.stack.len();
-                    if let Some((entity, column)) = query_results.next() {
+
+                    if let Some((_entity, column)) = query_results.next() {
                         column.iter().enumerate().for_each(|(index, component)| {
-                            println!("Entity {} has component {:?}", entity, component);
+                            // // Get next query result from owned data
+                            // if query_results_index < query_results.len() {
+                            //     let (entity, columns) = &query_results[query_results_index];
+                            //     query_results_index += 1;
+
+                            //     // Process component data
+                            //     for (index, component) in columns.iter().enumerate() {
+                            // println!("Entity {} has component {:?}", entity, component);
                             let pos_x = read_f32(&component[0..4]);
                             let pos_y = read_f32(&component[4..8]);
-                            println!("Position: ({}, {})", pos_x, pos_y);
+                            // println!("Position: ({}, {})", pos_x, pos_y);
                             let component = vec![Value::Float(pos_x), Value::Float(pos_y)];
                             if is_first_query_result {
                                 // Push components on the stack
@@ -596,6 +614,7 @@ impl VirtualMachine {
                             }
                         });
                     } else {
+                        // No more results
                         self.discard((self.stack.len() - query_results_stack_index) as u8);
                         self.jump_offset(offset);
                     }
