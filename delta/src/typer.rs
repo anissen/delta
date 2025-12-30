@@ -327,6 +327,8 @@ impl<'env> InferenceContext<'env> {
 
     fn expects_type(&mut self, expression: &Expr, expected_type: UnificationType) {
         let actual_type = self.infer_type(expression);
+        dbg!(&actual_type);
+        dbg!(&expected_type);
         self.constraints.push(Constraint::Eq {
             left: actual_type,
             right: expected_type,
@@ -697,6 +699,41 @@ impl<'env> InferenceContext<'env> {
                         .insert(component.name.lexeme.clone(), v);
                 });
                 self.infer_type(expr)
+            }
+
+            Expr::Create { token, arguments } => {
+                // dbg!(arguments);
+                // dbg!(self.infer_type(arguments));
+                // let component_list = self.infer_type(arguments);
+                // match component_list {
+                //     Uni
+                // }
+
+                // components.iter().for_each(|component| {
+                //     let component_name = component.type_.lexeme.clone();
+                //     if self.environment.components.get(&component_name).is_none() {
+                //         self.diagnostics.add_error(Error::TypeNotFound {
+                //             token: component.type_.clone(),
+                //         });
+                //     };
+
+                //     let v = self.type_placeholder();
+                //     self.environment
+                //         .variables
+                //         .insert(component.name.lexeme.clone(), v);
+                // });
+
+                let component_type = self.type_placeholder(); //UnificationType::Constructor { typ: Type::Component, generics: (), token: () }
+                self.expects_type(
+                    arguments,
+                    UnificationType::Constructor {
+                        typ: Type::List,
+                        generics: vec![component_type],
+                        token: token.clone(),
+                    },
+                );
+
+                make_constructor(Type::Integer, token.clone()) // entity id
             }
         }
     }

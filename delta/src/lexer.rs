@@ -145,6 +145,7 @@ impl Lexer {
             _ if self.match_keyword("or") => TokenKind::KeywordOr,
             _ if self.match_keyword("component") => TokenKind::KeywordComponent,
             _ if self.match_keyword("query") => TokenKind::KeywordQuery,
+            _ if self.match_keyword("create") => TokenKind::KeywordCreate,
             _ if self.match_keyword("f32") => TokenKind::KeywordF32,
             // '∆' if self.matches('.') && self.is_letter(self.peek()) => self.context_value(), // TODO(anissen): Key-value pair, e.g. ∆.x = y
             // '∆' => self.identifier(), // TODO(anissen): Named context, e.g. ∆x or ∆x.y

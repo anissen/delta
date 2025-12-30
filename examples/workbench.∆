@@ -78,8 +78,11 @@ component Velocity { dx f32, dy f32 }
 # | set Position { x 32.0, y 64.0 }
 # | set Velocity { dx 1.0, dy 0.5 }
 
-# create [ Position { x 32.0, y 64.0 }, Velocity { dx 1.0, dy 0.5 } ]
+# should this be [...] | create ?
+# create [45, 66]
+create [Position { x 32.0, y 64.0 }, Velocity { dx 1.0, dy 0.5 }]
 
+# Position p
 query
 	Position p
 		p | log

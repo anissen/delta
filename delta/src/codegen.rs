@@ -213,6 +213,14 @@ impl<'a> Codegen<'a> {
             Expr::Is { expr, arms } => self.emit_is(expr, arms, scope),
 
             Expr::Query { components, expr } => self.emit_query(components, expr, scope),
+
+            Expr::Create {
+                token: _,
+                arguments,
+            } => {
+                self.emit_expr(arguments, scope);
+                scope.bytecode.add_op(ByteCode::Create);
+            }
         };
     }
 

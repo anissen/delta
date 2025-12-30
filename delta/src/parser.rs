@@ -1,4 +1,3 @@
-
 use crate::diagnostics::Diagnostics;
 use crate::errors;
 use crate::expressions::ArithmeticOperations;
@@ -125,11 +124,7 @@ impl Parser {
     }
 
     fn declaration(&mut self) -> Result<Option<Expr>, String> {
-        if self.matches(&KeywordComponent) {
-            self.component()
-        } else {
-            self.expression()
-        }
+        self.expression()
     }
 
     fn component(&mut self) -> Result<Option<Expr>, String> {
@@ -177,8 +172,27 @@ impl Parser {
         }))
     }
 
+    fn create(&mut self) -> Result<Option<Expr>, String> {
+        let token = self.previous();
+        self.consume(&LeftBracket)?; // TODO(anissen): This ought to be part of list() ?
+        if let Some(components) = self.list()? {
+            Ok(Some(Expr::Create {
+                token: token.clone(),
+                arguments: Box::new(components),
+            }))
+        } else {
+            Err("Expected a list of components".to_string())
+        }
+    }
+
     fn expression(&mut self) -> Result<Option<Expr>, String> {
-        self.assignment()
+        if self.matches(&KeywordComponent) {
+            self.component()
+        } else if self.matches(&KeywordCreate) {
+            self.create()
+        } else {
+            self.assignment()
+        }
     }
 
     // assignment → IDENTIFIER "=" logic_or

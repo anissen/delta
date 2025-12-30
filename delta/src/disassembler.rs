@@ -155,7 +155,11 @@ impl Disassembler {
                 }
 
                 ByteCode::SetNextComponentColumnOrJump => {
-                    self.print(vec!["get_next_component_column".to_string()])
+                    let jump_offset = self.read_i16();
+                    self.print(vec![
+                        "set_next_component_column_or_jump".to_string(),
+                        format!("(offset: {jump_offset})"),
+                    ])
                 }
 
                 ByteCode::GetTagName => self.print(vec!["get_tag_name".to_string()]),
@@ -343,6 +347,8 @@ impl Disassembler {
                     }
                     self.print(vec![format!("query components: {}", components.join(", "))])
                 }
+
+                ByteCode::Create => self.print(vec![format!("create entity")]),
             };
 
             result.push_str(&instruction_str);

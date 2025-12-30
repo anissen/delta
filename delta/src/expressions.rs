@@ -71,12 +71,16 @@ pub enum Expr {
         arms: Vec<IsArm>,
     },
     Query {
-        components: Vec<NamedType>,
+        components: Vec<NamedType>, // TODO(anissen): Should this be Vec<Expr> instead?
         expr: Box<Expr>,
     },
     ComponentDefinition {
         name: Token,
         properties: Vec<PropertyDefinition>,
+    },
+    Create {
+        token: Token,
+        arguments: Box<Expr>,
     },
     // TODO(anissen): Add an Error and/or Todo expression?
 }

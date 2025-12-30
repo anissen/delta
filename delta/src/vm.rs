@@ -187,29 +187,6 @@ impl VirtualMachine {
         let dead_id: ComponentTypeId = 2;
         world.register_component(dead_id, ComponentLayout { size: 0, align: 0 });
 
-        // Create a few entities
-        let e0 = entity_manager.create();
-        let e1 = entity_manager.create();
-        let e2 = entity_manager.create();
-
-        // Add components
-        world.insert(position_id, e0, &position(0.01, 0.5));
-        world.insert(velocity_id, e0, &velocity(3.3, 3.3));
-        world.insert(velocity_id, e0, &velocity(1.0, 1.0));
-        world.insert(dead_id, e0, &[]);
-
-        world.insert(position_id, e1, &position(10.0, -5.0));
-        world.insert(velocity_id, e1, &velocity(-2.0, 0.5));
-
-        world.insert(position_id, e2, &position(3.0, 3.0));
-
-        let e3 = entity_manager.create();
-        world.insert(position_id, e3, &position(0.0, 0.0));
-        world.insert(velocity_id, e3, &velocity(-1.0, -1.0));
-
-        let e4 = entity_manager.create();
-        world.insert(dead_id, e4, &[]);
-
         let mut query_results = QueryResultIter::empty(); // TODO(anissen): Should probably be a stack to allow nested results
         let mut query_results_stack_index = 0; // TODO(anissen): Should probably be a stack to allow nested results
 
@@ -622,6 +599,29 @@ impl VirtualMachine {
                         self.discard((self.stack.len() - query_results_stack_index) as u8);
                         self.jump_offset(offset);
                     }
+                }
+
+                ByteCode::Create => {
+                    let entity = entity_manager.create();
+
+                    let components = self.pop_list();
+                    for component in components {
+                        match component {
+                            Value::Component(values) => {
+                                match values[..] {
+                                    [Value::Float(x), Value::Float(y)] => {
+                                        world.insert(position_id, entity, &position(x, y));
+                                        // world.insert(component.id, entity, &component.value);
+                                    }
+                                    _ => panic!("Expected two values for position component"),
+                                }
+                            }
+                            _ => panic!("Expected component type"),
+                        }
+                    }
+                    // world.insert(position_id, entity, &position(0.01, 0.5));
+                    // world.insert(velocity_id, entity, &velocity(3.3, 3.3));
+                    // world.insert(velocity_id, entity, &velocity(1.0, 1.0));
                 }
             }
             if self.verbose {
