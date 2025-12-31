@@ -7,7 +7,7 @@ result = "0.00"
 type = "float"
 
 [output.compiler]
-bytecode = "[36, 4, 109, 97, 105, 110, 26, 64, 128, 0, 0, 26, 64, 0, 0, 0, 11, 38]"
+bytecode = "[38, 4, 109, 97, 105, 110, 28, 64, 128, 0, 0, 28, 64, 0, 0, 0, 11, 40]"
 bytecode_length = 18
 disassembled = """
 

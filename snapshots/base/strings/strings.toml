@@ -7,7 +7,7 @@ result = ""
 type = "string"
 
 [output.compiler]
-bytecode = "[36, 4, 109, 97, 105, 110, 28, 0, 38]"
+bytecode = "[38, 4, 109, 97, 105, 110, 30, 0, 40]"
 bytecode_length = 9
 disassembled = """
 
