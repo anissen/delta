@@ -31,6 +31,9 @@ pub enum ByteCode {
     GetLocalValue,
     SetLocalValue,
 
+    GetFieldValue,
+    SetFieldValue,
+
     GetContextValue,
     SetContextValue,
 
@@ -117,6 +120,9 @@ impl TryFrom<u8> for ByteCode {
 
             value if value == ByteCode::GetLocalValue as u8 => Ok(Self::GetLocalValue),
             value if value == ByteCode::SetLocalValue as u8 => Ok(Self::SetLocalValue),
+
+            value if value == ByteCode::GetFieldValue as u8 => Ok(Self::GetFieldValue),
+            value if value == ByteCode::SetFieldValue as u8 => Ok(Self::SetFieldValue),
 
             value if value == ByteCode::GetContextValue as u8 => Ok(Self::GetContextValue),
             value if value == ByteCode::SetContextValue as u8 => Ok(Self::SetContextValue),

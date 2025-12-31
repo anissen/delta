@@ -82,6 +82,10 @@ pub enum Expr {
         token: Token,
         arguments: Box<Expr>,
     },
+    FieldAccess {
+        identifier: Token,
+        field_name: Token,
+    },
     // TODO(anissen): Add an Error and/or Todo expression?
 }
 

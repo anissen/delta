@@ -444,6 +444,54 @@ impl VirtualMachine {
                     }
                 }
 
+                ByteCode::GetFieldValue => {
+                    let index = self.read_byte();
+                    let field_index = self.read_byte();
+                    let stack_index = self.current_call_frame().stack_index;
+                    let object = self
+                        .stack
+                        .get((stack_index + index) as usize)
+                        .unwrap_or_else(|| {
+                            panic!(
+                                "Stack underflow: tried to access index {} but stack size is {}",
+                                (stack_index + index) as usize,
+                                self.stack.len()
+                            )
+                        });
+                    let value = match object {
+                        Value::Component { id, properties } => {
+                            properties[field_index as usize].clone()
+                        }
+                        _ => panic!("Trying to get field value from non-object"),
+                    };
+                    self.push_value(value);
+                }
+
+                ByteCode::SetFieldValue => {
+                    // TODO(anissen): This is untested
+                    let index = self.read_byte();
+                    let field_index = self.read_byte();
+                    let stack_index = self.current_call_frame().stack_index;
+                    let stack_size = self.stack.len();
+                    let new_value = self.pop_any();
+                    let object = self
+                        .stack
+                        .get_mut((stack_index + index) as usize)
+                        .unwrap_or_else(|| {
+                            panic!(
+                                "Stack underflow: tried to access index {} but stack size is {}",
+                                (stack_index + index) as usize,
+                                stack_size
+                            )
+                        });
+                    match object {
+                        Value::Component { id: _, properties } => {
+                            properties[field_index as usize] = new_value
+                        }
+                        _ => panic!("Trying to get field value from non-object"),
+                    };
+                }
+
                 ByteCode::GetContextValue => {
                     let name = self.read_string();
 
@@ -641,6 +689,8 @@ impl VirtualMachine {
                             _ => panic!("Expected component type"),
                         }
                     }
+
+                    // self.push_integer(entity as i32);
                 }
             }
             if self.verbose {

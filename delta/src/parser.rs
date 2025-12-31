@@ -283,9 +283,7 @@ impl Parser {
                 }
 
                 let type_ = self.consume(&Identifier)?;
-                print!("Type: {:?}", &type_);
                 let name = self.consume(&Identifier)?;
-                print!("Name: {:?}", &name);
                 components.push(NamedType { type_, name });
             }
 
@@ -714,12 +712,6 @@ impl Parser {
             let is_capitalized = name.lexeme.chars().take(1).any(|c| c.is_uppercase());
             if is_capitalized {
                 // Expecting this to be a struct initialization
-                // let component_definition = self
-                //     .components
-                //     .iter()
-                //     .find(|c| c.name.lexeme == name.lexeme)
-                //     .expect("Component not defined.");
-
                 self.consume(&LeftBrace)?;
                 let mut properties = Vec::new();
                 while !self.matches(&RightBrace) {
@@ -730,13 +722,11 @@ impl Parser {
                         return Err("Unterminated data initialization".to_string());
                     }
 
-                    // println!("Property: {}, Value: {:?}", property_name.lexeme, value);
                     let property = PropertyDeclaration {
                         name: property_name,
                         value: value.unwrap(),
                     };
                     properties.push(property);
-                    // properties.insert(property_name.lexeme.clone(), value.unwrap());
 
                     if !self.matches(&Comma) {
                         self.advance();
@@ -751,7 +741,15 @@ impl Parser {
                     },
                     token: name,
                 }))
+            } else if self.matches(&Dot) {
+                // Field access
+                let field_name = self.consume(&Identifier)?;
+                Ok(Some(Expr::FieldAccess {
+                    identifier: name,
+                    field_name,
+                }))
             } else {
+                // Plain identifier
                 Ok(Some(Expr::Identifier { name }))
             }
         } else if self.matches(&TokenKind::Context) {

@@ -356,6 +356,13 @@ impl<'env> InferenceContext<'env> {
                 self.type_placeholder()
             }
 
+            Expr::FieldAccess {
+                identifier: _,
+                field_name: _,
+            } => {
+                todo!("Implement field access expression")
+            }
+
             Expr::Context { name } => make_constructor(Type::Context, name.clone()),
 
             Expr::ComponentDefinition { name, properties } => {

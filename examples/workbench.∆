@@ -86,4 +86,4 @@ create [Position { x 32.0, y 64.0 }, Velocity { dx 1.0, dy 0.5 }]
 # Position p
 query
 	Position p
-		p | log
+		("x is {p.x} and y is {p.y}") | log

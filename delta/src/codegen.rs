@@ -22,6 +22,9 @@ pub struct Scope {
     bytecode: BytecodeBuilder,
     environment: HashMap<String, u8>,
     locals: HashSet<String>,
+
+    /// Mapping local component variables to their component types (e.g. "p" => "Position")
+    local_component_mapping: HashMap<String, Token>,
 }
 
 impl Scope {
@@ -30,6 +33,7 @@ impl Scope {
             bytecode: BytecodeBuilder::new(),
             environment: HashMap::new(),
             locals: HashSet::new(),
+            local_component_mapping: HashMap::new(),
         }
     }
 
@@ -38,14 +42,20 @@ impl Scope {
             bytecode: BytecodeBuilder::new(),
             environment: self.environment.clone(),
             locals: HashSet::new(),
+            local_component_mapping: HashMap::new(),
         }
     }
+}
+
+struct ComponentMetadata<'a> {
+    id: u8,
+    properties: &'a Vec<crate::expressions::PropertyDefinition>,
 }
 
 pub struct Codegen<'a> {
     function_chunks: Vec<FunctionChunk<'a>>,
     context: &'a Context<'a>,
-    component_ids: HashMap<String, u8>,
+    components: HashMap<String, ComponentMetadata<'a>>,
     diagnostics: Diagnostics,
 }
 
@@ -61,7 +71,7 @@ impl<'a> Codegen<'a> {
         Self {
             function_chunks: vec![],
             context,
-            component_ids: HashMap::new(),
+            components: HashMap::new(),
             diagnostics: Diagnostics::new(),
         }
     }
@@ -112,18 +122,47 @@ impl<'a> Codegen<'a> {
                 scope.bytecode.add_get_context_value(&name.lexeme);
             }
 
+            Expr::FieldAccess {
+                identifier,
+                field_name,
+            } => {
+                let lexeme = &identifier.lexeme;
+                if let Some(index) = scope.environment.get(lexeme) {
+                    let component_name = scope
+                        .local_component_mapping
+                        .get(&identifier.lexeme)
+                        .unwrap();
+                    let component_properties = self.components.get(&component_name.lexeme).unwrap();
+                    let _component_id = component_properties.id;
+                    let field_access_index = component_properties
+                        .properties
+                        .iter()
+                        .enumerate()
+                        .find(|(_, field)| field.name.lexeme == field_name.lexeme)
+                        .map(|field_index| field_index.0)
+                        .unwrap();
+                    scope
+                        .bytecode
+                        .add_get_field_value(*index, field_access_index as u8);
+                } else {
+                    panic!("Name not found in scope");
+                }
+            }
+
             Expr::Context { name: _ } => {
                 todo!("Implement context expression")
             }
 
-            Expr::ComponentDefinition {
-                name,
-                properties: _,
-            } => {
+            Expr::ComponentDefinition { name, properties } => {
                 // TODO(anissen): Implement component definition
 
-                self.component_ids
-                    .insert(name.lexeme.clone(), self.component_ids.len() as u8);
+                self.components.insert(
+                    name.lexeme.clone(),
+                    ComponentMetadata {
+                        id: self.components.len() as u8,
+                        properties,
+                    },
+                );
             }
 
             Expr::Call { name, args } => {
@@ -188,6 +227,19 @@ impl<'a> Codegen<'a> {
                 } => {
                     self.emit_expr(expr, scope);
                     scope.bytecode.add_set_context_value(&name.lexeme);
+                }
+                Expr::FieldAccess {
+                    identifier: _,
+                    field_name: _,
+                } => {
+                    // self.emit_expr(expr, scope);
+
+                    // let index = scope.locals.len() as u8;
+                    // scope.environment.insert(name.lexeme.clone(), index);
+                    // scope.locals.insert(name.lexeme.clone());
+                    // scope.bytecode.add_set_local_value(index);
+
+                    todo!("not implemented");
                 }
 
                 _ => panic!("Invalid assignment target"),
@@ -291,11 +343,11 @@ impl<'a> Codegen<'a> {
                     self.emit_expr(&property.value, scope);
                 });
 
-                let component_id = self.component_ids.get(&name.lexeme).unwrap();
+                let component_id = self.components.get(&name.lexeme).unwrap().id;
                 scope
                     .bytecode
                     .add_op(ByteCode::PushComponent)
-                    .add_byte(*component_id)
+                    .add_byte(component_id)
                     .add_byte(properties.len() as u8);
 
                 // scope.bytecode.add_op(ByteCode::PushComponentInitialization);
@@ -491,14 +543,20 @@ impl<'a> Codegen<'a> {
             .for_each(|(index, component)| {
                 let component_type_name = component.type_.lexeme.clone();
 
-                let id = 0; // TODO(anissen): Implement this!
-                scope.bytecode.add_byte(id).add_string(&component_type_name);
+                let component_id = self.components.get(&component_type_name).unwrap().id;
+                scope
+                    .bytecode
+                    .add_byte(component_id)
+                    .add_string(&component_type_name);
 
                 // TODO(anissen): This index is probably wrong!
                 let env_index = (scope.environment.len() + index) as u8;
                 let name = component.name.lexeme.clone();
                 scope.environment.insert(name.clone(), env_index);
                 scope.locals.insert(name);
+                scope
+                    .local_component_mapping
+                    .insert(component.name.lexeme.clone(), component.type_.clone());
             });
 
         /*
@@ -777,6 +835,12 @@ impl BytecodeBuilder {
 
     fn add_get_local_value(&mut self, index: u8) -> &mut Self {
         self.add_op(ByteCode::GetLocalValue).add_byte(index)
+    }
+
+    fn add_get_field_value(&mut self, index: u8, field_index: u8) -> &mut Self {
+        self.add_op(ByteCode::GetFieldValue)
+            .add_byte(index)
+            .add_byte(field_index)
     }
 
     fn add_get_context_value(&mut self, name: &str) -> &mut Self {

@@ -226,6 +226,24 @@ impl Disassembler {
                     self.print(vec!["set_value".to_string(), format!("(index: {})", index)])
                 }
 
+                ByteCode::GetFieldValue => {
+                    let index = self.read_byte();
+                    let field_index = self.read_byte();
+                    self.print(vec![
+                        "get_field_value".to_string(),
+                        format!("(index: {}, field_index: {})", index, field_index),
+                    ])
+                }
+
+                ByteCode::SetFieldValue => {
+                    let index = self.read_byte();
+                    let field_index = self.read_byte();
+                    self.print(vec![
+                        "set_field_value".to_string(),
+                        format!("(index: {}, field_index: {})", index, field_index),
+                    ])
+                }
+
                 ByteCode::GetContextValue => {
                     let name = self.read_string();
                     self.print(vec![
