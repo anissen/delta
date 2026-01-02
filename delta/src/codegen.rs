@@ -549,8 +549,8 @@ impl<'a> Codegen<'a> {
                     .add_byte(component_id)
                     .add_string(&component_type_name);
 
-                // TODO(anissen): This index is probably wrong!
-                let env_index = (scope.environment.len() + index) as u8;
+                let local_index = scope.locals.len();
+                let env_index = (local_index + index) as u8;
                 let name = component.name.lexeme.clone();
                 scope.environment.insert(name.clone(), env_index);
                 scope.locals.insert(name);

@@ -181,9 +181,7 @@ impl VirtualMachine {
         }
 
         // Store query results as owned data (entity + owned component bytes) to avoid holding borrow on world
-        // let mut query_results: Vec<(u32, Vec<Vec<u8>>)> = Vec::new(); // TODO(anissen): Should probably be a stack to allow nested results
         let mut query_results = QueryResultIter::empty(); // TODO(anissen): Should probably be a stack to allow nested results
-        // let mut query_results_index = 0; // Current index in query_results
         let mut query_results_stack_index = 0; // TODO(anissen): Should probably be a stack to allow nested results
 
         while self.program_counter < self.program.len() {
@@ -440,11 +438,11 @@ impl VirtualMachine {
                 ByteCode::GetFieldValue => {
                     let index = self.read_byte();
                     let field_index = self.read_byte();
-                    let stack_index = self.current_call_frame().stack_index; // - 1 /* HACK -1 to test some logic error elsewhere */;
-                    println!(
-                        "Index: {}, field_index: {}, stack_index: {}",
-                        index, field_index, stack_index
-                    );
+                    let stack_index = self.current_call_frame().stack_index;
+                    // println!(
+                    //     "Index: {}, field_index: {}, stack_index: {}",
+                    //     index, field_index, stack_index
+                    // );
                     let object = self
                         .stack
                         .get((stack_index + index) as usize)
@@ -456,10 +454,13 @@ impl VirtualMachine {
                             )
                         });
                     let value = match object {
-                        Value::Component { id, properties } => {
+                        Value::Component { id: _, properties } => {
                             properties[field_index as usize].clone()
                         }
-                        _ => panic!("Trying to get field value from non-object"),
+                        _ => {
+                            dbg!(&self.stack);
+                            panic!("Trying to get field value from non-object")
+                        }
                     };
                     self.push_value(value);
                 }
@@ -606,18 +607,14 @@ impl VirtualMachine {
 
                 ByteCode::ContextQuery => {
                     let component_count = self.read_byte();
-                    println!("query components:");
                     // collect all component ids and names for printing
                     let mut include_component_ids = Vec::new();
                     for _ in 0..component_count {
                         let component_id = self.read_byte();
                         include_component_ids.push(component_id as u32);
-                        let component_name = self.read_string();
-                        println!("{} (id: {})", component_name, component_id);
+                        let _component_name = self.read_string();
                     }
                     let exclude_component_ids = Vec::new(); // TODO(anissen): Implement exclude component ids
-
-                    // dbg!(&world);
 
                     // TODO(anissen): Alternatively, create a structure to encapsulate a query-execution-state, allowing component scope to be expressed for the borrow checker
                     query_results = data
@@ -639,24 +636,14 @@ impl VirtualMachine {
 
                 ByteCode::SetNextComponentColumnOrJump => {
                     let offset = self.read_i16();
-                    println!("Setting next component column or jump");
 
                     if let Some((_entity, column)) = query_results.next() {
-                        dbg!(_entity);
-                        println!("Entity {} has component {:?}", _entity, column);
                         let is_first_query_result = query_results_stack_index == self.stack.len();
                         column.iter().enumerate().for_each(|(index, component)| {
-                            // // Get next query result from owned data
-                            // if query_results_index < query_results.len() {
-                            //     let (entity, columns) = &query_results[query_results_index];
-                            //     query_results_index += 1;
-
-                            //     // Process component data
-                            //     for (index, component) in columns.iter().enumerate() {
-                            // println!("Entity {} has component {:?}", entity, component);
+                            // Get next query result from owned data
                             let pos_x = read_f32(&component[0..4]);
                             let pos_y = read_f32(&component[4..8]);
-                            println!("Position: ({}, {})", pos_x, pos_y);
+                            // println!("Position: ({}, {})", pos_x, pos_y);
                             let id = 0; // TODO(anissen): Implement
                             let component = vec![Value::Float(pos_x), Value::Float(pos_y)];
                             if is_first_query_result {
@@ -686,16 +673,15 @@ impl VirtualMachine {
                             Value::Component { id, properties } => {
                                 match properties[..] {
                                     [Value::Float(x), Value::Float(y)] => {
-                                        println!(
-                                            "Creating entity {} with position ({}, {}) and id {}",
-                                            entity, x, y, id
-                                        );
+                                        // println!(
+                                        //     "Creating entity {} with position ({}, {}) and id {}",
+                                        //     entity, x, y, id
+                                        // );
                                         data.elements.world.insert(
                                             id as u32,
                                             entity,
                                             &position(x, y),
                                         );
-                                        // world.insert(component.id, entity, &component.value);
                                     }
                                     _ => panic!("Expected two values for position component"),
                                 }

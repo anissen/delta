@@ -150,18 +150,6 @@ impl PersistentData {
     }
 }
 
-// let mut entity_manager = EntityManager::new();
-// let mut world = World::new();
-// // Position { x: f32, y: f32 }
-// let position_id: ComponentTypeId = 0;
-// world.register_component(position_id, ComponentLayout { size: 8, align: 4 });
-// // Velocity { dx: f32, dy: f32 }
-// let velocity_id: ComponentTypeId = 1;
-// world.register_component(velocity_id, ComponentLayout { size: 8, align: 4 });
-// // Dead (no data)
-// let dead_id: ComponentTypeId = 2;
-// world.register_component(dead_id, ComponentLayout { size: 0, align: 0 });
-
 pub struct Program<'a> {
     context: Context<'a>,
     // source: &'a str,
@@ -169,7 +157,6 @@ pub struct Program<'a> {
     debug: bool,
     pub metadata: ProgramMetadata,
     pub vm: Option<vm::VirtualMachine>,
-    // pub bytecode: Vec<u8>,
     pub is_valid: bool,
     data: PersistentData,
 }
@@ -180,6 +167,9 @@ impl<'a> Program<'a> {
         data.elements
             .world
             .register_component(0, ComponentLayout { size: 8, align: 4 }); // TODO(anissen): Temp!
+        data.elements
+            .world
+            .register_component(1, ComponentLayout { size: 8, align: 4 }); // TODO(anissen): Temp!
 
         Self {
             context,
@@ -187,7 +177,6 @@ impl<'a> Program<'a> {
             debug,
             metadata: ProgramMetadata::default(),
             vm: None, //vm::VirtualMachine::new(Vec::new(), debug),
-            // bytecode: Vec::new(),
             is_valid: false,
             data,
         }
@@ -287,21 +276,12 @@ impl<'a> Program<'a> {
                     execution_metadata: ExecutionMetadata::default(),
                 };
 
-                // TODO(anissen): This is a horrible hack! The world context should either be on program or persist on the VM.
-                // let world_data = self.vm.as_ref().map(|vm| vm.world_context.clone());
-
-                // TODO(anissen): Don't recreate the VM on each compile
-                // self.bytecode = bytecodes.clone();
                 if let Some(vm) = &mut self.vm {
                     vm.update_bytecode(bytecodes.clone());
                 } else {
                     let vm = vm::VirtualMachine::new(bytecodes.clone(), self.debug);
                     self.vm = Some(vm);
                 }
-
-                // if world_data.is_some() {
-                //     self.vm.as_mut().unwrap().world_context = world_data.unwrap();
-                // }
 
                 Ok(bytecodes)
             }
