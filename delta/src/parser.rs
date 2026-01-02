@@ -268,7 +268,6 @@ impl Parser {
 
     // query → ...
     fn query(&mut self) -> Result<Option<Expr>, String> {
-        let expr = self.is()?;
         if self.matches(&KeywordQuery) {
             self.comment();
             self.consume(&NewLine)?;
@@ -298,7 +297,7 @@ impl Parser {
                 Err("Unexpected end of input".to_string())
             }
         } else {
-            Ok(expr)
+            self.is()
         }
     }
 

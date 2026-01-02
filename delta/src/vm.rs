@@ -468,7 +468,7 @@ impl VirtualMachine {
                 }
 
                 ByteCode::SetFieldValue => {
-                    // TODO(anissen): This is untested
+                    // TODO(anissen): This is untested -- this also needs to update the ECS world representation!
                     let index = self.read_byte();
                     let field_index = self.read_byte();
                     let stack_index = self.current_call_frame().stack_index;
