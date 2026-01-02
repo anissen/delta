@@ -1,15 +1,11 @@
-use std::collections::HashMap;
 use std::fmt::Display;
 
 use crate::ExecutionMetadata;
 use crate::bytecodes::ByteCode;
 use crate::program::Context;
+use crate::program::PersistentData;
 
-use elements::ComponentLayout;
-use elements::ComponentTypeId;
-use elements::EntityManager;
 use elements::world::QueryResultIter;
-use elements::world::World;
 
 // TODO(anissen): See https://github.com/brightly-salty/rox/blob/master/src/value.rs
 #[derive(Debug, Clone, PartialEq)]
@@ -82,16 +78,16 @@ pub struct VirtualMachine {
     call_stack: Vec<CallFrame>,
     verbose: bool,
     pub metadata: ExecutionMetadata,
-    pub world_context: HashMap<String, Value>, // TODO(anissen): Find a better name
 }
 
 pub fn run<'a>(
     bytes: Vec<u8>,
     function_name: Option<(String, Vec<Value>)>,
     context: &'a Context<'a>,
+    data: &mut PersistentData,
     verbose: bool,
 ) -> Option<Value> {
-    VirtualMachine::new(bytes, verbose).execute(function_name, context)
+    VirtualMachine::new(bytes, verbose).execute(function_name, context, data)
 }
 
 static EMPTY_VALUE: Value = Value::False; // Only used when a function returns no result
@@ -106,8 +102,16 @@ impl VirtualMachine {
             call_stack: Vec::new(),
             verbose,
             metadata: ExecutionMetadata::default(),
-            world_context: HashMap::new(),
         }
+    }
+
+    pub fn update_bytecode(&mut self, bytes: Vec<u8>) {
+        self.program = bytes;
+        self.program_counter = 0;
+        self.functions.clear();
+        self.stack.clear();
+        self.call_stack.clear();
+        // self.read_header();
     }
 
     fn read_header(&mut self) {
@@ -141,6 +145,7 @@ impl VirtualMachine {
         &mut self,
         function: Option<(String, Vec<Value>)>,
         context: &Context,
+        data: &mut PersistentData,
     ) -> Option<Value> {
         self.program_counter = 0;
 
@@ -174,18 +179,6 @@ impl VirtualMachine {
                 0,
             );
         }
-
-        let mut entity_manager = EntityManager::new();
-        let mut world = World::new();
-        // Position { x: f32, y: f32 }
-        let position_id: ComponentTypeId = 0;
-        world.register_component(position_id, ComponentLayout { size: 8, align: 4 });
-        // Velocity { dx: f32, dy: f32 }
-        let velocity_id: ComponentTypeId = 1;
-        world.register_component(velocity_id, ComponentLayout { size: 8, align: 4 });
-        // Dead (no data)
-        let dead_id: ComponentTypeId = 2;
-        world.register_component(dead_id, ComponentLayout { size: 0, align: 0 });
 
         // Store query results as owned data (entity + owned component bytes) to avoid holding borrow on world
         // let mut query_results: Vec<(u32, Vec<Vec<u8>>)> = Vec::new(); // TODO(anissen): Should probably be a stack to allow nested results
@@ -447,7 +440,11 @@ impl VirtualMachine {
                 ByteCode::GetFieldValue => {
                     let index = self.read_byte();
                     let field_index = self.read_byte();
-                    let stack_index = self.current_call_frame().stack_index;
+                    let stack_index = self.current_call_frame().stack_index; // - 1 /* HACK -1 to test some logic error elsewhere */;
+                    println!(
+                        "Index: {}, field_index: {}, stack_index: {}",
+                        index, field_index, stack_index
+                    );
                     let object = self
                         .stack
                         .get((stack_index + index) as usize)
@@ -495,14 +492,14 @@ impl VirtualMachine {
                 ByteCode::GetContextValue => {
                     let name = self.read_string();
 
-                    let value = self.get_context_value(name);
+                    let value = get_context_value(data, name);
                     self.push_value(value);
                 }
 
                 ByteCode::SetContextValue => {
                     let name = self.read_string();
 
-                    self.set_context_value(name, self.peek_top().clone());
+                    set_context_value(data, name, self.peek_top().clone());
                     // TODO(anissen): Is peek top correct here?
                 }
 
@@ -620,8 +617,14 @@ impl VirtualMachine {
                     }
                     let exclude_component_ids = Vec::new(); // TODO(anissen): Implement exclude component ids
 
+                    // dbg!(&world);
+
                     // TODO(anissen): Alternatively, create a structure to encapsulate a query-execution-state, allowing component scope to be expressed for the borrow checker
-                    query_results = world.query(&include_component_ids, &exclude_component_ids);
+                    query_results = data
+                        .elements
+                        .world
+                        .query(&include_component_ids, &exclude_component_ids);
+
                     // query_results = world
                     //     .query(&include_component_ids, &exclude_component_ids)
                     //     .map(|(entity, columns)| {
@@ -636,9 +639,12 @@ impl VirtualMachine {
 
                 ByteCode::SetNextComponentColumnOrJump => {
                     let offset = self.read_i16();
-                    let is_first_query_result = query_results_stack_index == self.stack.len();
+                    println!("Setting next component column or jump");
 
                     if let Some((_entity, column)) = query_results.next() {
+                        dbg!(_entity);
+                        println!("Entity {} has component {:?}", _entity, column);
+                        let is_first_query_result = query_results_stack_index == self.stack.len();
                         column.iter().enumerate().for_each(|(index, component)| {
                             // // Get next query result from owned data
                             // if query_results_index < query_results.len() {
@@ -650,7 +656,7 @@ impl VirtualMachine {
                             // println!("Entity {} has component {:?}", entity, component);
                             let pos_x = read_f32(&component[0..4]);
                             let pos_y = read_f32(&component[4..8]);
-                            // println!("Position: ({}, {})", pos_x, pos_y);
+                            println!("Position: ({}, {})", pos_x, pos_y);
                             let id = 0; // TODO(anissen): Implement
                             let component = vec![Value::Float(pos_x), Value::Float(pos_y)];
                             if is_first_query_result {
@@ -672,7 +678,7 @@ impl VirtualMachine {
                 }
 
                 ByteCode::Create => {
-                    let entity = entity_manager.create();
+                    let entity = data.elements.entity_manager.create();
 
                     let components = self.pop_list();
                     for component in components {
@@ -680,7 +686,15 @@ impl VirtualMachine {
                             Value::Component { id, properties } => {
                                 match properties[..] {
                                     [Value::Float(x), Value::Float(y)] => {
-                                        world.insert(id as u32, entity, &position(x, y));
+                                        println!(
+                                            "Creating entity {} with position ({}, {}) and id {}",
+                                            entity, x, y, id
+                                        );
+                                        data.elements.world.insert(
+                                            id as u32,
+                                            entity,
+                                            &position(x, y),
+                                        );
                                         // world.insert(component.id, entity, &component.value);
                                     }
                                     _ => panic!("Expected two values for position component"),
@@ -916,14 +930,14 @@ impl VirtualMachine {
             _ => panic!("incompatible types for string concatenation"),
         }
     }
+}
 
-    fn get_context_value(&self, name: String) -> Value {
-        self.world_context.get(&name).unwrap().clone()
-    }
+fn get_context_value(data: &mut PersistentData, name: String) -> Value {
+    data.world_context.get(&name).unwrap().clone()
+}
 
-    fn set_context_value(&mut self, name: String, value: Value) {
-        self.world_context.insert(name, value);
-    }
+fn set_context_value(data: &mut PersistentData, name: String, value: Value) {
+    data.world_context.insert(name, value);
 }
 
 fn read_f32(b: &[u8]) -> f32 {

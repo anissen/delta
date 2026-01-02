@@ -1,5 +1,9 @@
 use std::collections::HashMap;
 
+use elements::ComponentLayout;
+use elements::EntityManager;
+use elements::world::World;
+
 use crate::CompilationMetadata;
 use crate::ExecutionMetadata;
 use crate::ProgramMetadata;
@@ -116,6 +120,48 @@ impl<'a> Context<'a> {
     }
 }
 
+pub struct Elements {
+    pub entity_manager: EntityManager,
+    pub world: World,
+}
+
+impl Elements {
+    fn new() -> Self {
+        Self {
+            entity_manager: EntityManager::new(),
+            world: World::new(),
+        }
+    }
+}
+
+pub struct PersistentData {
+    // pub metadata: ExecutionMetadata,
+    pub world_context: HashMap<String, Value>, // TODO(anissen): Find a better name
+    pub elements: Elements,
+}
+
+impl PersistentData {
+    pub fn new() -> Self {
+        Self {
+            // metadata: ExecutionMetadata::default(),
+            world_context: HashMap::new(),
+            elements: Elements::new(),
+        }
+    }
+}
+
+// let mut entity_manager = EntityManager::new();
+// let mut world = World::new();
+// // Position { x: f32, y: f32 }
+// let position_id: ComponentTypeId = 0;
+// world.register_component(position_id, ComponentLayout { size: 8, align: 4 });
+// // Velocity { dx: f32, dy: f32 }
+// let velocity_id: ComponentTypeId = 1;
+// world.register_component(velocity_id, ComponentLayout { size: 8, align: 4 });
+// // Dead (no data)
+// let dead_id: ComponentTypeId = 2;
+// world.register_component(dead_id, ComponentLayout { size: 0, align: 0 });
+
 pub struct Program<'a> {
     context: Context<'a>,
     // source: &'a str,
@@ -123,20 +169,27 @@ pub struct Program<'a> {
     debug: bool,
     pub metadata: ProgramMetadata,
     pub vm: Option<vm::VirtualMachine>,
-    pub bytecode: Vec<u8>,
+    // pub bytecode: Vec<u8>,
     pub is_valid: bool,
+    data: PersistentData,
 }
 
 impl<'a> Program<'a> {
     pub fn new(context: Context<'a>, debug: bool) -> Self {
+        let mut data = PersistentData::new();
+        data.elements
+            .world
+            .register_component(0, ComponentLayout { size: 8, align: 4 }); // TODO(anissen): Temp!
+
         Self {
             context,
             source: "".to_string(),
             debug,
             metadata: ProgramMetadata::default(),
             vm: None, //vm::VirtualMachine::new(Vec::new(), debug),
-            bytecode: Vec::new(),
+            // bytecode: Vec::new(),
             is_valid: false,
+            data,
         }
     }
 
@@ -235,15 +288,20 @@ impl<'a> Program<'a> {
                 };
 
                 // TODO(anissen): This is a horrible hack! The world context should either be on program or persist on the VM.
-                let world_data = self.vm.as_ref().map(|vm| vm.world_context.clone());
+                // let world_data = self.vm.as_ref().map(|vm| vm.world_context.clone());
 
                 // TODO(anissen): Don't recreate the VM on each compile
-                self.bytecode = bytecodes.clone();
-                self.vm = Some(vm::VirtualMachine::new(bytecodes.clone(), self.debug));
-
-                if world_data.is_some() {
-                    self.vm.as_mut().unwrap().world_context = world_data.unwrap();
+                // self.bytecode = bytecodes.clone();
+                if let Some(vm) = &mut self.vm {
+                    vm.update_bytecode(bytecodes.clone());
+                } else {
+                    let vm = vm::VirtualMachine::new(bytecodes.clone(), self.debug);
+                    self.vm = Some(vm);
                 }
+
+                // if world_data.is_some() {
+                //     self.vm.as_mut().unwrap().world_context = world_data.unwrap();
+                // }
 
                 Ok(bytecodes)
             }
@@ -254,7 +312,7 @@ impl<'a> Program<'a> {
     pub fn run(&mut self) -> Option<vm::Value> {
         match &mut self.vm {
             Some(vm) => {
-                let result = vm.execute(None, &self.context);
+                let result = vm.execute(None, &self.context, &mut self.data);
                 self.metadata.execution_metadata = vm.metadata.clone();
                 result
             }
@@ -265,7 +323,7 @@ impl<'a> Program<'a> {
     pub fn run_function(&mut self, function_name: String, args: Vec<Value>) -> Option<vm::Value> {
         match &mut self.vm {
             Some(vm) => {
-                let result = vm.execute(Some((function_name, args)), &self.context);
+                let result = vm.execute(Some((function_name, args)), &self.context, &mut self.data);
                 self.metadata.execution_metadata = vm.metadata.clone();
                 result
             }
