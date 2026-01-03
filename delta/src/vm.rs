@@ -182,7 +182,6 @@ impl VirtualMachine {
 
         // Store query results as owned data (entity + owned component bytes) to avoid holding borrow on world
         let mut query_results = QueryResultIter::empty(); // TODO(anissen): Should probably be a stack to allow nested results
-        // let mut query_results_stack_index = 0; // TODO(anissen): Should probably be a stack to allow nested results
 
         while self.program_counter < self.program.len() {
             let next = self.read_byte();
@@ -630,22 +629,9 @@ impl VirtualMachine {
                     } else {
                         self.jump(end_pc);
                     }
-
-                    // query_results = world
-                    //     .query(&include_component_ids, &exclude_component_ids)
-                    //     .map(|(entity, columns)| {
-                    //         let owned_columns: Vec<Vec<u8>> =
-                    //             columns.iter().map(|c| c.to_vec()).collect();
-                    //         (entity, owned_columns)
-                    //     })
-                    //     .collect();
-                    // query_results_index = 0;
-                    // query_results_stack_index = self.stack.len();
                 }
 
                 ByteCode::SetNextComponentColumnOrJump => {
-                    let offset = self.read_i16();
-
                     if let Some((_entity, column)) = query_results.next() {
                         let stack_start = self.current_call_frame().stack_index;
                         let is_first_query_result = self.stack.len() as u8 == stack_start;
@@ -670,8 +656,6 @@ impl VirtualMachine {
                     } else {
                         // No more results
                         self.pop_query_frame();
-                        // self.discard((self.stack.len() - query_results_stack_index) as u8);
-                        // self.jump_offset(offset);
                     }
                 }
 

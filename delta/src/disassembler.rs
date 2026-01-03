@@ -155,11 +155,7 @@ impl Disassembler {
                 }
 
                 ByteCode::SetNextComponentColumnOrJump => {
-                    let jump_offset = self.read_i16();
-                    self.print(vec![
-                        "set_next_component_column_or_jump".to_string(),
-                        format!("(offset: {jump_offset})"),
-                    ])
+                    self.print(vec!["set_next_component_column_or_jump".to_string()])
                 }
 
                 ByteCode::GetTagName => self.print(vec!["get_tag_name".to_string()]),

@@ -560,9 +560,9 @@ impl<'a> Codegen<'a> {
             });
 
         /*
-        context_query
+        context_query (queries components and jumps to :end if empty, pushes query frame otherwise)
         :start
-        set_next_component_column_or_jump (set/replaces components or pops when done)
+        set_next_component_column_or_jump (set/replaces components or pops query frame when done)
         [expr]
         jump_to_label start
         :end
@@ -570,10 +570,9 @@ impl<'a> Codegen<'a> {
 
         let start_label = scope.bytecode.bytes.len() as i16;
 
-        let end_offset = scope
+        scope
             .bytecode
-            .add_op(ByteCode::SetNextComponentColumnOrJump)
-            .get_patchable_i16_offset();
+            .add_op(ByteCode::SetNextComponentColumnOrJump);
 
         self.emit_expr(expr, scope);
 
@@ -584,7 +583,6 @@ impl<'a> Codegen<'a> {
         scope.bytecode.add_i16(&start_offset);
 
         scope.bytecode.patch_jump_to_current_byte(query_end_offset);
-        scope.bytecode.patch_jump_to_current_byte(end_offset);
     }
 
     fn emit_assignment(&mut self, name: &Token, expr: &'a Expr, scope: &mut Scope) {
