@@ -83,7 +83,9 @@ component Velocity { dx f32, dy f32 }
 create [Velocity { dx 0.1, dy 5.5 }, Position { x 11.0, y 22.0 }]
 create [Position { x 32.0, y 64.0 }, Velocity { dx 1.0, dy 0.5 }]
 
-# Position p
-query
-	Position p
-		("x is {p.x} and y is {p.y}") | log
+do_stuff = \v
+	query
+		Position p
+			("x is {p.x} and y is {p.y}") | log
+
+4 | do_stuff

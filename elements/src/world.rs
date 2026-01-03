@@ -235,9 +235,13 @@ impl World {
         }
     }
 
-    pub fn query(&self, include: &Vec<ComponentId>, exclude: &Vec<ComponentId>) -> QueryResultIter {
+    pub fn query(
+        &self,
+        include: &Vec<ComponentId>,
+        exclude: &Vec<ComponentId>,
+    ) -> Option<QueryResultIter> {
         if include.is_empty() {
-            return QueryResultIter::empty();
+            return None;
         }
 
         let exclude_columns: Vec<_> = self
@@ -288,9 +292,9 @@ impl World {
                     (entity.clone(), row)
                 })
                 .collect();
-            QueryResultIter::new(result)
+            Some(QueryResultIter::new(result))
         } else {
-            QueryResultIter::empty()
+            None
         }
     }
 }

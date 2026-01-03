@@ -341,7 +341,7 @@ impl Disassembler {
                     self.print(vec![format!(
                         "jump if true (offset: {}, to byte {})",
                         offset,
-                        self.program_counter + offset as usize
+                        self.program_counter as i16 + offset
                     )])
                 }
 
@@ -350,11 +350,12 @@ impl Disassembler {
                     self.print(vec![format!(
                         "jump if false (offset: {}, to byte {})",
                         offset,
-                        self.program_counter + offset as usize
+                        self.program_counter as i16 + offset
                     )])
                 }
 
                 ByteCode::ContextQuery => {
+                    let jump_offset = self.read_i16();
                     let component_count = self.read_byte();
                     let mut components = Vec::new();
                     // collect all component ids and names for printing
@@ -363,7 +364,12 @@ impl Disassembler {
                         let component_name = self.read_string();
                         components.push(format!("{} ({})", component_id, component_name));
                     }
-                    self.print(vec![format!("query components: {}", components.join(", "))])
+                    self.print(vec![format!(
+                        "query components: {} (offset: {}, to byte {})",
+                        components.join(", "),
+                        jump_offset,
+                        self.program_counter as i16 + jump_offset
+                    )])
                 }
 
                 ByteCode::Create => self.print(vec![format!("create entity")]),

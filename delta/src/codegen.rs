@@ -42,7 +42,7 @@ impl Scope {
             bytecode: BytecodeBuilder::new(),
             environment: self.environment.clone(),
             locals: HashSet::new(),
-            local_component_mapping: HashMap::new(),
+            local_component_mapping: self.local_component_mapping.clone(),
         }
     }
 }
@@ -532,10 +532,12 @@ impl<'a> Codegen<'a> {
     }
 
     fn emit_query(&mut self, components: &Vec<NamedType>, expr: &'a Expr, scope: &mut Scope) {
-        scope
+        let query_end_offset = scope
             .bytecode
             .add_op(ByteCode::ContextQuery)
-            .add_byte(components.len() as u8);
+            .get_patchable_i16_offset();
+
+        scope.bytecode.add_byte(components.len() as u8);
 
         components
             .iter()
@@ -549,10 +551,8 @@ impl<'a> Codegen<'a> {
                     .add_byte(component_id)
                     .add_string(&component_type_name);
 
-                let local_index = scope.locals.len();
-                let env_index = (local_index + index) as u8;
                 let name = component.name.lexeme.clone();
-                scope.environment.insert(name.clone(), env_index);
+                scope.environment.insert(name.clone(), index as u8);
                 scope.locals.insert(name);
                 scope
                     .local_component_mapping
@@ -583,6 +583,7 @@ impl<'a> Codegen<'a> {
             start_label - (scope.bytecode.bytes.len() as i16 + 2/* jump offset bytes */);
         scope.bytecode.add_i16(&start_offset);
 
+        scope.bytecode.patch_jump_to_current_byte(query_end_offset);
         scope.bytecode.patch_jump_to_current_byte(end_offset);
     }
 

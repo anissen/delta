@@ -182,7 +182,7 @@ impl VirtualMachine {
 
         // Store query results as owned data (entity + owned component bytes) to avoid holding borrow on world
         let mut query_results = QueryResultIter::empty(); // TODO(anissen): Should probably be a stack to allow nested results
-        let mut query_results_stack_index = 0; // TODO(anissen): Should probably be a stack to allow nested results
+        // let mut query_results_stack_index = 0; // TODO(anissen): Should probably be a stack to allow nested results
 
         while self.program_counter < self.program.len() {
             let next = self.read_byte();
@@ -606,6 +606,8 @@ impl VirtualMachine {
                 }
 
                 ByteCode::ContextQuery => {
+                    let jump_offset = self.read_i16();
+                    let pc = self.program_counter;
                     let component_count = self.read_byte();
                     // collect all component ids and names for printing
                     let mut include_component_ids = Vec::new();
@@ -617,10 +619,17 @@ impl VirtualMachine {
                     let exclude_component_ids = Vec::new(); // TODO(anissen): Implement exclude component ids
 
                     // TODO(anissen): Alternatively, create a structure to encapsulate a query-execution-state, allowing component scope to be expressed for the borrow checker
-                    query_results = data
+                    let end_pc = get_jump_offset(pc, jump_offset);
+                    if let Some(result) = data
                         .elements
                         .world
-                        .query(&include_component_ids, &exclude_component_ids);
+                        .query(&include_component_ids, &exclude_component_ids)
+                    {
+                        query_results = result;
+                        self.push_query_frame(end_pc);
+                    } else {
+                        self.jump(end_pc);
+                    }
 
                     // query_results = world
                     //     .query(&include_component_ids, &exclude_component_ids)
@@ -631,14 +640,15 @@ impl VirtualMachine {
                     //     })
                     //     .collect();
                     // query_results_index = 0;
-                    query_results_stack_index = self.stack.len();
+                    // query_results_stack_index = self.stack.len();
                 }
 
                 ByteCode::SetNextComponentColumnOrJump => {
                     let offset = self.read_i16();
 
                     if let Some((_entity, column)) = query_results.next() {
-                        let is_first_query_result = query_results_stack_index == self.stack.len();
+                        let stack_start = self.current_call_frame().stack_index;
+                        let is_first_query_result = self.stack.len() as u8 == stack_start;
                         column.iter().enumerate().for_each(|(index, component)| {
                             // Get next query result from owned data
                             let pos_x = read_f32(&component[0..4]);
@@ -651,7 +661,7 @@ impl VirtualMachine {
                                 self.push_component(id, component);
                             } else {
                                 // Replace components on the stack
-                                self.stack[query_results_stack_index + index] = Value::Component {
+                                self.stack[stack_start as usize + index] = Value::Component {
                                     id,
                                     properties: component,
                                 };
@@ -659,8 +669,9 @@ impl VirtualMachine {
                         });
                     } else {
                         // No more results
-                        self.discard((self.stack.len() - query_results_stack_index) as u8);
-                        self.jump_offset(offset);
+                        self.pop_query_frame();
+                        // self.discard((self.stack.len() - query_results_stack_index) as u8);
+                        // self.jump_offset(offset);
                     }
                 }
 
@@ -710,6 +721,17 @@ impl VirtualMachine {
             stack_index: (self.stack.len() - (arity as usize)) as u8,
         });
         self.program_counter = ip as usize;
+    }
+
+    fn push_query_frame(&mut self, return_program_counter: usize) {
+        self.call_stack.push(CallFrame {
+            return_program_counter: return_program_counter,
+            stack_index: self.stack.len() as u8,
+        });
+    }
+
+    fn pop_query_frame(&mut self) {
+        self.pop_call_frame();
     }
 
     fn current_call_frame(&self) -> &CallFrame {
@@ -789,13 +811,13 @@ impl VirtualMachine {
         String::from_utf8(bytes).unwrap()
     }
 
-    fn jump(&mut self, pc: u32) {
-        self.program_counter = pc as usize;
+    fn jump(&mut self, pc: usize) {
+        self.program_counter = pc;
         self.metadata.jumps_performed += 1;
     }
 
     fn jump_offset(&mut self, offset: i16) {
-        self.jump(self.program_counter.strict_add_signed(offset as isize) as u32);
+        self.jump(get_jump_offset(self.program_counter, offset));
     }
 
     fn pop_boolean(&mut self) -> bool {
@@ -916,6 +938,10 @@ impl VirtualMachine {
             _ => panic!("incompatible types for string concatenation"),
         }
     }
+}
+
+fn get_jump_offset(pc: usize, offset: i16) -> usize {
+    pc.strict_add_signed(offset as isize)
 }
 
 fn get_context_value(data: &mut PersistentData, name: String) -> Value {
