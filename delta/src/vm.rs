@@ -607,15 +607,23 @@ impl VirtualMachine {
                 ByteCode::ContextQuery => {
                     let jump_offset = self.read_i16();
                     let pc = self.program_counter;
-                    let component_count = self.read_byte();
+                    let include_component_count = self.read_byte();
+                    let exclude_component_count = self.read_byte();
+
                     // collect all component ids and names for printing
                     let mut include_component_ids = Vec::new();
-                    for _ in 0..component_count {
+                    for _ in 0..include_component_count {
                         let component_id = self.read_byte();
                         include_component_ids.push(component_id as u32);
                         let _component_name = self.read_string();
                     }
-                    let exclude_component_ids = Vec::new(); // TODO(anissen): Implement exclude component ids
+
+                    let mut exclude_component_ids = Vec::new();
+                    for _ in 0..exclude_component_count {
+                        let component_id = self.read_byte();
+                        exclude_component_ids.push(component_id as u32);
+                        let _component_name = self.read_string();
+                    }
 
                     // TODO(anissen): Alternatively, create a structure to encapsulate a query-execution-state, allowing component scope to be expressed for the borrow checker
                     let end_pc = get_jump_offset(pc, jump_offset);

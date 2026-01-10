@@ -71,7 +71,8 @@ pub enum Expr {
         arms: Vec<IsArm>,
     },
     Query {
-        components: Vec<NamedType>, // TODO(anissen): Should this be Vec<Expr> instead?
+        include_components: Vec<NamedType>, // TODO(anissen): Should this be Vec<Expr> instead?
+        exclude_components: Vec<Token>,
         expr: Box<Expr>,
     },
     ComponentDefinition {

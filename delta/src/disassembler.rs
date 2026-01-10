@@ -352,17 +352,27 @@ impl Disassembler {
 
                 ByteCode::ContextQuery => {
                     let jump_offset = self.read_i16();
-                    let component_count = self.read_byte();
-                    let mut components = Vec::new();
+                    let include_component_count = self.read_byte();
+                    let exclude_component_count = self.read_byte();
+                    let mut include_components = Vec::new();
+                    let mut exclude_components = Vec::new();
                     // collect all component ids and names for printing
-                    for _ in 0..component_count {
+                    for _ in 0..include_component_count {
                         let component_id = self.read_byte();
                         let component_name = self.read_string();
-                        components.push(format!("{} ({})", component_id, component_name));
+                        include_components
+                            .push(format!("include {} ({})", component_id, component_name));
+                    }
+                    for _ in 0..exclude_component_count {
+                        let component_id = self.read_byte();
+                        let component_name = self.read_string();
+                        exclude_components
+                            .push(format!("exclude {} ({})", component_id, component_name));
                     }
                     self.print(vec![format!(
-                        "query components: {} (offset: {}, to byte {})",
-                        components.join(", "),
+                        "query components: +{} -{} (offset: {}, to byte {})",
+                        include_components.join(", "),
+                        exclude_components.join(", "),
                         jump_offset,
                         self.program_counter as i16 + jump_offset
                     )])

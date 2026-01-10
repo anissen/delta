@@ -269,7 +269,11 @@ impl<'a> Codegen<'a> {
 
             Expr::Is { expr, arms } => self.emit_is(expr, arms, scope),
 
-            Expr::Query { components, expr } => self.emit_query(components, expr, scope),
+            Expr::Query {
+                include_components: include_compoments,
+                exclude_components: exclude_compoments,
+                expr,
+            } => self.emit_query(include_compoments, exclude_compoments, expr, scope),
 
             Expr::Create {
                 token: _,
@@ -531,15 +535,22 @@ impl<'a> Codegen<'a> {
         }
     }
 
-    fn emit_query(&mut self, components: &Vec<NamedType>, expr: &'a Expr, scope: &mut Scope) {
+    fn emit_query(
+        &mut self,
+        include_components: &Vec<NamedType>,
+        exclude_components: &Vec<Token>,
+        expr: &'a Expr,
+        scope: &mut Scope,
+    ) {
         let query_end_offset = scope
             .bytecode
             .add_op(ByteCode::ContextQuery)
             .get_patchable_i16_offset();
 
-        scope.bytecode.add_byte(components.len() as u8);
+        scope.bytecode.add_byte(include_components.len() as u8);
+        scope.bytecode.add_byte(exclude_components.len() as u8);
 
-        components
+        include_components
             .iter()
             .enumerate()
             .for_each(|(index, component)| {
@@ -558,6 +569,16 @@ impl<'a> Codegen<'a> {
                     .local_component_mapping
                     .insert(component.name.lexeme.clone(), component.type_.clone());
             });
+
+        exclude_components.iter().for_each(|component| {
+            let component_type_name = component.lexeme.clone();
+
+            let component_id = self.components.get(&component_type_name).unwrap().id;
+            scope
+                .bytecode
+                .add_byte(component_id)
+                .add_string(&component_type_name);
+        });
 
         /*
         context_query (queries components and jumps to :end if empty, pushes query frame otherwise)

@@ -691,8 +691,12 @@ impl<'env> InferenceContext<'env> {
                 }
             }
 
-            Expr::Query { components, expr } => {
-                components.iter().for_each(|component| {
+            Expr::Query {
+                include_components,
+                exclude_components: _,
+                expr,
+            } => {
+                include_components.iter().for_each(|component| {
                     let component_name = component.type_.lexeme.clone();
                     if self.environment.components.get(&component_name).is_none() {
                         self.diagnostics.add_error(Error::TypeNotFound {

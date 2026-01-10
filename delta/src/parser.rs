@@ -274,23 +274,36 @@ impl Parser {
             self.increase_indentation();
             self.consume_indentation()?;
 
-            let mut components = vec![];
+            let mut include_components = vec![];
+            let mut exclude_components = vec![];
             // parse components
             while !self.check(&NewLine) {
                 if self.is_at_end() {
                     return Err("Unexpected end of input".to_string());
                 }
 
-                let type_ = self.consume(&Identifier)?;
-                let name = self.consume(&Identifier)?;
-                components.push(NamedType { type_, name });
+                if !include_components.is_empty() {
+                    self.consume(&Comma)?;
+                }
+
+                let should_exclude = self.matches(&KeywordNot);
+
+                if should_exclude {
+                    let type_ = self.consume(&Identifier)?;
+                    exclude_components.push(type_);
+                } else {
+                    let type_ = self.consume(&Identifier)?;
+                    let name = self.consume(&Identifier)?;
+                    include_components.push(NamedType { type_, name });
+                }
             }
 
             // expr for matches
             if let Some(expr) = self.block()? {
                 self.decrease_indentation();
                 Ok(Some(Expr::Query {
-                    components,
+                    include_components,
+                    exclude_components,
                     expr: Box::new(expr),
                 }))
             } else {

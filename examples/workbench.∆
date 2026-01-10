@@ -81,11 +81,15 @@ component Velocity { dx f32, dy f32 }
 # should this be [...] | create ?
 # create [45, 66]
 create [Velocity { dx 0.1, dy 5.5 }, Position { x 11.0, y 22.0 }]
+create [Position { x 141.0, y 422.0 }]
 create [Position { x 32.0, y 64.0 }, Velocity { dx 1.0, dy 0.5 }]
 
 do_stuff = \v
 	query
-		Position p
-			("x is {p.x} and y is {p.y}") | log
+		Position p, not Velocity
+			("ONLY position, value: ({p.x}, {p.y})") | log
+	query
+		Position p, Velocity v
+			("position is ({p.x}, {p.y}), velocity is ({v.dx}, {v.dy})") | log
 
 4 | do_stuff
