@@ -7,8 +7,23 @@ pub type ComponentId = u32;
 pub type ComponentTypeId = u32;
 
 #[derive(Debug)]
+pub struct FieldLayout {
+    pub name: String, // For debugging purposes
+    pub type_id: u8,
+    pub size: u16,
+}
+
+#[derive(Debug)]
 pub struct ComponentLayout {
-    pub size: usize,
+    pub fields: Vec<FieldLayout>,
+    pub size: usize, // TODO(anissen): Change to u16?
+}
+
+impl ComponentLayout {
+    pub fn new(fields: Vec<FieldLayout>) -> Self {
+        let size = fields.iter().map(|f| f.size as usize).sum();
+        ComponentLayout { fields, size }
+    }
 }
 
 pub struct EntityManager {

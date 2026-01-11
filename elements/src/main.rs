@@ -1,4 +1,6 @@
-use elements::{ComponentLayout, ComponentTypeId, Entity, EntityManager, world::World};
+use elements::{
+    ComponentLayout, ComponentTypeId, Entity, EntityManager, FieldLayout, world::World,
+};
 
 fn f32_bytes(x: f32) -> [u8; 4] {
     x.to_le_bytes()
@@ -96,13 +98,41 @@ fn main() {
     let mut world = World::new();
     // Position { x: f32, y: f32 }
     let position_id: ComponentTypeId = 0;
-    world.register_component(position_id, ComponentLayout { size: 8 });
+    world.register_component(
+        position_id,
+        ComponentLayout::new(vec![
+            FieldLayout {
+                name: "x".to_string(),
+                type_id: 0,
+                size: 4,
+            },
+            FieldLayout {
+                name: "y".to_string(),
+                type_id: 0,
+                size: 4,
+            },
+        ]),
+    );
     // Velocity { dx: f32, dy: f32 }
     let velocity_id: ComponentTypeId = 1;
-    world.register_component(velocity_id, ComponentLayout { size: 8 });
+    world.register_component(
+        velocity_id,
+        ComponentLayout::new(vec![
+            FieldLayout {
+                name: "dx".to_string(),
+                type_id: 0,
+                size: 4,
+            },
+            FieldLayout {
+                name: "dy".to_string(),
+                type_id: 0,
+                size: 4,
+            },
+        ]),
+    );
     // Dead (no data)
     let dead_id: ComponentTypeId = 2;
-    world.register_component(dead_id, ComponentLayout { size: 0 });
+    world.register_component(dead_id, ComponentLayout::new(vec![]));
 
     // Create a few entities
     let e0 = entity_manager.create();

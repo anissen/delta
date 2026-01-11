@@ -236,6 +236,11 @@ pub fn unify(
                 token: token2,
             },
         ) => {
+            // TODO(anissen): Bypass typing checks against components for now
+            if name1 == Type::Component && name2 == Type::Component {
+                return;
+            }
+
             if name1 != name2 || generics1.len() != generics2.len() {
                 diagnostics.add_error(Error::TypeMismatch {
                     expected: right.substitute(substitutions),

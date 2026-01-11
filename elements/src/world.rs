@@ -80,6 +80,12 @@ impl World {
         }
     }
 
+    pub fn get_component_layout(&self, id: ComponentTypeId) -> Option<&ComponentLayout> {
+        self.components
+            .get(id as usize)
+            .map(|column| &column.layout)
+    }
+
     pub fn insert(&mut self, id: ComponentTypeId, entity: Entity, data: &[u8]) {
         self.components[id as usize].insert(entity, data);
     }

@@ -6,7 +6,7 @@ use crate::bitset::BitSet;
 #[derive(Debug)]
 pub struct Column {
     pub id: ComponentId, // TODO(anissen): Needs to be encoded in World instead
-    layout: ComponentLayout,
+    pub layout: ComponentLayout,
     dense: Vec<u8>,
     entities: Vec<Entity>,
     sparse: Vec<usize>,
@@ -19,7 +19,7 @@ impl Column {
         layout: ComponentLayout,
         initial_capacity: usize,
     ) -> Self {
-        let size = layout.size.max(1);
+        let size = layout.size.max(1); // TODO(anissen): Can this be zero length for tags?
         Self {
             id: component_id,
             layout,

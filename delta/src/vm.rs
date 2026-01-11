@@ -674,20 +674,24 @@ impl VirtualMachine {
                     for component in components {
                         match component {
                             Value::Component { id, properties } => {
-                                match properties[..] {
-                                    [Value::Float(x), Value::Float(y)] => {
-                                        // println!(
-                                        //     "Creating entity {} with position ({}, {}) and id {}",
-                                        //     entity, x, y, id
-                                        // );
-                                        data.elements.world.insert(
-                                            id as u32,
-                                            entity,
-                                            &position(x, y),
-                                        );
+                                let mut bytes = Vec::new();
+
+                                let layout =
+                                    data.elements.world.get_component_layout(id as u32).unwrap();
+                                layout.fields.iter().enumerate().for_each(|(index, field)| {
+                                    let property = &properties[index];
+                                    match field.type_id {
+                                        0 => match property {
+                                            Value::Float(value) => {
+                                                bytes.extend_from_slice(&value.to_le_bytes());
+                                            }
+                                            _ => panic!("Expected float property"),
+                                        },
+                                        _ => panic!("Unsupported type"),
                                     }
-                                    _ => panic!("Expected two values for position component"),
-                                }
+                                });
+
+                                data.elements.world.insert(id as u32, entity, &bytes);
                             }
                             _ => panic!("Expected component type"),
                         }
