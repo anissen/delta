@@ -166,13 +166,13 @@ impl<'a> Program<'a> {
         let mut data = PersistentData::new();
         data.elements
             .world
-            .register_component(0, ComponentLayout { size: 8, align: 4 }); // TODO(anissen): Temp!
+            .register_component(0, ComponentLayout { size: 8 }); // TODO(anissen): Temp!
         data.elements
             .world
-            .register_component(1, ComponentLayout { size: 8, align: 4 }); // TODO(anissen): Temp!
+            .register_component(1, ComponentLayout { size: 8 }); // TODO(anissen): Temp!
         data.elements
             .world
-            .register_component(2, ComponentLayout { size: 8, align: 4 }); // TODO(anissen): Temp!
+            .register_component(2, ComponentLayout { size: 8 }); // TODO(anissen): Temp!
 
         Self {
             context,

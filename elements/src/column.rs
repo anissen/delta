@@ -19,10 +19,11 @@ impl Column {
         layout: ComponentLayout,
         initial_capacity: usize,
     ) -> Self {
+        let size = layout.size.max(1);
         Self {
             id: component_id,
             layout,
-            dense: vec![0; initial_capacity * layout.size.max(1)], // allow zero-size components
+            dense: vec![0; initial_capacity * size], // allow zero-size components
             entities: Vec::with_capacity(initial_capacity),
             sparse: vec![usize::MAX; initial_capacity],
             bitset: BitSet::new(initial_capacity),

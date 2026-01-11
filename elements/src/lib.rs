@@ -6,10 +6,9 @@ pub type Entity = u32;
 pub type ComponentId = u32;
 pub type ComponentTypeId = u32;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Debug)]
 pub struct ComponentLayout {
     pub size: usize,
-    pub align: usize,
 }
 
 pub struct EntityManager {
