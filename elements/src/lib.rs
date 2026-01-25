@@ -10,7 +10,7 @@ pub type ComponentTypeId = u32;
 pub struct FieldLayout {
     pub name: String, // For debugging purposes
     pub type_id: u8,
-    pub size: u16,
+    pub size: u16, // Needed when we already have type_id?
 }
 
 #[derive(Debug)]

@@ -1,4 +1,8 @@
-use crate::{ComponentId, ComponentLayout, ComponentTypeId, Entity, column::Column};
+use crate::{
+    ComponentId, ComponentLayout, ComponentTypeId, Entity,
+    bitset::{BitSet, BitSetIter, ClonedBitSetIter},
+    column::Column,
+};
 
 pub struct QueryResultIter {
     iter: std::vec::IntoIter<(u32, Vec<Vec<u8>>)>,
@@ -51,6 +55,46 @@ impl<'a> Iterator for QueryResultMutIter<'a> {
         self.iter.next()
     }
 }
+
+// --------------------
+
+// pub struct QueryResultEntry {
+//     entity: Entity,
+//     // column_ids: &Vec<ComponentId>,
+//     // columns: &'a Vec<&'a mut Column>,
+// }
+
+pub struct QueryResult<'a> {
+    entities: std::vec::IntoIter<Entity>,
+    // column_ids: Vec<ComponentId>,
+    pub columns: Vec<&'a mut Column>,
+}
+
+impl<'a> QueryResult<'a> {
+    pub fn new(entities: Vec<Entity>, columns: Vec<&'a mut Column>) -> Self {
+        Self {
+            entities: entities.into_iter(),
+            columns,
+        }
+    }
+
+    // pub fn empty() -> Self {
+    //     Self {
+    //         entities: Vec::new().into_iter(),
+    //         columns: Vec::new(),
+    //     }
+    // }
+}
+
+impl<'a> Iterator for QueryResult<'a> {
+    type Item = Entity;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.entities.next()
+    }
+}
+
+// --------------------
 
 #[derive(Debug)]
 pub struct World {
@@ -301,6 +345,78 @@ impl World {
             Some(QueryResultIter::new(result))
         } else {
             None
+        }
+    }
+
+    pub fn query2(
+        &self,
+        include: &Vec<ComponentId>,
+        exclude: &Vec<ComponentId>,
+    ) -> ClonedBitSetIter {
+        // if include.is_empty() {
+        //     return None;
+        // }
+
+        // if let Some(first) = include_columns.first() {
+        // }
+        let mut matching_entities = BitSet::new_filled(64);
+
+        self.components
+            .iter()
+            .filter(|c| include.contains(&c.id))
+            .for_each(|col| matching_entities.intersect_with(&col.bitset));
+
+        self.components
+            .iter()
+            .filter(|c| exclude.contains(&c.id))
+            .for_each(|col| matching_entities.disjoint_with(&col.bitset));
+
+        matching_entities.cloned_iter_ids()
+    }
+
+    pub fn query3<'a>(
+        &'a mut self,
+        include: &Vec<ComponentId>,
+        exclude: &Vec<ComponentId>,
+    ) -> QueryResult<'a> {
+        let exclude_columns = self
+            .components
+            .iter()
+            .filter(|c| exclude.contains(&c.id))
+            .collect::<Vec<_>>();
+
+        let exclude_bitmap = if let Some((first, rest)) = exclude_columns.split_first() {
+            let mut bitset = first.bitset.clone();
+            for col in rest {
+                bitset.intersect_with(&col.bitset);
+            }
+            bitset
+        } else {
+            BitSet::new_empty(0)
+        };
+
+        let include_columns = self
+            .components
+            .iter_mut()
+            .filter(|c| include.contains(&c.id))
+            .collect::<Vec<_>>();
+
+        let matching_entities = if let Some((first, rest)) = include_columns.split_first() {
+            let mut bitset = first.bitset.clone();
+            for col in rest {
+                bitset.intersect_with(&col.bitset);
+            }
+            bitset.disjoint_with(&exclude_bitmap);
+
+            bitset.iter_ids().collect::<Vec<_>>()
+        } else {
+            Vec::new()
+        };
+
+        if !matching_entities.is_empty() {
+            QueryResult::new(matching_entities, include_columns)
+        } else {
+            QueryResult::new(Vec::new(), Vec::new())
         }
     }
 }

@@ -26,7 +26,7 @@ impl Column {
             dense: vec![0; initial_capacity * size], // allow zero-size components
             entities: Vec::with_capacity(initial_capacity),
             sparse: vec![usize::MAX; initial_capacity],
-            bitset: BitSet::new(initial_capacity),
+            bitset: BitSet::new_empty(initial_capacity),
         }
     }
 

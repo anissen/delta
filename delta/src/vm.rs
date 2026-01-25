@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fmt::Display;
 
 use crate::ExecutionMetadata;
@@ -5,6 +6,8 @@ use crate::bytecodes::ByteCode;
 use crate::program::Context;
 use crate::program::PersistentData;
 
+use elements::ComponentId;
+use elements::ComponentLayout;
 use elements::world::QueryResultIter;
 
 // TODO(anissen): See https://github.com/brightly-salty/rox/blob/master/src/value.rs
@@ -182,6 +185,7 @@ impl VirtualMachine {
 
         // Store query results as owned data (entity + owned component bytes) to avoid holding borrow on world
         let mut query_results = QueryResultIter::empty(); // TODO(anissen): Should probably be a stack to allow nested results
+        let mut query_entities = None;
 
         while self.program_counter < self.program.len() {
             let next = self.read_byte();
@@ -492,14 +496,14 @@ impl VirtualMachine {
                 ByteCode::GetContextValue => {
                     let name = self.read_string();
 
-                    let value = get_context_value(data, name);
+                    let value = get_context_value(&data.world_context, name);
                     self.push_value(value);
                 }
 
                 ByteCode::SetContextValue => {
                     let name = self.read_string();
 
-                    set_context_value(data, name, self.peek_top().clone());
+                    set_context_value(&mut data.world_context, name, self.peek_top().clone());
                     // TODO(anissen): Is peek top correct here?
                 }
 
@@ -627,12 +631,22 @@ impl VirtualMachine {
 
                     // TODO(anissen): Alternatively, create a structure to encapsulate a query-execution-state, allowing component scope to be expressed for the borrow checker
                     let end_pc = get_jump_offset(pc, jump_offset);
-                    if let Some(result) = data
+
+                    // Drop any previous query_entities to release the mutable borrow
+                    query_entities = None;
+
+                    // Get the mutable query iterator
+                    let query_iter = data
                         .elements
                         .world
-                        .query(&include_component_ids, &exclude_component_ids)
-                    {
-                        query_results = result;
+                        .query3(&include_component_ids, &exclude_component_ids);
+
+                    // Check if there are any results by checking if columns are empty
+                    // If there are columns, there should be results
+                    let has_results = !query_iter.columns.is_empty();
+
+                    if has_results {
+                        query_entities = Some(query_iter);
                         self.push_query_frame(end_pc);
                     } else {
                         self.jump(end_pc);
@@ -640,34 +654,80 @@ impl VirtualMachine {
                 }
 
                 ByteCode::SetNextComponentColumnOrJump => {
-                    if let Some((_entity, column)) = query_results.next() {
+                    // Needed: Matching entities, include column ids, column layouts
+                    dbg!(&query_entities.is_some());
+                    if let Some(ref mut result) = query_entities
+                        && let Some(entity) = result.next()
+                    {
                         let stack_start = self.current_call_frame().stack_index;
                         let is_first_query_result = self.stack.len() as u8 == stack_start;
-                        column.iter().enumerate().for_each(|(index, component)| {
-                            // Get next query result from owned data
-                            let pos_x = read_f32(&component[0..4]);
-                            let pos_y = read_f32(&component[4..8]);
-                            // println!("Position: ({}, {})", pos_x, pos_y);
-                            let id = 0; // TODO(anissen): Implement
-                            let component = vec![Value::Float(pos_x), Value::Float(pos_y)];
-                            if is_first_query_result {
-                                // Push components on the stack
-                                self.push_component(id, component);
-                            } else {
-                                // Replace components on the stack
-                                self.stack[stack_start as usize + index] = Value::Component {
-                                    id,
-                                    properties: component,
-                                };
-                            }
+                        let component_id = 0; // TODO(anissen): Implement
+                        let components = result.columns.iter().map(|column| {
+                            let data = column.get(entity).unwrap();
+                            let values = get_value_from_bytes(data, &column.layout);
+                            let component = Value::Component {
+                                id: component_id,
+                                properties: values,
+                            };
+                            component
                         });
-                    } else {
-                        // No more results
+
+                        if is_first_query_result {
+                            println!("First query result");
+                            // Push components on the stack
+                            components.for_each(|component| {
+                                dbg!(&component);
+                                self.push_value(component)
+                            });
+                        } else {
+                            println!("Replacing components on the stack");
+                            // Replace components on the stack
+                            components.enumerate().for_each(|(index, component)| {
+                                dbg!(&component);
+                                self.stack[stack_start as usize + index] = component;
+                            });
+                        }
+                    } else if query_entities.is_some() {
+                        println!("No query result/entity");
+                        // No query is active
+                        query_entities = None;
                         self.pop_query_frame();
                     }
+
+                    // if let Some((_entity, column)) = query_results.next() {
+                    //     let stack_start = self.current_call_frame().stack_index;
+                    //     let is_first_query_result = self.stack.len() as u8 == stack_start;
+                    //     column.iter().enumerate().for_each(|(index, component)| {
+                    //         // let layout =
+                    //         //     data.elements.world.get_component_layout(id as u32).unwrap();
+
+                    //         // Get next query result from owned data
+                    //         let pos_x = read_f32(&component[0..4]);
+                    //         let pos_y = read_f32(&component[4..8]);
+                    //         // println!("Position: ({}, {})", pos_x, pos_y);
+                    //         let id = 0; // TODO(anissen): Implement
+                    //         let component = vec![Value::Float(pos_x), Value::Float(pos_y)];
+                    //         if is_first_query_result {
+                    //             // Push components on the stack
+                    //             self.push_component(id, component);
+                    //         } else {
+                    //             // Replace components on the stack
+                    //             self.stack[stack_start as usize + index] = Value::Component {
+                    //                 id,
+                    //                 properties: component,
+                    //             };
+                    //         }
+                    //     });
+                    // } else {
+                    //     // No more results
+                    //     self.pop_query_frame();
+                    // }
                 }
 
                 ByteCode::Create => {
+                    // Drop the query_entities borrow before we access world mutably
+                    query_entities = None;
+
                     let entity = data.elements.entity_manager.create();
 
                     let components = self.pop_list();
@@ -940,12 +1000,12 @@ fn get_jump_offset(pc: usize, offset: i16) -> usize {
     pc.strict_add_signed(offset as isize)
 }
 
-fn get_context_value(data: &mut PersistentData, name: String) -> Value {
-    data.world_context.get(&name).unwrap().clone()
+fn get_context_value(world_context: &HashMap<String, Value>, name: String) -> Value {
+    world_context.get(&name).unwrap().clone()
 }
 
-fn set_context_value(data: &mut PersistentData, name: String, value: Value) {
-    data.world_context.insert(name, value);
+fn set_context_value(world_context: &mut HashMap<String, Value>, name: String, value: Value) {
+    world_context.insert(name, value);
 }
 
 fn read_f32(b: &[u8]) -> f32 {
@@ -962,4 +1022,23 @@ fn position(x: f32, y: f32) -> Vec<u8> {
 
 fn velocity(dx: f32, dy: f32) -> Vec<u8> {
     [f32_bytes(dx), f32_bytes(dy)].concat()
+}
+
+fn get_value_from_bytes(data: &[u8], layout: &ComponentLayout) -> Vec<Value> {
+    let mut offset = 0;
+    layout
+        .fields
+        .iter()
+        .map(|field| {
+            let size = field.size as usize;
+            let bytes = &data[offset..offset + size];
+            offset += size;
+            match field.type_id {
+                // 0 => Value::Integer(read_i32(bytes)),
+                0 => Value::Float(read_f32(bytes)),
+                // 2 => Value::String(read_string(bytes)),
+                _ => panic!("unknown type id"),
+            }
+        })
+        .collect()
 }
