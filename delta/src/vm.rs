@@ -6,7 +6,6 @@ use crate::bytecodes::ByteCode;
 use crate::program::Context;
 use crate::program::PersistentData;
 
-use elements::ComponentId;
 use elements::ComponentLayout;
 use elements::world::QueryResultIter;
 
@@ -665,11 +664,11 @@ impl VirtualMachine {
                         let components = result.columns.iter().map(|column| {
                             let data = column.get(entity).unwrap();
                             let values = get_value_from_bytes(data, &column.layout);
-                            let component = Value::Component {
+                            
+                            Value::Component {
                                 id: component_id,
                                 properties: values,
-                            };
-                            component
+                            }
                         });
 
                         if is_first_query_result {
@@ -781,7 +780,7 @@ impl VirtualMachine {
 
     fn push_query_frame(&mut self, return_program_counter: usize) {
         self.call_stack.push(CallFrame {
-            return_program_counter: return_program_counter,
+            return_program_counter,
             stack_index: self.stack.len() as u8,
         });
     }

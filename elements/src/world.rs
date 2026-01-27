@@ -1,6 +1,6 @@
 use crate::{
     ComponentId, ComponentLayout, ComponentTypeId, Entity,
-    bitset::{BitSet, BitSetIter, ClonedBitSetIter},
+    bitset::{BitSet, ClonedBitSetIter},
     column::Column,
 };
 
@@ -339,7 +339,7 @@ impl World {
                         .iter()
                         .map(|row| row.get(entity).unwrap().to_vec())
                         .collect();
-                    (entity.clone(), row)
+                    (entity, row)
                 })
                 .collect();
             Some(QueryResultIter::new(result))

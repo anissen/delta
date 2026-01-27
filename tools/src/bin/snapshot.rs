@@ -71,11 +71,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         match result.status {
             ProcessStatus::Processed => {
                 files_processed += 1;
-                if let Some(diff) = result.instructions_diff {
-                    if diff.previous != diff.current {
+                if let Some(diff) = result.instructions_diff
+                    && diff.previous != diff.current {
                         instruction_changes.push((result.path, diff));
                     }
-                }
             }
             ProcessStatus::Ignored(reason) => {
                 ignored_files.push((result.path, reason));
