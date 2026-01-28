@@ -10,7 +10,7 @@ use crate::expressions::Expr;
 use crate::expressions::IsArm;
 use crate::expressions::IsArmPattern;
 use crate::expressions::IsGuard;
-use crate::expressions::NamedType;
+use crate::expressions::MaybeNamedType;
 use crate::expressions::PropertyDeclaration;
 use crate::expressions::PropertyDefinition;
 use crate::expressions::StringOperations;
@@ -129,43 +129,32 @@ impl Parser {
 
     fn component(&mut self) -> Result<Option<Expr>, String> {
         let component_name = self.consume(&Identifier)?;
-        // println!("Component: {}", component_name.lexeme);
-        self.consume(&LeftBrace)?;
         let mut properties = Vec::new();
-        while !self.matches(&RightBrace) {
-            if self.is_at_end() {
-                return Err("Unterminated component definition".to_string());
-            }
-            let property_name = self.consume(&Identifier)?;
-            // self.consume(&Colon);
-            if !self.matches_any(&[KeywordF32]) {
-                return Err("Expected property type declaration".to_string());
-            }
-            let property_type = match self.previous().kind {
-                TokenKind::KeywordF32 => unification::Type::Float,
-                _ => return Err("Unknown property type declaration".to_string()),
-            };
-            // println!(
-            //     "Property: {}, Type: {:?}",
-            //     property_name.lexeme, property_type
-            // );
-            let property = PropertyDefinition {
-                name: property_name,
-                type_: property_type,
-            };
-            properties.push(property);
-            let has_comma = self.matches(&Comma);
-            if !has_comma {
-                self.advance();
-                break;
+        if self.matches(&LeftBrace) {
+            while !self.matches(&RightBrace) {
+                if self.is_at_end() {
+                    return Err("Unterminated component definition".to_string());
+                }
+                let property_name = self.consume(&Identifier)?;
+                if !self.matches_any(&[KeywordF32]) {
+                    return Err("Expected property type declaration".to_string());
+                }
+                let property_type = match self.previous().kind {
+                    TokenKind::KeywordF32 => unification::Type::Float,
+                    _ => return Err("Unknown property type declaration".to_string()),
+                };
+                let property = PropertyDefinition {
+                    name: property_name,
+                    type_: property_type,
+                };
+                properties.push(property);
+                let has_comma = self.matches(&Comma);
+                if !has_comma {
+                    self.advance();
+                    break;
+                }
             }
         }
-        // let component = crate::expressions::Component {
-        //     name: component_name,
-        //     properties: properties,
-        // };
-        // self.components.push(component);
-        // Ok(Some(Expr::ComponentDefinition { component }))
         Ok(Some(Expr::ComponentDefinition {
             name: component_name,
             properties,
@@ -173,9 +162,11 @@ impl Parser {
     }
 
     fn create(&mut self) -> Result<Option<Expr>, String> {
+        println!("*** Create");
         let token = self.previous();
         self.consume(&LeftBracket)?; // TODO(anissen): This ought to be part of list() ?
         if let Some(components) = self.list()? {
+            println!("*** found list");
             Ok(Some(Expr::Create {
                 token: token.clone(),
                 arguments: Box::new(components),
@@ -242,6 +233,7 @@ impl Parser {
     }
 
     fn list(&mut self) -> Result<Option<Expr>, String> {
+        println!("*** List");
         let token = self.previous();
         let mut list_elements = Vec::new();
 
@@ -259,6 +251,7 @@ impl Parser {
                 list_elements.push(expr)
             }
         }
+        println!("*** list elements: {:?}", list_elements);
 
         Ok(Some(Expr::Value {
             value: ValueType::List(list_elements),
@@ -293,8 +286,8 @@ impl Parser {
                     exclude_components.push(type_);
                 } else {
                     let type_ = self.consume(&Identifier)?;
-                    let name = self.consume(&Identifier)?;
-                    include_components.push(NamedType { type_, name });
+                    let name = self.optional(&Identifier);
+                    include_components.push(MaybeNamedType { type_, name });
                 }
             }
 
@@ -723,28 +716,31 @@ impl Parser {
             let name = self.previous();
             let is_capitalized = name.lexeme.chars().take(1).any(|c| c.is_uppercase());
             if is_capitalized {
-                // Expecting this to be a struct initialization
-                self.consume(&LeftBrace)?;
                 let mut properties = Vec::new();
-                while !self.matches(&RightBrace) {
-                    let property_name = self.consume(&Identifier)?;
-                    let value = self.expression()?;
 
-                    if self.is_at_end() {
-                        return Err("Unterminated data initialization".to_string());
-                    }
+                // Parse potential struct initialization
+                if self.matches(&LeftBrace) {
+                    while !self.matches(&RightBrace) {
+                        let property_name = self.consume(&Identifier)?;
+                        let value = self.expression()?;
 
-                    let property = PropertyDeclaration {
-                        name: property_name,
-                        value: value.unwrap(),
-                    };
-                    properties.push(property);
+                        if self.is_at_end() {
+                            return Err("Unterminated data initialization".to_string());
+                        }
 
-                    if !self.matches(&Comma) {
-                        self.advance();
-                        break;
+                        let property = PropertyDeclaration {
+                            name: property_name,
+                            value: value.unwrap(),
+                        };
+                        properties.push(property);
+
+                        if !self.matches(&Comma) {
+                            self.advance();
+                            break;
+                        }
                     }
                 }
+
                 // properties.sort_by(|a, b| a.name.lexeme.cmp(&b.name.lexeme));
                 Ok(Some(Expr::Value {
                     value: ValueType::Component {
@@ -854,9 +850,11 @@ impl Parser {
         }
     }
 
-    fn optional(&mut self, kind: &TokenKind) {
+    fn optional(&mut self, kind: &TokenKind) -> Option<Token> {
         if self.check(kind) {
-            self.advance();
+            Some(self.advance())
+        } else {
+            None
         }
     }
 

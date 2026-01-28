@@ -205,6 +205,9 @@ impl<'a> Program<'a> {
                 size: 4,
             }]),
         ); // TODO(anissen): Temp!
+        data.elements
+            .world
+            .register_component(3, ComponentLayout::new(vec![])); // TODO(anissen): Temp!
 
         Self {
             context,

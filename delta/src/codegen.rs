@@ -5,7 +5,7 @@ use crate::diagnostics::Diagnostics;
 use crate::errors::Error;
 use crate::expressions::{
     ArithmeticOperations, BinaryOperator, BooleanOperations, Comparisons, EqualityOperations, Expr,
-    IsArm, IsArmPattern, NamedType, StringOperations, UnaryOperator, ValueType,
+    IsArm, IsArmPattern, MaybeNamedType, StringOperations, UnaryOperator, ValueType,
 };
 use crate::program::Context;
 use crate::tokens::{Position, Token};
@@ -537,7 +537,7 @@ impl<'a> Codegen<'a> {
 
     fn emit_query(
         &mut self,
-        include_components: &Vec<NamedType>,
+        include_components: &Vec<MaybeNamedType>,
         exclude_components: &Vec<Token>,
         expr: &'a Expr,
         scope: &mut Scope,
@@ -562,12 +562,14 @@ impl<'a> Codegen<'a> {
                     .add_byte(component_id)
                     .add_string(&component_type_name);
 
-                let name = component.name.lexeme.clone();
-                scope.environment.insert(name.clone(), index as u8);
-                scope.locals.insert(name);
-                scope
-                    .local_component_mapping
-                    .insert(component.name.lexeme.clone(), component.type_.clone());
+                if let Some(ref name) = component.name {
+                    let lexeme = name.lexeme.clone();
+                    scope.environment.insert(lexeme.clone(), index as u8);
+                    scope.locals.insert(lexeme.clone());
+                    scope
+                        .local_component_mapping
+                        .insert(lexeme.clone(), component.type_.clone());
+                }
             });
 
         exclude_components.iter().for_each(|component| {

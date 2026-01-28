@@ -71,7 +71,7 @@ pub enum Expr {
         arms: Vec<IsArm>,
     },
     Query {
-        include_components: Vec<NamedType>, // TODO(anissen): Should this be Vec<Expr> instead?
+        include_components: Vec<MaybeNamedType>, // TODO(anissen): Should this be Vec<Expr> instead?
         exclude_components: Vec<Token>,
         expr: Box<Expr>,
     },
@@ -91,9 +91,9 @@ pub enum Expr {
 }
 
 #[derive(Debug)]
-pub struct NamedType {
+pub struct MaybeNamedType {
     pub type_: Token,
-    pub name: Token,
+    pub name: Option<Token>,
 }
 
 #[derive(Debug, Clone)]

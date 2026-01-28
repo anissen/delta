@@ -704,10 +704,10 @@ impl<'env> InferenceContext<'env> {
                         });
                     };
 
-                    let v = self.type_placeholder();
-                    self.environment
-                        .variables
-                        .insert(component.name.lexeme.clone(), v);
+                    if let Some(ref name) = component.name {
+                        let v = self.type_placeholder();
+                        self.environment.variables.insert(name.lexeme.clone(), v);
+                    }
                 });
                 self.infer_type(expr)
             }

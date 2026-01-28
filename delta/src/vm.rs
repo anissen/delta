@@ -656,8 +656,8 @@ impl VirtualMachine {
                     {
                         let stack_start = self.current_call_frame().stack_index;
                         let is_first_query_result = self.stack.len() as u8 == stack_start;
-                        let component_id = 0; // TODO(anissen): Implement
                         let components = result.columns.iter().map(|column| {
+                            let component_id = column.id as u8;
                             let data = column.get(entity).unwrap();
                             let values = get_value_from_bytes(data, &column.layout);
 
@@ -693,24 +693,25 @@ impl VirtualMachine {
                     for component in components {
                         match component {
                             Value::Component { id, properties } => {
-                                let mut bytes = Vec::new();
+                                if let Some(layout) =
+                                    data.elements.world.get_component_layout(id as u32)
+                                {
+                                    let mut bytes = Vec::new();
+                                    layout.fields.iter().enumerate().for_each(|(index, field)| {
+                                        let property = &properties[index];
+                                        match field.type_id {
+                                            0 => match property {
+                                                Value::Float(value) => {
+                                                    bytes.extend_from_slice(&value.to_le_bytes());
+                                                }
+                                                _ => panic!("Expected float property"),
+                                            },
+                                            _ => panic!("Unsupported type"),
+                                        }
+                                    });
 
-                                let layout =
-                                    data.elements.world.get_component_layout(id as u32).unwrap();
-                                layout.fields.iter().enumerate().for_each(|(index, field)| {
-                                    let property = &properties[index];
-                                    match field.type_id {
-                                        0 => match property {
-                                            Value::Float(value) => {
-                                                bytes.extend_from_slice(&value.to_le_bytes());
-                                            }
-                                            _ => panic!("Expected float property"),
-                                        },
-                                        _ => panic!("Unsupported type"),
-                                    }
-                                });
-
-                                data.elements.world.insert(id as u32, entity, &bytes);
+                                    data.elements.world.insert(id as u32, entity, &bytes);
+                                }
                             }
                             _ => panic!("Expected component type"),
                         }
