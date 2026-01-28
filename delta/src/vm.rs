@@ -7,7 +7,6 @@ use crate::program::Context;
 use crate::program::PersistentData;
 
 use elements::ComponentLayout;
-use elements::world::QueryResultIter;
 
 // TODO(anissen): See https://github.com/brightly-salty/rox/blob/master/src/value.rs
 #[derive(Debug, Clone, PartialEq)]
@@ -183,7 +182,6 @@ impl VirtualMachine {
         }
 
         // Store query results as owned data (entity + owned component bytes) to avoid holding borrow on world
-        let mut query_results = QueryResultIter::empty(); // TODO(anissen): Should probably be a stack to allow nested results
         let mut query_entities = None;
 
         while self.program_counter < self.program.len() {
@@ -638,7 +636,7 @@ impl VirtualMachine {
                     let query_iter = data
                         .elements
                         .world
-                        .query3(&include_component_ids, &exclude_component_ids);
+                        .query(&include_component_ids, &exclude_component_ids);
 
                     // Check if there are any results by checking if columns are empty
                     // If there are columns, there should be results
@@ -653,8 +651,6 @@ impl VirtualMachine {
                 }
 
                 ByteCode::SetNextComponentColumnOrJump => {
-                    // Needed: Matching entities, include column ids, column layouts
-                    dbg!(&query_entities.is_some());
                     if let Some(ref mut result) = query_entities
                         && let Some(entity) = result.next()
                     {
@@ -664,7 +660,7 @@ impl VirtualMachine {
                         let components = result.columns.iter().map(|column| {
                             let data = column.get(entity).unwrap();
                             let values = get_value_from_bytes(data, &column.layout);
-                            
+
                             Value::Component {
                                 id: component_id,
                                 properties: values,
@@ -672,55 +668,19 @@ impl VirtualMachine {
                         });
 
                         if is_first_query_result {
-                            println!("First query result");
                             // Push components on the stack
-                            components.for_each(|component| {
-                                dbg!(&component);
-                                self.push_value(component)
-                            });
+                            components.for_each(|component| self.push_value(component));
                         } else {
-                            println!("Replacing components on the stack");
                             // Replace components on the stack
                             components.enumerate().for_each(|(index, component)| {
-                                dbg!(&component);
                                 self.stack[stack_start as usize + index] = component;
                             });
                         }
                     } else if query_entities.is_some() {
-                        println!("No query result/entity");
                         // No query is active
                         query_entities = None;
                         self.pop_query_frame();
                     }
-
-                    // if let Some((_entity, column)) = query_results.next() {
-                    //     let stack_start = self.current_call_frame().stack_index;
-                    //     let is_first_query_result = self.stack.len() as u8 == stack_start;
-                    //     column.iter().enumerate().for_each(|(index, component)| {
-                    //         // let layout =
-                    //         //     data.elements.world.get_component_layout(id as u32).unwrap();
-
-                    //         // Get next query result from owned data
-                    //         let pos_x = read_f32(&component[0..4]);
-                    //         let pos_y = read_f32(&component[4..8]);
-                    //         // println!("Position: ({}, {})", pos_x, pos_y);
-                    //         let id = 0; // TODO(anissen): Implement
-                    //         let component = vec![Value::Float(pos_x), Value::Float(pos_y)];
-                    //         if is_first_query_result {
-                    //             // Push components on the stack
-                    //             self.push_component(id, component);
-                    //         } else {
-                    //             // Replace components on the stack
-                    //             self.stack[stack_start as usize + index] = Value::Component {
-                    //                 id,
-                    //                 properties: component,
-                    //             };
-                    //         }
-                    //     });
-                    // } else {
-                    //     // No more results
-                    //     self.pop_query_frame();
-                    // }
                 }
 
                 ByteCode::Create => {
