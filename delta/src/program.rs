@@ -164,51 +164,6 @@ pub struct Program<'a> {
 
 impl<'a> Program<'a> {
     pub fn new(context: Context<'a>, debug: bool) -> Self {
-        let f32_id = 0;
-
-        let mut data = PersistentData::new();
-        data.elements.world.register_component(
-            0,
-            ComponentLayout::new(vec![
-                FieldLayout {
-                    name: "x".to_string(),
-                    type_id: f32_id,
-                    size: 4,
-                },
-                FieldLayout {
-                    name: "y".to_string(),
-                    type_id: f32_id,
-                    size: 4,
-                },
-            ]),
-        ); // TODO(anissen): Temp!
-        data.elements.world.register_component(
-            1,
-            ComponentLayout::new(vec![
-                FieldLayout {
-                    name: "dx".to_string(),
-                    type_id: f32_id,
-                    size: 4,
-                },
-                FieldLayout {
-                    name: "dy".to_string(),
-                    type_id: f32_id,
-                    size: 4,
-                },
-            ]),
-        ); // TODO(anissen): Temp!
-        data.elements.world.register_component(
-            2,
-            ComponentLayout::new(vec![FieldLayout {
-                name: "xxx".to_string(),
-                type_id: f32_id,
-                size: 4,
-            }]),
-        ); // TODO(anissen): Temp!
-        data.elements
-            .world
-            .register_component(3, ComponentLayout::new(vec![])); // TODO(anissen): Temp!
-
         Self {
             context,
             source: "".to_string(),
@@ -216,7 +171,7 @@ impl<'a> Program<'a> {
             metadata: ProgramMetadata::default(),
             vm: None, //vm::VirtualMachine::new(Vec::new(), debug),
             is_valid: false,
-            data,
+            data: PersistentData::new(),
         }
     }
 

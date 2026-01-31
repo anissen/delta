@@ -7,6 +7,7 @@ use crate::program::Context;
 use crate::program::PersistentData;
 
 use elements::ComponentLayout;
+use elements::FieldLayout;
 
 // TODO(anissen): See https://github.com/brightly-salty/rox/blob/master/src/value.rs
 #[derive(Debug, Clone, PartialEq)]
@@ -115,10 +116,82 @@ impl VirtualMachine {
         // self.read_header();
     }
 
-    fn read_header(&mut self) {
+    fn read_header(&mut self, data: &mut PersistentData) {
         // TODO(anissen): Read header here
 
+        self.read_component_data(data);
         self.read_functions();
+    }
+
+    fn read_component_data(&mut self, data: &mut PersistentData) {
+        // TODO(anissen): Check that the new components matches the old
+
+        let component_count = self.read_byte();
+        for _ in 0..component_count {
+            let id = self.read_byte();
+            let field_count = self.read_byte();
+            let mut fields = Vec::with_capacity(field_count as usize);
+            for _ in 0..field_count {
+                let name = self.read_string();
+                let type_id = self.read_byte();
+                let size = self.read_u16();
+                fields.push(FieldLayout {
+                    name,
+                    type_id,
+                    size,
+                });
+            }
+
+            println!("Registering component {}", id);
+            println!("Fields: {:?}", fields);
+
+            data.elements
+                .world
+                .register_component(id as u32, ComponentLayout::new(fields));
+        }
+
+        // let f32_id = 0;
+        // data.elements.world.register_component(
+        //     0,
+        //     ComponentLayout::new(vec![
+        //         FieldLayout {
+        //             name: "x".to_string(),
+        //             type_id: f32_id,
+        //             size: 4,
+        //         },
+        //         FieldLayout {
+        //             name: "y".to_string(),
+        //             type_id: f32_id,
+        //             size: 4,
+        //         },
+        //     ]),
+        // ); // TODO(anissen): Temp!
+        // data.elements.world.register_component(
+        //     1,
+        //     ComponentLayout::new(vec![
+        //         FieldLayout {
+        //             name: "dx".to_string(),
+        //             type_id: f32_id,
+        //             size: 4,
+        //         },
+        //         FieldLayout {
+        //             name: "dy".to_string(),
+        //             type_id: f32_id,
+        //             size: 4,
+        //         },
+        //     ]),
+        // ); // TODO(anissen): Temp!
+        // data.elements.world.register_component(
+        //     2,
+        //     ComponentLayout::new(vec![FieldLayout {
+        //         name: "xxx".to_string(),
+        //         type_id: f32_id,
+        //         size: 4,
+        //     }]),
+        // ); // TODO(anissen): Temp!
+        // data.elements
+        //     .world
+        //     .register_component(3, ComponentLayout::new(vec![])); // TODO(anissen): Temp!
     }
 
     fn get_next_bytecode(&mut self) -> Result<ByteCode, ()> {
@@ -150,7 +223,7 @@ impl VirtualMachine {
     ) -> Option<Value> {
         self.program_counter = 0;
 
-        self.read_header();
+        self.read_header(data);
 
         if self.program_counter >= self.program.len() {
             return None;
@@ -702,7 +775,7 @@ impl VirtualMachine {
                                         match field.type_id {
                                             0 => match property {
                                                 Value::Float(value) => {
-                                                    bytes.extend_from_slice(&value.to_le_bytes());
+                                                    bytes.extend_from_slice(&value.to_be_bytes());
                                                 }
                                                 _ => panic!("Expected float property"),
                                             },
@@ -713,7 +786,10 @@ impl VirtualMachine {
                                     data.elements.world.insert(id as u32, entity, &bytes);
                                 }
                             }
-                            _ => panic!("Expected component type"),
+                            _ => {
+                                println!("Expected component type, found {:?}", component);
+                                panic!("Expected component type")
+                            }
                         }
                     }
 
@@ -802,6 +878,11 @@ impl VirtualMachine {
     fn read_i16(&mut self) -> i16 {
         let raw = self.read_2bytes();
         i16::from_be_bytes(raw)
+    }
+
+    fn read_u16(&mut self) -> u16 {
+        let raw = self.read_2bytes();
+        u16::from_be_bytes(raw)
     }
 
     fn read_i32(&mut self) -> i32 {
@@ -969,11 +1050,11 @@ fn set_context_value(world_context: &mut HashMap<String, Value>, name: String, v
 }
 
 fn read_f32(b: &[u8]) -> f32 {
-    f32::from_le_bytes(b.try_into().unwrap())
+    f32::from_be_bytes(b.try_into().unwrap())
 }
 
 fn f32_bytes(x: f32) -> [u8; 4] {
-    x.to_le_bytes()
+    x.to_be_bytes()
 }
 
 fn position(x: f32, y: f32) -> Vec<u8> {

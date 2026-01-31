@@ -721,9 +721,23 @@ impl<'a> Codegen<'a> {
     }
 
     fn create_bytecode(&mut self, scope: &mut Scope) -> Vec<u8> {
+        let mut component_definitions_builder = BytecodeBuilder::new();
+
+        component_definitions_builder.add_byte(self.components.len() as u8);
+        for (_, component) in &self.components {
+            component_definitions_builder.add_byte(component.id);
+            component_definitions_builder.add_byte(component.properties.len() as u8);
+            for property in component.properties {
+                component_definitions_builder.add_string(&property.name.lexeme);
+                let type_id: u8 = 0; // TODO(anissen): Implement type id mapping
+                component_definitions_builder.add_byte(type_id);
+                let size: u16 = 4; // TODO(anissen): Implement size mapping
+                component_definitions_builder.add_u16(&size);
+            }
+        }
+
         let mut signature_builder = BytecodeBuilder::new();
         let mut signature_patches = Vec::new();
-
         // println!("Function chunks:");
         for ele in self.function_chunks.iter() {
             // println!("{:?}", ele);
@@ -744,6 +758,7 @@ impl<'a> Codegen<'a> {
         }
 
         let mut bytecode = vec![];
+        bytecode.append(&mut component_definitions_builder.bytes);
         bytecode.append(&mut signature_builder.bytes);
         bytecode.append(&mut scope.bytecode.bytes);
         for ele in self.function_chunks.iter() {
@@ -779,6 +794,10 @@ impl BytecodeBuilder {
     }
 
     fn add_i16(&mut self, value: &i16) -> &mut Self {
+        self.add_bytes(&value.to_be_bytes())
+    }
+
+    fn add_u16(&mut self, value: &u16) -> &mut Self {
         self.add_bytes(&value.to_be_bytes())
     }
 

@@ -57,6 +57,15 @@ impl Disassembler {
         byte
     }
 
+    fn read_u16(&mut self) -> u16 {
+        let bytes = [
+            self.program[self.program_counter],
+            self.program[self.program_counter + 1],
+        ];
+        self.program_counter += 2;
+        u16::from_be_bytes(bytes)
+    }
+
     fn read_string(&mut self) -> String {
         let string_length = self.read_byte();
         self.read_string_bytes(string_length)
@@ -76,8 +85,31 @@ impl Disassembler {
         formatted
     }
 
+    fn read_components(&mut self) -> String {
+        let mut result = String::new();
+        let component_count = self.read_byte();
+        result.push_str(&self.print(vec![format!("Component Count: {}", component_count)]));
+        for _ in 0..component_count {
+            let component_id = self.read_byte();
+            let property_count = self.read_byte();
+            result.push_str(&self.print(vec![format!("Component ID: {}", component_id)]));
+            for _ in 0..property_count {
+                let property_name = self.read_string();
+                let property_type_id = self.read_byte();
+                let property_size = self.read_u16();
+                result.push_str(&self.print(vec![format!(
+                    "{} {} {}",
+                    property_name, property_type_id, property_size
+                )]));
+            }
+        }
+        self.print(vec![result])
+    }
+
     pub fn disassemble(&mut self, metadata: &mut CompilationMetadata) {
         let mut result = String::new();
+
+        result.push_str(&self.read_components());
 
         while self.program_counter < self.program.len() {
             let instruction = ByteCode::try_from(self.program[self.program_counter]).unwrap();

@@ -3,10 +3,10 @@ use elements::{
 };
 
 fn f32_bytes(x: f32) -> [u8; 4] {
-    x.to_le_bytes()
+    x.to_be_bytes()
 }
 fn read_f32(b: &[u8]) -> f32 {
-    f32::from_le_bytes(b.try_into().unwrap())
+    f32::from_be_bytes(b.try_into().unwrap())
 }
 
 fn position(x: f32, y: f32) -> Vec<u8> {
