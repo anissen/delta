@@ -721,7 +721,7 @@ impl<'a> Codegen<'a> {
     }
 
     fn create_bytecode(&mut self, scope: &mut Scope) -> Vec<u8> {
-        let mut component_definitions_builder = BytecodeBuilder::new();
+        let mut header_builder = BytecodeBuilder::new();
 
         let mut sorted_map = self
             .components
@@ -730,25 +730,24 @@ impl<'a> Codegen<'a> {
             .collect::<Vec<_>>();
         sorted_map.sort_by(|a, b| a.id.cmp(&b.id));
 
-        component_definitions_builder.add_byte(self.components.len() as u8);
+        header_builder.add_byte(self.components.len() as u8);
         for component_metadata in &sorted_map {
-            component_definitions_builder.add_byte(component_metadata.id);
-            component_definitions_builder.add_byte(component_metadata.properties.len() as u8);
+            header_builder.add_byte(component_metadata.id);
+            header_builder.add_byte(component_metadata.properties.len() as u8);
             for property in component_metadata.properties.iter() {
-                component_definitions_builder.add_string(&property.name.lexeme);
+                header_builder.add_string(&property.name.lexeme);
                 let type_id: u8 = 0; // TODO(anissen): Implement type id mapping
-                component_definitions_builder.add_byte(type_id);
+                header_builder.add_byte(type_id);
                 let size: u16 = 4; // TODO(anissen): Implement size mapping
-                component_definitions_builder.add_u16(&size);
+                header_builder.add_u16(&size);
             }
         }
 
-        let mut signature_builder = BytecodeBuilder::new();
         let mut signature_patches = Vec::new();
         // println!("Function chunks:");
         for ele in self.function_chunks.iter() {
             // println!("{:?}", ele);
-            let signature_offset = signature_builder
+            let signature_offset = header_builder
                 .add_op(ByteCode::FunctionSignature)
                 .add_string(&ele.function_name)
                 .add_byte(ele.local_count)
@@ -757,16 +756,15 @@ impl<'a> Codegen<'a> {
         }
 
         {
-            let mut length = signature_builder.bytes.len() + scope.bytecode.bytes.len();
+            let mut length = header_builder.bytes.len() + scope.bytecode.bytes.len();
             for (index, ele) in self.function_chunks.iter().enumerate() {
-                signature_builder.patch_i16_offset(signature_patches[index], length as isize);
+                header_builder.patch_i16_offset(signature_patches[index], length as isize);
                 length += ele.bytes.len();
             }
         }
 
         let mut bytecode = vec![];
-        bytecode.append(&mut component_definitions_builder.bytes);
-        bytecode.append(&mut signature_builder.bytes);
+        bytecode.append(&mut header_builder.bytes);
         bytecode.append(&mut scope.bytecode.bytes);
         for ele in self.function_chunks.iter() {
             bytecode.append(&mut ele.bytes.clone());
