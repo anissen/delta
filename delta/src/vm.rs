@@ -75,6 +75,7 @@ struct CallFrame {
 pub struct VirtualMachine {
     program: Vec<u8>,
     program_counter: usize,
+    main_chunk_program_counter: usize,
     functions: Vec<FunctionObj>,
     stack: Vec<Value>,
     call_stack: Vec<CallFrame>,
@@ -89,38 +90,42 @@ pub fn run<'a>(
     data: &mut PersistentData,
     verbose: bool,
 ) -> Option<Value> {
-    VirtualMachine::new(bytes, verbose).execute(function_name, context, data)
+    VirtualMachine::new(bytes, data, verbose).execute(function_name, context, data)
 }
 
 static EMPTY_VALUE: Value = Value::False; // Only used when a function returns no result
 
 impl VirtualMachine {
-    pub fn new(bytes: Vec<u8>, verbose: bool) -> Self {
-        Self {
+    pub fn new(bytes: Vec<u8>, data: &mut PersistentData, verbose: bool) -> Self {
+        let mut vm = Self {
             program: bytes,
             program_counter: 0,
             functions: Vec::new(),
             stack: Vec::new(),
             call_stack: Vec::new(),
             verbose,
+            main_chunk_program_counter: 0,
             metadata: ExecutionMetadata::default(),
-        }
+        };
+        vm.read_header(data);
+        vm
     }
 
-    pub fn update_bytecode(&mut self, bytes: Vec<u8>) {
+    pub fn update_bytecode(&mut self, bytes: Vec<u8>, data: &mut PersistentData) {
         self.program = bytes;
-        self.program_counter = 0;
         self.functions.clear();
         self.stack.clear();
         self.call_stack.clear();
-        // self.read_header();
+        self.read_header(data);
     }
 
     fn read_header(&mut self, data: &mut PersistentData) {
-        // TODO(anissen): Read header here
+        // TODO(anissen): Read bytecode header here
 
         self.read_component_data(data);
         self.read_functions();
+
+        self.main_chunk_program_counter = self.program_counter;
     }
 
     fn read_component_data(&mut self, data: &mut PersistentData) {
@@ -175,9 +180,7 @@ impl VirtualMachine {
         context: &Context,
         data: &mut PersistentData,
     ) -> Option<Value> {
-        self.program_counter = 0;
-
-        self.read_header(data); // TODO(anissen): Don't read this on execute!
+        self.program_counter = self.main_chunk_program_counter;
 
         if self.program_counter >= self.program.len() {
             return None;

@@ -270,9 +270,9 @@ impl<'a> Program<'a> {
                 };
 
                 if let Some(vm) = &mut self.vm {
-                    vm.update_bytecode(bytecodes.clone());
+                    vm.update_bytecode(bytecodes.clone(), &mut self.data);
                 } else {
-                    let vm = vm::VirtualMachine::new(bytecodes.clone(), self.debug);
+                    let vm = vm::VirtualMachine::new(bytecodes.clone(), &mut self.data, self.debug);
                     self.vm = Some(vm);
                 }
 
