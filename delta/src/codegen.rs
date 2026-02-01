@@ -723,11 +723,18 @@ impl<'a> Codegen<'a> {
     fn create_bytecode(&mut self, scope: &mut Scope) -> Vec<u8> {
         let mut component_definitions_builder = BytecodeBuilder::new();
 
+        let mut sorted_map = self
+            .components
+            .iter()
+            .map(|(_, component)| component)
+            .collect::<Vec<_>>();
+        sorted_map.sort_by(|a, b| a.id.cmp(&b.id));
+
         component_definitions_builder.add_byte(self.components.len() as u8);
-        for (_, component) in &self.components {
-            component_definitions_builder.add_byte(component.id);
-            component_definitions_builder.add_byte(component.properties.len() as u8);
-            for property in component.properties {
+        for component_metadata in &sorted_map {
+            component_definitions_builder.add_byte(component_metadata.id);
+            component_definitions_builder.add_byte(component_metadata.properties.len() as u8);
+            for property in component_metadata.properties.iter() {
                 component_definitions_builder.add_string(&property.name.lexeme);
                 let type_id: u8 = 0; // TODO(anissen): Implement type id mapping
                 component_definitions_builder.add_byte(type_id);

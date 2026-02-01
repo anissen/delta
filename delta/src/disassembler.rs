@@ -103,7 +103,7 @@ impl Disassembler {
                 )]));
             }
         }
-        self.print(vec![result])
+        result
     }
 
     pub fn disassemble(&mut self, metadata: &mut CompilationMetadata) {
