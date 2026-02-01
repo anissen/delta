@@ -162,11 +162,9 @@ impl Parser {
     }
 
     fn create(&mut self) -> Result<Option<Expr>, String> {
-        println!("*** Create");
         let token = self.previous();
         self.consume(&LeftBracket)?; // TODO(anissen): This ought to be part of list() ?
         if let Some(components) = self.list()? {
-            println!("*** found list");
             Ok(Some(Expr::Create {
                 token: token.clone(),
                 arguments: Box::new(components),
@@ -233,7 +231,6 @@ impl Parser {
     }
 
     fn list(&mut self) -> Result<Option<Expr>, String> {
-        println!("*** List");
         let token = self.previous();
         let mut list_elements = Vec::new();
 
@@ -251,7 +248,6 @@ impl Parser {
                 list_elements.push(expr)
             }
         }
-        println!("*** list elements: {:?}", list_elements);
 
         Ok(Some(Expr::Value {
             value: ValueType::List(list_elements),
