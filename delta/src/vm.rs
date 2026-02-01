@@ -142,56 +142,10 @@ impl VirtualMachine {
                 });
             }
 
-            println!("Registering component {}", id);
-            println!("Fields: {:?}", fields);
-
             data.elements
                 .world
                 .register_component(id as u32, ComponentLayout::new(fields));
         }
-
-        // let f32_id = 0;
-        // data.elements.world.register_component(
-        //     0,
-        //     ComponentLayout::new(vec![
-        //         FieldLayout {
-        //             name: "x".to_string(),
-        //             type_id: f32_id,
-        //             size: 4,
-        //         },
-        //         FieldLayout {
-        //             name: "y".to_string(),
-        //             type_id: f32_id,
-        //             size: 4,
-        //         },
-        //     ]),
-        // ); // TODO(anissen): Temp!
-        // data.elements.world.register_component(
-        //     1,
-        //     ComponentLayout::new(vec![
-        //         FieldLayout {
-        //             name: "dx".to_string(),
-        //             type_id: f32_id,
-        //             size: 4,
-        //         },
-        //         FieldLayout {
-        //             name: "dy".to_string(),
-        //             type_id: f32_id,
-        //             size: 4,
-        //         },
-        //     ]),
-        // ); // TODO(anissen): Temp!
-        // data.elements.world.register_component(
-        //     2,
-        //     ComponentLayout::new(vec![FieldLayout {
-        //         name: "xxx".to_string(),
-        //         type_id: f32_id,
-        //         size: 4,
-        //     }]),
-        // ); // TODO(anissen): Temp!
-        // data.elements
-        //     .world
-        //     .register_component(3, ComponentLayout::new(vec![])); // TODO(anissen): Temp!
     }
 
     fn get_next_bytecode(&mut self) -> Result<ByteCode, ()> {
@@ -223,7 +177,7 @@ impl VirtualMachine {
     ) -> Option<Value> {
         self.program_counter = 0;
 
-        self.read_header(data);
+        self.read_header(data); // TODO(anissen): Don't read this on execute!
 
         if self.program_counter >= self.program.len() {
             return None;
