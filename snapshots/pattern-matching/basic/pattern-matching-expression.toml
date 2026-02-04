@@ -11,29 +11,30 @@ result = "yes"
 type = "string"
 
 [output.compiler]
-bytecode = "[38, 4, 109, 97, 105, 110, 29, 0, 0, 0, 3, 21, 0, 20, 0, 29, 0, 0, 0, 1, 29, 0, 0, 0, 1, 0, 29, 0, 0, 0, 1, 0, 17, 46, 0, 8, 30, 3, 121, 101, 115, 44, 0, 4, 30, 2, 110, 111, 40]"
-bytecode_length = 49
+bytecode = "[0, 38, 4, 109, 97, 105, 110, 29, 0, 0, 0, 3, 21, 0, 20, 0, 29, 0, 0, 0, 1, 29, 0, 0, 0, 1, 0, 29, 0, 0, 0, 1, 0, 17, 46, 0, 8, 30, 3, 121, 101, 115, 44, 0, 4, 30, 2, 110, 111, 40]"
+bytecode_length = 50
 disassembled = """
+0 \tComponent Count: 0
 
-0 \t=== function chunk: main ===
-6 \tpush_integer (value: 3)
-11 \tset_value (index: 0)
-13 \tget_value (index: 0)
-15 \tpush_integer (value: 1)
-20 \tpush_integer (value: 1)
-25 \tint_add
-26 \tpush_integer (value: 1)
-31 \tint_add
-32 \teq
-33 \tjump if false (offset: 8, to byte 44)
-36 \tpush_string (value: 'yes')
-41 \tjump (offset: 4, to byte 48)
-44 \tpush_string (value: 'no')
-48 \tret
+1 \t=== function chunk: main ===
+7 \tpush_integer (value: 3)
+12 \tset_value (index: 0)
+14 \tget_value (index: 0)
+16 \tpush_integer (value: 1)
+21 \tpush_integer (value: 1)
+26 \tint_add
+27 \tpush_integer (value: 1)
+32 \tint_add
+33 \teq
+34 \tjump if false (offset: 8, to byte 45)
+37 \tpush_string (value: 'yes')
+42 \tjump (offset: 4, to byte 49)
+45 \tpush_string (value: 'no')
+49 \tret
 """
 
 [output.vm]
-bytes_read = 46
+bytes_read = 47
 instructions_executed = 14
 jumps_performed = 1
 max_stack_height = 4

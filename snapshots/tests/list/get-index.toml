@@ -7,22 +7,23 @@ result = "5.40"
 type = "float"
 
 [output.compiler]
-bytecode = "[38, 4, 109, 97, 105, 110, 28, 64, 83, 51, 51, 28, 64, 172, 204, 205, 28, 64, 208, 0, 0, 31, 0, 0, 0, 3, 29, 0, 0, 0, 1, 47, 40]"
-bytecode_length = 33
+bytecode = "[0, 38, 4, 109, 97, 105, 110, 28, 64, 83, 51, 51, 28, 64, 172, 204, 205, 28, 64, 208, 0, 0, 31, 0, 0, 0, 3, 29, 0, 0, 0, 1, 47, 40]"
+bytecode_length = 34
 disassembled = """
+0 \tComponent Count: 0
 
-0 \t=== function chunk: main ===
-6 \tpush_float (value: 3.3)
-11 \tpush_float (value: 5.4)
-16 \tpush_float (value: 6.5)
-21 \tpush_list (length: 3)
-26 \tpush_integer (value: 1)
-31 \tget_list_element_at_index
-32 \tret
+1 \t=== function chunk: main ===
+7 \tpush_float (value: 3.3)
+12 \tpush_float (value: 5.4)
+17 \tpush_float (value: 6.5)
+22 \tpush_list (length: 3)
+27 \tpush_integer (value: 1)
+32 \tget_list_element_at_index
+33 \tret
 """
 
 [output.vm]
-bytes_read = 34
+bytes_read = 35
 instructions_executed = 8
 jumps_performed = 0
 max_stack_height = 3

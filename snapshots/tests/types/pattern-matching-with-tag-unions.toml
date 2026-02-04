@@ -22,56 +22,57 @@ result = "yellow with value 4"
 type = "string"
 
 [output.compiler]
-bytecode = "[37, 15, 115, 116, 111, 112, 108, 105, 103, 104, 116, 95, 99, 111, 108, 111, 114, 1, 0, 131, 38, 4, 109, 97, 105, 110, 39, 0, 1, 21, 0, 28, 0, 0, 0, 0, 41, 1, 0, 0, 15, 115, 116, 111, 112, 108, 105, 103, 104, 116, 95, 99, 111, 108, 111, 114, 21, 1, 20, 1, 33, 4, 58, 114, 101, 100, 17, 46, 0, 10, 30, 5, 109, 97, 121, 98, 101, 44, 0, 50, 35, 30, 7, 58, 121, 101, 108, 108, 111, 119, 17, 46, 0, 27, 36, 30, 18, 121, 101, 108, 108, 111, 119, 32, 119, 105, 116, 104, 32, 118, 97, 108, 117, 101, 32, 20, 2, 14, 44, 0, 9, 30, 7, 97, 108, 115, 111, 32, 110, 111, 40, 38, 15, 115, 116, 111, 112, 108, 105, 103, 104, 116, 95, 99, 111, 108, 111, 114, 20, 0, 28, 0, 0, 0, 0, 13, 19, 46, 0, 9, 33, 4, 58, 114, 101, 100, 44, 0, 36, 20, 0, 28, 0, 0, 0, 0, 17, 46, 0, 17, 29, 0, 0, 0, 4, 34, 7, 58, 121, 101, 108, 108, 111, 119, 44, 0, 8, 33, 6, 58, 103, 114, 101, 101, 110, 40]"
-bytecode_length = 206
+bytecode = "[0, 37, 15, 115, 116, 111, 112, 108, 105, 103, 104, 116, 95, 99, 111, 108, 111, 114, 1, 0, 132, 38, 4, 109, 97, 105, 110, 39, 0, 1, 21, 0, 28, 0, 0, 0, 0, 41, 1, 0, 0, 15, 115, 116, 111, 112, 108, 105, 103, 104, 116, 95, 99, 111, 108, 111, 114, 21, 1, 20, 1, 33, 4, 58, 114, 101, 100, 17, 46, 0, 10, 30, 5, 109, 97, 121, 98, 101, 44, 0, 50, 35, 30, 7, 58, 121, 101, 108, 108, 111, 119, 17, 46, 0, 27, 36, 30, 18, 121, 101, 108, 108, 111, 119, 32, 119, 105, 116, 104, 32, 118, 97, 108, 117, 101, 32, 20, 2, 14, 44, 0, 9, 30, 7, 97, 108, 115, 111, 32, 110, 111, 40, 38, 15, 115, 116, 111, 112, 108, 105, 103, 104, 116, 95, 99, 111, 108, 111, 114, 20, 0, 28, 0, 0, 0, 0, 13, 19, 46, 0, 9, 33, 4, 58, 114, 101, 100, 44, 0, 36, 20, 0, 28, 0, 0, 0, 0, 17, 46, 0, 17, 29, 0, 0, 0, 4, 34, 7, 58, 121, 101, 108, 108, 111, 119, 44, 0, 8, 33, 6, 58, 103, 114, 101, 101, 110, 40]"
+bytecode_length = 207
 disassembled = """
-0 \tfunction signature (name: stoplight_color) (local count: 1) (function position: 131)
+0 \tComponent Count: 0
+1 \tfunction signature (name: stoplight_color) (local count: 1) (function position: 132)
 
-20 \t=== function chunk: main ===
-26 \tfunction (function index: 0) (params: 1)
-29 \tset_value (index: 0)
-31 \tpush_float (value: 0)
-36 \tcall stoplight_color (is_global: 0) (arg count: 1, function index: 0)
-56 \tset_value (index: 1)
-58 \tget_value (index: 1)
-60 \tpush_simple_tag (value: ':red')
-66 \teq
-67 \tjump if false (offset: 10, to byte 80)
-70 \tpush_string (value: 'maybe')
-77 \tjump (offset: 50, to byte 130)
-80 \tget_tag_name
-81 \tpush_string (value: ':yellow')
-90 \teq
-91 \tjump if false (offset: 27, to byte 121)
-94 \tget_tag_payload
-95 \tpush_string (value: 'yellow with value ')
-115 \tget_value (index: 2)
-117 \tstr_concat
-118 \tjump (offset: 9, to byte 130)
-121 \tpush_string (value: 'also no')
-130 \tret
+21 \t=== function chunk: main ===
+27 \tfunction (function index: 0) (params: 1)
+30 \tset_value (index: 0)
+32 \tpush_float (value: 0)
+37 \tcall stoplight_color (is_global: 0) (arg count: 1, function index: 0)
+57 \tset_value (index: 1)
+59 \tget_value (index: 1)
+61 \tpush_simple_tag (value: ':red')
+67 \teq
+68 \tjump if false (offset: 10, to byte 81)
+71 \tpush_string (value: 'maybe')
+78 \tjump (offset: 50, to byte 131)
+81 \tget_tag_name
+82 \tpush_string (value: ':yellow')
+91 \teq
+92 \tjump if false (offset: 27, to byte 122)
+95 \tget_tag_payload
+96 \tpush_string (value: 'yellow with value ')
+116 \tget_value (index: 2)
+118 \tstr_concat
+119 \tjump (offset: 9, to byte 131)
+122 \tpush_string (value: 'also no')
+131 \tret
 
-131 \t=== function chunk: stoplight_color ===
-148 \tget_value (index: 0)
-150 \tpush_float (value: 0)
-155 \tfloat_lte
-156 \tnot
-157 \tjump if false (offset: 9, to byte 169)
-160 \tpush_simple_tag (value: ':red')
-166 \tjump (offset: 36, to byte 205)
-169 \tget_value (index: 0)
-171 \tpush_float (value: 0)
-176 \teq
-177 \tjump if false (offset: 17, to byte 197)
-180 \tpush_integer (value: 4)
-185 \tpush_tag (value: ':yellow')
-194 \tjump (offset: 8, to byte 205)
-197 \tpush_simple_tag (value: ':green')
-205 \tret
+132 \t=== function chunk: stoplight_color ===
+149 \tget_value (index: 0)
+151 \tpush_float (value: 0)
+156 \tfloat_lte
+157 \tnot
+158 \tjump if false (offset: 9, to byte 170)
+161 \tpush_simple_tag (value: ':red')
+167 \tjump (offset: 36, to byte 206)
+170 \tget_value (index: 0)
+172 \tpush_float (value: 0)
+177 \teq
+178 \tjump if false (offset: 17, to byte 198)
+181 \tpush_integer (value: 4)
+186 \tpush_tag (value: ':yellow')
+195 \tjump (offset: 8, to byte 206)
+198 \tpush_simple_tag (value: ':green')
+206 \tret
 """
 
 [output.vm]
-bytes_read = 171
+bytes_read = 172
 instructions_executed = 34
 jumps_performed = 4
 max_stack_height = 5

@@ -13,39 +13,40 @@ result = "nothing matches: :xyz"
 type = "string"
 
 [output.compiler]
-bytecode = "[38, 4, 109, 97, 105, 110, 33, 4, 58, 120, 121, 122, 21, 0, 35, 30, 3, 58, 111, 107, 17, 46, 0, 23, 36, 30, 14, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 111, 107, 58, 32, 20, 0, 14, 44, 0, 61, 35, 30, 6, 58, 101, 114, 114, 111, 114, 17, 46, 0, 26, 36, 30, 17, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 101, 114, 114, 111, 114, 58, 32, 20, 0, 14, 44, 0, 22, 30, 17, 110, 111, 116, 104, 105, 110, 103, 32, 109, 97, 116, 99, 104, 101, 115, 58, 32, 20, 0, 14, 40]"
-bytecode_length = 109
+bytecode = "[0, 38, 4, 109, 97, 105, 110, 33, 4, 58, 120, 121, 122, 21, 0, 35, 30, 3, 58, 111, 107, 17, 46, 0, 23, 36, 30, 14, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 111, 107, 58, 32, 20, 0, 14, 44, 0, 61, 35, 30, 6, 58, 101, 114, 114, 111, 114, 17, 46, 0, 26, 36, 30, 17, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 101, 114, 114, 111, 114, 58, 32, 20, 0, 14, 44, 0, 22, 30, 17, 110, 111, 116, 104, 105, 110, 103, 32, 109, 97, 116, 99, 104, 101, 115, 58, 32, 20, 0, 14, 40]"
+bytecode_length = 110
 disassembled = """
+0 \tComponent Count: 0
 
-0 \t=== function chunk: main ===
-6 \tpush_simple_tag (value: ':xyz')
-12 \tset_value (index: 0)
-14 \tget_tag_name
-15 \tpush_string (value: ':ok')
-20 \teq
-21 \tjump if false (offset: 23, to byte 47)
-24 \tget_tag_payload
-25 \tpush_string (value: 'result is ok: ')
-41 \tget_value (index: 0)
-43 \tstr_concat
-44 \tjump (offset: 61, to byte 108)
-47 \tget_tag_name
-48 \tpush_string (value: ':error')
-56 \teq
-57 \tjump if false (offset: 26, to byte 86)
-60 \tget_tag_payload
-61 \tpush_string (value: 'result is error: ')
-80 \tget_value (index: 0)
-82 \tstr_concat
-83 \tjump (offset: 22, to byte 108)
-86 \tpush_string (value: 'nothing matches: ')
-105 \tget_value (index: 0)
-107 \tstr_concat
-108 \tret
+1 \t=== function chunk: main ===
+7 \tpush_simple_tag (value: ':xyz')
+13 \tset_value (index: 0)
+15 \tget_tag_name
+16 \tpush_string (value: ':ok')
+21 \teq
+22 \tjump if false (offset: 23, to byte 48)
+25 \tget_tag_payload
+26 \tpush_string (value: 'result is ok: ')
+42 \tget_value (index: 0)
+44 \tstr_concat
+45 \tjump (offset: 61, to byte 109)
+48 \tget_tag_name
+49 \tpush_string (value: ':error')
+57 \teq
+58 \tjump if false (offset: 26, to byte 87)
+61 \tget_tag_payload
+62 \tpush_string (value: 'result is error: ')
+81 \tget_value (index: 0)
+83 \tstr_concat
+84 \tjump (offset: 22, to byte 109)
+87 \tpush_string (value: 'nothing matches: ')
+106 \tget_value (index: 0)
+108 \tstr_concat
+109 \tret
 """
 
 [output.vm]
-bytes_read = 61
+bytes_read = 62
 instructions_executed = 15
 jumps_performed = 2
 max_stack_height = 3

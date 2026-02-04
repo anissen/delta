@@ -13,40 +13,41 @@ result = "true"
 type = "boolean"
 
 [output.compiler]
-bytecode = "[37, 3, 97, 100, 100, 2, 0, 67, 37, 7, 105, 115, 95, 101, 118, 101, 110, 1, 0, 78, 38, 4, 109, 97, 105, 110, 39, 0, 2, 21, 0, 39, 1, 1, 21, 1, 29, 0, 0, 0, 3, 29, 0, 0, 0, 1, 41, 2, 0, 0, 3, 97, 100, 100, 41, 1, 0, 1, 7, 105, 115, 95, 101, 118, 101, 110, 40, 38, 3, 97, 100, 100, 20, 0, 20, 1, 0, 40, 38, 7, 105, 115, 95, 101, 118, 101, 110, 20, 0, 29, 0, 0, 0, 2, 4, 29, 0, 0, 0, 0, 17, 40]"
-bytecode_length = 102
+bytecode = "[0, 37, 3, 97, 100, 100, 2, 0, 68, 37, 7, 105, 115, 95, 101, 118, 101, 110, 1, 0, 79, 38, 4, 109, 97, 105, 110, 39, 0, 2, 21, 0, 39, 1, 1, 21, 1, 29, 0, 0, 0, 3, 29, 0, 0, 0, 1, 41, 2, 0, 0, 3, 97, 100, 100, 41, 1, 0, 1, 7, 105, 115, 95, 101, 118, 101, 110, 40, 38, 3, 97, 100, 100, 20, 0, 20, 1, 0, 40, 38, 7, 105, 115, 95, 101, 118, 101, 110, 20, 0, 29, 0, 0, 0, 2, 4, 29, 0, 0, 0, 0, 17, 40]"
+bytecode_length = 103
 disassembled = """
-0 \tfunction signature (name: add) (local count: 2) (function position: 67)
-8 \tfunction signature (name: is_even) (local count: 1) (function position: 78)
+0 \tComponent Count: 0
+1 \tfunction signature (name: add) (local count: 2) (function position: 68)
+9 \tfunction signature (name: is_even) (local count: 1) (function position: 79)
 
-20 \t=== function chunk: main ===
-26 \tfunction (function index: 0) (params: 2)
-29 \tset_value (index: 0)
-31 \tfunction (function index: 1) (params: 1)
-34 \tset_value (index: 1)
-36 \tpush_integer (value: 3)
-41 \tpush_integer (value: 1)
-46 \tcall add (is_global: 0) (arg count: 2, function index: 0)
-54 \tcall is_even (is_global: 0) (arg count: 1, function index: 1)
-66 \tret
+21 \t=== function chunk: main ===
+27 \tfunction (function index: 0) (params: 2)
+30 \tset_value (index: 0)
+32 \tfunction (function index: 1) (params: 1)
+35 \tset_value (index: 1)
+37 \tpush_integer (value: 3)
+42 \tpush_integer (value: 1)
+47 \tcall add (is_global: 0) (arg count: 2, function index: 0)
+55 \tcall is_even (is_global: 0) (arg count: 1, function index: 1)
+67 \tret
 
-67 \t=== function chunk: add ===
-72 \tget_value (index: 0)
-74 \tget_value (index: 1)
-76 \tint_add
-77 \tret
+68 \t=== function chunk: add ===
+73 \tget_value (index: 0)
+75 \tget_value (index: 1)
+77 \tint_add
+78 \tret
 
-78 \t=== function chunk: is_even ===
-87 \tget_value (index: 0)
-89 \tpush_integer (value: 2)
-94 \tint_mod
-95 \tpush_integer (value: 0)
-100 \teq
-101 \tret
+79 \t=== function chunk: is_even ===
+88 \tget_value (index: 0)
+90 \tpush_integer (value: 2)
+95 \tint_mod
+96 \tpush_integer (value: 0)
+101 \teq
+102 \tret
 """
 
 [output.vm]
-bytes_read = 103
+bytes_read = 104
 instructions_executed = 22
 jumps_performed = 0
 max_stack_height = 6

@@ -11,28 +11,29 @@ result = "captured value :yellow(4)"
 type = "string"
 
 [output.compiler]
-bytecode = "[37, 5, 109, 97, 116, 99, 104, 1, 0, 46, 38, 4, 109, 97, 105, 110, 39, 0, 1, 21, 0, 29, 0, 0, 0, 4, 34, 7, 58, 121, 101, 108, 108, 111, 119, 41, 1, 0, 0, 5, 109, 97, 116, 99, 104, 40, 38, 5, 109, 97, 116, 99, 104, 30, 15, 99, 97, 112, 116, 117, 114, 101, 100, 32, 118, 97, 108, 117, 101, 32, 20, 0, 14, 40]"
-bytecode_length = 74
+bytecode = "[0, 37, 5, 109, 97, 116, 99, 104, 1, 0, 47, 38, 4, 109, 97, 105, 110, 39, 0, 1, 21, 0, 29, 0, 0, 0, 4, 34, 7, 58, 121, 101, 108, 108, 111, 119, 41, 1, 0, 0, 5, 109, 97, 116, 99, 104, 40, 38, 5, 109, 97, 116, 99, 104, 30, 15, 99, 97, 112, 116, 117, 114, 101, 100, 32, 118, 97, 108, 117, 101, 32, 20, 0, 14, 40]"
+bytecode_length = 75
 disassembled = """
-0 \tfunction signature (name: match) (local count: 1) (function position: 46)
+0 \tComponent Count: 0
+1 \tfunction signature (name: match) (local count: 1) (function position: 47)
 
-10 \t=== function chunk: main ===
-16 \tfunction (function index: 0) (params: 1)
-19 \tset_value (index: 0)
-21 \tpush_integer (value: 4)
-26 \tpush_tag (value: ':yellow')
-35 \tcall match (is_global: 0) (arg count: 1, function index: 0)
-45 \tret
+11 \t=== function chunk: main ===
+17 \tfunction (function index: 0) (params: 1)
+20 \tset_value (index: 0)
+22 \tpush_integer (value: 4)
+27 \tpush_tag (value: ':yellow')
+36 \tcall match (is_global: 0) (arg count: 1, function index: 0)
+46 \tret
 
-46 \t=== function chunk: match ===
-53 \tpush_string (value: 'captured value ')
-70 \tget_value (index: 0)
-72 \tstr_concat
-73 \tret
+47 \t=== function chunk: match ===
+54 \tpush_string (value: 'captured value ')
+71 \tget_value (index: 0)
+73 \tstr_concat
+74 \tret
 """
 
 [output.vm]
-bytes_read = 75
+bytes_read = 76
 instructions_executed = 12
 jumps_performed = 0
 max_stack_height = 4

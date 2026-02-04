@@ -7,16 +7,17 @@ result = "false"
 type = "boolean"
 
 [output.compiler]
-bytecode = "[38, 4, 109, 97, 105, 110, 40]"
-bytecode_length = 7
+bytecode = "[0, 38, 4, 109, 97, 105, 110, 40]"
+bytecode_length = 8
 disassembled = """
+0 \tComponent Count: 0
 
-0 \t=== function chunk: main ===
-6 \tret
+1 \t=== function chunk: main ===
+7 \tret
 """
 
 [output.vm]
-bytes_read = 8
+bytes_read = 9
 instructions_executed = 2
 jumps_performed = 0
 max_stack_height = 1

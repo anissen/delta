@@ -16,42 +16,43 @@ result = "true"
 type = "boolean"
 
 [output.compiler]
-bytecode = "[37, 7, 105, 115, 95, 101, 118, 101, 110, 1, 0, 63, 37, 6, 105, 115, 95, 111, 100, 100, 1, 0, 87, 38, 4, 109, 97, 105, 110, 29, 0, 0, 0, 2, 21, 0, 39, 0, 1, 21, 1, 39, 1, 1, 21, 2, 29, 0, 0, 0, 5, 41, 1, 0, 2, 6, 105, 115, 95, 111, 100, 100, 40, 38, 7, 105, 115, 95, 101, 118, 101, 110, 20, 0, 29, 0, 0, 0, 2, 4, 29, 0, 0, 0, 0, 17, 40, 38, 6, 105, 115, 95, 111, 100, 100, 20, 0, 41, 1, 1, 1, 7, 105, 115, 95, 101, 118, 101, 110, 21, 1, 20, 1, 19, 40]"
-bytecode_length = 115
+bytecode = "[0, 37, 7, 105, 115, 95, 101, 118, 101, 110, 1, 0, 64, 37, 6, 105, 115, 95, 111, 100, 100, 1, 0, 88, 38, 4, 109, 97, 105, 110, 29, 0, 0, 0, 2, 21, 0, 39, 0, 1, 21, 1, 39, 1, 1, 21, 2, 29, 0, 0, 0, 5, 41, 1, 0, 2, 6, 105, 115, 95, 111, 100, 100, 40, 38, 7, 105, 115, 95, 101, 118, 101, 110, 20, 0, 29, 0, 0, 0, 2, 4, 29, 0, 0, 0, 0, 17, 40, 38, 6, 105, 115, 95, 111, 100, 100, 20, 0, 41, 1, 1, 1, 7, 105, 115, 95, 101, 118, 101, 110, 21, 1, 20, 1, 19, 40]"
+bytecode_length = 116
 disassembled = """
-0 \tfunction signature (name: is_even) (local count: 1) (function position: 63)
-12 \tfunction signature (name: is_odd) (local count: 1) (function position: 87)
+0 \tComponent Count: 0
+1 \tfunction signature (name: is_even) (local count: 1) (function position: 64)
+13 \tfunction signature (name: is_odd) (local count: 1) (function position: 88)
 
-23 \t=== function chunk: main ===
-29 \tpush_integer (value: 2)
-34 \tset_value (index: 0)
-36 \tfunction (function index: 0) (params: 1)
-39 \tset_value (index: 1)
-41 \tfunction (function index: 1) (params: 1)
-44 \tset_value (index: 2)
-46 \tpush_integer (value: 5)
-51 \tcall is_odd (is_global: 0) (arg count: 1, function index: 2)
-62 \tret
+24 \t=== function chunk: main ===
+30 \tpush_integer (value: 2)
+35 \tset_value (index: 0)
+37 \tfunction (function index: 0) (params: 1)
+40 \tset_value (index: 1)
+42 \tfunction (function index: 1) (params: 1)
+45 \tset_value (index: 2)
+47 \tpush_integer (value: 5)
+52 \tcall is_odd (is_global: 0) (arg count: 1, function index: 2)
+63 \tret
 
-63 \t=== function chunk: is_even ===
-72 \tget_value (index: 0)
-74 \tpush_integer (value: 2)
-79 \tint_mod
-80 \tpush_integer (value: 0)
-85 \teq
-86 \tret
+64 \t=== function chunk: is_even ===
+73 \tget_value (index: 0)
+75 \tpush_integer (value: 2)
+80 \tint_mod
+81 \tpush_integer (value: 0)
+86 \teq
+87 \tret
 
-87 \t=== function chunk: is_odd ===
-95 \tget_value (index: 0)
-97 \tcall is_even (is_global: 1) (arg count: 1, function index: 1)
-109 \tset_value (index: 1)
-111 \tget_value (index: 1)
-113 \tnot
-114 \tret
+88 \t=== function chunk: is_odd ===
+96 \tget_value (index: 0)
+98 \tcall is_even (is_global: 1) (arg count: 1, function index: 1)
+110 \tset_value (index: 1)
+112 \tget_value (index: 1)
+114 \tnot
+115 \tret
 """
 
 [output.vm]
-bytes_read = 116
+bytes_read = 117
 instructions_executed = 24
 jumps_performed = 0
 max_stack_height = 7

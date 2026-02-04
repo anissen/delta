@@ -9,26 +9,27 @@ result = ":hello(4)"
 type = "tag"
 
 [output.compiler]
-bytecode = "[37, 4, 98, 108, 97, 104, 1, 0, 35, 38, 4, 109, 97, 105, 110, 39, 0, 1, 21, 0, 29, 0, 0, 0, 4, 41, 1, 0, 0, 4, 98, 108, 97, 104, 40, 38, 4, 98, 108, 97, 104, 20, 0, 34, 6, 58, 104, 101, 108, 108, 111, 40]"
-bytecode_length = 52
+bytecode = "[0, 37, 4, 98, 108, 97, 104, 1, 0, 36, 38, 4, 109, 97, 105, 110, 39, 0, 1, 21, 0, 29, 0, 0, 0, 4, 41, 1, 0, 0, 4, 98, 108, 97, 104, 40, 38, 4, 98, 108, 97, 104, 20, 0, 34, 6, 58, 104, 101, 108, 108, 111, 40]"
+bytecode_length = 53
 disassembled = """
-0 \tfunction signature (name: blah) (local count: 1) (function position: 35)
+0 \tComponent Count: 0
+1 \tfunction signature (name: blah) (local count: 1) (function position: 36)
 
-9 \t=== function chunk: main ===
-15 \tfunction (function index: 0) (params: 1)
-18 \tset_value (index: 0)
-20 \tpush_integer (value: 4)
-25 \tcall blah (is_global: 0) (arg count: 1, function index: 0)
-34 \tret
+10 \t=== function chunk: main ===
+16 \tfunction (function index: 0) (params: 1)
+19 \tset_value (index: 0)
+21 \tpush_integer (value: 4)
+26 \tcall blah (is_global: 0) (arg count: 1, function index: 0)
+35 \tret
 
-35 \t=== function chunk: blah ===
-41 \tget_value (index: 0)
-43 \tpush_tag (value: ':hello')
-51 \tret
+36 \t=== function chunk: blah ===
+42 \tget_value (index: 0)
+44 \tpush_tag (value: ':hello')
+52 \tret
 """
 
 [output.vm]
-bytes_read = 53
+bytes_read = 54
 instructions_executed = 10
 jumps_performed = 0
 max_stack_height = 3

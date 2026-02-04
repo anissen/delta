@@ -15,39 +15,40 @@ result = "0"
 type = "integer"
 
 [output.compiler]
-bytecode = "[37, 10, 99, 111, 117, 110, 116, 95, 100, 111, 119, 110, 1, 0, 47, 38, 4, 109, 97, 105, 110, 39, 0, 1, 21, 0, 29, 0, 0, 0, 3, 41, 1, 0, 0, 10, 99, 111, 117, 110, 116, 95, 100, 111, 119, 110, 40, 38, 10, 99, 111, 117, 110, 116, 95, 100, 111, 119, 110, 20, 0, 29, 0, 0, 0, 0, 6, 19, 46, 0, 44, 30, 12, 99, 111, 117, 110, 116, 32, 100, 111, 119, 110, 58, 32, 20, 0, 14, 50, 20, 0, 29, 0, 0, 0, 1, 1, 41, 1, 1, 0, 10, 99, 111, 117, 110, 116, 95, 100, 111, 119, 110, 44, 0, 2, 20, 0, 40]"
-bytecode_length = 118
+bytecode = "[0, 37, 10, 99, 111, 117, 110, 116, 95, 100, 111, 119, 110, 1, 0, 48, 38, 4, 109, 97, 105, 110, 39, 0, 1, 21, 0, 29, 0, 0, 0, 3, 41, 1, 0, 0, 10, 99, 111, 117, 110, 116, 95, 100, 111, 119, 110, 40, 38, 10, 99, 111, 117, 110, 116, 95, 100, 111, 119, 110, 20, 0, 29, 0, 0, 0, 0, 6, 19, 46, 0, 44, 30, 12, 99, 111, 117, 110, 116, 32, 100, 111, 119, 110, 58, 32, 20, 0, 14, 50, 20, 0, 29, 0, 0, 0, 1, 1, 41, 1, 1, 0, 10, 99, 111, 117, 110, 116, 95, 100, 111, 119, 110, 44, 0, 2, 20, 0, 40]"
+bytecode_length = 119
 disassembled = """
-0 \tfunction signature (name: count_down) (local count: 1) (function position: 47)
+0 \tComponent Count: 0
+1 \tfunction signature (name: count_down) (local count: 1) (function position: 48)
 
-15 \t=== function chunk: main ===
-21 \tfunction (function index: 0) (params: 1)
-24 \tset_value (index: 0)
-26 \tpush_integer (value: 3)
-31 \tcall count_down (is_global: 0) (arg count: 1, function index: 0)
-46 \tret
+16 \t=== function chunk: main ===
+22 \tfunction (function index: 0) (params: 1)
+25 \tset_value (index: 0)
+27 \tpush_integer (value: 3)
+32 \tcall count_down (is_global: 0) (arg count: 1, function index: 0)
+47 \tret
 
-47 \t=== function chunk: count_down ===
-59 \tget_value (index: 0)
-61 \tpush_integer (value: 0)
-66 \tint_lte
-67 \tnot
-68 \tjump if false (offset: 44, to byte 115)
-71 \tpush_string (value: 'count down: ')
-85 \tget_value (index: 0)
-87 \tstr_concat
-88 \tlog
-89 \tget_value (index: 0)
-91 \tpush_integer (value: 1)
-96 \tint_sub
-97 \tcall count_down (is_global: 1) (arg count: 1, function index: 0)
-112 \tjump (offset: 2, to byte 117)
-115 \tget_value (index: 0)
-117 \tret
+48 \t=== function chunk: count_down ===
+60 \tget_value (index: 0)
+62 \tpush_integer (value: 0)
+67 \tint_lte
+68 \tnot
+69 \tjump if false (offset: 44, to byte 116)
+72 \tpush_string (value: 'count down: ')
+86 \tget_value (index: 0)
+88 \tstr_concat
+89 \tlog
+90 \tget_value (index: 0)
+92 \tpush_integer (value: 1)
+97 \tint_sub
+98 \tcall count_down (is_global: 1) (arg count: 1, function index: 0)
+113 \tjump (offset: 2, to byte 118)
+116 \tget_value (index: 0)
+118 \tret
 """
 
 [output.vm]
-bytes_read = 282
+bytes_read = 283
 instructions_executed = 62
 jumps_performed = 4
 max_stack_height = 10

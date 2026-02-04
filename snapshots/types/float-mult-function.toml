@@ -10,28 +10,29 @@ result = "21.32"
 type = "float"
 
 [output.compiler]
-bytecode = "[37, 10, 109, 117, 108, 116, 95, 102, 108, 111, 97, 116, 2, 0, 52, 38, 4, 109, 97, 105, 110, 39, 0, 2, 21, 0, 28, 64, 131, 51, 51, 28, 64, 166, 102, 102, 41, 2, 0, 0, 10, 109, 117, 108, 116, 95, 102, 108, 111, 97, 116, 40, 38, 10, 109, 117, 108, 116, 95, 102, 108, 111, 97, 116, 20, 0, 20, 1, 10, 40]"
-bytecode_length = 70
+bytecode = "[0, 37, 10, 109, 117, 108, 116, 95, 102, 108, 111, 97, 116, 2, 0, 53, 38, 4, 109, 97, 105, 110, 39, 0, 2, 21, 0, 28, 64, 131, 51, 51, 28, 64, 166, 102, 102, 41, 2, 0, 0, 10, 109, 117, 108, 116, 95, 102, 108, 111, 97, 116, 40, 38, 10, 109, 117, 108, 116, 95, 102, 108, 111, 97, 116, 20, 0, 20, 1, 10, 40]"
+bytecode_length = 71
 disassembled = """
-0 \tfunction signature (name: mult_float) (local count: 2) (function position: 52)
+0 \tComponent Count: 0
+1 \tfunction signature (name: mult_float) (local count: 2) (function position: 53)
 
-15 \t=== function chunk: main ===
-21 \tfunction (function index: 0) (params: 2)
-24 \tset_value (index: 0)
-26 \tpush_float (value: 4.1)
-31 \tpush_float (value: 5.2)
-36 \tcall mult_float (is_global: 0) (arg count: 2, function index: 0)
-51 \tret
+16 \t=== function chunk: main ===
+22 \tfunction (function index: 0) (params: 2)
+25 \tset_value (index: 0)
+27 \tpush_float (value: 4.1)
+32 \tpush_float (value: 5.2)
+37 \tcall mult_float (is_global: 0) (arg count: 2, function index: 0)
+52 \tret
 
-52 \t=== function chunk: mult_float ===
-64 \tget_value (index: 0)
-66 \tget_value (index: 1)
-68 \tfloat_mult
-69 \tret
+53 \t=== function chunk: mult_float ===
+65 \tget_value (index: 0)
+67 \tget_value (index: 1)
+69 \tfloat_mult
+70 \tret
 """
 
 [output.vm]
-bytes_read = 71
+bytes_read = 72
 instructions_executed = 12
 jumps_performed = 0
 max_stack_height = 5

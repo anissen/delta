@@ -13,35 +13,36 @@ result = "container with value 4"
 type = "string"
 
 [output.compiler]
-bytecode = "[37, 5, 109, 97, 116, 99, 104, 1, 0, 49, 38, 4, 109, 97, 105, 110, 39, 0, 1, 21, 0, 29, 0, 0, 0, 4, 34, 10, 58, 99, 111, 110, 116, 97, 105, 110, 101, 114, 41, 1, 0, 0, 5, 109, 97, 116, 99, 104, 40, 38, 5, 109, 97, 116, 99, 104, 35, 30, 10, 58, 99, 111, 110, 116, 97, 105, 110, 101, 114, 17, 46, 0, 30, 36, 30, 21, 99, 111, 110, 116, 97, 105, 110, 101, 114, 32, 119, 105, 116, 104, 32, 118, 97, 108, 117, 101, 32, 20, 1, 14, 44, 0, 10, 30, 8, 110, 111, 32, 109, 97, 116, 99, 104, 40]"
-bytecode_length = 114
+bytecode = "[0, 37, 5, 109, 97, 116, 99, 104, 1, 0, 50, 38, 4, 109, 97, 105, 110, 39, 0, 1, 21, 0, 29, 0, 0, 0, 4, 34, 10, 58, 99, 111, 110, 116, 97, 105, 110, 101, 114, 41, 1, 0, 0, 5, 109, 97, 116, 99, 104, 40, 38, 5, 109, 97, 116, 99, 104, 35, 30, 10, 58, 99, 111, 110, 116, 97, 105, 110, 101, 114, 17, 46, 0, 30, 36, 30, 21, 99, 111, 110, 116, 97, 105, 110, 101, 114, 32, 119, 105, 116, 104, 32, 118, 97, 108, 117, 101, 32, 20, 1, 14, 44, 0, 10, 30, 8, 110, 111, 32, 109, 97, 116, 99, 104, 40]"
+bytecode_length = 115
 disassembled = """
-0 \tfunction signature (name: match) (local count: 1) (function position: 49)
+0 \tComponent Count: 0
+1 \tfunction signature (name: match) (local count: 1) (function position: 50)
 
-10 \t=== function chunk: main ===
-16 \tfunction (function index: 0) (params: 1)
-19 \tset_value (index: 0)
-21 \tpush_integer (value: 4)
-26 \tpush_tag (value: ':container')
-38 \tcall match (is_global: 0) (arg count: 1, function index: 0)
-48 \tret
+11 \t=== function chunk: main ===
+17 \tfunction (function index: 0) (params: 1)
+20 \tset_value (index: 0)
+22 \tpush_integer (value: 4)
+27 \tpush_tag (value: ':container')
+39 \tcall match (is_global: 0) (arg count: 1, function index: 0)
+49 \tret
 
-49 \t=== function chunk: match ===
-56 \tget_tag_name
-57 \tpush_string (value: ':container')
-69 \teq
-70 \tjump if false (offset: 30, to byte 103)
-73 \tget_tag_payload
-74 \tpush_string (value: 'container with value ')
-97 \tget_value (index: 1)
-99 \tstr_concat
-100 \tjump (offset: 10, to byte 113)
-103 \tpush_string (value: 'no match')
-113 \tret
+50 \t=== function chunk: match ===
+57 \tget_tag_name
+58 \tpush_string (value: ':container')
+70 \teq
+71 \tjump if false (offset: 30, to byte 104)
+74 \tget_tag_payload
+75 \tpush_string (value: 'container with value ')
+98 \tget_value (index: 1)
+100 \tstr_concat
+101 \tjump (offset: 10, to byte 114)
+104 \tpush_string (value: 'no match')
+114 \tret
 """
 
 [output.vm]
-bytes_read = 105
+bytes_read = 106
 instructions_executed = 18
 jumps_performed = 1
 max_stack_height = 5

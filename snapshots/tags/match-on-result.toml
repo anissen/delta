@@ -19,44 +19,45 @@ result = "result is ok: file contents"
 type = "string"
 
 [output.compiler]
-bytecode = "[37, 9, 114, 101, 97, 100, 95, 102, 105, 108, 101, 1, 0, 100, 38, 4, 109, 97, 105, 110, 39, 0, 1, 21, 0, 30, 4, 98, 108, 97, 104, 41, 1, 0, 0, 9, 114, 101, 97, 100, 95, 102, 105, 108, 101, 21, 1, 35, 30, 3, 58, 111, 107, 17, 46, 0, 23, 36, 30, 14, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 111, 107, 58, 32, 20, 2, 14, 44, 0, 19, 30, 17, 114, 101, 115, 117, 108, 116, 32, 119, 97, 115, 32, 110, 111, 116, 32, 111, 107, 40, 38, 9, 114, 101, 97, 100, 95, 102, 105, 108, 101, 20, 0, 30, 4, 98, 108, 97, 104, 17, 46, 0, 23, 30, 13, 102, 105, 108, 101, 32, 99, 111, 110, 116, 101, 110, 116, 115, 34, 3, 58, 111, 107, 44, 0, 30, 30, 20, 115, 111, 109, 101, 116, 104, 105, 110, 103, 32, 119, 101, 110, 116, 32, 119, 114, 111, 110, 103, 34, 6, 58, 101, 114, 114, 111, 114, 40]"
-bytecode_length = 177
+bytecode = "[0, 37, 9, 114, 101, 97, 100, 95, 102, 105, 108, 101, 1, 0, 101, 38, 4, 109, 97, 105, 110, 39, 0, 1, 21, 0, 30, 4, 98, 108, 97, 104, 41, 1, 0, 0, 9, 114, 101, 97, 100, 95, 102, 105, 108, 101, 21, 1, 35, 30, 3, 58, 111, 107, 17, 46, 0, 23, 36, 30, 14, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 111, 107, 58, 32, 20, 2, 14, 44, 0, 19, 30, 17, 114, 101, 115, 117, 108, 116, 32, 119, 97, 115, 32, 110, 111, 116, 32, 111, 107, 40, 38, 9, 114, 101, 97, 100, 95, 102, 105, 108, 101, 20, 0, 30, 4, 98, 108, 97, 104, 17, 46, 0, 23, 30, 13, 102, 105, 108, 101, 32, 99, 111, 110, 116, 101, 110, 116, 115, 34, 3, 58, 111, 107, 44, 0, 30, 30, 20, 115, 111, 109, 101, 116, 104, 105, 110, 103, 32, 119, 101, 110, 116, 32, 119, 114, 111, 110, 103, 34, 6, 58, 101, 114, 114, 111, 114, 40]"
+bytecode_length = 178
 disassembled = """
-0 \tfunction signature (name: read_file) (local count: 1) (function position: 100)
+0 \tComponent Count: 0
+1 \tfunction signature (name: read_file) (local count: 1) (function position: 101)
 
-14 \t=== function chunk: main ===
-20 \tfunction (function index: 0) (params: 1)
-23 \tset_value (index: 0)
-25 \tpush_string (value: 'blah')
-31 \tcall read_file (is_global: 0) (arg count: 1, function index: 0)
-45 \tset_value (index: 1)
-47 \tget_tag_name
-48 \tpush_string (value: ':ok')
-53 \teq
-54 \tjump if false (offset: 23, to byte 80)
-57 \tget_tag_payload
-58 \tpush_string (value: 'result is ok: ')
-74 \tget_value (index: 2)
-76 \tstr_concat
-77 \tjump (offset: 19, to byte 99)
-80 \tpush_string (value: 'result was not ok')
-99 \tret
+15 \t=== function chunk: main ===
+21 \tfunction (function index: 0) (params: 1)
+24 \tset_value (index: 0)
+26 \tpush_string (value: 'blah')
+32 \tcall read_file (is_global: 0) (arg count: 1, function index: 0)
+46 \tset_value (index: 1)
+48 \tget_tag_name
+49 \tpush_string (value: ':ok')
+54 \teq
+55 \tjump if false (offset: 23, to byte 81)
+58 \tget_tag_payload
+59 \tpush_string (value: 'result is ok: ')
+75 \tget_value (index: 2)
+77 \tstr_concat
+78 \tjump (offset: 19, to byte 100)
+81 \tpush_string (value: 'result was not ok')
+100 \tret
 
-100 \t=== function chunk: read_file ===
-111 \tget_value (index: 0)
-113 \tpush_string (value: 'blah')
-119 \teq
-120 \tjump if false (offset: 23, to byte 146)
-123 \tpush_string (value: 'file contents')
-138 \tpush_tag (value: ':ok')
-143 \tjump (offset: 30, to byte 176)
-146 \tpush_string (value: 'something went wrong')
-168 \tpush_tag (value: ':error')
-176 \tret
+101 \t=== function chunk: read_file ===
+112 \tget_value (index: 0)
+114 \tpush_string (value: 'blah')
+120 \teq
+121 \tjump if false (offset: 23, to byte 147)
+124 \tpush_string (value: 'file contents')
+139 \tpush_tag (value: ':ok')
+144 \tjump (offset: 30, to byte 177)
+147 \tpush_string (value: 'something went wrong')
+169 \tpush_tag (value: ':error')
+177 \tret
 """
 
 [output.vm]
-bytes_read = 129
+bytes_read = 130
 instructions_executed = 25
 jumps_performed = 2
 max_stack_height = 5

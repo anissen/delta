@@ -7,17 +7,18 @@ result = "hello world"
 type = "string"
 
 [output.compiler]
-bytecode = "[38, 4, 109, 97, 105, 110, 30, 11, 104, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100, 40]"
-bytecode_length = 20
+bytecode = "[0, 38, 4, 109, 97, 105, 110, 30, 11, 104, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100, 40]"
+bytecode_length = 21
 disassembled = """
+0 \tComponent Count: 0
 
-0 \t=== function chunk: main ===
-6 \tpush_string (value: 'hello world')
-19 \tret
+1 \t=== function chunk: main ===
+7 \tpush_string (value: 'hello world')
+20 \tret
 """
 
 [output.vm]
-bytes_read = 21
+bytes_read = 22
 instructions_executed = 3
 jumps_performed = 0
 max_stack_height = 1

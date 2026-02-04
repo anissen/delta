@@ -15,41 +15,42 @@ result = "result is 25"
 type = "string"
 
 [output.compiler]
-bytecode = "[37, 6, 115, 113, 117, 97, 114, 101, 1, 0, 66, 37, 5, 109, 97, 116, 99, 104, 1, 0, 80, 38, 4, 109, 97, 105, 110, 39, 0, 1, 21, 0, 39, 1, 1, 21, 1, 30, 10, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 29, 0, 0, 0, 2, 41, 1, 0, 1, 5, 109, 97, 116, 99, 104, 14, 40, 38, 6, 115, 113, 117, 97, 114, 101, 20, 0, 20, 0, 3, 40, 38, 5, 109, 97, 116, 99, 104, 20, 0, 29, 0, 0, 0, 2, 17, 46, 0, 16, 29, 0, 0, 0, 5, 41, 1, 1, 0, 6, 115, 113, 117, 97, 114, 101, 40]"
-bytecode_length = 115
+bytecode = "[0, 37, 6, 115, 113, 117, 97, 114, 101, 1, 0, 67, 37, 5, 109, 97, 116, 99, 104, 1, 0, 81, 38, 4, 109, 97, 105, 110, 39, 0, 1, 21, 0, 39, 1, 1, 21, 1, 30, 10, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 29, 0, 0, 0, 2, 41, 1, 0, 1, 5, 109, 97, 116, 99, 104, 14, 40, 38, 6, 115, 113, 117, 97, 114, 101, 20, 0, 20, 0, 3, 40, 38, 5, 109, 97, 116, 99, 104, 20, 0, 29, 0, 0, 0, 2, 17, 46, 0, 16, 29, 0, 0, 0, 5, 41, 1, 1, 0, 6, 115, 113, 117, 97, 114, 101, 40]"
+bytecode_length = 116
 disassembled = """
-0 \tfunction signature (name: square) (local count: 1) (function position: 66)
-11 \tfunction signature (name: match) (local count: 1) (function position: 80)
+0 \tComponent Count: 0
+1 \tfunction signature (name: square) (local count: 1) (function position: 67)
+12 \tfunction signature (name: match) (local count: 1) (function position: 81)
 
-21 \t=== function chunk: main ===
-27 \tfunction (function index: 0) (params: 1)
-30 \tset_value (index: 0)
-32 \tfunction (function index: 1) (params: 1)
-35 \tset_value (index: 1)
-37 \tpush_string (value: 'result is ')
-49 \tpush_integer (value: 2)
-54 \tcall match (is_global: 0) (arg count: 1, function index: 1)
-64 \tstr_concat
-65 \tret
+22 \t=== function chunk: main ===
+28 \tfunction (function index: 0) (params: 1)
+31 \tset_value (index: 0)
+33 \tfunction (function index: 1) (params: 1)
+36 \tset_value (index: 1)
+38 \tpush_string (value: 'result is ')
+50 \tpush_integer (value: 2)
+55 \tcall match (is_global: 0) (arg count: 1, function index: 1)
+65 \tstr_concat
+66 \tret
 
-66 \t=== function chunk: square ===
-74 \tget_value (index: 0)
-76 \tget_value (index: 0)
-78 \tint_mult
-79 \tret
+67 \t=== function chunk: square ===
+75 \tget_value (index: 0)
+77 \tget_value (index: 0)
+79 \tint_mult
+80 \tret
 
-80 \t=== function chunk: match ===
-87 \tget_value (index: 0)
-89 \tpush_integer (value: 2)
-94 \teq
-95 \tjump if false (offset: 16, to byte 114)
-98 \tpush_integer (value: 5)
-103 \tcall square (is_global: 1) (arg count: 1, function index: 0)
-114 \tret
+81 \t=== function chunk: match ===
+88 \tget_value (index: 0)
+90 \tpush_integer (value: 2)
+95 \teq
+96 \tjump if false (offset: 16, to byte 115)
+99 \tpush_integer (value: 5)
+104 \tcall square (is_global: 1) (arg count: 1, function index: 0)
+115 \tret
 """
 
 [output.vm]
-bytes_read = 116
+bytes_read = 117
 instructions_executed = 23
 jumps_performed = 0
 max_stack_height = 7

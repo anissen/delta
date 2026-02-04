@@ -10,29 +10,30 @@ result = "Hello John!"
 type = "string"
 
 [output.compiler]
-bytecode = "[37, 8, 103, 114, 101, 101, 116, 105, 110, 103, 1, 0, 44, 38, 4, 109, 97, 105, 110, 39, 0, 1, 21, 0, 30, 4, 74, 111, 104, 110, 41, 1, 0, 0, 8, 103, 114, 101, 101, 116, 105, 110, 103, 40, 38, 8, 103, 114, 101, 101, 116, 105, 110, 103, 30, 6, 72, 101, 108, 108, 111, 32, 20, 0, 14, 30, 1, 33, 14, 40]"
-bytecode_length = 70
+bytecode = "[0, 37, 8, 103, 114, 101, 101, 116, 105, 110, 103, 1, 0, 45, 38, 4, 109, 97, 105, 110, 39, 0, 1, 21, 0, 30, 4, 74, 111, 104, 110, 41, 1, 0, 0, 8, 103, 114, 101, 101, 116, 105, 110, 103, 40, 38, 8, 103, 114, 101, 101, 116, 105, 110, 103, 30, 6, 72, 101, 108, 108, 111, 32, 20, 0, 14, 30, 1, 33, 14, 40]"
+bytecode_length = 71
 disassembled = """
-0 \tfunction signature (name: greeting) (local count: 1) (function position: 44)
+0 \tComponent Count: 0
+1 \tfunction signature (name: greeting) (local count: 1) (function position: 45)
 
-13 \t=== function chunk: main ===
-19 \tfunction (function index: 0) (params: 1)
-22 \tset_value (index: 0)
-24 \tpush_string (value: 'John')
-30 \tcall greeting (is_global: 0) (arg count: 1, function index: 0)
-43 \tret
+14 \t=== function chunk: main ===
+20 \tfunction (function index: 0) (params: 1)
+23 \tset_value (index: 0)
+25 \tpush_string (value: 'John')
+31 \tcall greeting (is_global: 0) (arg count: 1, function index: 0)
+44 \tret
 
-44 \t=== function chunk: greeting ===
-54 \tpush_string (value: 'Hello ')
-62 \tget_value (index: 0)
-64 \tstr_concat
-65 \tpush_string (value: '!')
-68 \tstr_concat
-69 \tret
+45 \t=== function chunk: greeting ===
+55 \tpush_string (value: 'Hello ')
+63 \tget_value (index: 0)
+65 \tstr_concat
+66 \tpush_string (value: '!')
+69 \tstr_concat
+70 \tret
 """
 
 [output.vm]
-bytes_read = 71
+bytes_read = 72
 instructions_executed = 13
 jumps_performed = 0
 max_stack_height = 4

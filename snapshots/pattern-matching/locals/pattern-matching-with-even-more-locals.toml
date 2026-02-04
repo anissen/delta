@@ -33,99 +33,100 @@ result = "result is 13, 89 and 28"
 type = "string"
 
 [output.compiler]
-bytecode = "[37, 6, 115, 113, 117, 97, 114, 101, 1, 0, 139, 37, 5, 109, 97, 116, 99, 104, 1, 0, 153, 38, 4, 109, 97, 105, 110, 29, 0, 0, 0, 1, 21, 0, 29, 0, 0, 0, 2, 21, 1, 39, 0, 1, 21, 2, 29, 0, 0, 0, 3, 21, 3, 39, 1, 1, 21, 4, 29, 0, 0, 0, 4, 21, 5, 30, 10, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 29, 0, 0, 0, 1, 41, 1, 0, 4, 5, 109, 97, 116, 99, 104, 14, 30, 2, 44, 32, 14, 29, 0, 0, 0, 2, 41, 1, 0, 4, 5, 109, 97, 116, 99, 104, 14, 30, 5, 32, 97, 110, 100, 32, 14, 29, 0, 0, 0, 3, 41, 1, 0, 4, 5, 109, 97, 116, 99, 104, 14, 40, 38, 6, 115, 113, 117, 97, 114, 101, 20, 0, 20, 0, 3, 40, 38, 5, 109, 97, 116, 99, 104, 29, 0, 0, 0, 2, 21, 1, 20, 0, 20, 1, 0, 21, 2, 20, 2, 29, 0, 0, 0, 3, 17, 46, 0, 15, 29, 0, 0, 0, 4, 21, 2, 20, 0, 20, 2, 0, 44, 0, 65, 20, 2, 29, 0, 0, 0, 4, 17, 46, 0, 29, 20, 0, 20, 1, 0, 29, 0, 0, 0, 5, 0, 21, 2, 20, 2, 41, 1, 1, 2, 6, 115, 113, 117, 97, 114, 101, 44, 0, 25, 29, 0, 0, 0, 6, 21, 3, 29, 0, 0, 0, 7, 21, 4, 20, 2, 20, 1, 0, 20, 3, 0, 20, 4, 0, 21, 3, 29, 0, 0, 0, 8, 21, 4, 20, 3, 20, 4, 0, 40]"
-bytecode_length = 280
+bytecode = "[0, 37, 6, 115, 113, 117, 97, 114, 101, 1, 0, 140, 37, 5, 109, 97, 116, 99, 104, 1, 0, 154, 38, 4, 109, 97, 105, 110, 29, 0, 0, 0, 1, 21, 0, 29, 0, 0, 0, 2, 21, 1, 39, 0, 1, 21, 2, 29, 0, 0, 0, 3, 21, 3, 39, 1, 1, 21, 4, 29, 0, 0, 0, 4, 21, 5, 30, 10, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 29, 0, 0, 0, 1, 41, 1, 0, 4, 5, 109, 97, 116, 99, 104, 14, 30, 2, 44, 32, 14, 29, 0, 0, 0, 2, 41, 1, 0, 4, 5, 109, 97, 116, 99, 104, 14, 30, 5, 32, 97, 110, 100, 32, 14, 29, 0, 0, 0, 3, 41, 1, 0, 4, 5, 109, 97, 116, 99, 104, 14, 40, 38, 6, 115, 113, 117, 97, 114, 101, 20, 0, 20, 0, 3, 40, 38, 5, 109, 97, 116, 99, 104, 29, 0, 0, 0, 2, 21, 1, 20, 0, 20, 1, 0, 21, 2, 20, 2, 29, 0, 0, 0, 3, 17, 46, 0, 15, 29, 0, 0, 0, 4, 21, 2, 20, 0, 20, 2, 0, 44, 0, 65, 20, 2, 29, 0, 0, 0, 4, 17, 46, 0, 29, 20, 0, 20, 1, 0, 29, 0, 0, 0, 5, 0, 21, 2, 20, 2, 41, 1, 1, 2, 6, 115, 113, 117, 97, 114, 101, 44, 0, 25, 29, 0, 0, 0, 6, 21, 3, 29, 0, 0, 0, 7, 21, 4, 20, 2, 20, 1, 0, 20, 3, 0, 20, 4, 0, 21, 3, 29, 0, 0, 0, 8, 21, 4, 20, 3, 20, 4, 0, 40]"
+bytecode_length = 281
 disassembled = """
-0 \tfunction signature (name: square) (local count: 1) (function position: 139)
-11 \tfunction signature (name: match) (local count: 1) (function position: 153)
+0 \tComponent Count: 0
+1 \tfunction signature (name: square) (local count: 1) (function position: 140)
+12 \tfunction signature (name: match) (local count: 1) (function position: 154)
 
-21 \t=== function chunk: main ===
-27 \tpush_integer (value: 1)
-32 \tset_value (index: 0)
-34 \tpush_integer (value: 2)
-39 \tset_value (index: 1)
-41 \tfunction (function index: 0) (params: 1)
-44 \tset_value (index: 2)
-46 \tpush_integer (value: 3)
-51 \tset_value (index: 3)
-53 \tfunction (function index: 1) (params: 1)
-56 \tset_value (index: 4)
-58 \tpush_integer (value: 4)
-63 \tset_value (index: 5)
-65 \tpush_string (value: 'result is ')
-77 \tpush_integer (value: 1)
-82 \tcall match (is_global: 0) (arg count: 1, function index: 4)
-92 \tstr_concat
-93 \tpush_string (value: ', ')
-97 \tstr_concat
-98 \tpush_integer (value: 2)
-103 \tcall match (is_global: 0) (arg count: 1, function index: 4)
-113 \tstr_concat
-114 \tpush_string (value: ' and ')
-121 \tstr_concat
-122 \tpush_integer (value: 3)
-127 \tcall match (is_global: 0) (arg count: 1, function index: 4)
-137 \tstr_concat
-138 \tret
+22 \t=== function chunk: main ===
+28 \tpush_integer (value: 1)
+33 \tset_value (index: 0)
+35 \tpush_integer (value: 2)
+40 \tset_value (index: 1)
+42 \tfunction (function index: 0) (params: 1)
+45 \tset_value (index: 2)
+47 \tpush_integer (value: 3)
+52 \tset_value (index: 3)
+54 \tfunction (function index: 1) (params: 1)
+57 \tset_value (index: 4)
+59 \tpush_integer (value: 4)
+64 \tset_value (index: 5)
+66 \tpush_string (value: 'result is ')
+78 \tpush_integer (value: 1)
+83 \tcall match (is_global: 0) (arg count: 1, function index: 4)
+93 \tstr_concat
+94 \tpush_string (value: ', ')
+98 \tstr_concat
+99 \tpush_integer (value: 2)
+104 \tcall match (is_global: 0) (arg count: 1, function index: 4)
+114 \tstr_concat
+115 \tpush_string (value: ' and ')
+122 \tstr_concat
+123 \tpush_integer (value: 3)
+128 \tcall match (is_global: 0) (arg count: 1, function index: 4)
+138 \tstr_concat
+139 \tret
 
-139 \t=== function chunk: square ===
-147 \tget_value (index: 0)
-149 \tget_value (index: 0)
-151 \tint_mult
-152 \tret
+140 \t=== function chunk: square ===
+148 \tget_value (index: 0)
+150 \tget_value (index: 0)
+152 \tint_mult
+153 \tret
 
-153 \t=== function chunk: match ===
-160 \tpush_integer (value: 2)
-165 \tset_value (index: 1)
-167 \tget_value (index: 0)
-169 \tget_value (index: 1)
-171 \tint_add
-172 \tset_value (index: 2)
-174 \tget_value (index: 2)
-176 \tpush_integer (value: 3)
-181 \teq
-182 \tjump if false (offset: 15, to byte 200)
-185 \tpush_integer (value: 4)
-190 \tset_value (index: 2)
-192 \tget_value (index: 0)
-194 \tget_value (index: 2)
-196 \tint_add
-197 \tjump (offset: 65, to byte 265)
-200 \tget_value (index: 2)
-202 \tpush_integer (value: 4)
-207 \teq
-208 \tjump if false (offset: 29, to byte 240)
-211 \tget_value (index: 0)
-213 \tget_value (index: 1)
-215 \tint_add
-216 \tpush_integer (value: 5)
-221 \tint_add
-222 \tset_value (index: 2)
-224 \tget_value (index: 2)
-226 \tcall square (is_global: 1) (arg count: 1, function index: 2)
-237 \tjump (offset: 25, to byte 265)
-240 \tpush_integer (value: 6)
-245 \tset_value (index: 3)
-247 \tpush_integer (value: 7)
-252 \tset_value (index: 4)
-254 \tget_value (index: 2)
-256 \tget_value (index: 1)
-258 \tint_add
-259 \tget_value (index: 3)
-261 \tint_add
-262 \tget_value (index: 4)
-264 \tint_add
-265 \tset_value (index: 3)
-267 \tpush_integer (value: 8)
-272 \tset_value (index: 4)
-274 \tget_value (index: 3)
-276 \tget_value (index: 4)
-278 \tint_add
-279 \tret
+154 \t=== function chunk: match ===
+161 \tpush_integer (value: 2)
+166 \tset_value (index: 1)
+168 \tget_value (index: 0)
+170 \tget_value (index: 1)
+172 \tint_add
+173 \tset_value (index: 2)
+175 \tget_value (index: 2)
+177 \tpush_integer (value: 3)
+182 \teq
+183 \tjump if false (offset: 15, to byte 201)
+186 \tpush_integer (value: 4)
+191 \tset_value (index: 2)
+193 \tget_value (index: 0)
+195 \tget_value (index: 2)
+197 \tint_add
+198 \tjump (offset: 65, to byte 266)
+201 \tget_value (index: 2)
+203 \tpush_integer (value: 4)
+208 \teq
+209 \tjump if false (offset: 29, to byte 241)
+212 \tget_value (index: 0)
+214 \tget_value (index: 1)
+216 \tint_add
+217 \tpush_integer (value: 5)
+222 \tint_add
+223 \tset_value (index: 2)
+225 \tget_value (index: 2)
+227 \tcall square (is_global: 1) (arg count: 1, function index: 2)
+238 \tjump (offset: 25, to byte 266)
+241 \tpush_integer (value: 6)
+246 \tset_value (index: 3)
+248 \tpush_integer (value: 7)
+253 \tset_value (index: 4)
+255 \tget_value (index: 2)
+257 \tget_value (index: 1)
+259 \tint_add
+260 \tget_value (index: 3)
+262 \tint_add
+263 \tget_value (index: 4)
+265 \tint_add
+266 \tset_value (index: 3)
+268 \tpush_integer (value: 8)
+273 \tset_value (index: 4)
+275 \tget_value (index: 3)
+277 \tget_value (index: 4)
+279 \tint_add
+280 \tret
 """
 
 [output.vm]
-bytes_read = 386
+bytes_read = 387
 instructions_executed = 121
 jumps_performed = 5
 max_stack_height = 14

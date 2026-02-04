@@ -19,60 +19,61 @@ result = "12"
 type = "integer"
 
 [output.compiler]
-bytecode = "[37, 8, 115, 117, 109, 95, 108, 111, 111, 112, 3, 0, 76, 37, 8, 115, 117, 109, 95, 108, 105, 115, 116, 1, 0, 146, 38, 4, 109, 97, 105, 110, 39, 0, 3, 21, 0, 39, 1, 1, 21, 1, 29, 0, 0, 0, 3, 29, 0, 0, 0, 4, 29, 0, 0, 0, 5, 31, 0, 0, 0, 3, 41, 1, 0, 1, 8, 115, 117, 109, 95, 108, 105, 115, 116, 40, 38, 8, 115, 117, 109, 95, 108, 111, 111, 112, 20, 0, 48, 21, 3, 20, 2, 20, 0, 20, 1, 47, 0, 21, 4, 20, 1, 20, 3, 29, 0, 0, 0, 1, 1, 17, 46, 0, 5, 20, 4, 44, 0, 25, 20, 0, 20, 1, 29, 0, 0, 0, 1, 0, 20, 4, 41, 3, 1, 0, 8, 115, 117, 109, 95, 108, 111, 111, 112, 40, 38, 8, 115, 117, 109, 95, 108, 105, 115, 116, 20, 0, 29, 0, 0, 0, 0, 29, 0, 0, 0, 0, 41, 3, 1, 0, 8, 115, 117, 109, 95, 108, 111, 111, 112, 40]"
-bytecode_length = 182
+bytecode = "[0, 37, 8, 115, 117, 109, 95, 108, 111, 111, 112, 3, 0, 77, 37, 8, 115, 117, 109, 95, 108, 105, 115, 116, 1, 0, 147, 38, 4, 109, 97, 105, 110, 39, 0, 3, 21, 0, 39, 1, 1, 21, 1, 29, 0, 0, 0, 3, 29, 0, 0, 0, 4, 29, 0, 0, 0, 5, 31, 0, 0, 0, 3, 41, 1, 0, 1, 8, 115, 117, 109, 95, 108, 105, 115, 116, 40, 38, 8, 115, 117, 109, 95, 108, 111, 111, 112, 20, 0, 48, 21, 3, 20, 2, 20, 0, 20, 1, 47, 0, 21, 4, 20, 1, 20, 3, 29, 0, 0, 0, 1, 1, 17, 46, 0, 5, 20, 4, 44, 0, 25, 20, 0, 20, 1, 29, 0, 0, 0, 1, 0, 20, 4, 41, 3, 1, 0, 8, 115, 117, 109, 95, 108, 111, 111, 112, 40, 38, 8, 115, 117, 109, 95, 108, 105, 115, 116, 20, 0, 29, 0, 0, 0, 0, 29, 0, 0, 0, 0, 41, 3, 1, 0, 8, 115, 117, 109, 95, 108, 111, 111, 112, 40]"
+bytecode_length = 183
 disassembled = """
-0 \tfunction signature (name: sum_loop) (local count: 3) (function position: 76)
-13 \tfunction signature (name: sum_list) (local count: 1) (function position: 146)
+0 \tComponent Count: 0
+1 \tfunction signature (name: sum_loop) (local count: 3) (function position: 77)
+14 \tfunction signature (name: sum_list) (local count: 1) (function position: 147)
 
-26 \t=== function chunk: main ===
-32 \tfunction (function index: 0) (params: 3)
-35 \tset_value (index: 0)
-37 \tfunction (function index: 1) (params: 1)
-40 \tset_value (index: 1)
-42 \tpush_integer (value: 3)
-47 \tpush_integer (value: 4)
-52 \tpush_integer (value: 5)
-57 \tpush_list (length: 3)
-62 \tcall sum_list (is_global: 0) (arg count: 1, function index: 1)
-75 \tret
+27 \t=== function chunk: main ===
+33 \tfunction (function index: 0) (params: 3)
+36 \tset_value (index: 0)
+38 \tfunction (function index: 1) (params: 1)
+41 \tset_value (index: 1)
+43 \tpush_integer (value: 3)
+48 \tpush_integer (value: 4)
+53 \tpush_integer (value: 5)
+58 \tpush_list (length: 3)
+63 \tcall sum_list (is_global: 0) (arg count: 1, function index: 1)
+76 \tret
 
-76 \t=== function chunk: sum_loop ===
-86 \tget_value (index: 0)
-88 \tget_array_length
-89 \tset_value (index: 3)
-91 \tget_value (index: 2)
-93 \tget_value (index: 0)
-95 \tget_value (index: 1)
-97 \tget_list_element_at_index
-98 \tint_add
-99 \tset_value (index: 4)
-101 \tget_value (index: 1)
-103 \tget_value (index: 3)
-105 \tpush_integer (value: 1)
-110 \tint_sub
-111 \teq
-112 \tjump if false (offset: 5, to byte 120)
-115 \tget_value (index: 4)
-117 \tjump (offset: 25, to byte 145)
-120 \tget_value (index: 0)
-122 \tget_value (index: 1)
-124 \tpush_integer (value: 1)
-129 \tint_add
-130 \tget_value (index: 4)
-132 \tcall sum_loop (is_global: 1) (arg count: 3, function index: 0)
-145 \tret
+77 \t=== function chunk: sum_loop ===
+87 \tget_value (index: 0)
+89 \tget_array_length
+90 \tset_value (index: 3)
+92 \tget_value (index: 2)
+94 \tget_value (index: 0)
+96 \tget_value (index: 1)
+98 \tget_list_element_at_index
+99 \tint_add
+100 \tset_value (index: 4)
+102 \tget_value (index: 1)
+104 \tget_value (index: 3)
+106 \tpush_integer (value: 1)
+111 \tint_sub
+112 \teq
+113 \tjump if false (offset: 5, to byte 121)
+116 \tget_value (index: 4)
+118 \tjump (offset: 25, to byte 146)
+121 \tget_value (index: 0)
+123 \tget_value (index: 1)
+125 \tpush_integer (value: 1)
+130 \tint_add
+131 \tget_value (index: 4)
+133 \tcall sum_loop (is_global: 1) (arg count: 3, function index: 0)
+146 \tret
 
-146 \t=== function chunk: sum_list ===
-156 \tget_value (index: 0)
-158 \tpush_integer (value: 0)
-163 \tpush_integer (value: 0)
-168 \tcall sum_loop (is_global: 1) (arg count: 3, function index: 0)
-181 \tret
+147 \t=== function chunk: sum_list ===
+157 \tget_value (index: 0)
+159 \tpush_integer (value: 0)
+164 \tpush_integer (value: 0)
+169 \tcall sum_loop (is_global: 1) (arg count: 3, function index: 0)
+182 \tret
 """
 
 [output.vm]
-bytes_read = 288
+bytes_read = 289
 instructions_executed = 82
 jumps_performed = 3
 max_stack_height = 21

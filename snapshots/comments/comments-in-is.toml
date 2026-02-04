@@ -14,29 +14,30 @@ result = "7"
 type = "integer"
 
 [output.compiler]
-bytecode = "[38, 4, 109, 97, 105, 110, 29, 0, 0, 0, 2, 21, 0, 29, 0, 0, 0, 3, 20, 0, 0, 21, 1, 29, 0, 0, 0, 0, 21, 2, 20, 1, 20, 0, 0, 20, 2, 0, 40]"
-bytecode_length = 39
+bytecode = "[0, 38, 4, 109, 97, 105, 110, 29, 0, 0, 0, 2, 21, 0, 29, 0, 0, 0, 3, 20, 0, 0, 21, 1, 29, 0, 0, 0, 0, 21, 2, 20, 1, 20, 0, 0, 20, 2, 0, 40]"
+bytecode_length = 40
 disassembled = """
+0 \tComponent Count: 0
 
-0 \t=== function chunk: main ===
-6 \tpush_integer (value: 2)
-11 \tset_value (index: 0)
-13 \tpush_integer (value: 3)
-18 \tget_value (index: 0)
-20 \tint_add
-21 \tset_value (index: 1)
-23 \tpush_integer (value: 0)
-28 \tset_value (index: 2)
-30 \tget_value (index: 1)
-32 \tget_value (index: 0)
-34 \tint_add
-35 \tget_value (index: 2)
-37 \tint_add
-38 \tret
+1 \t=== function chunk: main ===
+7 \tpush_integer (value: 2)
+12 \tset_value (index: 0)
+14 \tpush_integer (value: 3)
+19 \tget_value (index: 0)
+21 \tint_add
+22 \tset_value (index: 1)
+24 \tpush_integer (value: 0)
+29 \tset_value (index: 2)
+31 \tget_value (index: 1)
+33 \tget_value (index: 0)
+35 \tint_add
+36 \tget_value (index: 2)
+38 \tint_add
+39 \tret
 """
 
 [output.vm]
-bytes_read = 40
+bytes_read = 41
 instructions_executed = 15
 jumps_performed = 0
 max_stack_height = 5

@@ -7,29 +7,30 @@ result = "result is true and true!"
 type = "string"
 
 [output.compiler]
-bytecode = "[38, 4, 109, 97, 105, 110, 30, 10, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 29, 0, 0, 0, 3, 29, 0, 0, 0, 4, 5, 14, 30, 5, 32, 97, 110, 100, 32, 14, 28, 64, 89, 153, 154, 28, 64, 144, 0, 0, 12, 14, 30, 1, 33, 14, 40]"
-bytecode_length = 55
+bytecode = "[0, 38, 4, 109, 97, 105, 110, 30, 10, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 29, 0, 0, 0, 3, 29, 0, 0, 0, 4, 5, 14, 30, 5, 32, 97, 110, 100, 32, 14, 28, 64, 89, 153, 154, 28, 64, 144, 0, 0, 12, 14, 30, 1, 33, 14, 40]"
+bytecode_length = 56
 disassembled = """
+0 \tComponent Count: 0
 
-0 \t=== function chunk: main ===
-6 \tpush_string (value: 'result is ')
-18 \tpush_integer (value: 3)
-23 \tpush_integer (value: 4)
-28 \tint_lt
-29 \tstr_concat
-30 \tpush_string (value: ' and ')
-37 \tstr_concat
-38 \tpush_float (value: 3.4)
-43 \tpush_float (value: 4.5)
-48 \tfloat_lt
-49 \tstr_concat
-50 \tpush_string (value: '!')
-53 \tstr_concat
-54 \tret
+1 \t=== function chunk: main ===
+7 \tpush_string (value: 'result is ')
+19 \tpush_integer (value: 3)
+24 \tpush_integer (value: 4)
+29 \tint_lt
+30 \tstr_concat
+31 \tpush_string (value: ' and ')
+38 \tstr_concat
+39 \tpush_float (value: 3.4)
+44 \tpush_float (value: 4.5)
+49 \tfloat_lt
+50 \tstr_concat
+51 \tpush_string (value: '!')
+54 \tstr_concat
+55 \tret
 """
 
 [output.vm]
-bytes_read = 56
+bytes_read = 57
 instructions_executed = 15
 jumps_performed = 0
 max_stack_height = 3

@@ -10,28 +10,29 @@ result = "7"
 type = "integer"
 
 [output.compiler]
-bytecode = "[37, 7, 97, 100, 100, 95, 111, 110, 101, 1, 0, 53, 38, 4, 109, 97, 105, 110, 39, 0, 1, 21, 0, 29, 0, 0, 0, 5, 41, 1, 0, 0, 7, 97, 100, 100, 95, 111, 110, 101, 41, 1, 0, 0, 7, 97, 100, 100, 95, 111, 110, 101, 40, 38, 7, 97, 100, 100, 95, 111, 110, 101, 20, 0, 29, 0, 0, 0, 1, 0, 40]"
-bytecode_length = 71
+bytecode = "[0, 37, 7, 97, 100, 100, 95, 111, 110, 101, 1, 0, 54, 38, 4, 109, 97, 105, 110, 39, 0, 1, 21, 0, 29, 0, 0, 0, 5, 41, 1, 0, 0, 7, 97, 100, 100, 95, 111, 110, 101, 41, 1, 0, 0, 7, 97, 100, 100, 95, 111, 110, 101, 40, 38, 7, 97, 100, 100, 95, 111, 110, 101, 20, 0, 29, 0, 0, 0, 1, 0, 40]"
+bytecode_length = 72
 disassembled = """
-0 \tfunction signature (name: add_one) (local count: 1) (function position: 53)
+0 \tComponent Count: 0
+1 \tfunction signature (name: add_one) (local count: 1) (function position: 54)
 
-12 \t=== function chunk: main ===
-18 \tfunction (function index: 0) (params: 1)
-21 \tset_value (index: 0)
-23 \tpush_integer (value: 5)
-28 \tcall add_one (is_global: 0) (arg count: 1, function index: 0)
-40 \tcall add_one (is_global: 0) (arg count: 1, function index: 0)
-52 \tret
+13 \t=== function chunk: main ===
+19 \tfunction (function index: 0) (params: 1)
+22 \tset_value (index: 0)
+24 \tpush_integer (value: 5)
+29 \tcall add_one (is_global: 0) (arg count: 1, function index: 0)
+41 \tcall add_one (is_global: 0) (arg count: 1, function index: 0)
+53 \tret
 
-53 \t=== function chunk: add_one ===
-62 \tget_value (index: 0)
-64 \tpush_integer (value: 1)
-69 \tint_add
-70 \tret
+54 \t=== function chunk: add_one ===
+63 \tget_value (index: 0)
+65 \tpush_integer (value: 1)
+70 \tint_add
+71 \tret
 """
 
 [output.vm]
-bytes_read = 90
+bytes_read = 91
 instructions_executed = 17
 jumps_performed = 0
 max_stack_height = 4

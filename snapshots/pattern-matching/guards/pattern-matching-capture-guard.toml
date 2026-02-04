@@ -11,32 +11,33 @@ result = "value captured is 2"
 type = "string"
 
 [output.compiler]
-bytecode = "[38, 4, 109, 97, 105, 110, 29, 0, 0, 0, 2, 21, 0, 20, 0, 29, 0, 0, 0, 1, 17, 46, 0, 7, 30, 2, 110, 111, 44, 0, 35, 20, 0, 29, 0, 0, 0, 2, 5, 19, 46, 0, 23, 30, 18, 118, 97, 108, 117, 101, 32, 99, 97, 112, 116, 117, 114, 101, 100, 32, 105, 115, 32, 20, 0, 14, 40]"
-bytecode_length = 67
+bytecode = "[0, 38, 4, 109, 97, 105, 110, 29, 0, 0, 0, 2, 21, 0, 20, 0, 29, 0, 0, 0, 1, 17, 46, 0, 7, 30, 2, 110, 111, 44, 0, 35, 20, 0, 29, 0, 0, 0, 2, 5, 19, 46, 0, 23, 30, 18, 118, 97, 108, 117, 101, 32, 99, 97, 112, 116, 117, 114, 101, 100, 32, 105, 115, 32, 20, 0, 14, 40]"
+bytecode_length = 68
 disassembled = """
+0 \tComponent Count: 0
 
-0 \t=== function chunk: main ===
-6 \tpush_integer (value: 2)
-11 \tset_value (index: 0)
-13 \tget_value (index: 0)
-15 \tpush_integer (value: 1)
-20 \teq
-21 \tjump if false (offset: 7, to byte 31)
-24 \tpush_string (value: 'no')
-28 \tjump (offset: 35, to byte 66)
-31 \tget_value (index: 0)
-33 \tpush_integer (value: 2)
-38 \tint_lt
-39 \tnot
-40 \tjump if false (offset: 23, to byte 66)
-43 \tpush_string (value: 'value captured is ')
-63 \tget_value (index: 0)
-65 \tstr_concat
-66 \tret
+1 \t=== function chunk: main ===
+7 \tpush_integer (value: 2)
+12 \tset_value (index: 0)
+14 \tget_value (index: 0)
+16 \tpush_integer (value: 1)
+21 \teq
+22 \tjump if false (offset: 7, to byte 32)
+25 \tpush_string (value: 'no')
+29 \tjump (offset: 35, to byte 67)
+32 \tget_value (index: 0)
+34 \tpush_integer (value: 2)
+39 \tint_lt
+40 \tnot
+41 \tjump if false (offset: 23, to byte 67)
+44 \tpush_string (value: 'value captured is ')
+64 \tget_value (index: 0)
+66 \tstr_concat
+67 \tret
 """
 
 [output.vm]
-bytes_read = 61
+bytes_read = 62
 instructions_executed = 16
 jumps_performed = 1
 max_stack_height = 3

@@ -13,35 +13,36 @@ result = "yes"
 type = "string"
 
 [output.compiler]
-bytecode = "[38, 4, 109, 97, 105, 110, 29, 0, 0, 0, 2, 21, 0, 20, 0, 29, 0, 0, 0, 1, 17, 46, 0, 7, 30, 2, 110, 111, 44, 0, 39, 20, 0, 29, 0, 0, 0, 2, 17, 46, 0, 8, 30, 3, 121, 101, 115, 44, 0, 20, 20, 0, 29, 0, 0, 0, 3, 17, 46, 0, 9, 30, 7, 97, 108, 115, 111, 32, 110, 111, 40]"
-bytecode_length = 71
+bytecode = "[0, 38, 4, 109, 97, 105, 110, 29, 0, 0, 0, 2, 21, 0, 20, 0, 29, 0, 0, 0, 1, 17, 46, 0, 7, 30, 2, 110, 111, 44, 0, 39, 20, 0, 29, 0, 0, 0, 2, 17, 46, 0, 8, 30, 3, 121, 101, 115, 44, 0, 20, 20, 0, 29, 0, 0, 0, 3, 17, 46, 0, 9, 30, 7, 97, 108, 115, 111, 32, 110, 111, 40]"
+bytecode_length = 72
 disassembled = """
+0 \tComponent Count: 0
 
-0 \t=== function chunk: main ===
-6 \tpush_integer (value: 2)
-11 \tset_value (index: 0)
-13 \tget_value (index: 0)
-15 \tpush_integer (value: 1)
-20 \teq
-21 \tjump if false (offset: 7, to byte 31)
-24 \tpush_string (value: 'no')
-28 \tjump (offset: 39, to byte 70)
-31 \tget_value (index: 0)
-33 \tpush_integer (value: 2)
-38 \teq
-39 \tjump if false (offset: 8, to byte 50)
-42 \tpush_string (value: 'yes')
-47 \tjump (offset: 20, to byte 70)
-50 \tget_value (index: 0)
-52 \tpush_integer (value: 3)
-57 \teq
-58 \tjump if false (offset: 9, to byte 70)
-61 \tpush_string (value: 'also no')
-70 \tret
+1 \t=== function chunk: main ===
+7 \tpush_integer (value: 2)
+12 \tset_value (index: 0)
+14 \tget_value (index: 0)
+16 \tpush_integer (value: 1)
+21 \teq
+22 \tjump if false (offset: 7, to byte 32)
+25 \tpush_string (value: 'no')
+29 \tjump (offset: 39, to byte 71)
+32 \tget_value (index: 0)
+34 \tpush_integer (value: 2)
+39 \teq
+40 \tjump if false (offset: 8, to byte 51)
+43 \tpush_string (value: 'yes')
+48 \tjump (offset: 20, to byte 71)
+51 \tget_value (index: 0)
+53 \tpush_integer (value: 3)
+58 \teq
+59 \tjump if false (offset: 9, to byte 71)
+62 \tpush_string (value: 'also no')
+71 \tret
 """
 
 [output.vm]
-bytes_read = 45
+bytes_read = 46
 instructions_executed = 14
 jumps_performed = 2
 max_stack_height = 3

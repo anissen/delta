@@ -7,19 +7,20 @@ result = "0"
 type = "integer"
 
 [output.compiler]
-bytecode = "[38, 4, 109, 97, 105, 110, 29, 0, 0, 0, 4, 29, 0, 0, 0, 2, 4, 40]"
-bytecode_length = 18
+bytecode = "[0, 38, 4, 109, 97, 105, 110, 29, 0, 0, 0, 4, 29, 0, 0, 0, 2, 4, 40]"
+bytecode_length = 19
 disassembled = """
+0 \tComponent Count: 0
 
-0 \t=== function chunk: main ===
-6 \tpush_integer (value: 4)
-11 \tpush_integer (value: 2)
-16 \tint_mod
-17 \tret
+1 \t=== function chunk: main ===
+7 \tpush_integer (value: 4)
+12 \tpush_integer (value: 2)
+17 \tint_mod
+18 \tret
 """
 
 [output.vm]
-bytes_read = 19
+bytes_read = 20
 instructions_executed = 5
 jumps_performed = 0
 max_stack_height = 2

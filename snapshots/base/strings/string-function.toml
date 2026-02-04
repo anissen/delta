@@ -10,27 +10,28 @@ result = "true"
 type = "boolean"
 
 [output.compiler]
-bytecode = "[37, 4, 105, 115, 95, 53, 1, 0, 35, 38, 4, 109, 97, 105, 110, 39, 0, 1, 21, 0, 29, 0, 0, 0, 5, 41, 1, 0, 0, 4, 105, 115, 95, 53, 40, 38, 4, 105, 115, 95, 53, 20, 0, 29, 0, 0, 0, 5, 17, 40]"
-bytecode_length = 50
+bytecode = "[0, 37, 4, 105, 115, 95, 53, 1, 0, 36, 38, 4, 109, 97, 105, 110, 39, 0, 1, 21, 0, 29, 0, 0, 0, 5, 41, 1, 0, 0, 4, 105, 115, 95, 53, 40, 38, 4, 105, 115, 95, 53, 20, 0, 29, 0, 0, 0, 5, 17, 40]"
+bytecode_length = 51
 disassembled = """
-0 \tfunction signature (name: is_5) (local count: 1) (function position: 35)
+0 \tComponent Count: 0
+1 \tfunction signature (name: is_5) (local count: 1) (function position: 36)
 
-9 \t=== function chunk: main ===
-15 \tfunction (function index: 0) (params: 1)
-18 \tset_value (index: 0)
-20 \tpush_integer (value: 5)
-25 \tcall is_5 (is_global: 0) (arg count: 1, function index: 0)
-34 \tret
+10 \t=== function chunk: main ===
+16 \tfunction (function index: 0) (params: 1)
+19 \tset_value (index: 0)
+21 \tpush_integer (value: 5)
+26 \tcall is_5 (is_global: 0) (arg count: 1, function index: 0)
+35 \tret
 
-35 \t=== function chunk: is_5 ===
-41 \tget_value (index: 0)
-43 \tpush_integer (value: 5)
-48 \teq
-49 \tret
+36 \t=== function chunk: is_5 ===
+42 \tget_value (index: 0)
+44 \tpush_integer (value: 5)
+49 \teq
+50 \tret
 """
 
 [output.vm]
-bytes_read = 51
+bytes_read = 52
 instructions_executed = 11
 jumps_performed = 0
 max_stack_height = 4

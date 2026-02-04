@@ -10,24 +10,25 @@ result = "3"
 type = "integer"
 
 [output.compiler]
-bytecode = "[38, 4, 109, 97, 105, 110, 28, 64, 83, 51, 51, 21, 0, 20, 0, 28, 0, 0, 0, 0, 13, 19, 46, 0, 5, 29, 0, 0, 0, 3, 40]"
-bytecode_length = 31
+bytecode = "[0, 38, 4, 109, 97, 105, 110, 28, 64, 83, 51, 51, 21, 0, 20, 0, 28, 0, 0, 0, 0, 13, 19, 46, 0, 5, 29, 0, 0, 0, 3, 40]"
+bytecode_length = 32
 disassembled = """
+0 \tComponent Count: 0
 
-0 \t=== function chunk: main ===
-6 \tpush_float (value: 3.3)
-11 \tset_value (index: 0)
-13 \tget_value (index: 0)
-15 \tpush_float (value: 0)
-20 \tfloat_lte
-21 \tnot
-22 \tjump if false (offset: 5, to byte 30)
-25 \tpush_integer (value: 3)
-30 \tret
+1 \t=== function chunk: main ===
+7 \tpush_float (value: 3.3)
+12 \tset_value (index: 0)
+14 \tget_value (index: 0)
+16 \tpush_float (value: 0)
+21 \tfloat_lte
+22 \tnot
+23 \tjump if false (offset: 5, to byte 31)
+26 \tpush_integer (value: 3)
+31 \tret
 """
 
 [output.vm]
-bytes_read = 32
+bytes_read = 33
 instructions_executed = 10
 jumps_performed = 0
 max_stack_height = 3

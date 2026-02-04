@@ -15,39 +15,40 @@ result = ":yellow(4)"
 type = "tag"
 
 [output.compiler]
-bytecode = "[37, 15, 115, 116, 111, 112, 108, 105, 103, 104, 116, 95, 99, 111, 108, 111, 114, 1, 0, 57, 38, 4, 109, 97, 105, 110, 39, 0, 1, 21, 0, 28, 0, 0, 0, 0, 41, 1, 0, 0, 15, 115, 116, 111, 112, 108, 105, 103, 104, 116, 95, 99, 111, 108, 111, 114, 40, 38, 15, 115, 116, 111, 112, 108, 105, 103, 104, 116, 95, 99, 111, 108, 111, 114, 20, 0, 28, 0, 0, 0, 0, 13, 19, 46, 0, 9, 33, 4, 58, 114, 101, 100, 44, 0, 36, 20, 0, 28, 0, 0, 0, 0, 17, 46, 0, 17, 29, 0, 0, 0, 4, 34, 7, 58, 121, 101, 108, 108, 111, 119, 44, 0, 8, 33, 6, 58, 103, 114, 101, 101, 110, 40]"
-bytecode_length = 132
+bytecode = "[0, 37, 15, 115, 116, 111, 112, 108, 105, 103, 104, 116, 95, 99, 111, 108, 111, 114, 1, 0, 58, 38, 4, 109, 97, 105, 110, 39, 0, 1, 21, 0, 28, 0, 0, 0, 0, 41, 1, 0, 0, 15, 115, 116, 111, 112, 108, 105, 103, 104, 116, 95, 99, 111, 108, 111, 114, 40, 38, 15, 115, 116, 111, 112, 108, 105, 103, 104, 116, 95, 99, 111, 108, 111, 114, 20, 0, 28, 0, 0, 0, 0, 13, 19, 46, 0, 9, 33, 4, 58, 114, 101, 100, 44, 0, 36, 20, 0, 28, 0, 0, 0, 0, 17, 46, 0, 17, 29, 0, 0, 0, 4, 34, 7, 58, 121, 101, 108, 108, 111, 119, 44, 0, 8, 33, 6, 58, 103, 114, 101, 101, 110, 40]"
+bytecode_length = 133
 disassembled = """
-0 \tfunction signature (name: stoplight_color) (local count: 1) (function position: 57)
+0 \tComponent Count: 0
+1 \tfunction signature (name: stoplight_color) (local count: 1) (function position: 58)
 
-20 \t=== function chunk: main ===
-26 \tfunction (function index: 0) (params: 1)
-29 \tset_value (index: 0)
-31 \tpush_float (value: 0)
-36 \tcall stoplight_color (is_global: 0) (arg count: 1, function index: 0)
-56 \tret
+21 \t=== function chunk: main ===
+27 \tfunction (function index: 0) (params: 1)
+30 \tset_value (index: 0)
+32 \tpush_float (value: 0)
+37 \tcall stoplight_color (is_global: 0) (arg count: 1, function index: 0)
+57 \tret
 
-57 \t=== function chunk: stoplight_color ===
-74 \tget_value (index: 0)
-76 \tpush_float (value: 0)
-81 \tfloat_lte
-82 \tnot
-83 \tjump if false (offset: 9, to byte 95)
-86 \tpush_simple_tag (value: ':red')
-92 \tjump (offset: 36, to byte 131)
-95 \tget_value (index: 0)
-97 \tpush_float (value: 0)
-102 \teq
-103 \tjump if false (offset: 17, to byte 123)
-106 \tpush_integer (value: 4)
-111 \tpush_tag (value: ':yellow')
-120 \tjump (offset: 8, to byte 131)
-123 \tpush_simple_tag (value: ':green')
-131 \tret
+58 \t=== function chunk: stoplight_color ===
+75 \tget_value (index: 0)
+77 \tpush_float (value: 0)
+82 \tfloat_lte
+83 \tnot
+84 \tjump if false (offset: 9, to byte 96)
+87 \tpush_simple_tag (value: ':red')
+93 \tjump (offset: 36, to byte 132)
+96 \tget_value (index: 0)
+98 \tpush_float (value: 0)
+103 \teq
+104 \tjump if false (offset: 17, to byte 124)
+107 \tpush_integer (value: 4)
+112 \tpush_tag (value: ':yellow')
+121 \tjump (offset: 8, to byte 132)
+124 \tpush_simple_tag (value: ':green')
+132 \tret
 """
 
 [output.vm]
-bytes_read = 116
+bytes_read = 117
 instructions_executed = 20
 jumps_performed = 2
 max_stack_height = 4

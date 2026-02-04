@@ -17,47 +17,48 @@ result = "yes"
 type = "string"
 
 [output.compiler]
-bytecode = "[37, 5, 109, 97, 116, 99, 104, 1, 0, 46, 38, 4, 109, 97, 105, 110, 39, 0, 1, 21, 0, 29, 0, 0, 0, 5, 34, 7, 58, 121, 101, 108, 108, 111, 119, 41, 1, 0, 0, 5, 109, 97, 116, 99, 104, 40, 38, 5, 109, 97, 116, 99, 104, 20, 0, 29, 0, 0, 0, 0, 34, 7, 58, 121, 101, 108, 108, 111, 119, 17, 46, 0, 7, 30, 2, 110, 111, 44, 0, 68, 20, 0, 29, 0, 0, 0, 3, 34, 7, 58, 121, 101, 108, 108, 111, 119, 17, 46, 0, 11, 30, 6, 97, 108, 109, 111, 115, 116, 44, 0, 37, 20, 0, 29, 0, 0, 0, 5, 34, 7, 58, 121, 101, 108, 108, 111, 119, 17, 46, 0, 8, 30, 3, 121, 101, 115, 44, 0, 9, 30, 7, 97, 108, 115, 111, 32, 110, 111, 40]"
-bytecode_length = 149
+bytecode = "[0, 37, 5, 109, 97, 116, 99, 104, 1, 0, 47, 38, 4, 109, 97, 105, 110, 39, 0, 1, 21, 0, 29, 0, 0, 0, 5, 34, 7, 58, 121, 101, 108, 108, 111, 119, 41, 1, 0, 0, 5, 109, 97, 116, 99, 104, 40, 38, 5, 109, 97, 116, 99, 104, 20, 0, 29, 0, 0, 0, 0, 34, 7, 58, 121, 101, 108, 108, 111, 119, 17, 46, 0, 7, 30, 2, 110, 111, 44, 0, 68, 20, 0, 29, 0, 0, 0, 3, 34, 7, 58, 121, 101, 108, 108, 111, 119, 17, 46, 0, 11, 30, 6, 97, 108, 109, 111, 115, 116, 44, 0, 37, 20, 0, 29, 0, 0, 0, 5, 34, 7, 58, 121, 101, 108, 108, 111, 119, 17, 46, 0, 8, 30, 3, 121, 101, 115, 44, 0, 9, 30, 7, 97, 108, 115, 111, 32, 110, 111, 40]"
+bytecode_length = 150
 disassembled = """
-0 \tfunction signature (name: match) (local count: 1) (function position: 46)
+0 \tComponent Count: 0
+1 \tfunction signature (name: match) (local count: 1) (function position: 47)
 
-10 \t=== function chunk: main ===
-16 \tfunction (function index: 0) (params: 1)
-19 \tset_value (index: 0)
-21 \tpush_integer (value: 5)
-26 \tpush_tag (value: ':yellow')
-35 \tcall match (is_global: 0) (arg count: 1, function index: 0)
-45 \tret
+11 \t=== function chunk: main ===
+17 \tfunction (function index: 0) (params: 1)
+20 \tset_value (index: 0)
+22 \tpush_integer (value: 5)
+27 \tpush_tag (value: ':yellow')
+36 \tcall match (is_global: 0) (arg count: 1, function index: 0)
+46 \tret
 
-46 \t=== function chunk: match ===
-53 \tget_value (index: 0)
-55 \tpush_integer (value: 0)
-60 \tpush_tag (value: ':yellow')
-69 \teq
-70 \tjump if false (offset: 7, to byte 80)
-73 \tpush_string (value: 'no')
-77 \tjump (offset: 68, to byte 148)
-80 \tget_value (index: 0)
-82 \tpush_integer (value: 3)
-87 \tpush_tag (value: ':yellow')
-96 \teq
-97 \tjump if false (offset: 11, to byte 111)
-100 \tpush_string (value: 'almost')
-108 \tjump (offset: 37, to byte 148)
-111 \tget_value (index: 0)
-113 \tpush_integer (value: 5)
-118 \tpush_tag (value: ':yellow')
-127 \teq
-128 \tjump if false (offset: 8, to byte 139)
-131 \tpush_string (value: 'yes')
-136 \tjump (offset: 9, to byte 148)
-139 \tpush_string (value: 'also no')
-148 \tret
+47 \t=== function chunk: match ===
+54 \tget_value (index: 0)
+56 \tpush_integer (value: 0)
+61 \tpush_tag (value: ':yellow')
+70 \teq
+71 \tjump if false (offset: 7, to byte 81)
+74 \tpush_string (value: 'no')
+78 \tjump (offset: 68, to byte 149)
+81 \tget_value (index: 0)
+83 \tpush_integer (value: 3)
+88 \tpush_tag (value: ':yellow')
+97 \teq
+98 \tjump if false (offset: 11, to byte 112)
+101 \tpush_string (value: 'almost')
+109 \tjump (offset: 37, to byte 149)
+112 \tget_value (index: 0)
+114 \tpush_integer (value: 5)
+119 \tpush_tag (value: ':yellow')
+128 \teq
+129 \tjump if false (offset: 8, to byte 140)
+132 \tpush_string (value: 'yes')
+137 \tjump (offset: 9, to byte 149)
+140 \tpush_string (value: 'also no')
+149 \tret
 """
 
 [output.vm]
-bytes_read = 123
+bytes_read = 124
 instructions_executed = 26
 jumps_performed = 3
 max_stack_height = 4

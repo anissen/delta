@@ -21,59 +21,60 @@ result = "result is 'oh yes'"
 type = "string"
 
 [output.compiler]
-bytecode = "[38, 4, 109, 97, 105, 110, 29, 0, 0, 0, 2, 21, 0, 20, 0, 29, 0, 0, 0, 4, 17, 46, 0, 9, 30, 4, 110, 111, 112, 101, 44, 0, 87, 20, 0, 29, 0, 0, 0, 3, 17, 46, 0, 7, 30, 2, 110, 111, 44, 0, 69, 20, 0, 29, 0, 0, 0, 2, 17, 46, 0, 38, 26, 21, 0, 20, 0, 26, 17, 46, 0, 11, 30, 6, 111, 104, 32, 121, 101, 115, 44, 0, 14, 20, 0, 27, 17, 46, 0, 7, 30, 5, 111, 104, 32, 110, 111, 44, 0, 20, 20, 0, 29, 0, 0, 0, 1, 17, 46, 0, 9, 30, 7, 97, 108, 115, 111, 32, 110, 111, 21, 0, 30, 11, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 39, 20, 0, 14, 30, 1, 39, 14, 40]"
-bytecode_length = 143
+bytecode = "[0, 38, 4, 109, 97, 105, 110, 29, 0, 0, 0, 2, 21, 0, 20, 0, 29, 0, 0, 0, 4, 17, 46, 0, 9, 30, 4, 110, 111, 112, 101, 44, 0, 87, 20, 0, 29, 0, 0, 0, 3, 17, 46, 0, 7, 30, 2, 110, 111, 44, 0, 69, 20, 0, 29, 0, 0, 0, 2, 17, 46, 0, 38, 26, 21, 0, 20, 0, 26, 17, 46, 0, 11, 30, 6, 111, 104, 32, 121, 101, 115, 44, 0, 14, 20, 0, 27, 17, 46, 0, 7, 30, 5, 111, 104, 32, 110, 111, 44, 0, 20, 20, 0, 29, 0, 0, 0, 1, 17, 46, 0, 9, 30, 7, 97, 108, 115, 111, 32, 110, 111, 21, 0, 30, 11, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 39, 20, 0, 14, 30, 1, 39, 14, 40]"
+bytecode_length = 144
 disassembled = """
+0 \tComponent Count: 0
 
-0 \t=== function chunk: main ===
-6 \tpush_integer (value: 2)
-11 \tset_value (index: 0)
-13 \tget_value (index: 0)
-15 \tpush_integer (value: 4)
-20 \teq
-21 \tjump if false (offset: 9, to byte 33)
-24 \tpush_string (value: 'nope')
-30 \tjump (offset: 87, to byte 120)
-33 \tget_value (index: 0)
-35 \tpush_integer (value: 3)
-40 \teq
-41 \tjump if false (offset: 7, to byte 51)
-44 \tpush_string (value: 'no')
-48 \tjump (offset: 69, to byte 120)
-51 \tget_value (index: 0)
-53 \tpush_integer (value: 2)
-58 \teq
-59 \tjump if false (offset: 38, to byte 100)
-62 \tpush_true
-63 \tset_value (index: 0)
-65 \tget_value (index: 0)
-67 \tpush_true
-68 \teq
-69 \tjump if false (offset: 11, to byte 83)
-72 \tpush_string (value: 'oh yes')
-80 \tjump (offset: 14, to byte 97)
-83 \tget_value (index: 0)
-85 \tpush_false
-86 \teq
-87 \tjump if false (offset: 7, to byte 97)
-90 \tpush_string (value: 'oh no')
-97 \tjump (offset: 20, to byte 120)
-100 \tget_value (index: 0)
-102 \tpush_integer (value: 1)
-107 \teq
-108 \tjump if false (offset: 9, to byte 120)
-111 \tpush_string (value: 'also no')
-120 \tset_value (index: 0)
-122 \tpush_string (value: 'result is '')
-135 \tget_value (index: 0)
-137 \tstr_concat
-138 \tpush_string (value: ''')
-141 \tstr_concat
-142 \tret
+1 \t=== function chunk: main ===
+7 \tpush_integer (value: 2)
+12 \tset_value (index: 0)
+14 \tget_value (index: 0)
+16 \tpush_integer (value: 4)
+21 \teq
+22 \tjump if false (offset: 9, to byte 34)
+25 \tpush_string (value: 'nope')
+31 \tjump (offset: 87, to byte 121)
+34 \tget_value (index: 0)
+36 \tpush_integer (value: 3)
+41 \teq
+42 \tjump if false (offset: 7, to byte 52)
+45 \tpush_string (value: 'no')
+49 \tjump (offset: 69, to byte 121)
+52 \tget_value (index: 0)
+54 \tpush_integer (value: 2)
+59 \teq
+60 \tjump if false (offset: 38, to byte 101)
+63 \tpush_true
+64 \tset_value (index: 0)
+66 \tget_value (index: 0)
+68 \tpush_true
+69 \teq
+70 \tjump if false (offset: 11, to byte 84)
+73 \tpush_string (value: 'oh yes')
+81 \tjump (offset: 14, to byte 98)
+84 \tget_value (index: 0)
+86 \tpush_false
+87 \teq
+88 \tjump if false (offset: 7, to byte 98)
+91 \tpush_string (value: 'oh no')
+98 \tjump (offset: 20, to byte 121)
+101 \tget_value (index: 0)
+103 \tpush_integer (value: 1)
+108 \teq
+109 \tjump if false (offset: 9, to byte 121)
+112 \tpush_string (value: 'also no')
+121 \tset_value (index: 0)
+123 \tpush_string (value: 'result is '')
+136 \tget_value (index: 0)
+138 \tstr_concat
+139 \tpush_string (value: ''')
+142 \tstr_concat
+143 \tret
 """
 
 [output.vm]
-bytes_read = 94
+bytes_read = 95
 instructions_executed = 31
 jumps_performed = 4
 max_stack_height = 3

@@ -7,21 +7,22 @@ result = "false"
 type = "boolean"
 
 [output.compiler]
-bytecode = "[38, 4, 109, 97, 105, 110, 29, 0, 0, 0, 1, 29, 0, 0, 0, 1, 0, 29, 0, 0, 0, 3, 17, 40]"
-bytecode_length = 24
+bytecode = "[0, 38, 4, 109, 97, 105, 110, 29, 0, 0, 0, 1, 29, 0, 0, 0, 1, 0, 29, 0, 0, 0, 3, 17, 40]"
+bytecode_length = 25
 disassembled = """
+0 \tComponent Count: 0
 
-0 \t=== function chunk: main ===
-6 \tpush_integer (value: 1)
-11 \tpush_integer (value: 1)
-16 \tint_add
-17 \tpush_integer (value: 3)
-22 \teq
-23 \tret
+1 \t=== function chunk: main ===
+7 \tpush_integer (value: 1)
+12 \tpush_integer (value: 1)
+17 \tint_add
+18 \tpush_integer (value: 3)
+23 \teq
+24 \tret
 """
 
 [output.vm]
-bytes_read = 25
+bytes_read = 26
 instructions_executed = 7
 jumps_performed = 0
 max_stack_height = 2

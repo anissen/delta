@@ -7,23 +7,24 @@ result = "Hello 21"
 type = "string"
 
 [output.compiler]
-bytecode = "[38, 4, 109, 97, 105, 110, 30, 6, 72, 101, 108, 108, 111, 32, 29, 0, 0, 0, 40, 29, 0, 0, 0, 2, 0, 29, 0, 0, 0, 2, 2, 14, 40]"
-bytecode_length = 33
+bytecode = "[0, 38, 4, 109, 97, 105, 110, 30, 6, 72, 101, 108, 108, 111, 32, 29, 0, 0, 0, 40, 29, 0, 0, 0, 2, 0, 29, 0, 0, 0, 2, 2, 14, 40]"
+bytecode_length = 34
 disassembled = """
+0 \tComponent Count: 0
 
-0 \t=== function chunk: main ===
-6 \tpush_string (value: 'Hello ')
-14 \tpush_integer (value: 40)
-19 \tpush_integer (value: 2)
-24 \tint_add
-25 \tpush_integer (value: 2)
-30 \tint_div
-31 \tstr_concat
-32 \tret
+1 \t=== function chunk: main ===
+7 \tpush_string (value: 'Hello ')
+15 \tpush_integer (value: 40)
+20 \tpush_integer (value: 2)
+25 \tint_add
+26 \tpush_integer (value: 2)
+31 \tint_div
+32 \tstr_concat
+33 \tret
 """
 
 [output.vm]
-bytes_read = 34
+bytes_read = 35
 instructions_executed = 9
 jumps_performed = 0
 max_stack_height = 3

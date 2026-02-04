@@ -10,32 +10,33 @@ result = "result is 42!"
 type = "string"
 
 [output.compiler]
-bytecode = "[37, 3, 97, 100, 100, 2, 0, 55, 38, 4, 109, 97, 105, 110, 39, 0, 2, 21, 0, 30, 10, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 29, 0, 0, 0, 40, 29, 0, 0, 0, 2, 41, 2, 0, 0, 3, 97, 100, 100, 14, 30, 1, 33, 14, 40, 38, 3, 97, 100, 100, 20, 0, 20, 1, 0, 40]"
-bytecode_length = 66
+bytecode = "[0, 37, 3, 97, 100, 100, 2, 0, 56, 38, 4, 109, 97, 105, 110, 39, 0, 2, 21, 0, 30, 10, 114, 101, 115, 117, 108, 116, 32, 105, 115, 32, 29, 0, 0, 0, 40, 29, 0, 0, 0, 2, 41, 2, 0, 0, 3, 97, 100, 100, 14, 30, 1, 33, 14, 40, 38, 3, 97, 100, 100, 20, 0, 20, 1, 0, 40]"
+bytecode_length = 67
 disassembled = """
-0 \tfunction signature (name: add) (local count: 2) (function position: 55)
+0 \tComponent Count: 0
+1 \tfunction signature (name: add) (local count: 2) (function position: 56)
 
-8 \t=== function chunk: main ===
-14 \tfunction (function index: 0) (params: 2)
-17 \tset_value (index: 0)
-19 \tpush_string (value: 'result is ')
-31 \tpush_integer (value: 40)
-36 \tpush_integer (value: 2)
-41 \tcall add (is_global: 0) (arg count: 2, function index: 0)
-49 \tstr_concat
-50 \tpush_string (value: '!')
-53 \tstr_concat
-54 \tret
+9 \t=== function chunk: main ===
+15 \tfunction (function index: 0) (params: 2)
+18 \tset_value (index: 0)
+20 \tpush_string (value: 'result is ')
+32 \tpush_integer (value: 40)
+37 \tpush_integer (value: 2)
+42 \tcall add (is_global: 0) (arg count: 2, function index: 0)
+50 \tstr_concat
+51 \tpush_string (value: '!')
+54 \tstr_concat
+55 \tret
 
-55 \t=== function chunk: add ===
-60 \tget_value (index: 0)
-62 \tget_value (index: 1)
-64 \tint_add
-65 \tret
+56 \t=== function chunk: add ===
+61 \tget_value (index: 0)
+63 \tget_value (index: 1)
+65 \tint_add
+66 \tret
 """
 
 [output.vm]
-bytes_read = 67
+bytes_read = 68
 instructions_executed = 16
 jumps_performed = 0
 max_stack_height = 6

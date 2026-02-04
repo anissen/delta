@@ -7,25 +7,26 @@ result = "15"
 type = "integer"
 
 [output.compiler]
-bytecode = "[38, 4, 109, 97, 105, 110, 29, 0, 0, 0, 1, 29, 0, 0, 0, 2, 0, 29, 0, 0, 0, 3, 0, 29, 0, 0, 0, 4, 0, 29, 0, 0, 0, 5, 0, 40]"
-bytecode_length = 36
+bytecode = "[0, 38, 4, 109, 97, 105, 110, 29, 0, 0, 0, 1, 29, 0, 0, 0, 2, 0, 29, 0, 0, 0, 3, 0, 29, 0, 0, 0, 4, 0, 29, 0, 0, 0, 5, 0, 40]"
+bytecode_length = 37
 disassembled = """
+0 \tComponent Count: 0
 
-0 \t=== function chunk: main ===
-6 \tpush_integer (value: 1)
-11 \tpush_integer (value: 2)
-16 \tint_add
-17 \tpush_integer (value: 3)
-22 \tint_add
-23 \tpush_integer (value: 4)
-28 \tint_add
-29 \tpush_integer (value: 5)
-34 \tint_add
-35 \tret
+1 \t=== function chunk: main ===
+7 \tpush_integer (value: 1)
+12 \tpush_integer (value: 2)
+17 \tint_add
+18 \tpush_integer (value: 3)
+23 \tint_add
+24 \tpush_integer (value: 4)
+29 \tint_add
+30 \tpush_integer (value: 5)
+35 \tint_add
+36 \tret
 """
 
 [output.vm]
-bytes_read = 37
+bytes_read = 38
 instructions_executed = 11
 jumps_performed = 0
 max_stack_height = 2
