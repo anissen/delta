@@ -9,6 +9,7 @@ use crate::expressions::{
 };
 use crate::program::Context;
 use crate::tokens::{Position, Token};
+use crate::unification::Type;
 
 #[derive(Debug, Clone)]
 struct FunctionChunk<'a> {
@@ -736,9 +737,22 @@ impl<'a> Codegen<'a> {
             header_builder.add_byte(component_metadata.properties.len() as u8);
             for property in component_metadata.properties.iter() {
                 header_builder.add_string(&property.name.lexeme);
-                let type_id: u8 = 0; // TODO(anissen): Implement type id mapping
+                let type_id: u8 = match property.type_ {
+                    // TODO(anissen): Implement this convertion on `Type`
+                    Type::Boolean => 0,
+                    Type::Integer => 1,
+                    Type::Float => 2,
+                    Type::String => 3,
+                    _ => panic!("Unknown type"),
+                };
                 header_builder.add_byte(type_id);
-                let size: u16 = 4; // TODO(anissen): Implement size mapping
+                let size: u16 = match property.type_ {
+                    // TODO(anissen): Implement this method on `Type`
+                    Type::Boolean => 1,
+                    Type::Integer => 4,
+                    Type::Float => 4,
+                    _ => panic!("Unknown/unhandled type"),
+                };
                 header_builder.add_u16(&size);
             }
         }

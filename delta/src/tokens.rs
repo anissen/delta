@@ -18,6 +18,7 @@ pub enum TokenKind {
     KeywordComponent,
     KeywordCreate,
     KeywordF32,
+    KeywordI32,
     KeywordNot,
     KeywordOr,
     KeywordIs,

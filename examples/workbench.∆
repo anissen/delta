@@ -60,8 +60,8 @@
 # - Shorthand for partial `is`?
 
 component Position { x f32, y f32 }
-component Velocity { dx f32, dy f32 }
-component Blah { xxx f32 }
+component Velocity { dx f32, dy f32, dz i32 }
+component Blah { xxx i32 }
 component Marker
 
 # ∆ | new [Position { x 32.0, y 64.0 }, Velocity { dx 1.0, dy 0.5 }]
@@ -82,10 +82,10 @@ component Marker
 
 # should this be [...] | create ?
 # create [45, 66]
-create [Velocity { dx 0.1, dy 5.5 }, Position { x 11.0, y 22.0 }, Marker]
-create [Position { x 141.0, y 422.0 }, Marker]
-create [Position { x 1.0, y 2.0 }, Blah { xxx 1.0 }]
-create [Position { x 32.0, y 64.0 }, Velocity { dx 1.0, dy 0.5 }]
+create [Velocity { dx 0.1, dy 5.5, dz 10 }, Position { x 11.0, y 22.0, z 33 }, Marker]
+create [Position { x 141.0, y 422.0, z 555 }, Marker]
+create [Position { x 1.0, y 2.0 }, Blah { xxx 1 }]
+create [Position { x 32.0, y 64.0 }, Velocity { dx 1.0, dy 0.5, dz 3 }]
 
 do_stuff = \v
 	query
@@ -93,7 +93,7 @@ do_stuff = \v
 			("ONLY position, value: ({p.x}, {p.y})") | log
 	query
 		Position p, Velocity v
-			("position is ({p.x}, {p.y}), velocity is ({v.dx}, {v.dy})") | log
+			("position is ({p.x}, {p.y}), velocity is ({v.dx}, {v.dy}, {v.dz})") | log
 	query
 		Blah x
 			("blah is ({x.xxx})") | log

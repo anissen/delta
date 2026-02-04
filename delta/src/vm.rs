@@ -731,6 +731,17 @@ impl VirtualMachine {
                                         let property = &properties[index];
                                         match field.type_id {
                                             0 => match property {
+                                                Value::True => bytes.push(1),
+                                                Value::False => bytes.push(0),
+                                                _ => panic!("Expected boolean property"),
+                                            },
+                                            1 => match property {
+                                                Value::Integer(value) => {
+                                                    bytes.extend_from_slice(&value.to_be_bytes());
+                                                }
+                                                _ => panic!("Expected integer property"),
+                                            },
+                                            2 => match property {
                                                 Value::Float(value) => {
                                                     bytes.extend_from_slice(&value.to_be_bytes());
                                                 }
@@ -1010,16 +1021,12 @@ fn read_f32(b: &[u8]) -> f32 {
     f32::from_be_bytes(b.try_into().unwrap())
 }
 
-fn f32_bytes(x: f32) -> [u8; 4] {
-    x.to_be_bytes()
+fn read_i32(b: &[u8]) -> i32 {
+    i32::from_be_bytes(b.try_into().unwrap())
 }
 
-fn position(x: f32, y: f32) -> Vec<u8> {
-    [f32_bytes(x), f32_bytes(y)].concat()
-}
-
-fn velocity(dx: f32, dy: f32) -> Vec<u8> {
-    [f32_bytes(dx), f32_bytes(dy)].concat()
+fn read_byte(b: &[u8]) -> u8 {
+    b[0]
 }
 
 fn get_value_from_bytes(data: &[u8], layout: &ComponentLayout) -> Vec<Value> {
@@ -1032,9 +1039,16 @@ fn get_value_from_bytes(data: &[u8], layout: &ComponentLayout) -> Vec<Value> {
             let bytes = &data[offset..offset + size];
             offset += size;
             match field.type_id {
-                // 0 => Value::Integer(read_i32(bytes)),
-                0 => Value::Float(read_f32(bytes)),
-                // 2 => Value::String(read_string(bytes)),
+                0 => {
+                    if read_byte(bytes) != 0 {
+                        Value::True
+                    } else {
+                        Value::False
+                    }
+                }
+                1 => Value::Integer(read_i32(bytes)),
+                2 => Value::Float(read_f32(bytes)),
+                // 3 => Value::String(read_string(bytes)),
                 _ => panic!("unknown type id"),
             }
         })
