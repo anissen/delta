@@ -8,6 +8,7 @@ use crate::program::PersistentData;
 
 use elements::ComponentLayout;
 use elements::FieldLayout;
+use elements::world::QueryResult;
 
 // TODO(anissen): See https://github.com/brightly-salty/rox/blob/master/src/value.rs
 #[derive(Debug, Clone, PartialEq)]
@@ -212,7 +213,8 @@ impl VirtualMachine {
         }
 
         // Store query results as owned data (entity + owned component bytes) to avoid holding borrow on world
-        let mut query_entities = None;
+        let mut query_entities: Option<QueryResult> = None;
+        let mut active_entity = None;
 
         while self.program_counter < self.program.len() {
             let next = self.read_byte();
@@ -496,7 +498,6 @@ impl VirtualMachine {
                 }
 
                 ByteCode::SetFieldValue => {
-                    // TODO(anissen): This is untested -- this also needs to update the ECS world representation!
                     let index = self.read_byte();
                     let field_index = self.read_byte();
                     let stack_index = self.current_call_frame().stack_index;
@@ -513,8 +514,25 @@ impl VirtualMachine {
                             )
                         });
                     match object {
-                        Value::Component { id: _, properties } => {
-                            properties[field_index as usize] = new_value
+                        Value::Component { id, properties } => {
+                            // Update the world represetation
+                            if let Some(ref mut query) = query_entities {
+                                // Find the column for this component in the active query
+                                if let Some(column) =
+                                    query.columns.iter_mut().find(|c| c.id == *id as u32)
+                                {
+                                    let bytes = get_bytes_from_values(
+                                        &vec![new_value.clone()],
+                                        &column.layout,
+                                    );
+                                    column.insert(active_entity.unwrap(), &bytes);
+                                }
+                            } else {
+                                panic!("Trying to update component value without active query");
+                            }
+
+                            // Update the value on stack
+                            properties[field_index as usize] = new_value;
                         }
                         _ => panic!("Trying to get field value from non-object"),
                     };
@@ -684,6 +702,7 @@ impl VirtualMachine {
                     if let Some(ref mut result) = query_entities
                         && let Some(entity) = result.next()
                     {
+                        active_entity = Some(entity); // TODO(anissen): This is a hack
                         let stack_start = self.current_call_frame().stack_index;
                         let is_first_query_result = self.stack.len() as u8 == stack_start;
                         let components = result.columns.iter().map(|column| {
@@ -709,6 +728,7 @@ impl VirtualMachine {
                     } else if query_entities.is_some() {
                         // No query is active
                         query_entities = None;
+                        active_entity = None;
                         self.pop_query_frame();
                     }
                 }
@@ -726,31 +746,7 @@ impl VirtualMachine {
                                 if let Some(layout) =
                                     data.elements.world.get_component_layout(id as u32)
                                 {
-                                    let mut bytes = Vec::new();
-                                    layout.fields.iter().enumerate().for_each(|(index, field)| {
-                                        let property = &properties[index];
-                                        match field.type_id {
-                                            0 => match property {
-                                                Value::True => bytes.push(1),
-                                                Value::False => bytes.push(0),
-                                                _ => panic!("Expected boolean property"),
-                                            },
-                                            1 => match property {
-                                                Value::Integer(value) => {
-                                                    bytes.extend_from_slice(&value.to_be_bytes());
-                                                }
-                                                _ => panic!("Expected integer property"),
-                                            },
-                                            2 => match property {
-                                                Value::Float(value) => {
-                                                    bytes.extend_from_slice(&value.to_be_bytes());
-                                                }
-                                                _ => panic!("Expected float property"),
-                                            },
-                                            _ => panic!("Unsupported type"),
-                                        }
-                                    });
-
+                                    let bytes = get_bytes_from_values(&properties, layout);
                                     data.elements.world.insert(id as u32, entity, &bytes);
                                 }
                             }
@@ -1053,4 +1049,30 @@ fn get_value_from_bytes(data: &[u8], layout: &ComponentLayout) -> Vec<Value> {
             }
         })
         .collect()
+}
+
+fn get_bytes_from_values(values: &Vec<Value>, layout: &ComponentLayout) -> Vec<u8> {
+    let mut bytes = Vec::new();
+    layout.fields.iter().enumerate().for_each(|(index, field)| {
+        let value = &values[index];
+        match field.type_id {
+            0 => match value {
+                Value::True => bytes.push(1),
+                Value::False => bytes.push(0),
+                _ => panic!("Expected boolean property"),
+            },
+            1 => match value {
+                Value::Integer(value) => {
+                    bytes.extend_from_slice(&value.to_be_bytes());
+                }
+                _ => panic!("Expected integer property"),
+            },
+            2 => match value {
+                Value::Float(value) => bytes.extend_from_slice(&value.to_be_bytes()),
+                _ => panic!("Expected float property"),
+            },
+            _ => panic!("Unsupported type"),
+        }
+    });
+    bytes
 }

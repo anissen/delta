@@ -360,7 +360,8 @@ impl<'env> InferenceContext<'env> {
                 identifier: _,
                 field_name: _,
             } => {
-                todo!("Implement field access expression")
+                // todo!("Implement field access expression")
+                self.type_placeholder()
             }
 
             Expr::Context { name } => make_constructor(Type::Context, name.clone()),
@@ -510,11 +511,12 @@ impl<'env> InferenceContext<'env> {
                 _operator,
                 expr,
             } => {
+                let type_variable = self.type_placeholder();
                 match **target {
                     Expr::Identifier { ref name } => {
                         self.environment
                             .variables
-                            .insert(name.lexeme.clone(), UnificationType::Variable(50));
+                            .insert(name.lexeme.clone(), type_variable);
                     }
                     Expr::ContextIdentifier {
                         context: _,
@@ -522,7 +524,14 @@ impl<'env> InferenceContext<'env> {
                     } => {
                         self.environment
                             .variables
-                            .insert(name.lexeme.clone(), UnificationType::Variable(50));
+                            .insert(name.lexeme.clone(), type_variable);
+                    }
+                    Expr::FieldAccess {
+                        ref identifier,
+                        ref field_name,
+                    } => {
+                        let name = format!("{}.{}", identifier.lexeme, field_name.lexeme);
+                        self.environment.variables.insert(name, type_variable);
                     }
                     _ => panic!("Invalid assignment target"),
                 }
@@ -541,6 +550,13 @@ impl<'env> InferenceContext<'env> {
                         self.environment
                             .variables
                             .insert(name.lexeme.clone(), expr_type.clone());
+                    }
+                    Expr::FieldAccess {
+                        ref identifier,
+                        ref field_name,
+                    } => {
+                        let name = format!("{}.{}", identifier.lexeme, field_name.lexeme);
+                        self.environment.variables.insert(name, expr_type.clone());
                     }
                     _ => panic!("Invalid assignment target"),
                 }

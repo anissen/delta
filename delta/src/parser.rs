@@ -195,6 +195,10 @@ impl Parser {
                 | Expr::ContextIdentifier {
                     context: _,
                     name: _,
+                }
+                | Expr::FieldAccess {
+                    identifier: _,
+                    field_name: _,
                 } => {
                     let operator = self.previous();
                     let value = self.assignment()?;

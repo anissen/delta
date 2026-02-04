@@ -230,17 +230,24 @@ impl<'a> Codegen<'a> {
                     scope.bytecode.add_set_context_value(&name.lexeme);
                 }
                 Expr::FieldAccess {
-                    identifier: _,
-                    field_name: _,
+                    ref identifier,
+                    ref field_name,
                 } => {
-                    // self.emit_expr(expr, scope);
+                    self.emit_expr(expr, scope);
+                    let index = scope.environment.get(&identifier.lexeme).unwrap();
+                    let field_index = 0; // TODO(anissen): Implement!
+                    scope
+                        .bytecode
+                        .add_op(ByteCode::SetFieldValue)
+                        .add_byte(*index)
+                        .add_byte(field_index);
 
                     // let index = scope.locals.len() as u8;
                     // scope.environment.insert(name.lexeme.clone(), index);
                     // scope.locals.insert(name.lexeme.clone());
                     // scope.bytecode.add_set_local_value(index);
 
-                    todo!("not implemented");
+                    // todo!("not implemented");
                 }
 
                 _ => panic!("Invalid assignment target"),
