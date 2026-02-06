@@ -1054,24 +1054,6 @@ fn get_bytes_from_values(values: &Vec<Value>, layout: &ComponentLayout) -> Vec<u
         let value = &values[index];
         let value_bytes = get_bytes_from_value(value, field);
         bytes.extend_from_slice(&value_bytes);
-        // match field.type_id {
-        //     0 => match value {
-        //         Value::True => bytes.push(1),
-        //         Value::False => bytes.push(0),
-        //         _ => panic!("Expected boolean property"),
-        //     },
-        //     1 => match value {
-        //         Value::Integer(value) => {
-        //             bytes.extend_from_slice(&value.to_be_bytes());
-        //         }
-        //         _ => panic!("Expected integer property"),
-        //     },
-        //     2 => match value {
-        //         Value::Float(value) => bytes.extend_from_slice(&value.to_be_bytes()),
-        //         _ => panic!("Expected float property"),
-        //     },
-        //     _ => panic!("Unsupported type"),
-        // }
     });
     bytes
 }

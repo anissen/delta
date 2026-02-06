@@ -129,19 +129,8 @@ impl<'a> Codegen<'a> {
             } => {
                 let lexeme = &identifier.lexeme;
                 if let Some(index) = scope.environment.get(lexeme) {
-                    let component_name = scope
-                        .local_component_mapping
-                        .get(&identifier.lexeme)
-                        .unwrap();
-                    let component_properties = self.components.get(&component_name.lexeme).unwrap();
-                    let _component_id = component_properties.id;
-                    let field_access_index = component_properties
-                        .properties
-                        .iter()
-                        .enumerate()
-                        .find(|(_, field)| field.name.lexeme == field_name.lexeme)
-                        .map(|field_index| field_index.0)
-                        .unwrap();
+                    let field_access_index =
+                        self.get_component_field_index(scope, identifier, field_name);
                     scope
                         .bytecode
                         .add_get_field_value(*index, field_access_index as u8);
@@ -234,20 +223,8 @@ impl<'a> Codegen<'a> {
                     ref field_name,
                 } => {
                     self.emit_expr(expr, scope);
-                    // TODO(anissen): Consider DRY'ing this (it's also used in FieldAccess)
                     let index = scope.environment.get(&identifier.lexeme).unwrap();
-                    let component_name = scope
-                        .local_component_mapping
-                        .get(&identifier.lexeme)
-                        .unwrap();
-                    let component_properties = self.components.get(&component_name.lexeme).unwrap();
-                    let field_index = component_properties
-                        .properties
-                        .iter()
-                        .enumerate()
-                        .find(|(_, field)| field.name.lexeme == field_name.lexeme)
-                        .map(|field_index| field_index.0)
-                        .unwrap();
+                    let field_index = self.get_component_field_index(scope, identifier, field_name);
                     scope
                         .bytecode
                         .add_op(ByteCode::SetFieldValue)
@@ -296,6 +273,27 @@ impl<'a> Codegen<'a> {
                 scope.bytecode.add_op(ByteCode::Create);
             }
         };
+    }
+
+    fn get_component_field_index(
+        &mut self,
+        scope: &Scope,
+        component_identifier: &Token,
+        field_name: &Token,
+    ) -> usize {
+        let component_name = scope
+            .local_component_mapping
+            .get(&component_identifier.lexeme)
+            .unwrap();
+        let component_properties = self.components.get(&component_name.lexeme).unwrap();
+        let field_index = component_properties
+            .properties
+            .iter()
+            .enumerate()
+            .find(|(_, field)| field.name.lexeme == field_name.lexeme)
+            .map(|field_index| field_index.0)
+            .unwrap();
+        field_index
     }
 
     fn emit_value(&mut self, value: &'a ValueType, token: &'a Token, scope: &mut Scope) {
