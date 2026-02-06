@@ -281,7 +281,11 @@ impl World {
         };
 
         if !matching_entities.is_empty() {
-            QueryResult::new(matching_entities, include_columns)
+            let non_marker_include_columns = include_columns
+                .into_iter()
+                .filter(|c| c.layout.size != 0)
+                .collect();
+            QueryResult::new(matching_entities, non_marker_include_columns)
         } else {
             QueryResult::new(Vec::new(), Vec::new())
         }

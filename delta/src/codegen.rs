@@ -561,29 +561,46 @@ impl<'a> Codegen<'a> {
         scope.bytecode.add_byte(include_components.len() as u8);
         scope.bytecode.add_byte(exclude_components.len() as u8);
 
-        include_components
-            .iter()
-            .enumerate()
-            .for_each(|(index, component)| {
-                let component_type_name = component.type_.lexeme.clone();
+        let mut sorted_includes = include_components.iter().collect::<Vec<_>>();
+        sorted_includes.sort_by(|a, b| {
+            let component_id_a = self.components.get(&a.type_.lexeme).unwrap().id;
+            let component_id_b = self.components.get(&b.type_.lexeme).unwrap().id;
 
-                let component_id = self.components.get(&component_type_name).unwrap().id;
+            component_id_a.cmp(&component_id_b)
+        });
+
+        let mut component_variable_index = 0;
+        sorted_includes.iter().for_each(|component| {
+            let component_type_name = component.type_.lexeme.clone();
+
+            let component_id = self.components.get(&component_type_name).unwrap().id;
+            scope
+                .bytecode
+                .add_byte(component_id)
+                .add_string(&component_type_name);
+
+            if let Some(ref name) = component.name {
+                let lexeme = name.lexeme.clone();
                 scope
-                    .bytecode
-                    .add_byte(component_id)
-                    .add_string(&component_type_name);
+                    .environment
+                    .insert(lexeme.clone(), component_variable_index);
+                component_variable_index += 1;
+                scope.locals.insert(lexeme.clone());
+                scope
+                    .local_component_mapping
+                    .insert(lexeme.clone(), component.type_.clone());
+            }
+        });
 
-                if let Some(ref name) = component.name {
-                    let lexeme = name.lexeme.clone();
-                    scope.environment.insert(lexeme.clone(), index as u8);
-                    scope.locals.insert(lexeme.clone());
-                    scope
-                        .local_component_mapping
-                        .insert(lexeme.clone(), component.type_.clone());
-                }
-            });
+        let mut sorted_excludes = exclude_components.clone();
+        sorted_excludes.sort_by(|a, b| {
+            let component_id_a = self.components.get(&a.lexeme).unwrap().id;
+            let component_id_b = self.components.get(&b.lexeme).unwrap().id;
 
-        exclude_components.iter().for_each(|component| {
+            component_id_a.cmp(&component_id_b)
+        });
+
+        sorted_excludes.iter().for_each(|component| {
             let component_type_name = component.lexeme.clone();
 
             let component_id = self.components.get(&component_type_name).unwrap().id;
