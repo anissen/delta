@@ -56,7 +56,7 @@ struct Parser {
     tokens: Vec<Token>,
     current: usize,
     indentation: u8,
-    // components: Vec<crate::expressions::Component>,
+    component_names: Vec<Token>,
 }
 
 pub fn parse(tokens: Vec<Token>) -> Result<Expr, Diagnostics> {
@@ -83,6 +83,7 @@ impl Parser {
             tokens: non_whitespace_tokens,
             current: 0,
             indentation: 0,
+            component_names: Vec::new(),
         }
     }
 
@@ -156,6 +157,17 @@ impl Parser {
                 }
             }
         }
+        if let Some(definition) = self
+            .component_names
+            .iter()
+            .find(|token| component_name.lexeme == token.lexeme)
+        {
+            return Err(format!(
+                "Component '{}' already defined at line {}",
+                component_name.lexeme, definition.position.line
+            ));
+        }
+        self.component_names.push(component_name.clone());
         Ok(Some(Expr::ComponentDefinition {
             name: component_name,
             properties,
