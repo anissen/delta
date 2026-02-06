@@ -98,7 +98,7 @@ impl Disassembler {
                 let property_type_id = self.read_byte();
                 let property_size = self.read_u16();
                 result.push_str(&self.print(vec![format!(
-                    "{} {} {}",
+                    "{}, type id: {}, size: {}",
                     property_name, property_type_id, property_size
                 )]));
             }

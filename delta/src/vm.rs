@@ -515,24 +515,21 @@ impl VirtualMachine {
                         });
                     match object {
                         Value::Component { id, properties } => {
+                            // Update the value on stack
+                            properties[field_index as usize] = new_value;
+
                             // Update the world represetation
                             if let Some(ref mut query) = query_entities {
                                 // Find the column for this component in the active query
                                 if let Some(column) =
                                     query.columns.iter_mut().find(|c| c.id == *id as u32)
                                 {
-                                    let bytes = get_bytes_from_values(
-                                        &vec![new_value.clone()],
-                                        &column.layout,
-                                    );
+                                    let bytes = get_bytes_from_values(&properties, &column.layout);
                                     column.insert(active_entity.unwrap(), &bytes);
                                 }
                             } else {
                                 panic!("Trying to update component value without active query");
                             }
-
-                            // Update the value on stack
-                            properties[field_index as usize] = new_value;
                         }
                         _ => panic!("Trying to get field value from non-object"),
                     };
@@ -1055,24 +1052,47 @@ fn get_bytes_from_values(values: &Vec<Value>, layout: &ComponentLayout) -> Vec<u
     let mut bytes = Vec::new();
     layout.fields.iter().enumerate().for_each(|(index, field)| {
         let value = &values[index];
-        match field.type_id {
-            0 => match value {
-                Value::True => bytes.push(1),
-                Value::False => bytes.push(0),
-                _ => panic!("Expected boolean property"),
-            },
-            1 => match value {
-                Value::Integer(value) => {
-                    bytes.extend_from_slice(&value.to_be_bytes());
-                }
-                _ => panic!("Expected integer property"),
-            },
-            2 => match value {
-                Value::Float(value) => bytes.extend_from_slice(&value.to_be_bytes()),
-                _ => panic!("Expected float property"),
-            },
-            _ => panic!("Unsupported type"),
-        }
+        let value_bytes = get_bytes_from_value(value, field);
+        bytes.extend_from_slice(&value_bytes);
+        // match field.type_id {
+        //     0 => match value {
+        //         Value::True => bytes.push(1),
+        //         Value::False => bytes.push(0),
+        //         _ => panic!("Expected boolean property"),
+        //     },
+        //     1 => match value {
+        //         Value::Integer(value) => {
+        //             bytes.extend_from_slice(&value.to_be_bytes());
+        //         }
+        //         _ => panic!("Expected integer property"),
+        //     },
+        //     2 => match value {
+        //         Value::Float(value) => bytes.extend_from_slice(&value.to_be_bytes()),
+        //         _ => panic!("Expected float property"),
+        //     },
+        //     _ => panic!("Unsupported type"),
+        // }
     });
     bytes
+}
+
+fn get_bytes_from_value(value: &Value, field_layout: &FieldLayout) -> Vec<u8> {
+    let mut bytes = Vec::new();
+    match field_layout.type_id {
+        0 => match value {
+            Value::True => bytes.push(1),
+            Value::False => bytes.push(0),
+            _ => panic!("Expected boolean property"),
+        },
+        1 => match value {
+            Value::Integer(value) => bytes.extend_from_slice(&value.to_be_bytes()),
+            _ => panic!("Expected integer property"),
+        },
+        2 => match value {
+            Value::Float(value) => bytes.extend_from_slice(&value.to_be_bytes()),
+            _ => panic!("Expected float property"),
+        },
+        _ => panic!("Unsupported type"),
+    };
+    bytes.to_vec()
 }

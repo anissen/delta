@@ -234,20 +234,25 @@ impl<'a> Codegen<'a> {
                     ref field_name,
                 } => {
                     self.emit_expr(expr, scope);
+                    // TODO(anissen): Consider DRY'ing this (it's also used in FieldAccess)
                     let index = scope.environment.get(&identifier.lexeme).unwrap();
-                    let field_index = 0; // TODO(anissen): Implement!
+                    let component_name = scope
+                        .local_component_mapping
+                        .get(&identifier.lexeme)
+                        .unwrap();
+                    let component_properties = self.components.get(&component_name.lexeme).unwrap();
+                    let field_index = component_properties
+                        .properties
+                        .iter()
+                        .enumerate()
+                        .find(|(_, field)| field.name.lexeme == field_name.lexeme)
+                        .map(|field_index| field_index.0)
+                        .unwrap();
                     scope
                         .bytecode
                         .add_op(ByteCode::SetFieldValue)
                         .add_byte(*index)
-                        .add_byte(field_index);
-
-                    // let index = scope.locals.len() as u8;
-                    // scope.environment.insert(name.lexeme.clone(), index);
-                    // scope.locals.insert(name.lexeme.clone());
-                    // scope.bytecode.add_set_local_value(index);
-
-                    // todo!("not implemented");
+                        .add_byte(field_index as u8);
                 }
 
                 _ => panic!("Invalid assignment target"),
