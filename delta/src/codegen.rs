@@ -364,10 +364,6 @@ impl<'a> Codegen<'a> {
                     .add_op(ByteCode::PushComponent)
                     .add_byte(component_id)
                     .add_byte(properties.len() as u8);
-
-                // scope.bytecode.add_op(ByteCode::PushComponentInitialization);
-                // scope.bytecode.add_string(&name.lexeme);
-                // self.emit_exprs(properties, scope);
             }
         }
     }

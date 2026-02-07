@@ -72,10 +72,6 @@ pub enum ByteCode {
     ContextQuery,
     SetNextComponentColumnOrJump,
     Create,
-    // CreateEntity,
-    // SetComponent, // TODO(anissen): Should be `UpsertComponents`
-    // GetComponent, // TODO(anissen): Should be `GetComponents`
-    // RunSystem
 }
 
 impl From<ByteCode> for u8 {
