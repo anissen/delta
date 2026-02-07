@@ -48,6 +48,7 @@ impl Scope {
     }
 }
 
+#[derive(Debug)]
 struct ComponentMetadata<'a> {
     id: u8,
     properties: &'a Vec<crate::expressions::PropertyDefinition>,
@@ -353,10 +354,18 @@ impl<'a> Codegen<'a> {
             }
 
             ValueType::Component { name, properties } => {
-                // TODO: This will fail if the initialization order of properties does not match the definition
-                properties.iter().for_each(|property| {
-                    self.emit_expr(&property.value, scope);
-                });
+                // Output property values in sorted order wrt. the definition
+                let component_properties = self.components.get(&name.lexeme).unwrap();
+                component_properties
+                    .properties
+                    .iter()
+                    .for_each(|property_definition| {
+                        let property = properties
+                            .iter()
+                            .find(|p| p.name.lexeme == property_definition.name.lexeme)
+                            .unwrap();
+                        self.emit_expr(&property.value, scope);
+                    });
 
                 let component_id = self.components.get(&name.lexeme).unwrap().id;
                 scope
