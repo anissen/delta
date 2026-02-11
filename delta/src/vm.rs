@@ -1022,6 +1022,13 @@ fn read_byte(b: &[u8]) -> u8 {
     b[0]
 }
 
+fn read_string(b: &[u8]) -> String {
+    let length = b[0] as usize;
+    let bytes: Vec<u8> = b[1..length + 1].into();
+    let s = String::from_utf8(bytes).unwrap();
+    s
+}
+
 fn get_value_from_bytes(data: &[u8], layout: &ComponentLayout) -> Vec<Value> {
     let mut offset = 0;
     layout
@@ -1041,7 +1048,7 @@ fn get_value_from_bytes(data: &[u8], layout: &ComponentLayout) -> Vec<Value> {
                 }
                 1 => Value::Integer(read_i32(bytes)),
                 2 => Value::Float(read_f32(bytes)),
-                // 3 => Value::String(read_string(bytes)),
+                3 => Value::String(read_string(bytes)),
                 _ => panic!("unknown type id"),
             }
         })
@@ -1073,6 +1080,19 @@ fn get_bytes_from_value(value: &Value, field_layout: &FieldLayout) -> Vec<u8> {
         2 => match value {
             Value::Float(value) => bytes.extend_from_slice(&value.to_be_bytes()),
             _ => panic!("Expected float property"),
+        },
+        3 => match value {
+            Value::String(value) => {
+                if value.len() > 32 {
+                    panic!("String too long");
+                }
+                bytes.push(value.len() as u8);
+                bytes.extend_from_slice(value.as_bytes()); // TODO(anissen): What about byte order?
+                for _ in bytes.len()..33 {
+                    bytes.push(0);
+                }
+            }
+            _ => panic!("Expected string property"),
         },
         _ => panic!("Unsupported type"),
     };

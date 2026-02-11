@@ -23,6 +23,7 @@ pub enum TokenKind {
     KeywordOr,
     KeywordIs,
     KeywordIf,
+    KeywordStr,
     KeywordQuery,
     LeftBrace,
     LeftBracket,

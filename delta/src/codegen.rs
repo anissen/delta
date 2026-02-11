@@ -287,7 +287,7 @@ impl<'a> Codegen<'a> {
             .get(&component_identifier.lexeme)
             .unwrap();
         let component_properties = self.components.get(&component_name.lexeme).unwrap();
-        
+
         component_properties
             .properties
             .iter()
@@ -756,9 +756,7 @@ impl<'a> Codegen<'a> {
     fn create_bytecode(&mut self, scope: &mut Scope) -> Vec<u8> {
         let mut header_builder = BytecodeBuilder::new();
 
-        let mut sorted_map = self
-            .components.values()
-            .collect::<Vec<_>>();
+        let mut sorted_map = self.components.values().collect::<Vec<_>>();
         sorted_map.sort_by(|a, b| a.id.cmp(&b.id));
 
         header_builder.add_byte(self.components.len() as u8);
@@ -781,6 +779,7 @@ impl<'a> Codegen<'a> {
                     Type::Boolean => 1,
                     Type::Integer => 4,
                     Type::Float => 4,
+                    Type::String => 1 /* length of string */ + 32, /* fixed max size of string */ // TODO(anissen): Make this size dynamic
                     _ => panic!("Unknown/unhandled type"),
                 };
                 header_builder.add_u16(&size);

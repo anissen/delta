@@ -137,12 +137,13 @@ impl Parser {
                     return Err("Unterminated component definition".to_string());
                 }
                 let property_name = self.consume(&Identifier)?;
-                if !self.matches_any(&[KeywordF32, KeywordI32]) {
+                if !self.matches_any(&[KeywordF32, KeywordI32, KeywordStr]) {
                     return Err("Expected property type declaration".to_string());
                 }
                 let property_type = match self.previous().kind {
                     TokenKind::KeywordF32 => unification::Type::Float,
                     TokenKind::KeywordI32 => unification::Type::Integer,
+                    TokenKind::KeywordStr => unification::Type::String,
                     _ => return Err("Unknown property type declaration".to_string()),
                 };
                 let property = PropertyDefinition {
