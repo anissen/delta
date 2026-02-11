@@ -524,7 +524,7 @@ impl VirtualMachine {
                                 if let Some(column) =
                                     query.columns.iter_mut().find(|c| c.id == *id as u32)
                                 {
-                                    let bytes = get_bytes_from_values(&properties, &column.layout);
+                                    let bytes = get_bytes_from_values(properties, &column.layout);
                                     column.insert(active_entity.unwrap(), &bytes);
                                 }
                             } else {

@@ -1,8 +1,6 @@
 use std::collections::HashMap;
 
-use elements::ComponentLayout;
 use elements::EntityManager;
-use elements::FieldLayout;
 use elements::world::World;
 
 use crate::CompilationMetadata;

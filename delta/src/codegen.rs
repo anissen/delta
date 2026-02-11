@@ -287,14 +287,14 @@ impl<'a> Codegen<'a> {
             .get(&component_identifier.lexeme)
             .unwrap();
         let component_properties = self.components.get(&component_name.lexeme).unwrap();
-        let field_index = component_properties
+        
+        component_properties
             .properties
             .iter()
             .enumerate()
             .find(|(_, field)| field.name.lexeme == field_name.lexeme)
             .map(|field_index| field_index.0)
-            .unwrap();
-        field_index
+            .unwrap()
     }
 
     fn emit_value(&mut self, value: &'a ValueType, token: &'a Token, scope: &mut Scope) {
@@ -757,9 +757,7 @@ impl<'a> Codegen<'a> {
         let mut header_builder = BytecodeBuilder::new();
 
         let mut sorted_map = self
-            .components
-            .iter()
-            .map(|(_, component)| component)
+            .components.values()
             .collect::<Vec<_>>();
         sorted_map.sort_by(|a, b| a.id.cmp(&b.id));
 
