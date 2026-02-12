@@ -300,5 +300,10 @@ fn run_script(
     debug: bool,
 ) -> Result<delta::ProgramResult, delta::diagnostics::Diagnostics> {
     // Set a timeout?
-    delta::run(source, Some(&file_name), debug)
+    let args = delta::DeltaArguments {
+        source_path: file_name,
+        debug,
+        no_run: false,
+    };
+    delta::run(source, &args)
 }

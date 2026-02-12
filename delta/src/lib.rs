@@ -45,6 +45,12 @@ pub struct ProgramResult {
     pub metadata: ProgramMetadata,
 }
 
+pub struct DeltaArguments {
+    pub source_path: String,
+    pub no_run: bool,
+    pub debug: bool,
+}
+
 pub fn read_file(path: &String) -> std::io::Result<String> {
     let mut file = File::open(path)?;
     let mut source = String::new();
@@ -52,10 +58,10 @@ pub fn read_file(path: &String) -> std::io::Result<String> {
     Ok(source)
 }
 
-pub fn run_file(source_path: &String, debug: bool) -> Result<ProgramResult, Diagnostics> {
-    let source = read_file(source_path);
+pub fn run_file(args: &DeltaArguments) -> Result<ProgramResult, Diagnostics> {
+    let source = read_file(&args.source_path);
     match source {
-        Ok(source) => run(&source, Some(source_path), debug),
+        Ok(source) => run(&source, args),
         Err(err) => {
             let mut diagnostics = Diagnostics::new();
             diagnostics.add_error(errors::Error::FileErr(err.to_string()));
@@ -89,27 +95,18 @@ pub fn run_file(source_path: &String, debug: bool) -> Result<ProgramResult, Diag
     program.dump("∆");
 */
 
-pub fn run(
-    source: &str,
-    file_name: Option<&String>,
-    debug: bool,
-) -> Result<ProgramResult, Diagnostics> {
-    let default_file_name = "n/a".to_string();
-    println!(
-        "\n# source (file: {}) =>",
-        file_name.unwrap_or(&default_file_name)
-    );
+pub fn run(source: &str, args: &DeltaArguments) -> Result<ProgramResult, Diagnostics> {
+    println!("\n# source (file: {}) =>", &args.source_path);
 
     let context = program::Context::new();
-    let mut program = Program::new(context, debug);
+    let mut program = Program::new(context, args);
     let result = program.reload(source.to_string());
     match result {
         None => {
             println!("\n# vm =>");
-            let result = program.run();
-
+            let value = if !args.no_run { program.run() } else { None };
             Ok(ProgramResult {
-                value: result,
+                value,
                 metadata: program.metadata,
             })
         }

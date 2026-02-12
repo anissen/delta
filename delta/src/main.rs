@@ -8,9 +8,12 @@ fn main() {
         exit(1);
     }
 
-    let source_path = &args[1];
-    let debug = args.contains(&"--debug".to_string());
-    let result = delta::run_file(source_path, debug);
+    let delta_args = delta::DeltaArguments {
+        source_path: args[1].clone(),
+        debug: args.contains(&"--debug".to_string()),
+        no_run: args.contains(&"--no-run".to_string()),
+    };
+    let result = delta::run_file(&delta_args);
     match result {
         Ok(program_result) => match program_result.value {
             Some(value) => {
@@ -22,7 +25,7 @@ fn main() {
         },
         Err(diagnostics) => {
             println!();
-            let source = delta::read_file(source_path);
+            let source = delta::read_file(&delta_args.source_path);
             for ele in diagnostics.print(&source.unwrap()) {
                 println!("\x1b[31merror:\x1b[0m");
                 println!("{ele}");

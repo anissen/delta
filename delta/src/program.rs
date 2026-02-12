@@ -4,6 +4,7 @@ use elements::EntityManager;
 use elements::world::World;
 
 use crate::CompilationMetadata;
+use crate::DeltaArguments;
 use crate::ExecutionMetadata;
 use crate::ProgramMetadata;
 use crate::codegen;
@@ -161,11 +162,11 @@ pub struct Program<'a> {
 }
 
 impl<'a> Program<'a> {
-    pub fn new(context: Context<'a>, debug: bool) -> Self {
+    pub fn new(context: Context<'a>, args: &DeltaArguments) -> Self {
         Self {
             context,
             source: "".to_string(),
-            debug,
+            debug: args.debug,
             metadata: ProgramMetadata::default(),
             vm: None, //vm::VirtualMachine::new(Vec::new(), debug),
             is_valid: false,
