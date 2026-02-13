@@ -212,8 +212,7 @@ impl VirtualMachine {
             );
         }
 
-        // Store query results as owned data (entity + owned component bytes) to avoid holding borrow on world
-        let mut query_entities: Option<QueryResult> = None;
+        let mut query_results: Option<QueryResult> = None;
         let mut active_entity = None;
 
         while self.program_counter < self.program.len() {
@@ -518,8 +517,8 @@ impl VirtualMachine {
                             // Update the value on stack
                             properties[field_index as usize] = new_value;
 
-                            // Update the world represetation
-                            if let Some(ref mut query) = query_entities {
+                            // Update the world representation
+                            if let Some(ref mut query) = query_results {
                                 // Find the column for this component in the active query
                                 if let Some(column) =
                                     query.columns.iter_mut().find(|c| c.id == *id as u32)
@@ -651,6 +650,11 @@ impl VirtualMachine {
                 }
 
                 ByteCode::ContextQuery => {
+                    if query_results.is_some() {
+                        println!("*** No noes, nested queries are not yet supported! ***");
+                        panic!("Nested queries are not yet supported!");
+                    }
+
                     let jump_offset = self.read_i16();
                     let pc = self.program_counter;
                     let include_component_count = self.read_byte();
@@ -675,7 +679,7 @@ impl VirtualMachine {
                     let end_pc = get_jump_offset(pc, jump_offset);
 
                     // Drop any previous query_entities to release the mutable borrow
-                    query_entities = None;
+                    query_results = None;
 
                     // Get the mutable query iterator
                     let query_iter = data
@@ -688,7 +692,7 @@ impl VirtualMachine {
                     let has_results = !query_iter.columns.is_empty();
 
                     if has_results {
-                        query_entities = Some(query_iter);
+                        query_results = Some(query_iter);
                         self.push_query_frame(end_pc);
                     } else {
                         self.jump(end_pc);
@@ -696,7 +700,7 @@ impl VirtualMachine {
                 }
 
                 ByteCode::SetNextComponentColumnOrJump => {
-                    if let Some(ref mut result) = query_entities
+                    if let Some(ref mut result) = query_results
                         && let Some(entity) = result.next()
                     {
                         active_entity = Some(entity); // TODO(anissen): This is a hack
@@ -722,9 +726,9 @@ impl VirtualMachine {
                                 self.stack[stack_start as usize + index] = component;
                             });
                         }
-                    } else if query_entities.is_some() {
+                    } else if query_results.is_some() {
                         // No query is active
-                        query_entities = None;
+                        query_results = None;
                         active_entity = None;
                         self.pop_query_frame();
                     }
@@ -732,7 +736,7 @@ impl VirtualMachine {
 
                 ByteCode::Create => {
                     // Drop the query_entities borrow before we access world mutably
-                    query_entities = None;
+                    query_results = None; // TODO(anissen): This isn't right! We need to be able to create entities inside a query.
 
                     let entity = data.elements.entity_manager.create();
 
