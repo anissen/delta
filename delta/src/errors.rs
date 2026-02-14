@@ -5,6 +5,10 @@ use crate::unification::UnificationType;
 
 #[derive(Debug, Clone)]
 pub enum Error {
+    SyntaxError {
+        description: String,
+        token: Token,
+    },
     ParseErr {
         message: String,
         token: Token,
@@ -44,6 +48,13 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
+            Error::SyntaxError { description, token } => {
+                write!(
+                    f,
+                    "Line {}.{}: Syntax error: {}",
+                    token.position.line, token.position.column, description
+                )
+            }
             Error::ParseErr { message, token } => {
                 write!(
                     f,
@@ -118,6 +129,10 @@ pub trait ErrorDescription {
 impl ErrorDescription for Error {
     fn print(&self, source: &str) -> String {
         match self {
+            Error::SyntaxError { description, token } => {
+                let error_line = get_error_line(source, token);
+                format!("{error_line}\n{self}")
+            }
             Error::ParseErr { message: _, token } => {
                 let error_line = get_error_line(source, token);
                 format!("{error_line}\n{self}")

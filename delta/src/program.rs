@@ -10,6 +10,7 @@ use crate::ProgramMetadata;
 use crate::codegen;
 use crate::diagnostics::Diagnostics;
 use crate::disassembler;
+use crate::errors::Error;
 use crate::lexer;
 use crate::parser;
 use crate::tokens;
@@ -189,15 +190,23 @@ impl<'a> Program<'a> {
         let (tokens, syntax_errors): (Vec<tokens::Token>, Vec<tokens::Token>) = tokens
             .into_iter()
             .partition(|token| !matches!(token.kind, tokens::TokenKind::SyntaxError(_)));
+        let mut syntax_error_diagnostics = Diagnostics::new();
         syntax_errors.iter().for_each(|token| match token.kind {
             tokens::TokenKind::SyntaxError(description) => {
                 println!(
                     "\n⚠️ syntax error: {} at {:?} ({:?})\n",
                     description, token.lexeme, token.position
-                )
+                );
+                syntax_error_diagnostics.add_error(Error::SyntaxError {
+                    description: description.to_string(),
+                    token: token.clone(),
+                });
             }
             _ => unreachable!(),
         });
+        if syntax_error_diagnostics.has_errors() {
+            return Err(syntax_error_diagnostics);
+        }
 
         // if self.debug {
         //     tokens.iter().for_each(|token| {
