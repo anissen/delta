@@ -270,7 +270,7 @@ impl Lexer {
 
         // self.start += 1;
         let length = self.current - self.start;
-        if length == 0 {
+        if length <= 1 {
             TokenKind::SyntaxError("Empty tag")
         } else {
             TokenKind::Tag
