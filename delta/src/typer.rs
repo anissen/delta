@@ -441,10 +441,10 @@ impl<'env> InferenceContext<'env> {
                     }
                 }
                 ValueType::Component { name, properties } => {
-                    let mut map = HashMap::new();
+                    let mut property_map = HashMap::new();
                     for prop in properties {
                         if let Some(_already_declared) =
-                            map.insert(prop.name.lexeme.clone(), self.infer_type(&prop.value))
+                            property_map.insert(prop.name.lexeme.clone(), prop)
                         {
                             self.diagnostics.add_error(Error::PropertyDuplicated {
                                 token: prop.name.clone(),
@@ -454,16 +454,27 @@ impl<'env> InferenceContext<'env> {
 
                     if let Some(definition) = self.environment.components.get(&name.lexeme) {
                         let filled_in_properties: Vec<_> = definition
+                            .clone() // Needed to avoid repeated borrowing
                             .iter()
-                            .flat_map(|def_prop| {
-                                let res = map.get(&def_prop.name.lexeme).cloned();
-                                if res.is_none() {
+                            .map(|def_prop| {
+                                let res = property_map.get(&def_prop.name.lexeme);
+
+                                if let Some(actual_prop) = res {
+                                    self.expects_type(
+                                        &actual_prop.value,
+                                        make_constructor(
+                                            def_prop.type_.clone(),
+                                            def_prop.name.clone(),
+                                        ),
+                                    );
+                                    self.infer_type(&actual_prop.value)
+                                } else {
                                     self.diagnostics.add_error(Error::PropertyMissing {
                                         property_definition: def_prop.name.clone(),
                                         token: name.clone(),
                                     });
+                                    self.type_placeholder()
                                 }
-                                res
                             })
                             .collect();
 
@@ -729,28 +740,7 @@ impl<'env> InferenceContext<'env> {
             }
 
             Expr::Create { token, arguments } => {
-                // dbg!(arguments);
-                // dbg!(self.infer_type(arguments));
-                // let component_list = self.infer_type(arguments);
-                // match component_list {
-                //     Uni
-                // }
-
-                // components.iter().for_each(|component| {
-                //     let component_name = component.type_.lexeme.clone();
-                //     if self.environment.components.get(&component_name).is_none() {
-                //         self.diagnostics.add_error(Error::TypeNotFound {
-                //             token: component.type_.clone(),
-                //         });
-                //     };
-
-                //     let v = self.type_placeholder();
-                //     self.environment
-                //         .variables
-                //         .insert(component.name.lexeme.clone(), v);
-                // });
-
-                let component_type = self.type_placeholder(); //UnificationType::Constructor { typ: Type::Component, generics: (), token: () }
+                let component_type = self.type_placeholder();
                 self.expects_type(
                     arguments,
                     UnificationType::Constructor {
