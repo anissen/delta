@@ -129,7 +129,7 @@ pub trait ErrorDescription {
 impl ErrorDescription for Error {
     fn print(&self, source: &str) -> String {
         match self {
-            Error::SyntaxError { description, token } => {
+            Error::SyntaxError { description: _, token } => {
                 let error_line = get_error_line(source, token);
                 format!("{error_line}\n{self}")
             }

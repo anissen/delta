@@ -1029,8 +1029,8 @@ fn read_byte(b: &[u8]) -> u8 {
 fn read_string(b: &[u8]) -> String {
     let length = b[0] as usize;
     let bytes: Vec<u8> = b[1..length + 1].into();
-    let s = String::from_utf8(bytes).unwrap();
-    s
+    
+    String::from_utf8(bytes).unwrap()
 }
 
 fn get_value_from_bytes(data: &[u8], layout: &ComponentLayout) -> Vec<Value> {

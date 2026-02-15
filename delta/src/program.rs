@@ -141,6 +141,12 @@ pub struct PersistentData {
     pub elements: Elements,
 }
 
+impl Default for PersistentData {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PersistentData {
     pub fn new() -> Self {
         Self {

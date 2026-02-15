@@ -30,6 +30,12 @@ pub struct EntityManager {
     next_id: Entity,
 }
 
+impl Default for EntityManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl EntityManager {
     pub fn new() -> Self {
         EntityManager { next_id: 0 }
