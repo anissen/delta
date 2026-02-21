@@ -19,6 +19,7 @@ struct FunctionChunk<'a> {
     function_name: String,
 }
 
+#[derive(Debug)]
 pub struct Scope {
     bytecode: BytecodeBuilder,
     environment: HashMap<String, u8>,
@@ -566,6 +567,11 @@ impl<'a> Codegen<'a> {
         scope.bytecode.add_byte(include_components.len() as u8);
         scope.bytecode.add_byte(exclude_components.len() as u8);
 
+        let old_environment = scope.environment.clone();
+        let old_locals = scope.locals.clone();
+        scope.locals.clear();
+        let old_local_component_mapping = scope.local_component_mapping.clone();
+
         let mut sorted_includes = include_components.iter().collect::<Vec<_>>();
         sorted_includes.sort_by(|a, b| {
             let component_id_a = self.components.get(&a.type_.lexeme).unwrap().id;
@@ -631,6 +637,9 @@ impl<'a> Codegen<'a> {
             .add_op(ByteCode::SetNextComponentColumnOrJump);
 
         self.emit_expr(expr, scope);
+        scope.locals = old_locals;
+        scope.environment = old_environment;
+        scope.local_component_mapping = old_local_component_mapping;
 
         // Unconditional jump to start label
         scope.bytecode.add_op(ByteCode::Jump);
@@ -816,7 +825,7 @@ impl<'a> Codegen<'a> {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 struct BytecodeBuilder {
     bytes: Vec<u8>,
 }
