@@ -214,6 +214,7 @@ impl VirtualMachine {
 
         let mut query_results: Option<QueryResult> = None;
         let mut active_entity = None;
+        let mut create_components_asap = Vec::new();
 
         while self.program_counter < self.program.len() {
             let next = self.read_byte();
@@ -731,30 +732,24 @@ impl VirtualMachine {
                         query_results = None;
                         active_entity = None;
                         self.pop_query_frame();
+
+                        create_components_asap
+                            .iter()
+                            .for_each(|components: &Vec<Value>| create_entity(data, components));
+                        create_components_asap.clear();
                     }
                 }
 
                 ByteCode::Create => {
-                    // Drop the query_entities borrow before we access world mutably
-                    query_results = None; // TODO(anissen): This isn't right! We need to be able to create entities inside a query.
-
-                    let entity = data.elements.entity_manager.create();
-
                     let components = self.pop_list();
-                    for component in components {
-                        match component {
-                            Value::Component { id, properties } => {
-                                if let Some(layout) =
-                                    data.elements.world.get_component_layout(id as u32)
-                                {
-                                    let bytes = get_bytes_from_values(&properties, layout);
-                                    data.elements.world.insert(id as u32, entity, &bytes);
-                                }
-                            }
-                            _ => {
-                                println!("Expected component type, found {:?}", component);
-                                panic!("Expected component type")
-                            }
+                    match query_results {
+                        Some(_) => {
+                            // Create the entity when the query goes out of scope
+                            create_components_asap.push(components)
+                        }
+                        None => {
+                            query_results = None; // Redundant but helps the borrow checker
+                            create_entity(data, &components);
                         }
                     }
 
@@ -1002,6 +997,25 @@ impl VirtualMachine {
     }
 }
 
+fn create_entity(data: &mut PersistentData, components: &Vec<Value>) {
+    let entity = data.elements.entity_manager.create();
+
+    for component in components {
+        match component {
+            Value::Component { id, properties } => {
+                if let Some(layout) = data.elements.world.get_component_layout(*id as u32) {
+                    let bytes = get_bytes_from_values(&properties, layout);
+                    data.elements.world.insert(*id as u32, entity, &bytes);
+                }
+            }
+            _ => {
+                println!("Expected component type, found {:?}", component);
+                panic!("Expected component type")
+            }
+        }
+    }
+}
+
 fn get_jump_offset(pc: usize, offset: i16) -> usize {
     pc.strict_add_signed(offset as isize)
 }
@@ -1029,7 +1043,7 @@ fn read_byte(b: &[u8]) -> u8 {
 fn read_string(b: &[u8]) -> String {
     let length = b[0] as usize;
     let bytes: Vec<u8> = b[1..length + 1].into();
-    
+
     String::from_utf8(bytes).unwrap()
 }
 
