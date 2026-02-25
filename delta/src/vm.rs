@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use std::fmt::Display;
-use std::path::Component;
 
 use crate::ExecutionMetadata;
 use crate::bytecodes::ByteCode;
@@ -1038,7 +1037,7 @@ fn create_entity(data: &mut PersistentData, components: &Vec<Value>) {
         match component {
             Value::Component { id, properties } => {
                 if let Some(layout) = data.elements.world.get_component_layout(*id as u32) {
-                    let bytes = get_bytes_from_values(&properties, layout);
+                    let bytes = get_bytes_from_values(properties, layout);
                     data.elements.world.insert(*id as u32, entity, &bytes);
                 }
             }
