@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::diagnostics::Diagnostics;
 use crate::errors::Error;
 use crate::expressions::{
-    BinaryOperator, Expr, IsArmPattern, IsGuard, PropertyDefinition, StringOperations,
+    BinaryOperator, Expr, IsArmPattern, IsGuard, StringOperations,
     UnaryOperator, ValueType,
 };
 use crate::program::Context;
@@ -755,7 +755,7 @@ impl<'env> InferenceContext<'env> {
                 include_components.iter().for_each(|component| {
                     let component_name = component.type_.lexeme.clone();
                     // Special-case handling for 'Entity' component
-                    if component_name == "Entity".to_string() {
+                    if component_name == "Entity" {
                         if let Some(ref name) = component.name {
                             self.environment.variables.insert(
                                 name.lexeme.clone(),

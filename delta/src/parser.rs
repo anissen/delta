@@ -1,4 +1,3 @@
-use std::path::Component;
 
 use crate::diagnostics::Diagnostics;
 use crate::errors;
@@ -133,7 +132,7 @@ impl Parser {
 
     fn component(&mut self) -> Result<Option<Expr>, String> {
         let component_name = self.consume(&Identifier)?;
-        if component_name.lexeme == "Entity".to_string() {
+        if component_name.lexeme == "Entity" {
             return Err("'Entity' already exists as a built-in component".to_string());
         }
         let mut properties = Vec::new();
@@ -320,7 +319,7 @@ impl Parser {
                     let type_ = self.consume(&Identifier)?;
                     let name = self.optional(&Identifier);
                     if let Some(ref name) = name
-                        && name.lexeme == "Entity".to_string()
+                        && name.lexeme == "Entity"
                     {
                         has_entity_component = true;
                     }

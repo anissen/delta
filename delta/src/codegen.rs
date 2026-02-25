@@ -5,11 +5,11 @@ use crate::diagnostics::Diagnostics;
 use crate::errors::Error;
 use crate::expressions::{
     ArithmeticOperations, BinaryOperator, BooleanOperations, Comparisons, EqualityOperations, Expr,
-    IsArm, IsArmPattern, MaybeNamedType, PropertyDefinition, StringOperations, UnaryOperator,
+    IsArm, IsArmPattern, MaybeNamedType, StringOperations, UnaryOperator,
     ValueType,
 };
 use crate::program::Context;
-use crate::tokens::{Position, Token, TokenKind};
+use crate::tokens::{Position, Token};
 use crate::unification::Type;
 
 #[derive(Debug, Clone)]
@@ -592,8 +592,8 @@ impl<'a> Codegen<'a> {
 
         let mut component_variable_index = 1; // Entity always exists at index 0
 
-        if let Some(entity_component) = entity_components.first() {
-            if let Some(ref name) = entity_component.name {
+        if let Some(entity_component) = entity_components.first()
+            && let Some(ref name) = entity_component.name {
                 let lexeme = name.lexeme.clone();
                 scope.environment.insert(lexeme.clone(), 0);
                 scope.locals.insert(lexeme.clone());
@@ -601,7 +601,6 @@ impl<'a> Codegen<'a> {
                     .local_component_mapping
                     .insert(lexeme.clone(), entity_component.type_.clone());
             }
-        }
 
         sorted_includes.iter().for_each(|component| {
             let component_type_name = component.type_.lexeme.clone();
