@@ -197,6 +197,8 @@ fn main() {
 
         world.remove(dead_id, e0);
 
+        world.destroy(e4);
+
         world.insert(dead_id, e1, &[]);
         world.insert(velocity_id, e2, &velocity(1.0, 1.0));
     }

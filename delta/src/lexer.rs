@@ -146,6 +146,7 @@ impl Lexer {
             _ if self.match_keyword("component") => TokenKind::KeywordComponent,
             _ if self.match_keyword("query") => TokenKind::KeywordQuery,
             _ if self.match_keyword("create") => TokenKind::KeywordCreate,
+            _ if self.match_keyword("destroy") => TokenKind::KeywordDestroy,
             _ if self.match_keyword("f32") => TokenKind::KeywordF32,
             _ if self.match_keyword("i32") => TokenKind::KeywordI32,
             _ if self.match_keyword("str") => TokenKind::KeywordStr,

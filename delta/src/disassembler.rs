@@ -411,6 +411,8 @@ impl Disassembler {
                 }
 
                 ByteCode::Create => self.print(vec![format!("create entity")]),
+
+                ByteCode::Destroy => self.print(vec![format!("destroy entity")]),
             };
 
             result.push_str(&instruction_str);

@@ -274,6 +274,11 @@ impl<'a> Codegen<'a> {
                 self.emit_expr(arguments, scope);
                 scope.bytecode.add_op(ByteCode::Create);
             }
+
+            Expr::Destroy { token: _, argument } => {
+                self.emit_expr(argument, scope);
+                scope.bytecode.add_op(ByteCode::Destroy);
+            }
         };
     }
 

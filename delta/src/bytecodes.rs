@@ -72,6 +72,7 @@ pub enum ByteCode {
     ContextQuery,
     SetNextComponentColumnOrJump,
     Create,
+    Destroy,
 }
 
 impl From<ByteCode> for u8 {
@@ -161,6 +162,7 @@ impl TryFrom<u8> for ByteCode {
                 Ok(Self::SetNextComponentColumnOrJump)
             }
             value if value == ByteCode::Create as u8 => Ok(Self::Create),
+            value if value == ByteCode::Destroy as u8 => Ok(Self::Destroy),
 
             _ => {
                 dbg!(value);

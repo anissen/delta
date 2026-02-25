@@ -188,11 +188,22 @@ impl Parser {
         }
     }
 
+    fn destroy(&mut self) -> Result<Option<Expr>, String> {
+        let token = self.previous();
+        let expr = self.expression()?.unwrap();
+        Ok(Some(Expr::Destroy {
+            token: token.clone(),
+            argument: Box::new(expr),
+        }))
+    }
+
     fn expression(&mut self) -> Result<Option<Expr>, String> {
         if self.matches(&KeywordComponent) {
             self.component()
         } else if self.matches(&KeywordCreate) {
             self.create()
+        } else if self.matches(&KeywordDestroy) {
+            self.destroy()
         } else {
             self.assignment()
         }

@@ -752,6 +752,11 @@ impl<'env> InferenceContext<'env> {
 
                 make_constructor(Type::Integer, token.clone()) // entity id
             }
+
+            Expr::Destroy { token, argument } => {
+                self.expects_type(argument, make_constructor(Type::Integer, token.clone()));
+                make_constructor(Type::Boolean, token.clone()) // TODO(anissen): Function actually returns Void
+            }
         }
     }
 

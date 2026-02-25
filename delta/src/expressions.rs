@@ -83,6 +83,10 @@ pub enum Expr {
         token: Token,
         arguments: Box<Expr>,
     },
+    Destroy {
+        token: Token,
+        argument: Box<Expr>,
+    },
     FieldAccess {
         identifier: Token,
         field_name: Token,

@@ -94,6 +94,12 @@ impl World {
         self.components[id as usize].remove(entity);
     }
 
+    pub fn destroy(&mut self, entity: Entity) {
+        self.components.iter_mut().for_each(|column| {
+            column.remove(entity);
+        });
+    }
+
     pub fn get(&self, id: ComponentTypeId, entity: Entity) -> Option<&[u8]> {
         self.components[id as usize].get(entity)
     }

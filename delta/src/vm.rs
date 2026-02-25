@@ -7,6 +7,7 @@ use crate::program::Context;
 use crate::program::PersistentData;
 
 use elements::ComponentLayout;
+use elements::Entity;
 use elements::FieldLayout;
 use elements::world::QueryResult;
 
@@ -215,6 +216,7 @@ impl VirtualMachine {
         let mut query_results: Option<QueryResult> = None;
         let mut active_entity = None;
         let mut create_components_asap = Vec::new();
+        let mut destroy_entities_asap = Vec::new();
 
         while self.program_counter < self.program.len() {
             let next = self.read_byte();
@@ -733,6 +735,11 @@ impl VirtualMachine {
                         active_entity = None;
                         self.pop_query_frame();
 
+                        destroy_entities_asap
+                            .iter()
+                            .for_each(|entity| destroy_entity(data, *entity));
+                        destroy_entities_asap.clear();
+
                         create_components_asap
                             .iter()
                             .for_each(|components: &Vec<Value>| create_entity(data, components));
@@ -750,6 +757,30 @@ impl VirtualMachine {
                         None => {
                             query_results = None; // Redundant but helps the borrow checker
                             create_entity(data, &components);
+                        }
+                    }
+
+                    // self.push_integer(entity as i32);
+                }
+
+                ByteCode::Destroy => {
+                    // let entity_id = match self.pop_any() {
+                    //     Value::Component { id, properties } => {
+                    //         properties.find
+                    //     }
+                    //     panic!("Expected a component")
+                    // };
+                    let entity = self.pop_integer() as Entity;
+                    match query_results {
+                        Some(_) => {
+                            // Destroy the entity when the query goes out of scope
+                            destroy_entities_asap.push(entity)
+                        }
+                        None => {
+                            println!("destroy the entity immediately");
+                            dbg!(&entity);
+                            query_results = None; // Redundant but helps the borrow checker
+                            destroy_entity(data, entity);
                         }
                     }
 
@@ -1014,6 +1045,10 @@ fn create_entity(data: &mut PersistentData, components: &Vec<Value>) {
             }
         }
     }
+}
+
+fn destroy_entity(data: &mut PersistentData, entity: Entity) {
+    data.elements.world.destroy(entity);
 }
 
 fn get_jump_offset(pc: usize, offset: i16) -> usize {
