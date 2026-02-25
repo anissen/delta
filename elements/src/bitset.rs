@@ -42,14 +42,14 @@ impl BitSet {
         }
     }
 
-    fn contains(&self, e: Entity) -> bool {
-        let w = (e as usize) / 64;
-        if w >= self.words.len() {
-            return false;
-        }
-        let b = (e as usize) % 64;
-        (self.words[w] >> b) & 1 != 0
-    }
+    // pub fn contains(&self, e: Entity) -> bool {
+    //     let w = (e as usize) / 64;
+    //     if w >= self.words.len() {
+    //         return false;
+    //     }
+    //     let b = (e as usize) % 64;
+    //     (self.words[w] >> b) & 1 != 0
+    // }
 
     pub fn intersect_with(&mut self, other: &BitSet) {
         let min_words = self.words.len().min(other.words.len());
@@ -67,9 +67,9 @@ impl BitSet {
         }
     }
 
-    fn is_empty(&self) -> bool {
-        self.words.iter().all(|&w| w == 0)
-    }
+    // fn is_empty(&self) -> bool {
+    //     self.words.iter().all(|&w| w == 0)
+    // }
 
     /// Iterate entity ids present in the bitset.
     pub fn iter_ids(&self) -> BitSetIter<'_> {

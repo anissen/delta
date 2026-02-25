@@ -76,6 +76,10 @@ impl Column {
         }
     }
 
+    // pub fn has(&self, entity: Entity) -> bool {
+    //     self.bitset.contains(entity)
+    // }
+
     pub fn get(&self, entity: Entity) -> Option<&[u8]> {
         let idx = self.sparse.get(entity as usize)?;
         if *idx == usize::MAX {
