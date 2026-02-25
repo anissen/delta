@@ -116,7 +116,7 @@ impl Column {
         self.sparse[moved_entity as usize] = idx;
         self.sparse[entity as usize] = usize::MAX;
 
-        if self.layout.size > 0 {
+        if self.layout.size > 0 && idx < last {
             let s0 = idx * self.layout.size;
             let s1 = last * self.layout.size;
 
