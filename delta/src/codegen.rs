@@ -574,19 +574,6 @@ impl<'a> Codegen<'a> {
                 .iter()
                 .partition(|component| component.type_.lexeme == "Entity");
 
-        let mut component_variable_index = 1; // Entity always exists at index 0
-
-        if let Some(entity_component) = entity_components.first() {
-            if let Some(ref name) = entity_component.name {
-                let lexeme = name.lexeme.clone();
-                scope.environment.insert(lexeme.clone(), 0);
-                scope.locals.insert(lexeme.clone());
-                scope
-                    .local_component_mapping
-                    .insert(lexeme.clone(), entity_component.type_.clone());
-            }
-        }
-
         scope.bytecode.add_byte(include_components.len() as u8);
         scope.bytecode.add_byte(exclude_components.len() as u8);
 
@@ -602,6 +589,19 @@ impl<'a> Codegen<'a> {
 
             component_id_a.cmp(&component_id_b)
         });
+
+        let mut component_variable_index = 1; // Entity always exists at index 0
+
+        if let Some(entity_component) = entity_components.first() {
+            if let Some(ref name) = entity_component.name {
+                let lexeme = name.lexeme.clone();
+                scope.environment.insert(lexeme.clone(), 0);
+                scope.locals.insert(lexeme.clone());
+                scope
+                    .local_component_mapping
+                    .insert(lexeme.clone(), entity_component.type_.clone());
+            }
+        }
 
         sorted_includes.iter().for_each(|component| {
             let component_type_name = component.type_.lexeme.clone();
