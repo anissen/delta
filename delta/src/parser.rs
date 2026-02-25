@@ -1,3 +1,5 @@
+use std::path::Component;
+
 use crate::diagnostics::Diagnostics;
 use crate::errors;
 use crate::expressions::ArithmeticOperations;
@@ -16,6 +18,7 @@ use crate::expressions::PropertyDefinition;
 use crate::expressions::StringOperations;
 use crate::expressions::UnaryOperator;
 use crate::expressions::ValueType;
+use crate::tokens::Position;
 use crate::tokens::Token;
 use crate::tokens::TokenKind;
 use crate::tokens::TokenKind::*;
@@ -130,6 +133,9 @@ impl Parser {
 
     fn component(&mut self) -> Result<Option<Expr>, String> {
         let component_name = self.consume(&Identifier)?;
+        if component_name.lexeme == "Entity".to_string() {
+            return Err("'Entity' already exists as a built-in component".to_string());
+        }
         let mut properties = Vec::new();
         if self.matches(&LeftBrace) {
             while !self.matches(&RightBrace) {
@@ -293,6 +299,7 @@ impl Parser {
             self.consume_indentation()?;
 
             let mut include_components = vec![];
+            let mut has_entity_component = false;
             let mut exclude_components = vec![];
             // parse components
             while !self.check(&NewLine) {
@@ -312,8 +319,23 @@ impl Parser {
                 } else {
                     let type_ = self.consume(&Identifier)?;
                     let name = self.optional(&Identifier);
+                    if let Some(ref name) = name
+                        && name.lexeme == "Entity".to_string()
+                    {
+                        has_entity_component = true;
+                    }
                     include_components.push(MaybeNamedType { type_, name });
                 }
+            }
+            if !has_entity_component {
+                include_components.push(MaybeNamedType {
+                    type_: Token {
+                        kind: Identifier,
+                        position: Position { line: 0, column: 0 },
+                        lexeme: "Entity".to_string(),
+                    },
+                    name: None,
+                });
             }
 
             // expr for matches

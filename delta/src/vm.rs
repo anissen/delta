@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::fmt::Display;
+use std::path::Component;
 
 use crate::ExecutionMetadata;
 use crate::bytecodes::ByteCode;
@@ -722,11 +723,13 @@ impl VirtualMachine {
 
                         if is_first_query_result {
                             // Push components on the stack
+                            self.push_integer(entity as i32);
                             components.for_each(|component| self.push_value(component));
                         } else {
                             // Replace components on the stack
+                            self.stack[stack_start as usize] = Value::Integer(entity as i32);
                             components.enumerate().for_each(|(index, component)| {
-                                self.stack[stack_start as usize + index] = component;
+                                self.stack[stack_start as usize + 1 + index] = component;
                             });
                         }
                     } else if query_results.is_some() {

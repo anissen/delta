@@ -5,10 +5,11 @@ use crate::diagnostics::Diagnostics;
 use crate::errors::Error;
 use crate::expressions::{
     ArithmeticOperations, BinaryOperator, BooleanOperations, Comparisons, EqualityOperations, Expr,
-    IsArm, IsArmPattern, MaybeNamedType, StringOperations, UnaryOperator, ValueType,
+    IsArm, IsArmPattern, MaybeNamedType, PropertyDefinition, StringOperations, UnaryOperator,
+    ValueType,
 };
 use crate::program::Context;
-use crate::tokens::{Position, Token};
+use crate::tokens::{Position, Token, TokenKind};
 use crate::unification::Type;
 
 #[derive(Debug, Clone)]
@@ -137,6 +138,7 @@ impl<'a> Codegen<'a> {
                         .bytecode
                         .add_get_field_value(*index, field_access_index as u8);
                 } else {
+                    dbg!(&identifier);
                     panic!("Name not found in scope");
                 }
             }
@@ -146,8 +148,6 @@ impl<'a> Codegen<'a> {
             }
 
             Expr::ComponentDefinition { name, properties } => {
-                // TODO(anissen): Implement component definition
-
                 self.components.insert(
                     name.lexeme.clone(),
                     ComponentMetadata {
@@ -569,6 +569,24 @@ impl<'a> Codegen<'a> {
             .add_op(ByteCode::ContextQuery)
             .get_patchable_i16_offset();
 
+        let (entity_components, include_components): (Vec<&MaybeNamedType>, Vec<&MaybeNamedType>) =
+            include_components
+                .iter()
+                .partition(|component| component.type_.lexeme == "Entity");
+
+        let mut component_variable_index = 1; // Entity always exists at index 0
+
+        if let Some(entity_component) = entity_components.first() {
+            if let Some(ref name) = entity_component.name {
+                let lexeme = name.lexeme.clone();
+                scope.environment.insert(lexeme.clone(), 0);
+                scope.locals.insert(lexeme.clone());
+                scope
+                    .local_component_mapping
+                    .insert(lexeme.clone(), entity_component.type_.clone());
+            }
+        }
+
         scope.bytecode.add_byte(include_components.len() as u8);
         scope.bytecode.add_byte(exclude_components.len() as u8);
 
@@ -585,7 +603,6 @@ impl<'a> Codegen<'a> {
             component_id_a.cmp(&component_id_b)
         });
 
-        let mut component_variable_index = 0;
         sorted_includes.iter().for_each(|component| {
             let component_type_name = component.type_.lexeme.clone();
 

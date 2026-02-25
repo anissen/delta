@@ -60,9 +60,10 @@
 # - Shorthand for partial `is`?
 
 component Position { x f32, y f32 }
-component Velocity { dx f32, dy f32, dz i32 }
-component Blah { xxx i32 }
+# component Unit
 component Marker
+# component Velocity { dx f32, dy f32, dz i32 }
+# component Blah { y i32, xxx i32, text str }
 
 # ∆ | new [Position { x 32.0, y 64.0 }, Velocity { dx 1.0, dy 0.5 }]
 
@@ -82,20 +83,39 @@ component Marker
 
 # should this be [...] | create ?
 # create [45, 66]
-create [Velocity { dx 0.1, dy 5.5, dz 10 }, Position { x 11.0, y 22.0, z 33 }, Marker]
-create [Position { x 141.0, y 422.0, z 555 }, Marker]
-create [Position { x 1.0, y 2.0 }, Blah { xxx 1 }]
-create [Position { x 32.0, y 64.0 }, Velocity { dx 1.0, dy 0.5, dz 3 }]
+# create [Position { x 1.0, y 2.0 }, Blah { y 8, xxx 1 }, Marker]
+# create [Position { x 4.0, y 1.0 }]
+# create [Blah { y 7, xxx 5, text "World" }, Position { x 32.0, y 64.0 }, Velocity { dx 1.0, dy 0.5, dz 3 }]
+# create [Unit, Position { y 4.0, x 1.0 }]
+# create [Marker, Velocity { dx 1.0, dy 0.5, dz 3 }]
+# create [Position { x 32.0, y 64.0 }, Blah { y 7, xxx 5, text "Hello" }]
+# create [Position { x 48.0, y 34.0 }, Blah { y 14, xxx 10, text "Hello 2" }]
+create [Position { x 22.0, y 33.0 }]
+create [Position { x 48.0, y 34.0 }, Marker]
 
-do_stuff = \v
-	query
-		Position p, Marker, not Velocity
-			("ONLY position, value: ({p.x}, {p.y})") | log
-	query
-		Position p, Velocity v
-			("position is ({p.x}, {p.y}), velocity is ({v.dx}, {v.dy}, {v.dz})") | log
-	query
-		Blah x
-			("blah is ({x.xxx})") | log
+# query
+# 	Unit, Position p
+# 		("Unit has position ({p.x}, {p.y})") | log
+# query
+# 	Marker, Velocity v
+# 		("Unit has velocity ({v.dx}, {v.dy}, {v.dz})") | log
+a = 112
+query
+	Position p, Marker, Entity e
+		("First: {p.x}") | log
+		("Entity: {e}") | log
+		destroy e
+"after:" | log
+query
+	Position p
+		p.y = 3.0 # TODO: p.y = 3 fails at runtime (missing type checking)
+		("Second: {p.x}") | log
 
-4 | do_stuff
+#	query
+#		Blah b, Position p
+#			("Blah has position ({p.x}, {p.y}), y {b.y}, xxx {b.xxx} and text '{b.text}'") | log
+#			x = p.x
+#			x | log
+# 		# query
+# 		# 	Unit u, Position p
+# 		# 		("Unit has position ({p.x}, {p.y})") | log

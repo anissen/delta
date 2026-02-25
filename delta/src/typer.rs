@@ -3,7 +3,8 @@ use std::collections::HashMap;
 use crate::diagnostics::Diagnostics;
 use crate::errors::Error;
 use crate::expressions::{
-    BinaryOperator, Expr, IsArmPattern, IsGuard, StringOperations, UnaryOperator, ValueType,
+    BinaryOperator, Expr, IsArmPattern, IsGuard, PropertyDefinition, StringOperations,
+    UnaryOperator, ValueType,
 };
 use crate::program::Context;
 use crate::tokens::Token;
@@ -235,6 +236,34 @@ impl<'a> Typer<'a> {
             UnificationType::Constructor {
                 typ: Type::Function,
                 generics: vec![
+                    make_constructor(Type::Float, no_token.clone()),
+                    make_constructor(Type::Float, no_token.clone()),
+                ],
+                token: no_token.clone(),
+            },
+        );
+
+        environment.variables.insert(
+            "distance".to_string(),
+            UnificationType::Constructor {
+                typ: Type::Function,
+                generics: vec![
+                    make_constructor(Type::Component, no_token.clone()),
+                    make_constructor(Type::Component, no_token.clone()),
+                    make_constructor(Type::Float, no_token.clone()),
+                ],
+                token: no_token.clone(),
+            },
+        );
+
+        environment.variables.insert(
+            "distance2".to_string(),
+            UnificationType::Constructor {
+                typ: Type::Function,
+                generics: vec![
+                    make_constructor(Type::Float, no_token.clone()),
+                    make_constructor(Type::Float, no_token.clone()),
+                    make_constructor(Type::Float, no_token.clone()),
                     make_constructor(Type::Float, no_token.clone()),
                     make_constructor(Type::Float, no_token.clone()),
                 ],
@@ -725,15 +754,27 @@ impl<'env> InferenceContext<'env> {
             } => {
                 include_components.iter().for_each(|component| {
                     let component_name = component.type_.lexeme.clone();
-                    if self.environment.components.get(&component_name).is_none() {
-                        self.diagnostics.add_error(Error::TypeNotFound {
-                            token: component.type_.clone(),
-                        });
-                    };
+                    // Special-case handling for 'Entity' component
+                    if component_name == "Entity".to_string() {
+                        if let Some(ref name) = component.name {
+                            self.environment.variables.insert(
+                                name.lexeme.clone(),
+                                make_constructor(Type::Integer, name.clone()),
+                            );
+                        } else {
+                            // panic!("Entity component must be named to be used");
+                        }
+                    } else {
+                        if self.environment.components.get(&component_name).is_none() {
+                            self.diagnostics.add_error(Error::TypeNotFound {
+                                token: component.type_.clone(),
+                            });
+                        };
 
-                    if let Some(ref name) = component.name {
-                        let v = self.type_placeholder();
-                        self.environment.variables.insert(name.lexeme.clone(), v);
+                        if let Some(ref name) = component.name {
+                            let v = self.type_placeholder();
+                            self.environment.variables.insert(name.lexeme.clone(), v);
+                        }
                     }
                 });
                 self.infer_type(expr)

@@ -104,6 +104,7 @@ impl Column {
 
     pub fn remove(&mut self, entity: Entity) -> bool {
         // TODO(anissen): DRY logic around entity existence check
+        // TODO(anissen): It's probably faster to use bitmap.contains
         let idx = match self.sparse.get(entity as usize) {
             Some(i) if *i != usize::MAX => *i,
             _ => return false,
