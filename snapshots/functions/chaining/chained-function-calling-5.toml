@@ -1,13 +1,13 @@
 script = '''
-repeat = \str times
-	str | repeat_part "" times
+repeat = \s times
+    s | repeat_part "" times
 
-repeat_part = \str acc tt
-	tt is
-		t if t <= 1
-			acc
-		_
-			"{acc}{str}" | repeat_part str (tt - 1)
+repeat_part = \s acc tt
+    tt is
+        t if t <= 1
+            acc
+        _
+            "{acc}{s}" | repeat_part s (tt - 1)
 
 "hey" | repeat 3
 '''
