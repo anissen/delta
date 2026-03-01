@@ -3,7 +3,8 @@ use std::collections::HashMap;
 use crate::diagnostics::Diagnostics;
 use crate::errors::Error;
 use crate::expressions::{
-    BinaryOperator, Expr, IsArmPattern, IsGuard, StringOperations, UnaryOperator, ValueType,
+    BinaryOperator, Expr, IsArmPattern, IsGuard, PropertyDefinition, StringOperations,
+    UnaryOperator, ValueType,
 };
 use crate::program::Context;
 use crate::tokens::Token;
@@ -313,18 +314,36 @@ enum Constraint {
     },
 }
 
+struct ComponentMetadata {
+    type_: UnificationType,
+    properties: Vec<PropertyDefinition>,
+}
+
 #[derive(Default)]
 struct Environment {
     variables: HashMap<String, UnificationType>,
-    components: HashMap<
-        String, /* TODO(anissen): Should be a Token */
-        Vec<crate::expressions::PropertyDefinition>,
-    >,
+    components: HashMap<String /* TODO(anissen): Should be a Token */, ComponentMetadata>,
 }
 
 impl Environment {
     fn new() -> Self {
         Self::default()
+    }
+
+    fn get_property_definition(
+        &self,
+        component_name: String,
+        property_name: String,
+    ) -> &PropertyDefinition {
+        let component_metadata = self.components.get(&component_name).unwrap();
+        let properties = &component_metadata.properties;
+        dbg!(&properties);
+        dbg!(&property_name);
+        let property = properties
+            .iter()
+            .find(|prop| prop.name.lexeme == property_name)
+            .unwrap();
+        property
     }
 }
 
@@ -402,18 +421,25 @@ impl<'env> InferenceContext<'env> {
                     });
                 }
 
-                self.environment
-                    .components
-                    .insert(name.lexeme.clone(), properties.clone());
-
-                UnificationType::Constructor {
+                let type_ = UnificationType::Constructor {
                     typ: Type::Component,
                     generics: properties
                         .iter()
                         .map(|p| make_constructor(p.type_.clone(), p.name.clone()))
                         .collect(),
                     token: name.clone(),
-                }
+                };
+
+                let component_metadata = ComponentMetadata {
+                    type_: type_.clone(),
+                    properties: properties.clone(),
+                };
+
+                self.environment
+                    .components
+                    .insert(name.lexeme.clone(), component_metadata);
+
+                type_
             }
 
             Expr::Value { value, token } => match value {
@@ -481,8 +507,10 @@ impl<'env> InferenceContext<'env> {
                         }
                     }
 
-                    if let Some(definition) = self.environment.components.get(&name.lexeme) {
-                        let filled_in_properties: Vec<_> = definition
+                    if let Some(component_metadata) = self.environment.components.get(&name.lexeme)
+                    {
+                        let filled_in_properties: Vec<_> = component_metadata
+                            .properties
                             .clone() // Needed to avoid repeated borrowing
                             .iter()
                             .map(|def_prop| {
@@ -570,8 +598,12 @@ impl<'env> InferenceContext<'env> {
                         ref identifier,
                         ref field_name,
                     } => {
+                        // let property = self.environment.get_property_definition(component_name, property_name)
                         let name = format!("{}.{}", identifier.lexeme, field_name.lexeme);
-                        self.environment.variables.insert(name, type_variable);
+                        let t = self.environment.variables.get(&identifier.lexeme).unwrap();
+                        dbg!(&name);
+                        dbg!(&t);
+                        self.environment.variables.insert(name, t.clone());
                     }
                     _ => panic!("Invalid assignment target"),
                 }
@@ -765,16 +797,25 @@ impl<'env> InferenceContext<'env> {
                             // panic!("Entity component must be named to be used");
                         }
                     } else {
-                        if self.environment.components.get(&component_name).is_none() {
+                        if let Some(component_metadata) =
+                            self.environment.components.get(&component_name)
+                        {
+                            if let Some(ref name) = component.name {
+                                // let v = self.type_placeholder();
+                                // let prop_def = self
+                                //     .environment
+                                //     .get_property_definition(component_name, name.lexeme.clone());
+                                // let t = make_constructor(prop_def.type_.clone(), name.clone());
+
+                                self.environment
+                                    .variables
+                                    .insert(name.lexeme.clone(), component_metadata.type_.clone());
+                            }
+                        } else {
                             self.diagnostics.add_error(Error::TypeNotFound {
                                 token: component.type_.clone(),
                             });
                         };
-
-                        if let Some(ref name) = component.name {
-                            let v = self.type_placeholder();
-                            self.environment.variables.insert(name.lexeme.clone(), v);
-                        }
                     }
                 });
                 self.infer_type(expr)
