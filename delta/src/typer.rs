@@ -3,8 +3,7 @@ use std::collections::HashMap;
 use crate::diagnostics::Diagnostics;
 use crate::errors::Error;
 use crate::expressions::{
-    BinaryOperator, Expr, IsArmPattern, IsGuard, StringOperations,
-    UnaryOperator, ValueType,
+    BinaryOperator, Expr, IsArmPattern, IsGuard, StringOperations, UnaryOperator, ValueType,
 };
 use crate::program::Context;
 use crate::tokens::Token;
@@ -58,6 +57,7 @@ impl<'a> Typer<'a> {
             UnificationType::Constructor {
                 typ: Type::Function,
                 generics: vec![
+                    make_constructor(Type::Float, no_token.clone()),
                     make_constructor(Type::Float, no_token.clone()),
                     make_constructor(Type::Float, no_token.clone()),
                     make_constructor(Type::Float, no_token.clone()),
