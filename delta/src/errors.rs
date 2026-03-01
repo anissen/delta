@@ -50,6 +50,8 @@ pub enum Error {
 pub enum ResolutionError {
     ComponentRedefined { name: Token, definition: Token },
     BuiltinComponentRedefined { name: Token },
+    IsWithoutArms { token: Token },
+    IsWithMultipleDefaultArms { token: Token },
 }
 
 impl fmt::Display for Error {
@@ -151,6 +153,20 @@ impl fmt::Display for ResolutionError {
                     name.position.line, name.position.column, name.lexeme
                 )
             }
+            ResolutionError::IsWithoutArms { token } => {
+                write!(
+                    f,
+                    "Line {}.{}: `is` expression must have at least one arm",
+                    token.position.line, token.position.column,
+                )
+            }
+            ResolutionError::IsWithMultipleDefaultArms { token } => {
+                write!(
+                    f,
+                    "Line {}.{}: `is` expression cannot have multiple default arms",
+                    token.position.line, token.position.column,
+                )
+            }
         }
     }
 }
@@ -244,6 +260,14 @@ impl ErrorDescription for ResolutionError {
             }
             ResolutionError::BuiltinComponentRedefined { name } => {
                 let error_line = get_error_line(source, name);
+                format!("{error_line}\n{self}")
+            }
+            ResolutionError::IsWithoutArms { token } => {
+                let error_line = get_error_line(source, token);
+                format!("{error_line}\n{self}")
+            }
+            ResolutionError::IsWithMultipleDefaultArms { token } => {
+                let error_line = get_error_line(source, token);
                 format!("{error_line}\n{self}")
             }
         }

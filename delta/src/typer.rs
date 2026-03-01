@@ -709,7 +709,7 @@ impl<'env> InferenceContext<'env> {
 
             Expr::Grouping(expr) => self.infer_type(expr),
 
-            Expr::Is { expr, arms } => {
+            Expr::Is { token, expr, arms } => {
                 let mut has_wildcard = false;
                 let mut arm_expr_types = Vec::new();
                 let mut return_types = Vec::new();
@@ -745,7 +745,7 @@ impl<'env> InferenceContext<'env> {
                             });
                         }
 
-                        IsArmPattern::Default => {
+                        IsArmPattern::Default { token: _ } => {
                             has_wildcard = true;
                         }
                     }

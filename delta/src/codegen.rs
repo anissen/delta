@@ -5,8 +5,7 @@ use crate::diagnostics::Diagnostics;
 use crate::errors::Error;
 use crate::expressions::{
     ArithmeticOperations, BinaryOperator, BooleanOperations, Comparisons, EqualityOperations, Expr,
-    IsArm, IsArmPattern, MaybeNamedType, StringOperations, UnaryOperator,
-    ValueType,
+    IsArm, IsArmPattern, MaybeNamedType, StringOperations, UnaryOperator, ValueType,
 };
 use crate::program::Context;
 use crate::tokens::{Position, Token};
@@ -259,7 +258,7 @@ impl<'a> Codegen<'a> {
                 right,
             } => self.emit_binary(left, operator, right, scope),
 
-            Expr::Is { expr, arms } => self.emit_is(expr, arms, scope),
+            Expr::Is { token, expr, arms } => self.emit_is(expr, arms, scope),
 
             Expr::Query {
                 include_components: include_compoments,
@@ -523,7 +522,7 @@ impl<'a> Codegen<'a> {
                         .insert(identifier.lexeme.clone(), locals_count);
                     // scope.locals.insert(identifier.lexeme.clone());
                 }
-                IsArmPattern::Default => {
+                IsArmPattern::Default { token: _ } => {
                     // No pattern matching needed for default case
                 }
             }
@@ -593,14 +592,15 @@ impl<'a> Codegen<'a> {
         let mut component_variable_index = 1; // Entity always exists at index 0
 
         if let Some(entity_component) = entity_components.first()
-            && let Some(ref name) = entity_component.name {
-                let lexeme = name.lexeme.clone();
-                scope.environment.insert(lexeme.clone(), 0);
-                scope.locals.insert(lexeme.clone());
-                scope
-                    .local_component_mapping
-                    .insert(lexeme.clone(), entity_component.type_.clone());
-            }
+            && let Some(ref name) = entity_component.name
+        {
+            let lexeme = name.lexeme.clone();
+            scope.environment.insert(lexeme.clone(), 0);
+            scope.locals.insert(lexeme.clone());
+            scope
+                .local_component_mapping
+                .insert(lexeme.clone(), entity_component.type_.clone());
+        }
 
         sorted_includes.iter().for_each(|component| {
             let component_type_name = component.type_.lexeme.clone();

@@ -67,6 +67,7 @@ pub enum Expr {
         exprs: Vec<Expr>,
     },
     Is {
+        token: Token,
         expr: Box<Expr>,
         arms: Vec<IsArm>,
     },
@@ -130,7 +131,7 @@ pub enum IsArmPattern {
     Expression(Expr),
     Capture { identifier: Token },
     CaptureTagPayload { tag_name: Token, identifier: Token },
-    Default,
+    Default { token: Token },
 }
 
 #[derive(Debug)]

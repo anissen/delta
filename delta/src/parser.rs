@@ -342,39 +342,22 @@ impl Parser {
     fn is(&mut self) -> Result<Option<Expr>, String> {
         let expr = self.string_concat()?;
         if self.matches(&KeywordIs) {
+            let token = self.previous();
             self.comment();
             self.consume(&NewLine)?;
             self.increase_indentation();
             let mut arms = vec![];
-            let mut has_default = false;
             while self.matches_indentation() {
                 self.consume_indentation()?;
                 if self.matches(&Comment) {
                     self.consume(&NewLine)?;
                     continue;
                 }
-                let arm = self.is_arm()?;
-                // TODO(anissen): Move this to Resolver
-                if has_default {
-                    return match arm.pattern {
-                        IsArmPattern::Default => {
-                            Err("An `is` block cannot have multiple default arms.".to_string())
-                        }
-                        _ => Err("Unreachable due to default arm above.".to_string()),
-                    };
-                }
-                has_default = matches!(arm.pattern, IsArmPattern::Default) && arm.guard.is_none();
-
-                // TODO(anissen): Check for multiple capture arms or arms after a capture arm
-
-                arms.push(arm);
-            }
-            // TODO(anissen): Move this to Resolver
-            if arms.is_empty() {
-                return Err("`is` block must have at least one arm".to_string());
+                arms.push(self.is_arm()?);
             }
             self.decrease_indentation();
             Ok(Some(Expr::Is {
+                token,
                 expr: Box::new(expr.unwrap()),
                 arms,
             }))
@@ -386,7 +369,9 @@ impl Parser {
     // is_arm → INDENT ( ( "_" | expression ) block )
     fn is_arm(&mut self) -> Result<IsArm, String> {
         let pattern = if self.matches(&Underscore) {
-            IsArmPattern::Default
+            IsArmPattern::Default {
+                token: self.previous().clone(),
+            }
         } else if let Some(pattern) = self.expression()? {
             match pattern {
                 Expr::Identifier { name } => IsArmPattern::Capture { identifier: name },

@@ -1,7 +1,7 @@
 use crate::{
     diagnostics::Diagnostics,
     errors::{Error, ResolutionError},
-    expressions::Expr,
+    expressions::{Expr, IsArmPattern},
     program::Context,
     tokens::Token,
 };
@@ -24,11 +24,17 @@ impl<'a> Resolver<'a> {
     fn resolve_expr(&mut self, expression: &'a Expr) {
         match expression {
             Expr::Identifier { name } => (),
+
             Expr::Context { name } => (),
+
             Expr::ContextIdentifier { context, name } => (),
+
             Expr::Grouping(expr) => self.resolve_expr(expr),
+
             Expr::Value { value, token } => (),
+
             Expr::Call { name, args } => (),
+
             Expr::Assignment {
                 target,
                 _operator,
@@ -37,11 +43,13 @@ impl<'a> Resolver<'a> {
                 self.resolve_expr(target);
                 self.resolve_expr(expr);
             }
+
             Expr::Unary {
                 operator,
                 token,
                 expr,
             } => self.resolve_expr(expr),
+
             Expr::Binary {
                 left,
                 operator,
@@ -52,12 +60,45 @@ impl<'a> Resolver<'a> {
                 self.resolve_expr(right);
             }
             Expr::Block { exprs } => exprs.iter().for_each(|expr| self.resolve_expr(expr)),
-            Expr::Is { expr, arms } => (),
+
+            Expr::Is { token, expr, arms } => {
+                self.resolve_expr(expr);
+
+                if arms.is_empty() {
+                    self.error(ResolutionError::IsWithoutArms {
+                        token: token.clone(),
+                    });
+                }
+
+                let mut has_default = false;
+                for arm in arms {
+                    if has_default {
+                        return match arm.pattern {
+                            IsArmPattern::Default { ref token } => {
+                                self.error(ResolutionError::IsWithMultipleDefaultArms {
+                                    token: token.clone(),
+                                });
+                            }
+                            _ => unreachable!(),
+                        };
+                    }
+                    match arm.pattern {
+                        IsArmPattern::Default { ref token } if arm.guard.is_none() => {
+                            has_default = true
+                        }
+                        _ => (),
+                    }
+                }
+
+                // TODO(anissen): Check for multiple capture arms or arms after a capture arm
+            }
+
             Expr::Query {
                 include_components,
                 exclude_components,
                 expr,
             } => (),
+
             Expr::ComponentDefinition { name, properties } => {
                 if name.lexeme == "Entity" {
                     self.error(ResolutionError::BuiltinComponentRedefined { name: name.clone() });
@@ -80,7 +121,9 @@ impl<'a> Resolver<'a> {
                 ()
             }
             Expr::Create { token, arguments } => (),
+
             Expr::Destroy { token, argument } => (),
+
             Expr::FieldAccess {
                 identifier,
                 field_name,
