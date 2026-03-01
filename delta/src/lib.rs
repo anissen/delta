@@ -7,6 +7,7 @@ mod expressions;
 mod lexer;
 mod parser;
 pub mod program;
+mod resolver;
 mod tokens;
 mod typer;
 mod unification;

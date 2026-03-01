@@ -1,4 +1,3 @@
-
 use crate::diagnostics::Diagnostics;
 use crate::errors;
 use crate::expressions::ArithmeticOperations;
@@ -58,7 +57,6 @@ struct Parser {
     tokens: Vec<Token>,
     current: usize,
     indentation: u8,
-    component_names: Vec<Token>,
 }
 
 pub fn parse(tokens: Vec<Token>) -> Result<Expr, Diagnostics> {
@@ -85,7 +83,6 @@ impl Parser {
             tokens: non_whitespace_tokens,
             current: 0,
             indentation: 0,
-            component_names: Vec::new(),
         }
     }
 
@@ -132,9 +129,6 @@ impl Parser {
 
     fn component(&mut self) -> Result<Option<Expr>, String> {
         let component_name = self.consume(&Identifier)?;
-        if component_name.lexeme == "Entity" {
-            return Err("'Entity' already exists as a built-in component".to_string());
-        }
         let mut properties = Vec::new();
         if self.matches(&LeftBrace) {
             while !self.matches(&RightBrace) {
@@ -163,17 +157,6 @@ impl Parser {
                 }
             }
         }
-        if let Some(definition) = self
-            .component_names
-            .iter()
-            .find(|token| component_name.lexeme == token.lexeme)
-        {
-            return Err(format!(
-                "Component '{}' already defined at line {}",
-                component_name.lexeme, definition.position.line
-            ));
-        }
-        self.component_names.push(component_name.clone());
         Ok(Some(Expr::ComponentDefinition {
             name: component_name,
             properties,
@@ -326,6 +309,8 @@ impl Parser {
                     include_components.push(MaybeNamedType { type_, name });
                 }
             }
+
+            // TODO(anissen): Move this to Resolver
             if !has_entity_component {
                 include_components.push(MaybeNamedType {
                     type_: Token {
@@ -369,6 +354,7 @@ impl Parser {
                     continue;
                 }
                 let arm = self.is_arm()?;
+                // TODO(anissen): Move this to Resolver
                 if has_default {
                     return match arm.pattern {
                         IsArmPattern::Default => {
@@ -383,6 +369,7 @@ impl Parser {
 
                 arms.push(arm);
             }
+            // TODO(anissen): Move this to Resolver
             if arms.is_empty() {
                 return Err("`is` block must have at least one arm".to_string());
             }

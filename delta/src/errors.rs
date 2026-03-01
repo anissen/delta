@@ -43,6 +43,13 @@ pub enum Error {
     PropertyDuplicated {
         token: Token,
     },
+    ResolutionErr(ResolutionError),
+}
+
+#[derive(Debug, Clone)]
+pub enum ResolutionError {
+    ComponentRedefined { name: Token, definition: Token },
+    BuiltinComponentRedefined { name: Token },
 }
 
 impl fmt::Display for Error {
@@ -118,6 +125,32 @@ impl fmt::Display for Error {
                     token.position.line, token.position.column, token.lexeme
                 )
             }
+            Error::ResolutionErr(resolution_error) => resolution_error.fmt(f),
+        }
+    }
+}
+
+impl fmt::Display for ResolutionError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ResolutionError::ComponentRedefined { name, definition } => {
+                write!(
+                    f,
+                    "Line {}.{}: Component '{}' is has already been defined at line {}.{}",
+                    name.position.line,
+                    name.position.column,
+                    name.lexeme,
+                    definition.position.line,
+                    definition.position.column,
+                )
+            }
+            ResolutionError::BuiltinComponentRedefined { name } => {
+                write!(
+                    f,
+                    "Line {}.{}: Component '{}' already exists as a built-in component",
+                    name.position.line, name.position.column, name.lexeme
+                )
+            }
         }
     }
 }
@@ -129,7 +162,10 @@ pub trait ErrorDescription {
 impl ErrorDescription for Error {
     fn print(&self, source: &str) -> String {
         match self {
-            Error::SyntaxError { description: _, token } => {
+            Error::SyntaxError {
+                description: _,
+                token,
+            } => {
                 let error_line = get_error_line(source, token);
                 format!("{error_line}\n{self}")
             }
@@ -192,6 +228,22 @@ impl ErrorDescription for Error {
             }
             Error::PropertyDuplicated { token } => {
                 let error_line = get_error_line(source, token);
+                format!("{error_line}\n{self}")
+            }
+            Error::ResolutionErr(resolution_error) => resolution_error.print(source),
+        }
+    }
+}
+
+impl ErrorDescription for ResolutionError {
+    fn print(&self, source: &str) -> String {
+        match self {
+            ResolutionError::ComponentRedefined { name, definition } => {
+                let error_line = get_error_line(source, name);
+                format!("{error_line}\n{self}")
+            }
+            ResolutionError::BuiltinComponentRedefined { name } => {
+                let error_line = get_error_line(source, name);
                 format!("{error_line}\n{self}")
             }
         }

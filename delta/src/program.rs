@@ -13,6 +13,7 @@ use crate::disassembler;
 use crate::errors::Error;
 use crate::lexer;
 use crate::parser;
+use crate::resolver;
 use crate::tokens;
 use crate::typer;
 use crate::vm;
@@ -232,10 +233,16 @@ impl<'a> Program<'a> {
             println!("ast: {ast:?}");
         }
 
+        println!("\n# resolution =>");
+        let mut diagnostics = Diagnostics::new();
+        let start = std::time::Instant::now();
+        resolver::resolve(&ast, &self.context, &mut diagnostics);
+        let duration = start.elapsed();
+        println!("Elapsed: {duration:?}");
+
         println!("\n# typing =>");
         let start = std::time::Instant::now();
         // TODO(anissen): Diagnostics should be collected in each phase
-        let mut diagnostics = Diagnostics::new();
         typer::type_check(&ast, &self.context, &mut diagnostics);
         let duration = start.elapsed();
         println!("Elapsed: {duration:?}");
