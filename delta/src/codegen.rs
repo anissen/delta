@@ -26,7 +26,7 @@ pub struct Scope {
     locals: HashSet<String>,
 
     /// Mapping local component variables to their component types (e.g. "p" => "Position")
-    local_component_mapping: HashMap<String, Token>,
+    local_component_mapping: HashMap<String, Token>, // TODO(anissen): Move into Environment
 }
 
 impl Scope {
@@ -58,7 +58,7 @@ struct ComponentMetadata<'a> {
 pub struct Codegen<'a> {
     function_chunks: Vec<FunctionChunk<'a>>,
     context: &'a Context<'a>,
-    components: HashMap<String, ComponentMetadata<'a>>,
+    components: HashMap<String, ComponentMetadata<'a>>, // TODO(anissen): Move into Environment
     diagnostics: Diagnostics,
 }
 
@@ -117,6 +117,7 @@ impl<'a> Codegen<'a> {
                 } else if let Some(index) = scope.environment.get(lexeme) {
                     scope.bytecode.add_get_local_value(*index);
                 } else {
+                    // TODO(anissen): Move into Resolver
                     panic!("Name not found in scope");
                 }
             }
@@ -137,6 +138,7 @@ impl<'a> Codegen<'a> {
                         .bytecode
                         .add_get_field_value(*index, field_access_index as u8);
                 } else {
+                    // TODO(anissen): Move into Resolver
                     dbg!(&identifier);
                     panic!("Name not found in scope");
                 }
@@ -193,6 +195,7 @@ impl<'a> Codegen<'a> {
                                 scope.bytecode.add_byte(*index);
                             }
                             None => {
+                                // TODO(anissen): Move into Resolver
                                 panic!("Unknown function");
                             }
                         }
