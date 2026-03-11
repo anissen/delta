@@ -48,10 +48,24 @@ pub enum Error {
 
 #[derive(Debug, Clone)]
 pub enum ResolutionError {
-    ComponentRedefined { name: Token, definition: Token },
-    BuiltinComponentRedefined { name: Token },
-    IsWithoutArms { token: Token },
-    IsWithMultipleDefaultArms { token: Token },
+    ComponentRedefined {
+        name: Token,
+        definition: Token,
+    },
+    BuiltinComponentRedefined {
+        name: Token,
+    },
+    IsWithoutArms {
+        token: Token,
+    },
+    IsWithMultipleDefaultArms {
+        token: Token,
+        default_arm_token: Token,
+    },
+    UnreachableArm {
+        token: Token,
+        default_arm_token: Token,
+    },
 }
 
 impl fmt::Display for Error {
@@ -160,11 +174,24 @@ impl fmt::Display for ResolutionError {
                     token.position.line, token.position.column,
                 )
             }
-            ResolutionError::IsWithMultipleDefaultArms { token } => {
+            ResolutionError::IsWithMultipleDefaultArms {
+                token,
+                default_arm_token,
+            } => {
                 write!(
                     f,
-                    "Line {}.{}: `is` expression cannot have multiple default arms",
-                    token.position.line, token.position.column,
+                    "Line {}.{}: `is` expression cannot have multiple default arms (previously defined at line {})",
+                    token.position.line, token.position.column, default_arm_token.position.line,
+                )
+            }
+            ResolutionError::UnreachableArm {
+                token,
+                default_arm_token,
+            } => {
+                write!(
+                    f,
+                    "Line {}.{}: unreachable arm in `is` expression due to default arm above (line {})",
+                    token.position.line, token.position.column, default_arm_token.position.line,
                 )
             }
         }
@@ -266,7 +293,17 @@ impl ErrorDescription for ResolutionError {
                 let error_line = get_error_line(source, token);
                 format!("{error_line}\n{self}")
             }
-            ResolutionError::IsWithMultipleDefaultArms { token } => {
+            ResolutionError::IsWithMultipleDefaultArms {
+                token,
+                default_arm_token: _,
+            } => {
+                let error_line = get_error_line(source, token);
+                format!("{error_line}\n{self}")
+            }
+            ResolutionError::UnreachableArm {
+                token,
+                default_arm_token: _,
+            } => {
                 let error_line = get_error_line(source, token);
                 format!("{error_line}\n{self}")
             }

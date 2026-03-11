@@ -8,6 +8,6 @@ script = """
 
 [output]
 error = """
-        "not okay"
-                 \u001B[33m^\u001B[0m
-Line 5.18: Parse error: Unreachable due to default arm above."""
+3 is
+  \u001B[33m^^\u001B[0m
+Line 1.3: unreachable arm in `is` expression due to default arm above (line 2)"""

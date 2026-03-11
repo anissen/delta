@@ -8,6 +8,6 @@ script = """
 
 [output]
 error = """
-        "not okay"
-                 \u001B[33m^\u001B[0m
-Line 5.18: Parse error: An `is` block cannot have multiple default arms."""
+    _
+    \u001B[33m^\u001B[0m
+Line 4.5: `is` expression cannot have multiple default arms (previously defined at line 2)"""

@@ -80,21 +80,25 @@ impl<'a> Resolver<'a> {
                     });
                 }
 
-                let mut has_default = false;
+                let mut default_arm: Option<Token> = None;
                 for arm in arms {
-                    if has_default {
+                    if let Some(default_arm_token) = default_arm {
                         return match arm.pattern {
                             IsArmPattern::Default { ref token } => {
                                 self.error(ResolutionError::IsWithMultipleDefaultArms {
                                     token: token.clone(),
+                                    default_arm_token: default_arm_token.clone(),
                                 });
                             }
-                            _ => unreachable!(),
+                            _ => self.error(ResolutionError::UnreachableArm {
+                                token: token.clone(),
+                                default_arm_token: default_arm_token.clone(),
+                            }),
                         };
                     }
                     match arm.pattern {
                         IsArmPattern::Default { ref token } if arm.guard.is_none() => {
-                            has_default = true
+                            default_arm = Some(token.clone())
                         }
                         _ => (),
                     }
