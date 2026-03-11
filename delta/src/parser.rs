@@ -828,7 +828,7 @@ impl Parser {
         } else if self.matches(&LeftParen) {
             let expr = self.expression()?;
             self.consume(&RightParen)?;
-            Ok(Some(Expr::Grouping(Box::new(expr.unwrap()))))
+            Ok(expr)
         } else if self.matches(&BackSlash) {
             self.function()
         } else if self.matches(&Tag) {

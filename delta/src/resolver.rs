@@ -37,8 +37,6 @@ impl<'a> Resolver<'a> {
 
             Expr::ContextIdentifier { context, name } => (),
 
-            Expr::Grouping(expr) => self.resolve_expr(expr),
-
             Expr::Value { value, token } => (),
 
             Expr::Call { name, args } => {

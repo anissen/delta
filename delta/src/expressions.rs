@@ -33,7 +33,6 @@ pub enum Expr {
         context: Token,
         name: Token,
     },
-    Grouping(Box<Expr>),
     Value {
         value: ValueType,
         token: Token,

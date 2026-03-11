@@ -90,8 +90,6 @@ impl<'a> Codegen<'a> {
         match expr {
             Expr::Value { value, token } => self.emit_value(value, token, scope),
 
-            Expr::Grouping(expr) => self.emit_expr(expr, scope),
-
             Expr::Block { exprs } => {
                 // Emit block with its own environment and locals
                 let locals = scope.locals.clone();
