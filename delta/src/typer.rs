@@ -339,11 +339,11 @@ impl Environment {
         let properties = &component_metadata.properties;
         dbg!(&properties);
         dbg!(&property_name);
-        let property = properties
+        
+        (properties
             .iter()
             .find(|prop| prop.name.lexeme == property_name)
-            .unwrap();
-        property
+            .unwrap()) as _
     }
 }
 
@@ -707,7 +707,7 @@ impl<'env> InferenceContext<'env> {
                 }
             },
 
-            Expr::Is { token, expr, arms } => {
+            Expr::Is { token: _, expr, arms } => {
                 let mut has_wildcard = false;
                 let mut arm_expr_types = Vec::new();
                 let mut return_types = Vec::new();

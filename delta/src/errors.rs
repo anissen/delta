@@ -198,6 +198,8 @@ impl fmt::Display for ResolutionError {
     }
 }
 
+// TODO(anissen): Clean up this file. An error should have a standard representation (e.g. error description, source location, references to other related lines, optional hint)
+
 pub trait ErrorDescription {
     fn print(&self, source: &str) -> String;
 }
@@ -281,7 +283,7 @@ impl ErrorDescription for Error {
 impl ErrorDescription for ResolutionError {
     fn print(&self, source: &str) -> String {
         match self {
-            ResolutionError::ComponentRedefined { name, definition } => {
+            ResolutionError::ComponentRedefined { name, definition: _ } => {
                 let error_line = get_error_line(source, name);
                 format!("{error_line}\n{self}")
             }

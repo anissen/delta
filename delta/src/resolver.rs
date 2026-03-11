@@ -31,15 +31,15 @@ impl<'a> Resolver<'a> {
 
     fn resolve_expr(&mut self, expression: &'a Expr) {
         match expression {
-            Expr::Identifier { name } => (),
+            Expr::Identifier { name: _ } => (),
 
-            Expr::Context { name } => (),
+            Expr::Context { name: _ } => (),
 
-            Expr::ContextIdentifier { context, name } => (),
+            Expr::ContextIdentifier { context: _, name: _ } => (),
 
-            Expr::Value { value, token } => (),
+            Expr::Value { value: _, token: _ } => (),
 
-            Expr::Call { name, args } => {
+            Expr::Call { name: _, args } => {
                 self.resolve_exprs(args);
             }
 
@@ -53,15 +53,15 @@ impl<'a> Resolver<'a> {
             }
 
             Expr::Unary {
-                operator,
-                token,
+                operator: _,
+                token: _,
                 expr,
             } => self.resolve_expr(expr),
 
             Expr::Binary {
                 left,
-                operator,
-                token,
+                operator: _,
+                token: _,
                 right,
             } => {
                 self.resolve_expr(left);
@@ -106,8 +106,8 @@ impl<'a> Resolver<'a> {
             }
 
             Expr::Query {
-                include_components,
-                exclude_components,
+                include_components: _,
+                exclude_components: _,
                 expr,
             } => {
                 // TODO(anissen): Resolve include/exclude components
@@ -115,7 +115,7 @@ impl<'a> Resolver<'a> {
                 self.resolve_expr(expr);
             }
 
-            Expr::ComponentDefinition { name, properties } => {
+            Expr::ComponentDefinition { name, properties: _ } => {
                 if name.lexeme == "Entity" {
                     self.error(ResolutionError::BuiltinComponentRedefined { name: name.clone() });
                 }
@@ -134,13 +134,13 @@ impl<'a> Resolver<'a> {
 
                 // TODO(anissen): Also check properties
             }
-            Expr::Create { token, arguments } => self.resolve_expr(arguments),
+            Expr::Create { token: _, arguments } => self.resolve_expr(arguments),
 
-            Expr::Destroy { token, argument } => self.resolve_expr(argument),
+            Expr::Destroy { token: _, argument } => self.resolve_expr(argument),
 
             Expr::FieldAccess {
-                identifier,
-                field_name,
+                identifier: _,
+                field_name: _,
             } => (),
         }
     }

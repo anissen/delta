@@ -259,7 +259,7 @@ impl<'a> Codegen<'a> {
                 right,
             } => self.emit_binary(left, operator, right, scope),
 
-            Expr::Is { token, expr, arms } => self.emit_is(expr, arms, scope),
+            Expr::Is { token: _, expr, arms } => self.emit_is(expr, arms, scope),
 
             Expr::Query {
                 include_components: include_compoments,
