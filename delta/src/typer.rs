@@ -287,6 +287,18 @@ impl<'a> Typer<'a> {
             },
         );
 
+        environment.variables.insert(
+            "play_sound".to_string(),
+            UnificationType::Constructor {
+                typ: Type::Function,
+                generics: vec![
+                    make_constructor(Type::String, no_token.clone()),
+                    make_constructor(Type::Boolean, no_token.clone()),
+                ],
+                token: no_token.clone(),
+            },
+        );
+
         // for function in self.context.get_function_names() {
         //     environment.variables.insert(
         //         function,
@@ -339,7 +351,7 @@ impl Environment {
         let properties = &component_metadata.properties;
         dbg!(&properties);
         dbg!(&property_name);
-        
+
         (properties
             .iter()
             .find(|prop| prop.name.lexeme == property_name)
@@ -707,7 +719,11 @@ impl<'env> InferenceContext<'env> {
                 }
             },
 
-            Expr::Is { token: _, expr, arms } => {
+            Expr::Is {
+                token: _,
+                expr,
+                arms,
+            } => {
                 let mut has_wildcard = false;
                 let mut arm_expr_types = Vec::new();
                 let mut return_types = Vec::new();
