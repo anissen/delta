@@ -342,21 +342,20 @@ impl Environment {
         Self::default()
     }
 
-    fn get_property_definition(
-        &self,
-        component_name: String,
-        property_name: String,
-    ) -> &PropertyDefinition {
-        let component_metadata = self.components.get(&component_name).unwrap();
-        let properties = &component_metadata.properties;
-        dbg!(&properties);
-        dbg!(&property_name);
+    // fn get_property_definition(
+    //     &self,
+    //     identifier: String,
+    //     property_name: String,
+    // ) -> &PropertyDefinition {
+    //     let component = self.variables.get(&identifier).unwrap();
+    //     let component_metadata = self.components.get(&component).unwrap();
+    //     let properties = &component_metadata.properties;
 
-        (properties
-            .iter()
-            .find(|prop| prop.name.lexeme == property_name)
-            .unwrap()) as _
-    }
+    //     properties
+    //         .iter()
+    //         .find(|prop| prop.name.lexeme == property_name)
+    //         .unwrap()
+    // }
 }
 
 struct InferenceContext<'env> {
@@ -387,11 +386,54 @@ impl<'env> InferenceContext<'env> {
 
     fn expects_type(&mut self, expression: &Expr, expected_type: UnificationType) {
         let actual_type = self.infer_type(expression);
-        // dbg!(&actual_type);
-        // dbg!(&expected_type);
+        self.check_type(actual_type, expected_type);
+    }
+
+    fn check_type(&mut self, actual_type: UnificationType, expected_type: UnificationType) {
         self.constraints.push(Constraint::Eq {
             left: actual_type,
             right: expected_type,
+            at: None,
+        });
+    }
+
+    fn expect_field_type(
+        &mut self,
+        actual_type: UnificationType,
+        expected_type: UnificationType,
+        field_name: String,
+    ) {
+        // TODO(anissen): This works for the current use case but is error prone and verbose. Please find a better way of checking the field type of a component.
+        let field_type = match expected_type {
+            UnificationType::Constructor {
+                typ,
+                ref generics,
+                token,
+            } => generics
+                .iter()
+                .find(|generic| match generic {
+                    UnificationType::Constructor {
+                        typ,
+                        generics,
+                        token,
+                    } => token.lexeme == field_name,
+                    UnificationType::Variable(_) => todo!(),
+                    UnificationType::Union {
+                        types,
+                        has_wildcard,
+                    } => todo!(),
+                })
+                .unwrap(),
+            UnificationType::Variable(_) => todo!(),
+            UnificationType::Union {
+                types,
+                has_wildcard,
+            } => todo!(),
+        };
+
+        self.constraints.push(Constraint::Eq {
+            left: actual_type,
+            right: field_type.clone(),
             at: None,
         });
     }
@@ -610,11 +652,9 @@ impl<'env> InferenceContext<'env> {
                         ref identifier,
                         ref field_name,
                     } => {
-                        // let property = self.environment.get_property_definition(component_name, property_name)
+                        let property = self.environment.get_property_definition(component_name, property_name)
                         let name = format!("{}.{}", identifier.lexeme, field_name.lexeme);
                         let t = self.environment.variables.get(&identifier.lexeme).unwrap();
-                        dbg!(&name);
-                        dbg!(&t);
                         self.environment.variables.insert(name, t.clone());
                     }
                     _ => panic!("Invalid assignment target"),
@@ -639,6 +679,13 @@ impl<'env> InferenceContext<'env> {
                         ref identifier,
                         ref field_name,
                     } => {
+                        let expected_type =
+                            self.environment.variables.get(&identifier.lexeme).unwrap();
+                        self.expect_field_type(
+                            expr_type.clone(),
+                            expected_type.clone(),
+                            field_name.lexeme.clone(),
+                        );
                         let name = format!("{}.{}", identifier.lexeme, field_name.lexeme);
                         self.environment.variables.insert(name, expr_type.clone());
                     }
@@ -826,6 +873,7 @@ impl<'env> InferenceContext<'env> {
                                     .insert(name.lexeme.clone(), component_metadata.type_.clone());
                             }
                         } else {
+                            // TODO(anissen): This should be moved to Resolver
                             self.diagnostics.add_error(Error::TypeNotFound {
                                 token: component.type_.clone(),
                             });
