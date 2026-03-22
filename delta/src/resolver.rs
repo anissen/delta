@@ -1,5 +1,6 @@
 use crate::{
     diagnostics::Diagnostics,
+    environment::{ComponentMetadata, Environment},
     errors::{Error, ResolutionError},
     expressions::{Expr, IsArmPattern},
     program::Context,
@@ -9,15 +10,19 @@ use crate::{
 pub struct Resolver<'a> {
     context: &'a Context<'a>, // TODO(anissen): Check against shadowing variables and functions defined in the context
     diagnostics: &'a mut Diagnostics,
-    component_names: Vec<Token>, // TODO(anissen): Component meta data needs to be a more complex structure
+    environment: &'a mut Environment,
 }
 
 impl<'a> Resolver<'a> {
-    fn new(context: &'a Context<'a>, diagnostics: &'a mut Diagnostics) -> Self {
+    fn new(
+        context: &'a Context<'a>,
+        environment: &'a mut Environment,
+        diagnostics: &'a mut Diagnostics,
+    ) -> Self {
         Self {
             context,
             diagnostics,
-            component_names: Vec::new(),
+            environment,
         }
     }
 
@@ -35,7 +40,10 @@ impl<'a> Resolver<'a> {
 
             Expr::Context { name: _ } => (),
 
-            Expr::ContextIdentifier { context: _, name: _ } => (),
+            Expr::ContextIdentifier {
+                context: _,
+                name: _,
+            } => (),
 
             Expr::Value { value: _, token: _ } => (),
 
@@ -115,26 +123,39 @@ impl<'a> Resolver<'a> {
                 self.resolve_expr(expr);
             }
 
-            Expr::ComponentDefinition { name, properties: _ } => {
+            Expr::ComponentDefinition { name, properties } => {
                 if name.lexeme == "Entity" {
                     self.error(ResolutionError::BuiltinComponentRedefined { name: name.clone() });
                 }
 
-                if let Some(definition) = self
-                    .component_names
+                if let Some(metadata) = self
+                    .environment
+                    .components
                     .iter()
-                    .find(|token| name.lexeme == token.lexeme)
+                    .find(|(component_name, _)| **component_name == name.lexeme)
+                    .map(|(_, metadata)| metadata)
                 {
                     self.error(ResolutionError::ComponentRedefined {
                         name: name.clone(),
-                        definition: definition.clone(),
+                        definition: metadata.token.clone(),
                     });
                 }
-                self.component_names.push(name.clone());
+
+                let metadata = ComponentMetadata {
+                    token: name.clone(),
+                    id: self.environment.components.len() as u8,
+                    properties: properties.clone(),
+                };
+                self.environment
+                    .components
+                    .insert(name.lexeme.clone(), metadata);
 
                 // TODO(anissen): Also check properties
             }
-            Expr::Create { token: _, arguments } => self.resolve_expr(arguments),
+            Expr::Create {
+                token: _,
+                arguments,
+            } => self.resolve_expr(arguments),
 
             Expr::Destroy { token: _, argument } => self.resolve_expr(argument),
 
@@ -150,7 +171,12 @@ impl<'a> Resolver<'a> {
     }
 }
 
-pub fn resolve<'a>(expression: &'a Expr, context: &'a Context<'a>, diagnostics: &mut Diagnostics) {
-    let mut resolver = Resolver::new(context, diagnostics);
+pub fn resolve<'a>(
+    expression: &'a Expr,
+    context: &'a Context<'a>,
+    environment: &'a mut Environment,
+    diagnostics: &mut Diagnostics,
+) {
+    let mut resolver = Resolver::new(context, environment, diagnostics);
     resolver.resolve_expr(expression);
 }

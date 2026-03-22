@@ -2,6 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use crate::bytecodes::ByteCode;
 use crate::diagnostics::Diagnostics;
+use crate::environment::Environment;
 use crate::errors::Error;
 use crate::expressions::{
     ArithmeticOperations, BinaryOperator, BooleanOperations, Comparisons, EqualityOperations, Expr,
@@ -26,7 +27,7 @@ pub struct Scope {
     locals: HashSet<String>,
 
     /// Mapping local component variables to their component types (e.g. "p" => "Position")
-    local_component_mapping: HashMap<String, Token>, // TODO(anissen): Move into Environment
+    local_component_mapping: HashMap<String, Token>,
 }
 
 impl Scope {
@@ -49,32 +50,30 @@ impl Scope {
     }
 }
 
-#[derive(Debug)]
-struct ComponentMetadata<'a> {
-    id: u8,
-    properties: &'a Vec<crate::expressions::PropertyDefinition>,
-}
-
 pub struct Codegen<'a> {
     function_chunks: Vec<FunctionChunk<'a>>,
     context: &'a Context<'a>,
-    components: HashMap<String, ComponentMetadata<'a>>, // TODO(anissen): Move into Environment
+    environment: &'a Environment,
     diagnostics: Diagnostics,
 }
 
-pub fn codegen<'a>(expression: &'a Expr, context: &'a Context<'a>) -> Result<Vec<u8>, Diagnostics> {
-    Codegen::new(context).emit(expression)
+pub fn codegen<'a>(
+    expression: &'a Expr,
+    environment: &'a Environment,
+    context: &'a Context<'a>,
+) -> Result<Vec<u8>, Diagnostics> {
+    Codegen::new(environment, context).emit(expression)
 }
 
 // TODO(anissen): Add a function overview mapping for each scope containing { name, arity, starting IP, source line number  }.
 // This will be used directly in the VM as well as for debug logging.
 
 impl<'a> Codegen<'a> {
-    fn new(context: &'a Context<'a>) -> Self {
+    fn new(environment: &'a Environment, context: &'a Context<'a>) -> Self {
         Self {
             function_chunks: vec![],
             context,
-            components: HashMap::new(),
+            environment,
             diagnostics: Diagnostics::new(),
         }
     }
@@ -146,15 +145,7 @@ impl<'a> Codegen<'a> {
                 todo!("Implement context expression")
             }
 
-            Expr::ComponentDefinition { name, properties } => {
-                self.components.insert(
-                    name.lexeme.clone(),
-                    ComponentMetadata {
-                        id: self.components.len() as u8,
-                        properties,
-                    },
-                );
-            }
+            Expr::ComponentDefinition { name, properties } => {}
 
             Expr::Call { name, args } => {
                 let lexeme = &name.lexeme;
@@ -259,7 +250,11 @@ impl<'a> Codegen<'a> {
                 right,
             } => self.emit_binary(left, operator, right, scope),
 
-            Expr::Is { token: _, expr, arms } => self.emit_is(expr, arms, scope),
+            Expr::Is {
+                token: _,
+                expr,
+                arms,
+            } => self.emit_is(expr, arms, scope),
 
             Expr::Query {
                 include_components: include_compoments,
@@ -292,7 +287,11 @@ impl<'a> Codegen<'a> {
             .local_component_mapping
             .get(&component_identifier.lexeme)
             .unwrap();
-        let component_properties = self.components.get(&component_name.lexeme).unwrap();
+        let component_properties = self
+            .environment
+            .components
+            .get(&component_name.lexeme)
+            .unwrap();
 
         component_properties
             .properties
@@ -361,7 +360,7 @@ impl<'a> Codegen<'a> {
 
             ValueType::Component { name, properties } => {
                 // Output property values in sorted order wrt. the definition
-                let component_properties = self.components.get(&name.lexeme).unwrap();
+                let component_properties = self.environment.components.get(&name.lexeme).unwrap();
                 component_properties
                     .properties
                     .iter()
@@ -373,7 +372,7 @@ impl<'a> Codegen<'a> {
                         self.emit_expr(&property.value, scope);
                     });
 
-                let component_id = self.components.get(&name.lexeme).unwrap().id;
+                let component_id = self.environment.components.get(&name.lexeme).unwrap().id;
                 scope
                     .bytecode
                     .add_op(ByteCode::PushComponent)
@@ -584,8 +583,8 @@ impl<'a> Codegen<'a> {
 
         let mut sorted_includes = include_components.iter().collect::<Vec<_>>();
         sorted_includes.sort_by(|a, b| {
-            let component_id_a = self.components.get(&a.type_.lexeme).unwrap().id;
-            let component_id_b = self.components.get(&b.type_.lexeme).unwrap().id;
+            let component_id_a = self.environment.components.get(&a.type_.lexeme).unwrap().id;
+            let component_id_b = self.environment.components.get(&b.type_.lexeme).unwrap().id;
 
             component_id_a.cmp(&component_id_b)
         });
@@ -606,7 +605,12 @@ impl<'a> Codegen<'a> {
         sorted_includes.iter().for_each(|component| {
             let component_type_name = component.type_.lexeme.clone();
 
-            let component_id = self.components.get(&component_type_name).unwrap().id;
+            let component_id = self
+                .environment
+                .components
+                .get(&component_type_name)
+                .unwrap()
+                .id;
             scope
                 .bytecode
                 .add_byte(component_id)
@@ -627,8 +631,8 @@ impl<'a> Codegen<'a> {
 
         let mut sorted_excludes = exclude_components.clone();
         sorted_excludes.sort_by(|a, b| {
-            let component_id_a = self.components.get(&a.lexeme).unwrap().id;
-            let component_id_b = self.components.get(&b.lexeme).unwrap().id;
+            let component_id_a = self.environment.components.get(&a.lexeme).unwrap().id;
+            let component_id_b = self.environment.components.get(&b.lexeme).unwrap().id;
 
             component_id_a.cmp(&component_id_b)
         });
@@ -636,7 +640,12 @@ impl<'a> Codegen<'a> {
         sorted_excludes.iter().for_each(|component| {
             let component_type_name = component.lexeme.clone();
 
-            let component_id = self.components.get(&component_type_name).unwrap().id;
+            let component_id = self
+                .environment
+                .components
+                .get(&component_type_name)
+                .unwrap()
+                .id;
             scope
                 .bytecode
                 .add_byte(component_id)
@@ -787,10 +796,10 @@ impl<'a> Codegen<'a> {
     fn create_bytecode(&mut self, scope: &mut Scope) -> Vec<u8> {
         let mut header_builder = BytecodeBuilder::new();
 
-        let mut sorted_map = self.components.values().collect::<Vec<_>>();
+        let mut sorted_map = self.environment.components.values().collect::<Vec<_>>();
         sorted_map.sort_by(|a, b| a.id.cmp(&b.id));
 
-        header_builder.add_byte(self.components.len() as u8);
+        header_builder.add_byte(self.environment.components.len() as u8);
         for component_metadata in &sorted_map {
             header_builder.add_byte(component_metadata.id);
             header_builder.add_byte(component_metadata.properties.len() as u8);

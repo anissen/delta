@@ -2,6 +2,7 @@ mod bytecodes;
 mod codegen;
 pub mod diagnostics;
 mod disassembler;
+mod environment;
 mod errors;
 mod expressions;
 mod lexer;

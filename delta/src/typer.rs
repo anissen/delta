@@ -652,7 +652,7 @@ impl<'env> InferenceContext<'env> {
                         ref identifier,
                         ref field_name,
                     } => {
-                        let property = self.environment.get_property_definition(component_name, property_name)
+                        // let property = self.environment.get_property_definition(component_name, property_name)
                         let name = format!("{}.{}", identifier.lexeme, field_name.lexeme);
                         let t = self.environment.variables.get(&identifier.lexeme).unwrap();
                         self.environment.variables.insert(name, t.clone());

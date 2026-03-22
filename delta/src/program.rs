@@ -10,6 +10,7 @@ use crate::ProgramMetadata;
 use crate::codegen;
 use crate::diagnostics::Diagnostics;
 use crate::disassembler;
+use crate::environment::Environment;
 use crate::errors::Error;
 use crate::lexer;
 use crate::parser;
@@ -234,9 +235,10 @@ impl<'a> Program<'a> {
         }
 
         println!("\n# resolution =>");
+        let mut environment = Environment::default();
         let mut diagnostics = Diagnostics::new();
         let start = std::time::Instant::now();
-        resolver::resolve(&ast, &self.context, &mut diagnostics);
+        resolver::resolve(&ast, &self.context, &mut environment, &mut diagnostics);
         let duration = start.elapsed();
         println!("Elapsed: {duration:?}");
 
@@ -262,7 +264,7 @@ impl<'a> Program<'a> {
 
         println!("\n# code gen =>");
         let start = std::time::Instant::now();
-        let bytecodes = codegen::codegen(&ast, &self.context);
+        let bytecodes = codegen::codegen(&ast, &environment, &self.context);
         let duration = start.elapsed();
         println!("Elapsed: {duration:?}");
 
