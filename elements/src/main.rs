@@ -185,11 +185,43 @@ fn main() {
         println!("--- Frame {} ---", frame);
 
         // TODO(anissen): We probably need to get the list of entities/components out, and then iterate?!?
-        world.system(
-            &vec![position_id, velocity_id],
-            &vec![dead_id],
-            movement_system,
-        );
+        let mut results = world.query(&vec![position_id, velocity_id], &vec![dead_id]);
+        let (first, rest) = results.columns.split_at_mut(1);
+        let pos_col = &mut first[0];
+        let vel_col = &mut rest[0];
+        results.for_each(move |entity| {
+            // let columns = results.columns.iter().map(|column| {
+            //     let component_id = column.id as u8;
+            //     let data = column.get(entity).unwrap();
+            //     let values = get_value_from_bytes(data, &column.layout);
+
+            //     Value::Component {
+            //         id: component_id,
+            //         properties: values,
+            //     }
+            // });
+
+            // let (first, rest) = results.columns.split_at_mut(1);
+            // let pos = &mut first[0].get(entity).unwrap();
+            // let vel = &mut rest[0].get(entity).unwrap();
+            let pos = pos_col.get(entity).unwrap();
+            let vel = vel_col.get(entity).unwrap();
+            let pos_x = read_f32(&pos[0..4]);
+            let pos_y = read_f32(&pos[4..8]);
+            let vel_x = read_f32(&vel[0..4]);
+            let vel_y = read_f32(&vel[4..8]);
+
+            let new_pos_x = pos_x + vel_x;
+            let new_pos_y = pos_y + vel_y;
+            let new_pos = [f32_bytes(new_pos_x), f32_bytes(new_pos_y)].concat();
+
+            pos.copy_from_slice(&new_pos);
+
+            println!(
+                "Entity {} at ({}, {}) with velocity ({}, {})",
+                entity, new_pos_x, new_pos_y, vel_x, vel_y
+            );
+        });
 
         world
             .iter(dead_id)
