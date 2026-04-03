@@ -17,8 +17,8 @@ use crate::parser;
 use crate::resolver;
 use crate::tokens;
 use crate::typer;
+use crate::value;
 use crate::vm;
-use crate::vm::Value;
 // use crate::vm::VirtualMachine;
 
 // struct CallContext<'a> {
@@ -35,8 +35,8 @@ use crate::vm::Value;
 //     }
 // }
 
-type ForeignValue<'a> = Box<dyn Fn() -> vm::Value + 'a>;
-type ForeignFn<'a> = Box<dyn Fn(&Vec<vm::Value>) -> vm::Value + 'a>;
+type ForeignValue<'a> = Box<dyn Fn() -> value::Value + 'a>;
+type ForeignFn<'a> = Box<dyn Fn(&Vec<value::Value>) -> value::Value + 'a>;
 
 struct ForeignFunction<'a> {
     index: u8,
@@ -47,7 +47,7 @@ pub struct Context<'a> {
     functions: HashMap<String, ForeignFunction<'a>>,
     function_count: u8,
     values: HashMap<String, ForeignValue<'a>>,
-    // pub entity_components: HashMap<i32, HashMap<String, vm::Value>>,
+    // pub entity_components: HashMap<i32, HashMap<String, value::Value>>,
 }
 
 impl Default for Context<'_> {
@@ -66,7 +66,7 @@ impl<'a> Context<'a> {
         }
     }
 
-    pub fn add_value(&mut self, name: String, value: impl Fn() -> vm::Value + 'a) {
+    pub fn add_value(&mut self, name: String, value: impl Fn() -> value::Value + 'a) {
         self.values.insert(name, Box::new(value));
     }
 
@@ -78,18 +78,18 @@ impl<'a> Context<'a> {
         self.values.keys().cloned().collect()
     }
 
-    pub fn get_value(&self, name: &String) -> vm::Value {
+    pub fn get_value(&self, name: &String) -> value::Value {
         if let Some(value_func) = self.values.get(name) {
             value_func()
         } else {
-            vm::Value::False
+            value::Value::False
         }
     }
 
     pub fn add_function(
         &mut self,
         name: String,
-        function: impl Fn(&Vec<vm::Value>) -> vm::Value + 'a,
+        function: impl Fn(&Vec<value::Value>) -> value::Value + 'a,
     ) {
         self.functions.insert(
             name,
@@ -113,12 +113,12 @@ impl<'a> Context<'a> {
         self.functions.keys().cloned().collect::<Vec<String>>()
     }
 
-    pub fn call_function(&self, name: &String, stack: &Vec<vm::Value>) -> vm::Value {
+    pub fn call_function(&self, name: &String, stack: &Vec<value::Value>) -> value::Value {
         if let Some(foreign) = self.functions.get(name) {
             let func = &foreign.function;
             func(stack)
         } else {
-            vm::Value::False // TODO(anissen): Should this be an error?
+            value::Value::False // TODO(anissen): Should this be an error?
         }
     }
 }
@@ -139,7 +139,7 @@ impl Elements {
 
 pub struct PersistentData {
     // pub metadata: ExecutionMetadata,
-    pub world_context: HashMap<String, Value>, // TODO(anissen): Find a better name
+    pub world_context: HashMap<String, value::Value>, // TODO(anissen): Find a better name
     pub elements: Elements,
 }
 
@@ -305,7 +305,7 @@ impl<'a> Program<'a> {
         }
     }
 
-    pub fn run(&mut self) -> Option<vm::Value> {
+    pub fn run(&mut self) -> Option<value::Value> {
         match &mut self.vm {
             Some(vm) => {
                 let result = vm.execute(None, &self.context, &mut self.data);
@@ -316,7 +316,11 @@ impl<'a> Program<'a> {
         }
     }
 
-    pub fn run_function(&mut self, function_name: String, args: Vec<Value>) -> Option<vm::Value> {
+    pub fn run_function(
+        &mut self,
+        function_name: String,
+        args: Vec<value::Value>,
+    ) -> Option<value::Value> {
         match &mut self.vm {
             Some(vm) => {
                 let result = vm.execute(Some((function_name, args)), &self.context, &mut self.data);

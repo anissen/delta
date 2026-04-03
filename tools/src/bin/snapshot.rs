@@ -72,9 +72,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             ProcessStatus::Processed => {
                 files_processed += 1;
                 if let Some(diff) = result.instructions_diff
-                    && diff.previous != diff.current {
-                        instruction_changes.push((result.path, diff));
-                    }
+                    && diff.previous != diff.current
+                {
+                    instruction_changes.push((result.path, diff));
+                }
             }
             ProcessStatus::Ignored(reason) => {
                 ignored_files.push((result.path, reason));
@@ -189,16 +190,16 @@ fn process_toml_file(test_file: &TestFile) -> Result<TestResult, Box<dyn std::er
                 let (result, result_type) = match program_result.value {
                     Some(value) => {
                         let result_type = match value {
-                            delta::vm::Value::True => "boolean".to_string(),
-                            delta::vm::Value::False => "boolean".to_string(),
-                            delta::vm::Value::Integer(_) => "integer".to_string(),
-                            delta::vm::Value::Float(_) => "float".to_string(),
-                            delta::vm::Value::String(_) => "string".to_string(),
-                            delta::vm::Value::SimpleTag { .. } => "tag".to_string(),
-                            delta::vm::Value::Tag { .. } => "tag".to_string(),
-                            delta::vm::Value::Function(_) => "function".to_string(),
-                            delta::vm::Value::List(_) => "list".to_string(),
-                            delta::vm::Value::Component { id, properties: _ } => {
+                            delta::value::Value::True => "boolean".to_string(),
+                            delta::value::Value::False => "boolean".to_string(),
+                            delta::value::Value::Integer(_) => "integer".to_string(),
+                            delta::value::Value::Float(_) => "float".to_string(),
+                            delta::value::Value::String(_) => "string".to_string(),
+                            delta::value::Value::SimpleTag { .. } => "tag".to_string(),
+                            delta::value::Value::Tag { .. } => "tag".to_string(),
+                            delta::value::Value::Function(_) => "function".to_string(),
+                            delta::value::Value::List(_) => "list".to_string(),
+                            delta::value::Value::Component { id, properties: _ } => {
                                 format!("component ({})", id)
                             }
                         };

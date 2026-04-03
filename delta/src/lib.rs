@@ -12,6 +12,7 @@ mod resolver;
 mod tokens;
 mod typer;
 mod unification;
+pub mod value;
 pub mod vm;
 
 use std::{fs::File, io::Read};
@@ -43,7 +44,7 @@ pub struct ExecutionMetadata {
 
 #[derive(Debug, Clone)]
 pub struct ProgramResult {
-    pub value: Option<vm::Value>,
+    pub value: Option<value::Value>,
     pub metadata: ProgramMetadata,
 }
 
