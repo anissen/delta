@@ -1,5 +1,5 @@
 use delta::value;
-use elements::world::World;
+use elements::{ComponentId, world::World};
 
 #[derive(Clone, Copy, Debug)]
 struct Position {
@@ -159,6 +159,117 @@ fn get_two_mut<T>(slice: &mut [T], i: usize, j: usize) -> (&mut T, &mut T) {
     }
 }
 
+pub fn update_positions(
+    world: &mut World,
+    position_id: ComponentId,
+    last_position_id: ComponentId,
+) {
+    let mut results = world.query(&vec![position_id, last_position_id], &vec![]);
+
+    // For each entity e
+    //      update the position of e in World
+    //
+    // For each entity e1,
+    //      for each other entity e2
+    //          filter by broad phase, narrow phase
+    //          resolve collision for e1 <=> e2 (update positions, create event?)
+    //          update e2 in World
+    //      update e1 in World
+
+    // Update entity positions
+    while let Some(entity) = results.next() {
+        if let Ok([position_column, last_position_column]) = results
+            .columns
+            .get_disjoint_mut([position_id as usize, last_position_id as usize])
+        {
+            let position_data = position_column.get_mut(entity).unwrap();
+            let last_position_data = last_position_column.get_mut(entity).unwrap();
+
+            // "Constants"
+            let dt = 0.1;
+            let friction = 0.97;
+
+            // TODO(anissen): I would like a more highlevel read/write API than operating on bytes
+            let x = read_f32(&position_data[0..4]);
+            let y = read_f32(&position_data[4..8]);
+            let last_x = read_f32(&last_position_data[0..4]);
+            let last_y = read_f32(&last_position_data[4..8]);
+            let velocity_x = (x - last_x) * dt * friction;
+            let velocity_y = (y - last_y) * dt * friction;
+
+            last_position_data.copy_from_slice(&position_data);
+
+            let new_position_x = x + velocity_x;
+            let new_position_y = y + velocity_y;
+            let new_position_data = [f32_bytes(new_position_x), f32_bytes(new_position_y)].concat();
+
+            position_data.copy_from_slice(&new_position_data);
+
+            println!(
+                "Entity {}: position {}, {}",
+                entity, new_position_x, new_position_y
+            );
+        } else {
+            panic!("cannot get columns");
+        }
+    }
+}
+
+pub fn handle_collisions(world: &mut World, position_id: ComponentId) {
+    // TODO: This should also include radius etc. (a physics component)
+    let results = world.query(&vec![position_id], &vec![]);
+    let entities = results.collect::<Vec<_>>();
+
+    // Handle collisions
+    for (entity_index, entity) in entities.iter().enumerate() {
+        for other_entity_index in entity_index + 1..entities.len() {
+            let other_entity = entities[other_entity_index];
+            let (pos, other_pos) = world
+                .get_column_mut(position_id)
+                .get_two_mut(*entity, other_entity)
+                .unwrap();
+            let mut pos_x = read_f32(&pos[0..4]);
+            let mut pos_y = read_f32(&pos[4..8]);
+            let mut other_pos_x = read_f32(&other_pos[0..4]);
+            let mut other_pos_y = read_f32(&other_pos[4..8]);
+
+            let minimum_distance = 100.0;
+            let stiffness = 1.0;
+
+            // TODO(anissen): Handle different kinds of constraints
+
+            // iterations
+            for _ in 0..10 {
+                // calculate the distance between two particles
+                let dx = other_pos_x - pos_x;
+                let dy = other_pos_y - pos_y;
+                let dist = (dx * dx + dy * dy).sqrt();
+                if dist > minimum_distance {
+                    println!("no collision");
+                    break;
+                }
+                let dist_diff = minimum_distance - dist;
+                println!("collision: {}", dist_diff);
+                let diff = dist_diff / dist * stiffness;
+
+                // getting the offset of the points
+                let offset_x = dx * diff * 0.5;
+                let offset_y = dy * diff * 0.5;
+
+                pos_x -= offset_x * 0.5;
+                pos_y -= offset_y * 0.5;
+                other_pos_x += offset_x * 0.5;
+                other_pos_y += offset_y * 0.5;
+            }
+
+            pos.copy_from_slice(&[f32_bytes(pos_x), f32_bytes(pos_y)].concat());
+            other_pos.copy_from_slice(&[f32_bytes(other_pos_x), f32_bytes(other_pos_y)].concat());
+
+            println!("Entity {} at ({}, {})", entity, pos_x, pos_y);
+        }
+    }
+}
+
 // pub fn simulation() {
 //     let mut particles = Vec::new();
 //     particles.push(Particle::new(Position { x: 0.0, y: 0.0 }));
@@ -281,6 +392,13 @@ mod tests {
         world.insert(physics_id, e1, &[]);
 
         world.insert(position_id, e2, &position(3.0, 3.0));
+
+        /*
+        Ideas for API for force from VM:
+        - Use World directly, querying the needed entities and decoding/encoding components
+        - Operate on an entirely abstract set of data, handling particles and constraints and returning a changed set of particles
+        - Use World but make a more highlevel API for easier interop
+        */
 
         for frame in 0..3 {
             println!("--- Frame {} ---", frame);

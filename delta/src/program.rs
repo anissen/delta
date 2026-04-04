@@ -167,7 +167,7 @@ pub struct Program<'a> {
     pub metadata: ProgramMetadata,
     pub vm: Option<vm::VirtualMachine>,
     pub is_valid: bool,
-    data: PersistentData,
+    pub data: PersistentData,
 }
 
 impl<'a> Program<'a> {
