@@ -59,9 +59,10 @@
 # - Exhaustiveness tests for `is`
 # - Shorthand for partial `is`?
 
-component Position { x f32, y f32 }
-# component Unit
-component Marker
+# component Position { x f32, y f32 }
+# component Entity
+component Unit { name str }
+# component Marker
 # component Velocity { dx f32, dy f32, dz i32 }
 # component Blah { y i32, xxx i32, text str }
 
@@ -90,8 +91,8 @@ component Marker
 # create [Marker, Velocity { dx 1.0, dy 0.5, dz 3 }]
 # create [Position { x 32.0, y 64.0 }, Blah { y 7, xxx 5, text "Hello" }]
 # create [Position { x 48.0, y 34.0 }, Blah { y 14, xxx 10, text "Hello 2" }]
-create [Position { x 22.0, y 33.0 }]
-create [Position { x 48.0, y 34.0 }, Marker]
+# create [Position { x 22.0, y 33.0 }]
+# create [Position { x 48.0, y 34.0 }, Marker]
 
 # query
 # 	Unit, Position p
@@ -99,17 +100,18 @@ create [Position { x 48.0, y 34.0 }, Marker]
 # query
 # 	Marker, Velocity v
 # 		("Unit has velocity ({v.dx}, {v.dy}, {v.dz})") | log
-a = 112
-query
-	Position p, Marker, Entity e
-		("First: {p.x}") | log
-		("Entity: {e}") | log
-		destroy e
-"after:" | log
-query
-	Position p
-		p.y = 3.0 # TODO: p.y = 3 fails at runtime (missing type checking)
-		("Second: {p.x}") | log
+# a = 112
+# query
+# 	Position p, Marker, Entity e
+# 		("First: {p.x}") | log
+# 		("Entity: {e}") | log
+# 		destroy e
+# "after:" | log
+# query
+# 	Position p
+# 		q = 4
+# 		p.y = 3 # TODO: p.y = 3 fails at runtime (missing type checking)
+# 		("Second: {p.x}") | log
 
 #	query
 #		Blah b, Position p
@@ -119,3 +121,13 @@ query
 # 		# query
 # 		# 	Unit u, Position p
 # 		# 		("Unit has position ({p.x}, {p.y})") | log
+
+abe = create [Unit { name "Abe" }]
+create [Unit { name "Ben" }]
+create [Unit { name "Carl" }]
+
+"{abe}" | log
+
+query
+	Unit u1
+		("Unit {u1.name}") | log

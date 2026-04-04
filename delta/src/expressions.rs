@@ -71,8 +71,7 @@ pub enum Expr {
         arms: Vec<IsArm>,
     },
     Query {
-        include_components: Vec<MaybeNamedType>, // TODO(anissen): Should this be Vec<Expr> instead?
-        exclude_components: Vec<Token>,
+        components: QueryComponents,
         expr: Box<Expr>,
     },
     ComponentDefinition {
@@ -92,6 +91,12 @@ pub enum Expr {
         field_name: Token,
     },
     // TODO(anissen): Add an Error and/or Todo expression?
+}
+
+#[derive(Debug)]
+pub struct QueryComponents {
+    pub include: Vec<MaybeNamedType>, // TODO(anissen): Should this be Vec<Expr> instead?
+    pub exclude: Vec<Token>,
 }
 
 #[derive(Debug)]

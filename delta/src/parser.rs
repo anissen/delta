@@ -13,6 +13,7 @@ use crate::expressions::IsGuard;
 use crate::expressions::MaybeNamedType;
 use crate::expressions::PropertyDeclaration;
 use crate::expressions::PropertyDefinition;
+use crate::expressions::QueryComponents;
 use crate::expressions::StringOperations;
 use crate::expressions::UnaryOperator;
 use crate::expressions::ValueType;
@@ -280,16 +281,88 @@ impl Parser {
             self.increase_indentation();
             self.consume_indentation()?;
 
-            let mut include_components = vec![];
+            let expect_query_pairs = self.check(&LeftParen);
+            if expect_query_pairs {
+                // let mut component_sets = vec![];
+                let mut query_components = QueryComponents {
+                    include: vec![],
+                    exclude: vec![],
+                };
+
+                // parse all component sets
+                while !self.check(&NewLine) {
+                    self.consume(&LeftParen)?;
+
+                    let mut has_entity_component = false;
+
+                    // parse component set
+                    while !self.matches(&RightParen) || !self.check(&NewLine) {
+                        if !query_components.include.is_empty()
+                            || !query_components.exclude.is_empty()
+                        {
+                            self.consume(&Comma)?;
+                        }
+
+                        let should_exclude = self.matches(&KeywordNot);
+
+                        if should_exclude {
+                            let type_ = self.consume(&Identifier)?;
+                            query_components.exclude.push(type_);
+                        } else {
+                            let type_ = self.consume(&Identifier)?;
+                            let name = self.optional(&Identifier);
+                            if let Some(ref name) = name
+                                && name.lexeme == "Entity"
+                            {
+                                has_entity_component = true;
+                            }
+                            query_components
+                                .include
+                                .push(MaybeNamedType { type_, name });
+                        }
+                    }
+
+                    // TODO(anissen): Move this to Resolver
+                    if !has_entity_component {
+                        query_components.include.push(MaybeNamedType {
+                            type_: Token {
+                                kind: Identifier,
+                                position: Position { line: 0, column: 0 },
+                                lexeme: "Entity".to_string(),
+                            },
+                            name: None,
+                        });
+                    }
+
+                    // component_sets.push(query_components);
+                }
+
+                if let Some(expr) = self.block()? {
+                    self.decrease_indentation();
+                    return Ok(Some(Expr::Query {
+                        components: query_components,
+                        expr: Box::new(expr),
+                    }));
+                } else {
+                    return Err("Unexpected end of input".to_string());
+                }
+            }
+
+            let mut query_components = QueryComponents {
+                include: vec![],
+                exclude: vec![],
+            };
             let mut has_entity_component = false;
-            let mut exclude_components = vec![];
+
             // parse components
             while !self.check(&NewLine) {
                 if self.is_at_end() {
                     return Err("Unexpected end of input".to_string());
                 }
 
-                if !include_components.is_empty() {
+                // let component_sets = vec![];
+
+                if !query_components.include.is_empty() || !query_components.exclude.is_empty() {
                     self.consume(&Comma)?;
                 }
 
@@ -297,7 +370,7 @@ impl Parser {
 
                 if should_exclude {
                     let type_ = self.consume(&Identifier)?;
-                    exclude_components.push(type_);
+                    query_components.exclude.push(type_);
                 } else {
                     let type_ = self.consume(&Identifier)?;
                     let name = self.optional(&Identifier);
@@ -306,13 +379,15 @@ impl Parser {
                     {
                         has_entity_component = true;
                     }
-                    include_components.push(MaybeNamedType { type_, name });
+                    query_components
+                        .include
+                        .push(MaybeNamedType { type_, name });
                 }
             }
 
             // TODO(anissen): Move this to Resolver
             if !has_entity_component {
-                include_components.push(MaybeNamedType {
+                query_components.include.push(MaybeNamedType {
                     type_: Token {
                         kind: Identifier,
                         position: Position { line: 0, column: 0 },
@@ -326,8 +401,7 @@ impl Parser {
             if let Some(expr) = self.block()? {
                 self.decrease_indentation();
                 Ok(Some(Expr::Query {
-                    include_components,
-                    exclude_components,
+                    components: query_components,
                     expr: Box::new(expr),
                 }))
             } else {
@@ -337,6 +411,60 @@ impl Parser {
             self.is()
         }
     }
+
+    // fn parse_query_components(&mut self) -> Result<QueryComponents, String> {
+    //     let mut query_components = QueryComponents {
+    //         include: vec![],
+    //         exclude: vec![],
+    //     };
+
+    //     let mut has_entity_component = false;
+
+    //     // parse components
+    //     while !self.check(&NewLine) {
+    //         if self.is_at_end() {
+    //             return Err("Unexpected end of input".to_string());
+    //         }
+
+    //         // let component_sets = vec![];
+
+    //         if !query_components.include.is_empty() || !query_components.exclude.is_empty() {
+    //             self.consume(&Comma)?;
+    //         }
+
+    //         let should_exclude = self.matches(&KeywordNot);
+
+    //         if should_exclude {
+    //             let type_ = self.consume(&Identifier)?;
+    //             query_components.exclude.push(type_);
+    //         } else {
+    //             let type_ = self.consume(&Identifier)?;
+    //             let name = self.optional(&Identifier);
+    //             if let Some(ref name) = name
+    //                 && name.lexeme == "Entity"
+    //             {
+    //                 has_entity_component = true;
+    //             }
+    //             query_components
+    //                 .include
+    //                 .push(MaybeNamedType { type_, name });
+    //         }
+    //     }
+
+    //     // TODO(anissen): Move this to Resolver
+    //     if !has_entity_component {
+    //         query_components.include.push(MaybeNamedType {
+    //             type_: Token {
+    //                 kind: Identifier,
+    //                 position: Position { line: 0, column: 0 },
+    //                 lexeme: "Entity".to_string(),
+    //             },
+    //             name: None,
+    //         });
+    //     }
+
+    //     Ok(query_components)
+    // }
 
     // is → string_concat "is" NEWLINE is_arm* | string_concat
     fn is(&mut self) -> Result<Option<Expr>, String> {

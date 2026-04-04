@@ -840,12 +840,8 @@ impl<'env> InferenceContext<'env> {
                 }
             }
 
-            Expr::Query {
-                include_components,
-                exclude_components: _,
-                expr,
-            } => {
-                include_components.iter().for_each(|component| {
+            Expr::Query { components, expr } => {
+                components.include.iter().for_each(|component| {
                     let component_name = component.type_.lexeme.clone();
                     // Special-case handling for 'Entity' component
                     if component_name == "Entity" {

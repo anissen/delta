@@ -6,7 +6,8 @@ use crate::environment::Environment;
 use crate::errors::Error;
 use crate::expressions::{
     ArithmeticOperations, BinaryOperator, BooleanOperations, Comparisons, EqualityOperations, Expr,
-    IsArm, IsArmPattern, MaybeNamedType, StringOperations, UnaryOperator, ValueType,
+    IsArm, IsArmPattern, MaybeNamedType, QueryComponents, StringOperations, UnaryOperator,
+    ValueType,
 };
 use crate::program::Context;
 use crate::tokens::{Position, Token};
@@ -256,11 +257,7 @@ impl<'a> Codegen<'a> {
                 arms,
             } => self.emit_is(expr, arms, scope),
 
-            Expr::Query {
-                include_components: include_compoments,
-                exclude_components: exclude_compoments,
-                expr,
-            } => self.emit_query(include_compoments, exclude_compoments, expr, scope),
+            Expr::Query { components, expr } => self.emit_query(components, expr, scope),
 
             Expr::Create {
                 token: _,
@@ -556,22 +553,18 @@ impl<'a> Codegen<'a> {
         }
     }
 
-    fn emit_query(
-        &mut self,
-        include_components: &Vec<MaybeNamedType>,
-        exclude_components: &Vec<Token>,
-        expr: &'a Expr,
-        scope: &mut Scope,
-    ) {
+    fn emit_query(&mut self, components: &QueryComponents, expr: &'a Expr, scope: &mut Scope) {
         let query_end_offset = scope
             .bytecode
             .add_op(ByteCode::ContextQuery)
             .get_patchable_i16_offset();
 
         let (entity_components, include_components): (Vec<&MaybeNamedType>, Vec<&MaybeNamedType>) =
-            include_components
+            components
+                .include
                 .iter()
                 .partition(|component| component.type_.lexeme == "Entity");
+        let exclude_components = &components.exclude;
 
         scope.bytecode.add_byte(include_components.len() as u8);
         scope.bytecode.add_byte(exclude_components.len() as u8);

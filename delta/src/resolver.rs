@@ -114,8 +114,7 @@ impl<'a> Resolver<'a> {
             }
 
             Expr::Query {
-                include_components: _,
-                exclude_components: _,
+                components: _,
                 expr,
             } => {
                 // TODO(anissen): Resolve include/exclude components
