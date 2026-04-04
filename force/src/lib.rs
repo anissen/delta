@@ -1,4 +1,3 @@
-use delta::value;
 use elements::{ComponentId, world::World};
 
 #[derive(Clone, Copy, Debug)]
@@ -215,15 +214,28 @@ pub fn update_positions(
     }
 }
 
-pub fn handle_collisions(world: &mut World, position_id: ComponentId) {
+// Would be nice to have something like
+// fn handle_collisions(query1, query2)
+// e.g. (enemy, position) <=> (enemy, position)
+// e.g. (enemy, position) <=> (player, position)
+// e.g. (player, position) <=> (pickup, position)
+
+pub fn handle_collisions(world: &mut World, position_id: ComponentId, physics_id: ComponentId) {
     // TODO: This should also include radius etc. (a physics component)
-    let results = world.query(&vec![position_id], &vec![]);
+    let results = world.query(&vec![position_id, physics_id], &vec![]);
     let entities = results.collect::<Vec<_>>();
 
     // Handle collisions
     for (entity_index, entity) in entities.iter().enumerate() {
         for other_entity_index in entity_index + 1..entities.len() {
             let other_entity = entities[other_entity_index];
+            let (radius, other_radius) = world
+                .get_column(physics_id)
+                .get_two(*entity, other_entity)
+                .unwrap();
+            let radius = read_f32(&radius[0..4]);
+            let other_radius = read_f32(&other_radius[0..4]);
+
             let (pos, other_pos) = world
                 .get_column_mut(position_id)
                 .get_two_mut(*entity, other_entity)
@@ -233,19 +245,21 @@ pub fn handle_collisions(world: &mut World, position_id: ComponentId) {
             let mut other_pos_x = read_f32(&other_pos[0..4]);
             let mut other_pos_y = read_f32(&other_pos[4..8]);
 
-            let minimum_distance = 100.0;
+            let minimum_distance = radius + other_radius; //200.0;
             let stiffness = 1.0;
+            let max_iterations = 10;
 
             // TODO(anissen): Handle different kinds of constraints
 
             // iterations
-            for _ in 0..10 {
+            for _ in 0..max_iterations {
+                // TODO(anissen): Should iterations be here or outside entire nested loop?
                 // calculate the distance between two particles
                 let dx = other_pos_x - pos_x;
                 let dy = other_pos_y - pos_y;
                 let dist = (dx * dx + dy * dy).sqrt();
                 if dist > minimum_distance {
-                    println!("no collision");
+                    // println!("no collision");
                     break;
                 }
                 let dist_diff = minimum_distance - dist;
@@ -310,7 +324,7 @@ pub fn handle_collisions(world: &mut World, position_id: ComponentId) {
 
 #[cfg(test)]
 mod tests {
-    use elements::{ComponentLayout, ComponentTypeId, Entity, EntityManager, FieldLayout};
+    use elements::{ComponentLayout, ComponentTypeId, EntityManager, FieldLayout};
 
     use super::*;
 
