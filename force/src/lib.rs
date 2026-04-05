@@ -299,13 +299,14 @@ pub fn handle_links(world: &mut World, link_id: ComponentId, position_id: Compon
             .get_column_mut(position_id)
             .get_two_mut(entity_a, entity_b)
             .unwrap();
-        let mut pos_x_a = read_f32(&pos_a[0..4]);
-        let mut pos_y_a = read_f32(&pos_a[4..8]);
-        let mut pos_x_b = read_f32(&pos_b[0..4]);
-        let mut pos_y_b = read_f32(&pos_b[4..8]);
+        let mut pos_a_x = read_f32(&pos_a[0..4]);
+        let mut pos_a_y = read_f32(&pos_a[4..8]);
+        let mut pos_b_x = read_f32(&pos_b[0..4]);
+        let mut pos_b_y = read_f32(&pos_b[4..8]);
 
         let stiffness = 1.0;
-        let max_iterations = 10;
+        let max_iterations = 5;
+        let acceptable_epsilon = 0.1;
 
         // TODO(anissen): Handle different kinds of constraints
 
@@ -313,10 +314,14 @@ pub fn handle_links(world: &mut World, link_id: ComponentId, position_id: Compon
         for _ in 0..max_iterations {
             // TODO(anissen): Should iterations be here or outside entire nested loop?
             // calculate the distance between two particles
-            let dx = pos_x_b - pos_x_a;
-            let dy = pos_y_b - pos_y_a;
+            let dx = pos_b_x - pos_a_x;
+            let dy = pos_b_y - pos_a_y;
             let dist = (dx * dx + dy * dy).sqrt();
             let dist_diff = length - dist;
+            if dist_diff.abs() < acceptable_epsilon {
+                break;
+            }
+
             // println!("collision: {}", dist_diff);
             let diff = dist_diff / dist * stiffness;
 
@@ -324,14 +329,14 @@ pub fn handle_links(world: &mut World, link_id: ComponentId, position_id: Compon
             let offset_x = dx * diff * 0.5;
             let offset_y = dy * diff * 0.5;
 
-            pos_x_a -= offset_x * 0.5;
-            pos_y_a -= offset_y * 0.5;
-            pos_x_b += offset_x * 0.5;
-            pos_y_b += offset_y * 0.5;
+            pos_a_x -= offset_x * 0.5;
+            pos_a_y -= offset_y * 0.5;
+            pos_b_x += offset_x * 0.5;
+            pos_b_y += offset_y * 0.5;
         }
 
-        pos_a.copy_from_slice(&[f32_bytes(pos_x_a), f32_bytes(pos_y_a)].concat());
-        pos_b.copy_from_slice(&[f32_bytes(pos_x_b), f32_bytes(pos_y_b)].concat());
+        pos_a.copy_from_slice(&[f32_bytes(pos_a_x), f32_bytes(pos_a_y)].concat());
+        pos_b.copy_from_slice(&[f32_bytes(pos_b_x), f32_bytes(pos_b_y)].concat());
     }
 }
 
