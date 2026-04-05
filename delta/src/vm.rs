@@ -745,9 +745,10 @@ impl VirtualMachine {
                             .for_each(|entity| destroy_entity(data, *entity));
                         destroy_entities_asap.clear();
 
-                        create_components_asap
+                        let _entities = create_components_asap
                             .iter()
-                            .for_each(|components: &Vec<Value>| create_entity(data, components));
+                            .map(|components: &Vec<Value>| create_entity(data, components))
+                            .collect::<Vec<_>>();
                         create_components_asap.clear();
                     }
                 }
@@ -761,7 +762,9 @@ impl VirtualMachine {
                         }
                         None => {
                             query_results = None; // Redundant but helps the borrow checker
-                            create_entity(data, &components);
+                            let entity = create_entity(data, &components);
+                            // TODO(anissen): Assigning entity id to a value only works when there is no query in scope!
+                            self.push_integer(entity as i32);
                         }
                     }
 
@@ -1033,7 +1036,7 @@ impl VirtualMachine {
     }
 }
 
-fn create_entity(data: &mut PersistentData, components: &Vec<Value>) {
+fn create_entity(data: &mut PersistentData, components: &Vec<Value>) -> Entity {
     let entity = data.elements.entity_manager.create();
 
     for component in components {
@@ -1050,6 +1053,8 @@ fn create_entity(data: &mut PersistentData, components: &Vec<Value>) {
             }
         }
     }
+
+    entity
 }
 
 fn destroy_entity(data: &mut PersistentData, entity: Entity) {

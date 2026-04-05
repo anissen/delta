@@ -165,15 +165,19 @@ impl Parser {
     }
 
     fn create(&mut self) -> Result<Option<Expr>, String> {
-        let token = self.previous();
-        self.consume(&LeftBracket)?; // TODO(anissen): This ought to be part of list() ?
-        if let Some(components) = self.list()? {
-            Ok(Some(Expr::Create {
-                token: token.clone(),
-                arguments: Box::new(components),
-            }))
+        if self.matches(&KeywordCreate) {
+            let token = self.previous();
+            self.consume(&LeftBracket)?; // TODO(anissen): This ought to be part of list() ?
+            if let Some(components) = self.list()? {
+                Ok(Some(Expr::Create {
+                    token: token.clone(),
+                    arguments: Box::new(components),
+                }))
+            } else {
+                Err("Expected a list of components".to_string())
+            }
         } else {
-            Err("Expected a list of components".to_string())
+            self.query()
         }
     }
 
@@ -189,9 +193,11 @@ impl Parser {
     fn expression(&mut self) -> Result<Option<Expr>, String> {
         if self.matches(&KeywordComponent) {
             self.component()
-        } else if self.matches(&KeywordCreate) {
+        }
+        /* else if self.matches(&KeywordCreate) {
             self.create()
-        } else if self.matches(&KeywordDestroy) {
+        } */
+        else if self.matches(&KeywordDestroy) {
             self.destroy()
         } else {
             self.assignment()
@@ -200,7 +206,7 @@ impl Parser {
 
     // assignment → IDENTIFIER "=" logic_or
     fn assignment(&mut self) -> Result<Option<Expr>, String> {
-        let expr = self.query()?;
+        let expr = self.create()?;
         if expr.is_some() && self.matches(&Equal) {
             let expr = expr.unwrap();
             match expr {

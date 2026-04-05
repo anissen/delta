@@ -123,10 +123,12 @@ component Unit { name str }
 # 		# 		("Unit has position ({p.x}, {p.y})") | log
 
 abe = create [Unit { name "Abe" }]
-create [Unit { name "Ben" }]
-create [Unit { name "Carl" }]
+ben = create [Unit { name "Ben" }]
+carl = create [Unit { name "Carl" }]
 
-"{abe}" | log
+("abe: {abe}") | log
+("ben: {ben}") | log
+("carl: {carl}") | log
 
 query
 	Unit u1
