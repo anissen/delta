@@ -1,4 +1,4 @@
-use elements::{ComponentId, world::World};
+use elements::{ComponentId, Entity, world::World};
 
 #[derive(Clone, Copy, Debug)]
 struct Position {
@@ -204,10 +204,10 @@ pub fn update_positions(
 
             position_data.copy_from_slice(&new_position_data);
 
-            println!(
-                "Entity {}: position {}, {}",
-                entity, new_position_x, new_position_y
-            );
+            // println!(
+            //     "Entity {}: position {}, {}",
+            //     entity, new_position_x, new_position_y
+            // );
         } else {
             panic!("cannot get columns");
         }
@@ -263,7 +263,7 @@ pub fn handle_collisions(world: &mut World, position_id: ComponentId, physics_id
                     break;
                 }
                 let dist_diff = minimum_distance - dist;
-                println!("collision: {}", dist_diff);
+                // println!("collision: {}", dist_diff);
                 let diff = dist_diff / dist * stiffness;
 
                 // getting the offset of the points
@@ -279,8 +279,59 @@ pub fn handle_collisions(world: &mut World, position_id: ComponentId, physics_id
             pos.copy_from_slice(&[f32_bytes(pos_x), f32_bytes(pos_y)].concat());
             other_pos.copy_from_slice(&[f32_bytes(other_pos_x), f32_bytes(other_pos_y)].concat());
 
-            println!("Entity {} at ({}, {})", entity, pos_x, pos_y);
+            // println!("Entity {} at ({}, {})", entity, pos_x, pos_y);
         }
+    }
+}
+
+pub fn handle_links(world: &mut World, link_id: ComponentId, position_id: ComponentId) {
+    let results = world.query(&vec![link_id], &vec![]);
+    let entities = results.collect::<Vec<_>>();
+
+    // while let Some(entity) = results.next() {
+    for entity in entities {
+        let link = world.get_column(link_id).get(entity).unwrap();
+        let entity_a = read_u32(&link[0..4]);
+        let entity_b = read_u32(&link[4..8]);
+        let length = read_f32(&link[8..12]);
+
+        let (pos_a, pos_b) = world
+            .get_column_mut(position_id)
+            .get_two_mut(entity_a, entity_b)
+            .unwrap();
+        let mut pos_x_a = read_f32(&pos_a[0..4]);
+        let mut pos_y_a = read_f32(&pos_a[4..8]);
+        let mut pos_x_b = read_f32(&pos_b[0..4]);
+        let mut pos_y_b = read_f32(&pos_b[4..8]);
+
+        let stiffness = 1.0;
+        let max_iterations = 10;
+
+        // TODO(anissen): Handle different kinds of constraints
+
+        // iterations
+        for _ in 0..max_iterations {
+            // TODO(anissen): Should iterations be here or outside entire nested loop?
+            // calculate the distance between two particles
+            let dx = pos_x_b - pos_x_a;
+            let dy = pos_y_b - pos_y_a;
+            let dist = (dx * dx + dy * dy).sqrt();
+            let dist_diff = length - dist;
+            // println!("collision: {}", dist_diff);
+            let diff = dist_diff / dist * stiffness;
+
+            // getting the offset of the points
+            let offset_x = dx * diff * 0.5;
+            let offset_y = dy * diff * 0.5;
+
+            pos_x_a -= offset_x * 0.5;
+            pos_y_a -= offset_y * 0.5;
+            pos_x_b += offset_x * 0.5;
+            pos_y_b += offset_y * 0.5;
+        }
+
+        pos_a.copy_from_slice(&[f32_bytes(pos_x_a), f32_bytes(pos_y_a)].concat());
+        pos_b.copy_from_slice(&[f32_bytes(pos_x_b), f32_bytes(pos_y_b)].concat());
     }
 }
 
@@ -460,10 +511,10 @@ mod tests {
 
                     position_data.copy_from_slice(&new_position_data);
 
-                    println!(
-                        "Entity {}: position {}, {}",
-                        entity, new_position_x, new_position_y
-                    );
+                    // println!(
+                    //     "Entity {}: position {}, {}",
+                    //     entity, new_position_x, new_position_y
+                    // );
                 } else {
                     panic!("cannot get columns");
                 }
@@ -498,11 +549,11 @@ mod tests {
                         let dy = other_pos_y - pos_y;
                         let dist = (dx * dx + dy * dy).sqrt();
                         if dist > minimum_distance {
-                            println!("no collision");
+                            // println!("no collision");
                             break;
                         }
                         let dist_diff = minimum_distance - dist;
-                        println!("collision: {}", dist_diff);
+                        // println!("collision: {}", dist_diff);
                         let diff = dist_diff / dist * stiffness;
 
                         // getting the offset of the points
@@ -520,7 +571,7 @@ mod tests {
                         &[f32_bytes(other_pos_x), f32_bytes(other_pos_y)].concat(),
                     );
 
-                    println!("Entity {} at ({}, {})", entity, pos_x, pos_y);
+                    // println!("Entity {} at ({}, {})", entity, pos_x, pos_y);
                 }
             }
         }
@@ -532,6 +583,9 @@ fn f32_bytes(x: f32) -> [u8; 4] {
 }
 fn read_f32(b: &[u8]) -> f32 {
     f32::from_be_bytes(b.try_into().unwrap())
+}
+fn read_u32(b: &[u8]) -> u32 {
+    u32::from_be_bytes(b.try_into().unwrap())
 }
 
 fn position(x: f32, y: f32) -> Vec<u8> {
