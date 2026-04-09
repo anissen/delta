@@ -11,15 +11,6 @@ impl BitSet {
         bitset
     }
 
-    pub fn new_filled(initial_capacity: usize) -> Self {
-        let mut bitset = BitSet { words: Vec::new() };
-        bitset.ensure_capacity(initial_capacity as Entity);
-        for i in 0..initial_capacity {
-            bitset.set(i as Entity);
-        }
-        bitset
-    }
-
     fn ensure_capacity(&mut self, entity: Entity) {
         let word_index = (entity as usize) / 64;
         if word_index >= self.words.len() {
@@ -85,65 +76,4 @@ impl BitSet {
     // fn is_empty(&self) -> bool {
     //     self.words.iter().all(|&w| w == 0)
     // }
-
-    /// Iterate entity ids present in the bitset.
-    pub fn iter_ids(&self) -> BitSetIter<'_> {
-        BitSetIter {
-            words: &self.words,
-            idx: 0,
-            cur: 0,
-        }
-    }
-
-    pub fn cloned_iter_ids(&self) -> ClonedBitSetIter {
-        ClonedBitSetIter {
-            words: self.words.clone(),
-            idx: 0,
-            cur: 0,
-        }
-    }
-}
-
-pub struct ClonedBitSetIter {
-    words: Vec<u64>,
-    idx: usize,
-    cur: u64,
-}
-impl<'a> Iterator for ClonedBitSetIter {
-    type Item = Entity;
-    fn next(&mut self) -> Option<Self::Item> {
-        while self.cur == 0 {
-            if self.idx >= self.words.len() {
-                return None;
-            }
-            self.cur = self.words[self.idx];
-            self.idx += 1;
-        }
-        let tz = self.cur.trailing_zeros() as usize;
-        self.cur &= !(1u64 << tz);
-        let entity = ((self.idx - 1) * 64 + tz) as Entity;
-        Some(entity)
-    }
-}
-
-pub struct BitSetIter<'a> {
-    words: &'a [u64],
-    idx: usize,
-    cur: u64,
-}
-impl<'a> Iterator for BitSetIter<'a> {
-    type Item = Entity;
-    fn next(&mut self) -> Option<Self::Item> {
-        while self.cur == 0 {
-            if self.idx >= self.words.len() {
-                return None;
-            }
-            self.cur = self.words[self.idx];
-            self.idx += 1;
-        }
-        let tz = self.cur.trailing_zeros() as usize;
-        self.cur &= !(1u64 << tz);
-        let entity = ((self.idx - 1) * 64 + tz) as Entity;
-        Some(entity)
-    }
 }

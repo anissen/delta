@@ -406,28 +406,28 @@ impl<'env> InferenceContext<'env> {
         // TODO(anissen): This works for the current use case but is error prone and verbose. Please find a better way of checking the field type of a component.
         let field_type = match expected_type {
             UnificationType::Constructor {
-                typ,
+                typ: _,
                 ref generics,
-                token,
+                token: _,
             } => generics
                 .iter()
                 .find(|generic| match generic {
                     UnificationType::Constructor {
-                        typ,
-                        generics,
+                        typ: _,
+                        generics: _,
                         token,
                     } => token.lexeme == field_name,
                     UnificationType::Variable(_) => todo!(),
                     UnificationType::Union {
-                        types,
-                        has_wildcard,
+                        types: _,
+                        has_wildcard: _,
                     } => todo!(),
                 })
                 .unwrap(),
             UnificationType::Variable(_) => todo!(),
             UnificationType::Union {
-                types,
-                has_wildcard,
+                types: _,
+                has_wildcard: _,
             } => todo!(),
         };
 

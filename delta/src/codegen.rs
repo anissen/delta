@@ -146,7 +146,7 @@ impl<'a> Codegen<'a> {
                 todo!("Implement context expression")
             }
 
-            Expr::ComponentDefinition { name, properties } => {}
+            Expr::ComponentDefinition { name: _, properties: _ } => {}
 
             Expr::Call { name, args } => {
                 let lexeme = &name.lexeme;

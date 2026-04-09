@@ -127,15 +127,13 @@ impl Column {
         let end1 = start1 + self.layout.size;
         let start2 = idx2 * self.layout.size;
         let end2 = start2 + self.layout.size;
-        // dbg!(start1, end1);
-        // dbg!(start2, end2);
         if start1 < start2 {
             assert!(end1 <= start2);
-            let (left, right) = self.dense.split_at_mut(start2 as usize);
+            let (left, right) = self.dense.split_at_mut(start2);
             Some((&mut left[start1..end1], &mut right[0..(end2 - start2)]))
         } else {
             assert!(end2 <= start1);
-            let (left, right) = self.dense.split_at_mut(start1 as usize);
+            let (left, right) = self.dense.split_at_mut(start1);
             Some((&mut right[0..(end1 - start1)], &mut left[start2..end2]))
         }
     }
@@ -157,34 +155,16 @@ impl Column {
         let end1 = start1 + self.layout.size;
         let start2 = idx2 * self.layout.size;
         let end2 = start2 + self.layout.size;
-        // dbg!(start1, end1);
-        // dbg!(start2, end2);
         if start1 < start2 {
             assert!(end1 <= start2);
-            let (left, right) = self.dense.split_at(start2 as usize);
+            let (left, right) = self.dense.split_at(start2);
             Some((&left[start1..end1], &right[0..(end2 - start2)]))
         } else {
             assert!(end2 <= start1);
-            let (left, right) = self.dense.split_at(start1 as usize);
+            let (left, right) = self.dense.split_at(start1);
             Some((&right[0..(end1 - start1)], &left[start2..end2]))
         }
     }
-
-    // fn get_two_mut(&mut self, a: Entity, b: Entity) -> Option<(&mut [u8], &mut [u8])> {
-    //     get_two_mut(&mut self.dense, a, b)
-    // }
-
-    // fn get_two_mut<T>(&mut self, slice: &mut [T], i: Entity, j: Entity) -> (&mut T, &mut T) {
-    //     assert!(i != j);
-
-    //     if i < j {
-    //         let (left, right) = slice.split_at_mut(j as usize);
-    //         (&mut left[i as usize], &mut right[0])
-    //     } else {
-    //         let (left, right) = slice.split_at_mut(i as usize);
-    //         (&mut right[0], &mut left[j as usize])
-    //     }
-    // }
 
     pub fn remove(&mut self, entity: Entity) -> bool {
         // TODO(anissen): DRY logic around entity existence check

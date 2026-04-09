@@ -4,7 +4,6 @@ pub mod world;
 
 pub type Entity = u32;
 pub type ComponentId = u32;
-// pub type ComponentTypeId = u32;
 
 #[derive(Debug)]
 pub struct FieldLayout {
