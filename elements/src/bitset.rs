@@ -67,6 +67,21 @@ impl BitSet {
         }
     }
 
+    pub fn collect_set(&self) -> Vec<Entity> {
+        let mut result = Vec::new();
+        for (i, &word) in self.words.iter().enumerate() {
+            if word == 0 {
+                continue;
+            }
+            for j in 0..64 {
+                if (word >> j) & 1 != 0 {
+                    result.push((i * 64 + j) as Entity);
+                }
+            }
+        }
+        result
+    }
+
     // fn is_empty(&self) -> bool {
     //     self.words.iter().all(|&w| w == 0)
     // }

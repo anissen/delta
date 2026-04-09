@@ -1,6 +1,4 @@
-use crate::{
-    ComponentId, ComponentLayout, ComponentTypeId, Entity, bitset::BitSet, column::Column,
-};
+use crate::{ComponentId, ComponentLayout, Entity, bitset::BitSet, column::Column};
 
 // pub struct QueryResultMutIter<'a> {
 //     iter: std::vec::IntoIter<(u32, Vec<&'a mut [u8]>)>,
@@ -28,21 +26,24 @@ use crate::{
 //     }
 // }
 
-pub struct QueryResult<'a> {
+pub struct QueryResult {
     entities: std::vec::IntoIter<Entity>,
-    pub columns: Vec<&'a mut Column>,
+    pub component_ids: Vec<ComponentId>,
+    pub is_empty: bool,
+    // pub columns: Vec<&'a mut Column>,
 }
 
-impl<'a> QueryResult<'a> {
-    pub fn new(entities: Vec<Entity>, columns: Vec<&'a mut Column>) -> Self {
+impl QueryResult {
+    pub fn new(entities: Vec<Entity>, component_ids: Vec<ComponentId>) -> Self {
         Self {
+            is_empty: entities.is_empty(),
             entities: entities.into_iter(),
-            columns,
+            component_ids,
         }
     }
 }
 
-impl<'a> Iterator for QueryResult<'a> {
+impl Iterator for QueryResult {
     type Item = Entity;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -70,7 +71,7 @@ impl World {
         }
     }
 
-    pub fn register_component(&mut self, id: ComponentTypeId, layout: ComponentLayout) {
+    pub fn register_component(&mut self, id: ComponentId, layout: ComponentLayout) {
         let column = Column::new(id, layout, 16);
         let idx = id as usize;
         if idx < self.components.len() {
@@ -80,17 +81,17 @@ impl World {
         }
     }
 
-    pub fn get_component_layout(&self, id: ComponentTypeId) -> Option<&ComponentLayout> {
+    pub fn get_component_layout(&self, id: ComponentId) -> Option<&ComponentLayout> {
         self.components
             .get(id as usize)
             .map(|column| &column.layout)
     }
 
-    pub fn insert(&mut self, id: ComponentTypeId, entity: Entity, data: &[u8]) {
+    pub fn insert(&mut self, id: ComponentId, entity: Entity, data: &[u8]) {
         self.components[id as usize].insert(entity, data);
     }
 
-    pub fn remove(&mut self, id: ComponentTypeId, entity: Entity) {
+    pub fn remove(&mut self, id: ComponentId, entity: Entity) {
         self.components[id as usize].remove(entity);
     }
 
@@ -100,29 +101,32 @@ impl World {
         });
     }
 
-    pub fn get_column(&self, id: ComponentTypeId) -> &Column {
+    pub fn get_column(&self, id: ComponentId) -> &Column {
         &self.components[id as usize]
     }
 
-    pub fn get_column_mut(&mut self, id: ComponentTypeId) -> &mut Column {
+    pub fn get_column_mut(&mut self, id: ComponentId) -> &mut Column {
         &mut self.components[id as usize]
     }
 
-    // pub fn get_two_columns_mut(&mut self, id1: ComponentId, id2: ComponentId) -> [&mut Column; 2] {
-    //     self.components
-    //         .get_disjoint_mut([id1 as usize, id2 as usize])
-    //         .unwrap()
-    // }
+    pub fn get_two_columns_mut(
+        &mut self,
+        id1: ComponentId,
+        id2: ComponentId,
+    ) -> Result<[&mut Column; 2], std::slice::GetDisjointMutError> {
+        self.components
+            .get_disjoint_mut([id1 as usize, id2 as usize])
+    }
 
-    pub fn get(&self, id: ComponentTypeId, entity: Entity) -> Option<&[u8]> {
+    pub fn get(&self, id: ComponentId, entity: Entity) -> Option<&[u8]> {
         self.components[id as usize].get(entity)
     }
 
-    pub fn get_mut(&mut self, id: ComponentTypeId, entity: Entity) -> Option<&mut [u8]> {
+    pub fn get_mut(&mut self, id: ComponentId, entity: Entity) -> Option<&mut [u8]> {
         self.components[id as usize].get_mut(entity)
     }
 
-    pub fn iter(&self, id: ComponentTypeId) -> impl Iterator<Item = (Entity, &[u8])> + '_ {
+    pub fn iter(&self, id: ComponentId) -> impl Iterator<Item = (Entity, &[u8])> + '_ {
         self.components[id as usize].iter()
     }
 
@@ -261,11 +265,7 @@ impl World {
     //     }
     // }
 
-    pub fn query<'a>(
-        &'a mut self,
-        include: &Vec<ComponentId>,
-        exclude: &Vec<ComponentId>,
-    ) -> QueryResult<'a> {
+    pub fn query(&mut self, include: &Vec<ComponentId>, exclude: &Vec<ComponentId>) -> QueryResult {
         let exclude_columns = self
             .components
             .iter()
@@ -295,17 +295,23 @@ impl World {
             }
             bitset.disjoint_with(&exclude_bitmap);
 
-            bitset.iter_ids().collect::<Vec<_>>()
+            // bitset.iter_ids().collect::<Vec<_>>()
+            bitset.collect_set()
         } else {
             Vec::new()
         };
 
         if !matching_entities.is_empty() {
-            let non_marker_include_columns = include_columns
+            // let non_marker_include_columns = include_columns
+            //     .into_iter()
+            //     .filter(|c| c.layout.size != 0)
+            //     .collect();
+            let non_marker_include_column_ids = include_columns
                 .into_iter()
                 .filter(|c| c.layout.size != 0)
+                .map(|c| c.id)
                 .collect();
-            QueryResult::new(matching_entities, non_marker_include_columns)
+            QueryResult::new(matching_entities, non_marker_include_column_ids)
         } else {
             QueryResult::new(Vec::new(), Vec::new())
         }

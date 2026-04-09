@@ -6,6 +6,7 @@ use crate::program::Context;
 use crate::program::PersistentData;
 use crate::value::Value;
 
+use elements::ComponentId;
 use elements::ComponentLayout;
 use elements::Entity;
 use elements::FieldLayout;
@@ -521,11 +522,14 @@ impl VirtualMachine {
                             properties[field_index as usize] = new_value;
 
                             // Update the world representation
-                            if let Some(ref mut query) = query_results {
+                            if let Some(ref query) = query_results {
                                 // Find the column for this component in the active query
-                                if let Some(column) =
-                                    query.columns.iter_mut().find(|c| c.id == *id as u32)
+                                if let Some(component_id) = query
+                                    .component_ids
+                                    .iter()
+                                    .find(|c| **c == *id as ComponentId)
                                 {
+                                    let column = data.elements.world.get_column_mut(*component_id);
                                     let bytes = crate::value::get_bytes_from_values(
                                         properties,
                                         &column.layout,
@@ -688,17 +692,13 @@ impl VirtualMachine {
                     query_results = None;
 
                     // Get the mutable query iterator
-                    let query_iter = data
+                    let results = data
                         .elements
                         .world
                         .query(&include_component_ids, &exclude_component_ids);
 
-                    // Check if there are any results by checking if columns are empty
-                    // If there are columns, there should be results
-                    let has_results = !query_iter.columns.is_empty();
-
-                    if has_results {
-                        query_results = Some(query_iter);
+                    if !results.is_empty {
+                        query_results = Some(results);
                         self.push_query_frame(end_pc);
                     } else {
                         self.jump(end_pc);
@@ -712,13 +712,13 @@ impl VirtualMachine {
                         active_entity = Some(entity); // TODO(anissen): This is a hack
                         let stack_start = self.current_call_frame().stack_index;
                         let is_first_query_result = self.stack.len() as u8 == stack_start;
-                        let components = result.columns.iter().map(|column| {
-                            let component_id = column.id as u8;
+                        let components = result.component_ids.iter().map(|component_id| {
+                            let column = data.elements.world.get_column(*component_id);
                             let data = column.get(entity).unwrap();
                             let values = crate::value::get_values_from_bytes(data, &column.layout);
 
                             Value::Component {
-                                id: component_id,
+                                id: *component_id as u8,
                                 properties: values,
                             }
                         });

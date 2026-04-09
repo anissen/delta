@@ -1,6 +1,4 @@
-use elements::{
-    ComponentLayout, ComponentTypeId, Entity, EntityManager, FieldLayout, world::World,
-};
+use elements::{ComponentId, ComponentLayout, Entity, EntityManager, FieldLayout, world::World};
 
 fn f32_bytes(x: f32) -> [u8; 4] {
     x.to_be_bytes()
@@ -97,7 +95,7 @@ fn main() {
     let mut entity_manager = EntityManager::new();
     let mut world = World::new();
     // Position { x: f32, y: f32 }
-    let position_id: ComponentTypeId = 0;
+    let position_id: ComponentId = 0;
     world.register_component(
         position_id,
         ComponentLayout::new(vec![
@@ -114,7 +112,7 @@ fn main() {
         ]),
     );
     // Velocity { dx: f32, dy: f32 }
-    let velocity_id: ComponentTypeId = 1;
+    let velocity_id: ComponentId = 1;
     world.register_component(
         velocity_id,
         ComponentLayout::new(vec![
@@ -131,7 +129,7 @@ fn main() {
         ]),
     );
     // Dead (no data)
-    let dead_id: ComponentTypeId = 2;
+    let dead_id: ComponentId = 2;
     world.register_component(dead_id, ComponentLayout::new(vec![]));
 
     // Create a few entities
@@ -185,43 +183,47 @@ fn main() {
         println!("--- Frame {} ---", frame);
 
         // TODO(anissen): We probably need to get the list of entities/components out, and then iterate?!?
-        let mut results = world.query(&vec![position_id, velocity_id], &vec![dead_id]);
-        let (first, rest) = results.columns.split_at_mut(1);
-        let pos_col = &mut first[0];
-        let vel_col = &mut rest[0];
-        results.for_each(move |entity| {
-            // let columns = results.columns.iter().map(|column| {
-            //     let component_id = column.id as u8;
-            //     let data = column.get(entity).unwrap();
-            //     let values = get_value_from_bytes(data, &column.layout);
-
-            //     Value::Component {
-            //         id: component_id,
-            //         properties: values,
-            //     }
-            // });
-
+        let results = world.query(&vec![position_id, velocity_id], &vec![dead_id]);
+        if let Ok([pos_col, vel_col]) = world.get_two_columns_mut(position_id, velocity_id) {
+            // let pos_col = world.get_column_mut(position_id);
+            // let vel_col = world.get_column(velocity_id);
             // let (first, rest) = results.columns.split_at_mut(1);
-            // let pos = &mut first[0].get(entity).unwrap();
-            // let vel = &mut rest[0].get(entity).unwrap();
-            let pos = pos_col.get(entity).unwrap();
-            let vel = vel_col.get(entity).unwrap();
-            let pos_x = read_f32(&pos[0..4]);
-            let pos_y = read_f32(&pos[4..8]);
-            let vel_x = read_f32(&vel[0..4]);
-            let vel_y = read_f32(&vel[4..8]);
+            // let pos_col = &mut first[0];
+            // let vel_col = &mut rest[0];
+            results.for_each(move |entity| {
+                // let columns = results.columns.iter().map(|column| {
+                //     let component_id = column.id as u8;
+                //     let data = column.get(entity).unwrap();
+                //     let values = get_value_from_bytes(data, &column.layout);
 
-            let new_pos_x = pos_x + vel_x;
-            let new_pos_y = pos_y + vel_y;
-            let new_pos = [f32_bytes(new_pos_x), f32_bytes(new_pos_y)].concat();
+                //     Value::Component {
+                //         id: component_id,
+                //         properties: values,
+                //     }
+                // });
 
-            pos.copy_from_slice(&new_pos);
+                // let (first, rest) = results.columns.split_at_mut(1);
+                // let pos = &mut first[0].get(entity).unwrap();
+                // let vel = &mut rest[0].get(entity).unwrap();
+                let pos = pos_col.get_mut(entity).unwrap();
+                let vel = vel_col.get(entity).unwrap();
+                let pos_x = read_f32(&pos[0..4]);
+                let pos_y = read_f32(&pos[4..8]);
+                let vel_x = read_f32(&vel[0..4]);
+                let vel_y = read_f32(&vel[4..8]);
 
-            println!(
-                "Entity {} at ({}, {}) with velocity ({}, {})",
-                entity, new_pos_x, new_pos_y, vel_x, vel_y
-            );
-        });
+                let new_pos_x = pos_x + vel_x;
+                let new_pos_y = pos_y + vel_y;
+                let new_pos = [f32_bytes(new_pos_x), f32_bytes(new_pos_y)].concat();
+
+                pos.copy_from_slice(&new_pos);
+
+                println!(
+                    "Entity {} at ({}, {}) with velocity ({}, {})",
+                    entity, new_pos_x, new_pos_y, vel_x, vel_y
+                );
+            });
+        }
 
         world
             .iter(dead_id)

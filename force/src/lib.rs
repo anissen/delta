@@ -1,5 +1,7 @@
-use elements::{ComponentId, Entity, world::World};
+use elements::{ComponentId, world::World};
 
+// TODO(anissen): Move force to Prism
+//
 #[derive(Clone, Copy, Debug)]
 struct Position {
     x: f32,
@@ -177,9 +179,8 @@ pub fn update_positions(
 
     // Update entity positions
     while let Some(entity) = results.next() {
-        if let Ok([position_column, last_position_column]) = results
-            .columns
-            .get_disjoint_mut([position_id as usize, last_position_id as usize])
+        if let Ok([position_column, last_position_column]) =
+            world.get_two_columns_mut(position_id, last_position_id)
         {
             let position_data = position_column.get_mut(entity).unwrap();
             let last_position_data = last_position_column.get_mut(entity).unwrap();
@@ -380,7 +381,7 @@ pub fn handle_links(world: &mut World, link_id: ComponentId, position_id: Compon
 
 #[cfg(test)]
 mod tests {
-    use elements::{ComponentLayout, ComponentTypeId, EntityManager, FieldLayout};
+    use elements::{ComponentId, ComponentLayout, EntityManager, FieldLayout};
 
     use super::*;
 
@@ -411,7 +412,7 @@ mod tests {
     fn world_test() {
         let mut entity_manager = EntityManager::new();
         let mut world = World::new();
-        let position_id: ComponentTypeId = 0;
+        let position_id: ComponentId = 0;
         world.register_component(
             position_id,
             ComponentLayout::new(vec![
@@ -427,7 +428,7 @@ mod tests {
                 },
             ]),
         );
-        let last_position_id: ComponentTypeId = 1;
+        let last_position_id: ComponentId = 1;
         world.register_component(
             last_position_id,
             ComponentLayout::new(vec![
@@ -444,7 +445,7 @@ mod tests {
             ]),
         );
         // Physics marker (no data)
-        let physics_id: ComponentTypeId = 2;
+        let physics_id: ComponentId = 2;
         world.register_component(physics_id, ComponentLayout::new(vec![]));
 
         // Create a few entities
@@ -488,9 +489,8 @@ mod tests {
 
             // Update entity positions
             while let Some(entity) = results.next() {
-                if let Ok([position_column, last_position_column]) = results
-                    .columns
-                    .get_disjoint_mut([position_id as usize, last_position_id as usize])
+                if let Ok([position_column, last_position_column]) =
+                    world.get_two_columns_mut(position_id, last_position_id)
                 {
                     let position_data = position_column.get_mut(entity).unwrap();
                     let last_position_data = last_position_column.get_mut(entity).unwrap();

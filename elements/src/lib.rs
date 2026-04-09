@@ -4,7 +4,7 @@ pub mod world;
 
 pub type Entity = u32;
 pub type ComponentId = u32;
-pub type ComponentTypeId = u32;
+// pub type ComponentTypeId = u32;
 
 #[derive(Debug)]
 pub struct FieldLayout {
@@ -24,6 +24,15 @@ impl ComponentLayout {
         let size = fields.iter().map(|f| f.size as usize).sum();
         ComponentLayout { fields, size }
     }
+
+    // return an iterator for byte slices representing fields, each offset by the size of the previous
+    // pub fn iter(&self, data: &[u8]) -> impl Iterator<Item = &[u8]> {
+    //     self.fields.iter().scan(0, |offset, field| {
+    //         let start = *offset;
+    //         *offset += field.size as usize;
+    //         Some(&data[start..*offset])
+    //     })
+    // }
 }
 
 pub struct EntityManager {
