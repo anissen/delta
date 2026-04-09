@@ -216,8 +216,6 @@ impl VirtualMachine {
 
         let mut query_results: Option<QueryResult> = None;
         let mut active_entity = None;
-        let mut create_components_asap = Vec::new();
-        let mut destroy_entities_asap = Vec::new();
 
         while self.program_counter < self.program.len() {
             let next = self.read_byte();
@@ -739,60 +737,18 @@ impl VirtualMachine {
                         query_results = None;
                         active_entity = None;
                         self.pop_query_frame();
-
-                        destroy_entities_asap
-                            .iter()
-                            .for_each(|entity| destroy_entity(data, *entity));
-                        destroy_entities_asap.clear();
-
-                        let _entities = create_components_asap
-                            .iter()
-                            .map(|components: &Vec<Value>| create_entity(data, components))
-                            .collect::<Vec<_>>();
-                        create_components_asap.clear();
                     }
                 }
 
                 ByteCode::Create => {
                     let components = self.pop_list();
-                    match query_results {
-                        Some(_) => {
-                            // Create the entity when the query goes out of scope
-                            create_components_asap.push(components)
-                        }
-                        None => {
-                            query_results = None; // Redundant but helps the borrow checker
-                            let entity = create_entity(data, &components);
-                            // TODO(anissen): Assigning entity id to a value only works when there is no query in scope!
-                            self.push_integer(entity as i32);
-                        }
-                    }
-
-                    // self.push_integer(entity as i32);
+                    let entity = create_entity(data, &components);
+                    self.push_integer(entity as i32);
                 }
 
                 ByteCode::Destroy => {
-                    // let entity_id = match self.pop_any() {
-                    //     Value::Component { id, properties } => {
-                    //         properties.find
-                    //     }
-                    //     panic!("Expected a component")
-                    // };
                     let entity = self.pop_integer() as Entity;
-                    match query_results {
-                        Some(_) => {
-                            // Destroy the entity when the query goes out of scope
-                            destroy_entities_asap.push(entity)
-                        }
-                        None => {
-                            println!("destroy the entity immediately");
-                            dbg!(&entity);
-                            query_results = None; // Redundant but helps the borrow checker
-                            destroy_entity(data, entity);
-                        }
-                    }
-
-                    // self.push_integer(entity as i32);
+                    destroy_entity(data, entity);
                 }
             }
             if self.verbose {
