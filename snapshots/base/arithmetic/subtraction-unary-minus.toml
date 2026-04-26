@@ -1,22 +1,22 @@
 script = """
--12.3 == 12.3
+2 - -4
 """
 
 [output]
-result = "false"
-type = "boolean"
+result = "6"
+type = "integer"
 
 [output.compiler]
-bytecode = "[0, 38, 4, 109, 97, 105, 110, 28, 65, 68, 204, 205, 18, 28, 65, 68, 204, 205, 17, 40]"
+bytecode = "[0, 38, 4, 109, 97, 105, 110, 29, 0, 0, 0, 2, 29, 0, 0, 0, 4, 18, 1, 40]"
 bytecode_length = 20
 disassembled = """
 0 \tComponent Count: 0
 
 1 \t=== function chunk: main ===
-7 \tpush_float (value: 12.3)
-12 \tneg
-13 \tpush_float (value: 12.3)
-18 \teq
+7 \tpush_integer (value: 2)
+12 \tpush_integer (value: 4)
+17 \tneg
+18 \tint_sub
 19 \tret
 """
 

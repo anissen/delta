@@ -80,7 +80,6 @@ impl Lexer {
             ' ' => self.spaces(),
             '+' if self.matches('.') => TokenKind::PlusDot,
             '+' => TokenKind::Plus,
-            '-' if self.is_digit(self.peek()) => self.number(),
             '-' if self.matches('.') => TokenKind::MinusDot,
             '-' => TokenKind::Minus,
             '*' if self.matches('.') => TokenKind::StarDot,

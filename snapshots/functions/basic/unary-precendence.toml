@@ -1,0 +1,66 @@
+script = '''
+add = \v1 v2
+    v1 + v2
+
+r1 = 3 | add -2 # 1
+r2 = -3 | add 2 # -1
+r3 = -3 | add -2 # -5
+"r1: {r1}, r2: {r2}, r3: {r3}"
+'''
+
+[output]
+result = "r1: 1, r2: -1, r3: -5"
+type = "string"
+
+[output.compiler]
+bytecode = "[0, 37, 3, 97, 100, 100, 2, 0, 118, 38, 4, 109, 97, 105, 110, 39, 0, 2, 21, 0, 29, 0, 0, 0, 3, 29, 0, 0, 0, 2, 18, 41, 2, 0, 0, 3, 97, 100, 100, 21, 1, 29, 0, 0, 0, 3, 18, 29, 0, 0, 0, 2, 41, 2, 0, 0, 3, 97, 100, 100, 21, 2, 29, 0, 0, 0, 3, 18, 29, 0, 0, 0, 2, 18, 41, 2, 0, 0, 3, 97, 100, 100, 21, 3, 30, 4, 114, 49, 58, 32, 20, 1, 14, 30, 6, 44, 32, 114, 50, 58, 32, 14, 20, 2, 14, 30, 6, 44, 32, 114, 51, 58, 32, 14, 20, 3, 14, 40, 38, 3, 97, 100, 100, 20, 0, 20, 1, 0, 40]"
+bytecode_length = 129
+disassembled = """
+0 \tComponent Count: 0
+1 \tfunction signature (name: add) (local count: 2) (function position: 118)
+
+9 \t=== function chunk: main ===
+15 \tfunction (function index: 0) (params: 2)
+18 \tset_value (index: 0)
+20 \tpush_integer (value: 3)
+25 \tpush_integer (value: 2)
+30 \tneg
+31 \tcall add (is_global: 0) (arg count: 2, function index: 0)
+39 \tset_value (index: 1)
+41 \tpush_integer (value: 3)
+46 \tneg
+47 \tpush_integer (value: 2)
+52 \tcall add (is_global: 0) (arg count: 2, function index: 0)
+60 \tset_value (index: 2)
+62 \tpush_integer (value: 3)
+67 \tneg
+68 \tpush_integer (value: 2)
+73 \tneg
+74 \tcall add (is_global: 0) (arg count: 2, function index: 0)
+82 \tset_value (index: 3)
+84 \tpush_string (value: 'r1: ')
+90 \tget_value (index: 1)
+92 \tstr_concat
+93 \tpush_string (value: ', r2: ')
+101 \tstr_concat
+102 \tget_value (index: 2)
+104 \tstr_concat
+105 \tpush_string (value: ', r3: ')
+113 \tstr_concat
+114 \tget_value (index: 3)
+116 \tstr_concat
+117 \tret
+
+118 \t=== function chunk: add ===
+123 \tget_value (index: 0)
+125 \tget_value (index: 1)
+127 \tint_add
+128 \tret
+"""
+
+[output.vm]
+bytes_read = 152
+instructions_executed = 46
+jumps_performed = 0
+max_stack_height = 7
+stack_allocations = 35

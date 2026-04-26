@@ -64,6 +64,8 @@ impl VirtualMachine {
     }
 
     pub fn update_bytecode(&mut self, bytes: Vec<u8>, data: &mut PersistentData) {
+        self.program_counter = 0;
+        self.main_chunk_program_counter = 0;
         self.program = bytes;
         self.functions.clear();
         self.stack.clear();
@@ -359,10 +361,11 @@ impl VirtualMachine {
                     self.push_boolean(left == right)
                 }
 
-                ByteCode::Negation => {
-                    let value = self.pop_float();
-                    self.push_float(-value);
-                }
+                ByteCode::Negation => match self.pop_any() {
+                    Value::Integer(v) => self.push_integer(-v),
+                    Value::Float(v) => self.push_float(-v),
+                    default => panic!("expected integer or float, got {:?}", default),
+                },
 
                 ByteCode::Not => {
                     let value = self.pop_boolean();

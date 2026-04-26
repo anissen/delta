@@ -1,0 +1,24 @@
+script = "-4"
+
+[output]
+result = "-4"
+type = "integer"
+
+[output.compiler]
+bytecode = "[0, 38, 4, 109, 97, 105, 110, 29, 0, 0, 0, 4, 18, 40]"
+bytecode_length = 14
+disassembled = """
+0 \tComponent Count: 0
+
+1 \t=== function chunk: main ===
+7 \tpush_integer (value: 4)
+12 \tneg
+13 \tret
+"""
+
+[output.vm]
+bytes_read = 15
+instructions_executed = 4
+jumps_performed = 0
+max_stack_height = 1
+stack_allocations = 3

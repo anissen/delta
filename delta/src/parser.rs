@@ -36,10 +36,10 @@ is_arm         → INDENT ( ( "_" | expression ) block ) ;
 logic_or       → logic_and ( "or" logic_or )* ;
 logic_and      → equality ( "and" logic_or )* ;
 equality       → comparison ( ( "!=" | "==" ) comparison )* ;
-comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
+comparison     → addition ( ( ">" | ">=" | "<" | "<=" ) addition )* ;
 block          → NEWLINE (INDENT expression NEWLINE?)*
-term           → factor ( ( "-" | "+" ) factor )* ;
-factor         → unary ( ( "/" | "*" ) unary )* ;
+addition           → multiplication ( ( "-" | "+" ) multiplication )* ;
+multiplication → unary ( ( "/" | "*" ) unary )* ;
 unary          → ( "!" | "-" ) unary | call ;
 call           → call → primary "|" call_with_first_arg | primary ;
 call_with_first_arg → IDENTIFIER primary* ;
@@ -586,9 +586,9 @@ impl Parser {
         }
     }
 
-    // comparison → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
+    // comparison → addition ( ( ">" | ">=" | "<" | "<=" ) addition )* ;
     fn comparison(&mut self) -> Result<Option<Expr>, String> {
-        let expr = self.term()?;
+        let expr = self.addition()?;
         if expr.is_some()
             && self.matches_any(&[
                 LeftChevron,
@@ -602,7 +602,7 @@ impl Parser {
             ])
         {
             let token = self.previous();
-            let right = self.term()?;
+            let right = self.addition()?;
             let operator = match token.kind {
                 LeftChevron => BinaryOperator::IntegerComparison(Comparisons::LessThan),
                 LeftChevronDot => BinaryOperator::FloatComparison(Comparisons::LessThan),
@@ -629,9 +629,9 @@ impl Parser {
         }
     }
 
-    // term → factor ( ( "-" | "+" ) factor )* ;
-    fn term(&mut self) -> Result<Option<Expr>, String> {
-        let mut expr = self.factor()?;
+    // addition → multiplication ( ( "-" | "+" ) multiplication )* ;
+    fn addition(&mut self) -> Result<Option<Expr>, String> {
+        let mut expr = self.multiplication()?;
         while expr.is_some() && self.matches_any(&[Plus, PlusDot, Minus, MinusDot]) {
             let token = self.previous();
             let operator = match token.kind {
@@ -641,7 +641,7 @@ impl Parser {
                 MinusDot => BinaryOperator::FloatOperation(ArithmeticOperations::Subtraction),
                 _ => unreachable!(),
             };
-            let right = self.factor()?;
+            let right = self.multiplication()?;
             expr = Some(Expr::Binary {
                 left: Box::new(expr.unwrap()),
                 operator,
@@ -652,9 +652,9 @@ impl Parser {
         Ok(expr)
     }
 
-    // factor → unary ( ( "/" | "*" ) unary )* ;
-    fn factor(&mut self) -> Result<Option<Expr>, String> {
-        let mut expr = self.unary()?;
+    // multiplication → call ( ( "/" | "*" ) call )* ;
+    fn multiplication(&mut self) -> Result<Option<Expr>, String> {
+        let mut expr = self.call()?;
         while expr.is_some()
             && self.matches_any(&[Slash, SlashDot, Star, StarDot, Percent, PercentDot])
         {
@@ -679,7 +679,7 @@ impl Parser {
         Ok(expr)
     }
 
-    // unary → ( "!" | "-" ) unary | call ;
+    // unary → ( "!" | "-" ) unary | primary ;
     fn unary(&mut self) -> Result<Option<Expr>, String> {
         if self.matches_any(&[Bang, Minus]) {
             let token = self.previous();
@@ -695,13 +695,13 @@ impl Parser {
                 expr: Box::new(right.unwrap()),
             }))
         } else {
-            self.call()
+            self.primary()
         }
     }
 
-    // call → primary "|" call_with_first_arg | primary
+    // call → unary ( "|" call_with_first_arg )?
     fn call(&mut self) -> Result<Option<Expr>, String> {
-        let expr = self.primary()?;
+        let expr = self.unary()?;
         let token = self.previous();
         if self.matches(&Pipe) {
             self.call_with_first_arg(expr.unwrap(), token)
@@ -724,7 +724,7 @@ impl Parser {
             && !self.check(&StringConcat)
             && !self.check(&RightParen)
         {
-            let arg = self.primary()?; // precedence after string concatenation
+            let arg = self.unary()?; // precedence after string concatenation
             if let Some(arg) = arg {
                 args.push(arg);
             }

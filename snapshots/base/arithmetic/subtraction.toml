@@ -1,0 +1,27 @@
+script = """
+2-4
+"""
+
+[output]
+result = "-2"
+type = "integer"
+
+[output.compiler]
+bytecode = "[0, 38, 4, 109, 97, 105, 110, 29, 0, 0, 0, 2, 29, 0, 0, 0, 4, 1, 40]"
+bytecode_length = 19
+disassembled = """
+0 \tComponent Count: 0
+
+1 \t=== function chunk: main ===
+7 \tpush_integer (value: 2)
+12 \tpush_integer (value: 4)
+17 \tint_sub
+18 \tret
+"""
+
+[output.vm]
+bytes_read = 20
+instructions_executed = 5
+jumps_performed = 0
+max_stack_height = 2
+stack_allocations = 4

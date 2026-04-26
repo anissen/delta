@@ -7,21 +7,23 @@ result = "true"
 type = "boolean"
 
 [output.compiler]
-bytecode = "[0, 38, 4, 109, 97, 105, 110, 28, 194, 246, 233, 224, 28, 194, 246, 233, 224, 17, 40]"
-bytecode_length = 19
+bytecode = "[0, 38, 4, 109, 97, 105, 110, 28, 66, 246, 233, 224, 18, 28, 66, 246, 233, 224, 18, 17, 40]"
+bytecode_length = 21
 disassembled = """
 0 \tComponent Count: 0
 
 1 \t=== function chunk: main ===
-7 \tpush_float (value: -123.45679)
-12 \tpush_float (value: -123.45679)
-17 \teq
-18 \tret
+7 \tpush_float (value: 123.45679)
+12 \tneg
+13 \tpush_float (value: 123.45679)
+18 \tneg
+19 \teq
+20 \tret
 """
 
 [output.vm]
-bytes_read = 20
-instructions_executed = 5
+bytes_read = 22
+instructions_executed = 7
 jumps_performed = 0
 max_stack_height = 2
-stack_allocations = 4
+stack_allocations = 6
