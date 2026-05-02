@@ -995,3 +995,134 @@ impl Parser {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::parse;
+    use crate::expressions::ArithmeticOperations;
+    use crate::expressions::BinaryOperator;
+    use crate::expressions::Expr;
+    use crate::expressions::UnaryOperator;
+    use crate::expressions::ValueType;
+    use crate::lexer::lex;
+
+    fn parse_single_expr(source: &str) -> Expr {
+        let program = parse(lex(source)).expect("parser should produce an AST");
+        match program {
+            Expr::Block { mut exprs } => {
+                assert_eq!(exprs.len(), 1, "expected exactly one top-level expression");
+                exprs.remove(0)
+            }
+            other => panic!("expected top-level block expression, got {other:?}"),
+        }
+    }
+
+    fn assert_integer_literal(expr: &Expr, expected: i32) {
+        match expr {
+            Expr::Value {
+                value: ValueType::Integer(value),
+                ..
+            } => assert_eq!(*value, expected),
+            other => panic!("expected integer literal {expected}, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn parses_operator_precedence_for_addition_and_multiplication() {
+        let expr = parse_single_expr("1 + 2 * 3");
+
+        match expr {
+            Expr::Binary {
+                left,
+                operator: BinaryOperator::IntegerOperation(ArithmeticOperations::Addition),
+                right,
+                ..
+            } => {
+                assert_integer_literal(&left, 1);
+                match *right {
+                    Expr::Binary {
+                        left,
+                        operator:
+                            BinaryOperator::IntegerOperation(ArithmeticOperations::Multiplication),
+                        right,
+                        ..
+                    } => {
+                        assert_integer_literal(&left, 2);
+                        assert_integer_literal(&right, 3);
+                    }
+                    other => panic!("expected multiplication on right-hand side, got {other:?}"),
+                }
+            }
+            other => panic!("expected top-level addition expression, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn parses_pipeline_call_with_arguments() {
+        let expr = parse_single_expr("5 | add 3");
+
+        match expr {
+            Expr::Call { name, args } => {
+                assert_eq!(name.lexeme, "add");
+                assert_eq!(args.len(), 2);
+                assert_integer_literal(&args[0], 5);
+                assert_integer_literal(&args[1], 3);
+            }
+            other => panic!("expected call expression, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn parses_chained_pipeline_calls() {
+        let expr = parse_single_expr("5 | add_one | add_two");
+
+        match expr {
+            Expr::Call { name, args } => {
+                assert_eq!(name.lexeme, "add_two");
+                assert_eq!(args.len(), 1);
+                match &args[0] {
+                    Expr::Call {
+                        name: inner_name,
+                        args: inner_args,
+                    } => {
+                        assert_eq!(inner_name.lexeme, "add_one");
+                        assert_eq!(inner_args.len(), 1);
+                        assert_integer_literal(&inner_args[0], 5);
+                    }
+                    other => panic!("expected nested call as first argument, got {other:?}"),
+                }
+            }
+            other => panic!("expected call expression, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn parses_unary_negation_expression() {
+        let expr = parse_single_expr("-3");
+
+        match expr {
+            Expr::Unary {
+                operator: UnaryOperator::Negation,
+                expr,
+                ..
+            } => assert_integer_literal(&expr, 3),
+            other => panic!("expected unary negation expression, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn parses_assignment_expression() {
+        let expr = parse_single_expr("value = 10");
+
+        match expr {
+            Expr::Assignment { target, expr, .. } => {
+                match *target {
+                    Expr::Identifier { name } => assert_eq!(name.lexeme, "value"),
+                    other => panic!("expected identifier assignment target, got {other:?}"),
+                }
+                assert_integer_literal(&expr, 10);
+            }
+            other => panic!("expected assignment expression, got {other:?}"),
+        }
+    }
+}

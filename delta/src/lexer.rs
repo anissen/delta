@@ -380,3 +380,71 @@ impl Lexer {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::lex;
+    use crate::tokens::TokenKind;
+
+    fn token_kinds(source: &str) -> Vec<TokenKind> {
+        lex(source).into_iter().map(|token| token.kind).collect()
+    }
+
+    fn token_lexemes(source: &str) -> Vec<String> {
+        lex(source).into_iter().map(|token| token.lexeme).collect()
+    }
+
+    #[test]
+    fn lexes_basic_pipeline_expression() {
+        let kinds = token_kinds("-3 | square");
+        assert_eq!(
+            kinds,
+            vec![
+                TokenKind::Minus,
+                TokenKind::Integer,
+                TokenKind::Space,
+                TokenKind::Pipe,
+                TokenKind::Space,
+                TokenKind::Identifier,
+            ]
+        );
+
+        let lexemes = token_lexemes("-3 | square");
+        assert_eq!(lexemes, vec!["-", "3", " ", "|", " ", "square"]);
+    }
+
+    #[test]
+    fn lexes_keywords_without_confusing_identifiers() {
+        let kinds = token_kinds("is island if iff and andromeda");
+        assert_eq!(
+            kinds,
+            vec![
+                TokenKind::KeywordIs,
+                TokenKind::Space,
+                TokenKind::Identifier,
+                TokenKind::Space,
+                TokenKind::KeywordIf,
+                TokenKind::Space,
+                TokenKind::Identifier,
+                TokenKind::Space,
+                TokenKind::KeywordAnd,
+                TokenKind::Space,
+                TokenKind::Identifier,
+            ]
+        );
+    }
+
+    #[test]
+    fn lexes_indentation_from_four_spaces_as_tab() {
+        let kinds = token_kinds("    value");
+        assert_eq!(kinds, vec![TokenKind::Tab, TokenKind::Identifier]);
+    }
+
+    #[test]
+    fn lexes_string_with_escaped_characters() {
+        let tokens = lex("\"line\\nend\"");
+        assert_eq!(tokens.len(), 1);
+        assert_eq!(tokens[0].kind, TokenKind::Text);
+        assert_eq!(tokens[0].lexeme, "line\nend");
+    }
+}
