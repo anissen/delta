@@ -668,7 +668,7 @@ impl Parser {
                 PercentDot => BinaryOperator::FloatOperation(ArithmeticOperations::Modulus),
                 _ => unreachable!(),
             };
-            let right = self.unary()?;
+            let right = self.call()?;
             expr = Some(Expr::Binary {
                 left: Box::new(expr.unwrap()),
                 operator,
@@ -1096,6 +1096,34 @@ mod tests {
         }
     }
 
+    #[test]
+    fn parses_pipeline_on_multiplication_right_hand_side() {
+        let expr = parse_single_expr("x +. 8.0 *. ((x +. 3.14 /. 2.0) *. 10.0) | sin");
+
+        match expr {
+            Expr::Binary {
+                operator: BinaryOperator::FloatOperation(ArithmeticOperations::Addition),
+                right,
+                ..
+            } => match *right {
+                Expr::Binary {
+                    operator: BinaryOperator::FloatOperation(ArithmeticOperations::Multiplication),
+                    right: multiplication_rhs,
+                    ..
+                } => match *multiplication_rhs {
+                    Expr::Call { name, args } => {
+                        assert_eq!(name.lexeme, "sin");
+                        assert_eq!(args.len(), 1);
+                    }
+                    other => {
+                        panic!("expected pipeline call on multiplication rhs, got {other:?}")
+                    }
+                },
+                other => panic!("expected multiplication on addition rhs, got {other:?}"),
+            },
+            other => panic!("expected top-level float addition expression, got {other:?}"),
+        }
+    }
     #[test]
     fn parses_unary_negation_expression() {
         let expr = parse_single_expr("-3");

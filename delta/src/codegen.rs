@@ -790,7 +790,7 @@ impl<'a> Codegen<'a> {
         let mut header_builder = BytecodeBuilder::new();
 
         let mut sorted_map = self.environment.components.values().collect::<Vec<_>>();
-        sorted_map.sort_by(|a, b| a.id.cmp(&b.id));
+        sorted_map.sort_by_key(|a| a.id);
 
         header_builder.add_byte(self.environment.components.len() as u8);
         for component_metadata in &sorted_map {
